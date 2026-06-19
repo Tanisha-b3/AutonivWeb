@@ -12,7 +12,7 @@ import {
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  AreaChart, Area, ResponsiveContainer, LineChart, Line,
+  AreaChart, Area, ResponsiveContainer, 
 } from 'recharts';
 import { useAppDispatch, useAppSelector } from '../../hooks/useStore';
 import { fetchMyStats } from '../../store/slices/analyticsSlice';

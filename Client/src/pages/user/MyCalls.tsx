@@ -110,9 +110,9 @@ export function MyCalls() {
 
   // Calculate stats
   const totalCalls = filteredCalls.length;
-  const completedCount = filteredCalls.filter(c => c.status === 'completed').length;
-  const missedCount = filteredCalls.filter(c => c.status === 'missed').length;
-  const answerRate = totalCalls > 0 ? Math.round((completedCount / totalCalls) * 100) : 0;
+  // const completedCount = filteredCalls.filter(c => c.status === 'completed').length;
+  // const missedCount = filteredCalls.filter(c => c.status === 'missed').length;
+  // const answerRate = totalCalls > 0 ? Math.round((completedCount / totalCalls) * 100) : 0;
 
   const columns: Column<Call>[] = [
     {
