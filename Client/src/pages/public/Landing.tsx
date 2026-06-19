@@ -1379,7 +1379,7 @@ export function Landing() {
           <section className="section-box black">
             <div className="section-pad relative overflow-hidden">
               <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 50% 50%,rgba(34,197,94,.12) 0%,transparent 65%)" }} />
-              <Reveal className="relative text-center" style={{ zIndex: 1 }}>
+              <Reveal className="relative text-center">
                 <span className="tag px-4 py-1.5 rounded-full inline-block mb-6" style={{ color: "#4ade80", background: "rgba(34,197,94,.10)", border: "1px solid rgba(34,197,94,.28)" }}>Get Started</span>
                 <h2 className="font-extrabold tracking-tight mb-4" style={{ fontSize: "clamp(28px,4.5vw,60px)", color: "#ffffff" }}>
                   Ready to Transform<span className="gradient-text block">Your Business?</span>
