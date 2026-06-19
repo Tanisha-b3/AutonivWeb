@@ -6,20 +6,20 @@ import { fetchOverview, fetchUsage, fetchTrends, fetchPeriodOverview } from '../
 import { fetchAllAgents } from '../../store/slices/agentsSlice';
 import { Link } from 'react-router-dom';
 
-const T = {
-  emerald:   '#10b981',
-  emeraldDim: 'rgba(16,185,129,0.12)',
-  blue:      '#2563eb',
-  blueDim:   'rgba(37,99,235,0.12)',
-  cyan:      '#06b6d4',
-  amber:     '#f59e0b',
-  rose:      '#f43f5e',
-  slate:     '#94a3b8',
-  bg:        '#f8fafc',
-  surface:   'rgba(255,255,255,0.8)',
-  border:    'rgba(16,185,129,0.12)',
-  borderHover: 'rgba(16,185,129,0.35)',
-};
+// const T = {
+//   emerald:   '#10b981',
+//   emeraldDim: 'rgba(16,185,129,0.12)',
+//   blue:      '#2563eb',
+//   blueDim:   'rgba(37,99,235,0.12)',
+//   cyan:      '#06b6d4',
+//   amber:     '#f59e0b',
+//   rose:      '#f43f5e',
+//   slate:     '#94a3b8',
+//   bg:        '#f8fafc',
+//   surface:   'rgba(255,255,255,0.8)',
+//   border:    'rgba(16,185,129,0.12)',
+//   borderHover: 'rgba(16,185,129,0.35)',
+// };
 
 const AreaChartBlock = lazy(() => import('../../components/AreaChartBlock'));
 
