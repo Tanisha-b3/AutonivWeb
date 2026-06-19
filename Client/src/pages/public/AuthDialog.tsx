@@ -1,0 +1,561 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { Modal } from '../../components/Modal';
+import { useAuth } from '../../App';
+import { authService } from '../../services/api';
+// import { useAppDispatch } from '../../hooks/useStore';
+// import { checkAuth } from '../../store/slices/authSlice';
+
+type AuthMode = 'login' | 'register' | 'forgot_password' | 'reset_password';
+
+interface AuthDialogProps {
+  mode: AuthMode;
+  isOpen: boolean;
+  onClose: () => void;
+  onSwitch: (mode: AuthMode) => void;
+}
+
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+function validateEmail(value: string): string | null {
+  if (!value.trim()) return 'Email is required';
+  if (!EMAIL_REGEX.test(value)) return 'Enter a valid email address';
+  if (value.length > 254) return 'Email is too long';
+  return null;
+}
+
+function validatePassword(value: string): string | null {
+  if (!value) return 'Password is required';
+  if (value.length < 10) return 'Password must be at least 10 characters';
+  if (value.length > 128) return 'Password is too long';
+  if (!/[A-Z]/.test(value)) return 'Password must include an uppercase letter';
+  if (!/[a-z]/.test(value)) return 'Password must include a lowercase letter';
+  if (!/[0-9]/.test(value)) return 'Password must include a digit';
+  if (!/[^A-Za-z0-9]/.test(value)) return 'Password must include a symbol';
+  return null;
+}
+
+function validateName(value: string): string | null {
+  if (!value.trim()) return 'Name is required';
+  if (value.trim().length < 2) return 'Name must be at least 2 characters';
+  if (value.trim().length > 100) return 'Name is too long';
+  return null;
+}
+
+function validatePhone(value: string): string | null {
+  if (!value.trim()) return null;
+  const digits = value.replace(/[^0-9]/g, '');
+  if (digits.length !== 10) return 'Phone number must be exactly 10 digits';
+  return null;
+}
+
+function getPasswordStrength(password: string): { score: number; label: string; color: string } {
+  let score = 0;
+  if (password.length >= 10) score++;
+  if (password.length >= 14) score++;
+  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  if (score <= 1) return { score, label: 'Weak',   color: 'bg-rose-500' };
+  if (score <= 2) return { score, label: 'Fair',   color: 'bg-amber-500' };
+  if (score <= 3) return { score, label: 'Good',   color: 'bg-cyan-500' };
+  return           { score, label: 'Strong', color: 'bg-emerald-500' };
+}
+
+function parseError(err: unknown, fallback: string): string {
+  if (axios.isAxiosError(err)) return err.response?.data?.message ?? fallback;
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+  return fallback;
+}
+
+export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps) {
+  const navigate = useNavigate();
+  // const dispatch = useAppDispatch();
+  const { login, register } = useAuth();
+
+  const [name, setName]               = useState('');
+  const [email, setEmail]             = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [company, setCompany]         = useState('');
+  const [password, setPassword]       = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError]             = useState('');
+  const [loading, setLoading]         = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
+  const [touched, setTouched]         = useState<Record<string, boolean>>({});
+
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetConfirm, setResetConfirm]   = useState('');
+  const [success, setSuccess]         = useState('');
+
+  const isLogin = mode === 'login';
+
+  // Reset form on mode change
+  useEffect(() => {
+    if (mode !== 'reset_password') {
+      setEmail('');
+      setName('');
+      setPassword('');
+      setPhoneNumber('');
+      setCompany('');
+    }
+    setError(''); setLoading(false);
+    setFieldErrors({}); setTouched({});
+    setShowPassword(false);
+    setResetPassword('');
+    setResetConfirm('');
+    setSuccess('');
+  }, [mode, isOpen]);
+
+  const validateField = (fieldName: string, value: string): string | null => {
+    switch (fieldName) {
+      case 'email':       return validateEmail(value);
+      case 'password':    return isLogin ? (!value ? 'Password is required' : null) : validatePassword(value);
+      case 'name':        return validateName(value);
+      case 'phoneNumber': return validatePhone(value);
+      default:            return null;
+    }
+  };
+
+  const handleBlur = (fieldName: string, value: string) => {
+    setTouched((prev) => ({ ...prev, [fieldName]: true }));
+    setFieldErrors((prev) => ({ ...prev, [fieldName]: validateField(fieldName, value) }));
+  };
+
+  const handleChange = (fieldName: string, value: string) => {
+    if (touched[fieldName]) {
+      setFieldErrors((prev) => ({ ...prev, [fieldName]: validateField(fieldName, value) }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    // ── Forgot Password ────────────────────────────────────────────────────
+    if (mode === 'forgot_password') {
+      if (!email || validateEmail(email)) {
+        setError('Please enter a valid email');
+        return;
+      }
+      setLoading(true);
+      try {
+        await authService.forgotPassword(email);
+        onSwitch('reset_password');
+      } catch (err) {
+        setError(parseError(err, 'Failed to send reset code'));
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // ── Reset Password ─────────────────────────────────────────────────────
+    if (mode === 'reset_password') {
+      if (!resetPassword || resetPassword.length < 10) {
+        setError('Password must be at least 10 characters');
+        return;
+      }
+      if (resetPassword !== resetConfirm) {
+        setError('Passwords do not match');
+        return;
+      }
+      setLoading(true);
+      try {
+        await authService.resetPassword(email, resetPassword);
+        setSuccess('Password reset successfully! You can now sign in.');
+        setTimeout(() => onSwitch('login'), 2000);
+      } catch (err) {
+        setError(parseError(err, 'Failed to reset password'));
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // ── Login / Register ───────────────────────────────────────────────────
+    const errors: Record<string, string | null> = {
+      email:    validateEmail(email),
+      password: isLogin ? (!password ? 'Password is required' : null) : validatePassword(password),
+      ...(!isLogin && {
+        name:        validateName(name),
+        phoneNumber: validatePhone(phoneNumber),
+      }),
+    };
+
+    setFieldErrors(errors);
+    setTouched({
+      email: true, password: true,
+      ...(!isLogin && { name: true, phoneNumber: true }),
+    });
+
+    if (Object.values(errors).some(Boolean)) return;
+
+      setLoading(true);
+      try {
+        if (isLogin) {
+          await login(email, password);
+        } else {
+          await register({ name, email, password, company, phoneNumber });
+        }
+        onClose();
+        const stored = JSON.parse(sessionStorage.getItem('user') || '{}');
+        if (!isLogin) {
+          navigate('/onboarding', { replace: true });
+        } else {
+          navigate(stored?.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
+        }
+    } catch (err) {
+      setError(parseError(err, `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const strength = password ? getPasswordStrength(password) : null;
+
+  const getTitle = () => {
+    if (mode === 'forgot_password') return 'Forgot Password';
+    if (mode === 'reset_password')  return 'Reset Password';
+    return isLogin ? 'Welcome back' : 'Create your account';
+  };
+
+  const getSubtitle = () => {
+    if (mode === 'forgot_password') return "Enter your email and we'll send you a reset code";
+    if (mode === 'reset_password')  return 'Enter your new password';
+    return isLogin ? 'Sign in to your account to continue' : 'Start your free trial today';
+  };
+
+  const isAuthFlow = mode === 'forgot_password' || mode === 'reset_password';
+
+  const submitLabel = () => {
+    if (mode === 'forgot_password') return 'Send Reset Code';
+    if (mode === 'reset_password')  return 'Reset Password';
+    return isLogin ? 'Sign in' : 'Create account';
+  };
+
+  const loadingLabel = () => {
+    if (mode === 'forgot_password') return 'Sending...';
+    if (mode === 'reset_password')  return 'Resetting...';
+    return isLogin ? 'Signing in…' : 'Creating account…';
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={getTitle()} size="md">
+      <div className="space-y-5 sm:space-y-6">
+        <p className="text-sm text-slate-500">{getSubtitle()}</p>
+
+        {success && (
+          <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm flex items-start gap-3">
+            <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span>{success}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
+          {error && (
+            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-sm flex items-start gap-3">
+              <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* ── Forgot Password: Email ─────────────────────────────── */}
+          {mode === 'forgot_password' && (
+            <Field label="Email" error={null}>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                autoComplete="email"
+                className={inputCls(false)}
+              />
+            </Field>
+          )}
+
+          {/* ── Reset Password ────────────────────────────────────── */}
+          {mode === 'reset_password' && (
+            <>
+              <Field label="New Password" error={null}>
+                <input
+                  type="password"
+                  value={resetPassword}
+                  onChange={(e) => setResetPassword(e.target.value)}
+                  placeholder="Enter new password"
+                  autoComplete="new-password"
+                  className={inputCls(false)}
+                />
+                {resetPassword.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {[
+                      { label: 'At least 10 characters',  met: resetPassword.length >= 10 },
+                      { label: 'Uppercase letter',         met: /[A-Z]/.test(resetPassword) },
+                      { label: 'Lowercase letter',         met: /[a-z]/.test(resetPassword) },
+                      { label: 'Number',                   met: /\d/.test(resetPassword) },
+                      { label: 'Special character',        met: /[^A-Za-z0-9]/.test(resetPassword) },
+                    ].map((check, i) => (
+                      <div key={i} className="flex items-center gap-1.5 text-xs">
+                        <span className={check.met ? 'text-emerald-600' : 'text-slate-400'}>{check.met ? '✓' : '○'}</span>
+                        <span className={check.met ? 'text-emerald-600' : 'text-slate-400'}>{check.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Field>
+              <Field label="Confirm Password" error={null}>
+                <input
+                  type="password"
+                  value={resetConfirm}
+                  onChange={(e) => setResetConfirm(e.target.value)}
+                  placeholder="Confirm new password"
+                  autoComplete="new-password"
+                  className={inputCls(false)}
+                />
+                {resetConfirm && resetPassword !== resetConfirm && (
+                  <p className="text-xs text-rose-500 mt-1">Passwords do not match</p>
+                )}
+              </Field>
+            </>
+          )}
+
+          {/* ── Login / Register Fields ───────────────────────────── */}
+          {!isAuthFlow && (
+            <>
+              {!isLogin && (
+                <Field label="Full Name" error={touched.name ? fieldErrors.name : null}>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => { setName(e.target.value); handleChange('name', e.target.value); }}
+                    onBlur={() => handleBlur('name', name)}
+                    placeholder="John Doe"
+                    autoComplete="name"
+                    className={inputCls(touched.name && !!fieldErrors.name)}
+                  />
+                </Field>
+              )}
+
+              <Field label="Email" error={touched.email ? fieldErrors.email : null}>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); handleChange('email', e.target.value); }}
+                  onBlur={() => handleBlur('email', email)}
+                  placeholder="you@company.com"
+                  autoComplete={isLogin ? 'username' : 'email'}
+                  className={inputCls(touched.email && !!fieldErrors.email)}
+                />
+              </Field>
+
+              {!isLogin && (
+                <>
+                  <Field label="Phone Number" error={touched.phoneNumber ? fieldErrors.phoneNumber : null}>
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={10}
+                      value={phoneNumber}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+                        setPhoneNumber(val);
+                        handleChange('phoneNumber', val);
+                      }}
+                      onBlur={() => handleBlur('phoneNumber', phoneNumber)}
+                      placeholder="9876543210"
+                      autoComplete="tel"
+                      className={inputCls(touched.phoneNumber && !!fieldErrors.phoneNumber)}
+                    />
+                  </Field>
+
+                  <Field label="Company" hint="optional">
+                    <input
+                      type="text"
+                      value={company}
+                      onChange={(e) => setCompany(e.target.value)}
+                      placeholder="Your Company"
+                      autoComplete="organization"
+                      className={inputCls(false)}
+                    />
+                  </Field>
+                </>
+              )}
+
+              <Field label="Password" error={touched.password ? fieldErrors.password : null}>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); handleChange('password', e.target.value); }}
+                    onBlur={() => handleBlur('password', password)}
+                    placeholder={isLogin ? 'Enter your password' : 'Create a strong password'}
+                    autoComplete={isLogin ? 'current-password' : 'new-password'}
+                    minLength={isLogin ? undefined : 10}
+                    className={`${inputCls(touched.password && !!fieldErrors.password)} pr-11`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    tabIndex={-1}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+
+                {!isLogin && password && strength && (
+                  <div className="mt-2 space-y-1.5">
+                    <div className="flex gap-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                            i < strength.score ? strength.color : 'bg-slate-200'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-slate-400">
+                      {strength.label} — 10+ chars, uppercase, lowercase, number & symbol
+                    </p>
+                  </div>
+                )}
+              </Field>
+            </>
+          )}
+
+          {/* ── Demo Credentials (login only) ──────────────────────── */}
+          {isLogin && !isAuthFlow && (
+            <div className="space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Demo Accounts</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: 'Admin', email: 'admin@autoniv.ai', pwd: 'Password123@' },
+                  { label: 'User', email: 'user@autoniv.ai', pwd: 'Test2@1234' },
+                ].map((d) => (
+                  <button
+                    key={d.label}
+                    type="button"
+                    onClick={() => { setEmail(d.email); setPassword(d.pwd); setTouched({}); setFieldErrors({}); }}
+                    className="px-3 py-2 rounded-xl text-left transition-all hover:bg-cyan-50 border border-cyan-100"
+                    style={{ background: 'rgba(6,182,212,0.04)' }}
+                  >
+                    <span className="block text-xs font-semibold text-slate-700">{d.label}</span>
+                    <span className="block text-[10px] text-slate-400 mt-0.5 truncate">{d.email}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-cta w-full py-3.5 rounded-xl font-semibold text-white hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+          >
+            {loading ? (
+              <>
+                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                {loadingLabel()}
+              </>
+            ) : submitLabel()}
+          </button>
+        </form>
+
+        {/* ── Footer Links ─────────────────────────────────────────── */}
+        {mode === 'login' && (
+          <p className="text-center text-sm text-slate-500">
+            <button
+              type="button"
+              onClick={() => onSwitch('forgot_password')}
+              className="text-cyan-600 hover:text-cyan-700 font-medium transition-colors"
+            >
+              Forgot Password?
+            </button>
+          </p>
+        )}
+
+        {mode === 'forgot_password' && (
+          <p className="text-center text-sm text-slate-500">
+            Remember your password?{' '}
+            <button
+              type="button"
+              onClick={() => onSwitch('login')}
+              className="text-cyan-600 hover:text-cyan-700 font-medium transition-colors"
+            >
+              Sign in
+            </button>
+          </p>
+        )}
+
+        {!isAuthFlow && (
+          <p className="text-center text-sm text-slate-500">
+            {isLogin ? "Don't have an account? " : 'Already have an account? '}
+            <button
+              type="button"
+              onClick={() => onSwitch(isLogin ? 'register' : 'login')}
+              className="text-cyan-600 hover:text-cyan-700 font-medium transition-colors"
+            >
+              {isLogin ? 'Create one' : 'Sign in'}
+            </button>
+          </p>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function inputCls(hasError: boolean) {
+  return [
+    'w-full px-4 py-3.5 bg-slate-50 border rounded-xl',
+    'text-slate-900 placeholder-slate-400',
+    'focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent',
+    'transition-all',
+    hasError ? 'border-rose-300' : 'border-slate-200',
+  ].join(' ');
+}
+
+function Field({
+  label,
+  hint,
+  error,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  error?: string | null;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-1.5">
+        <label className="block text-sm font-medium text-slate-700">{label}</label>
+        {hint && <span className="text-xs text-slate-400">({hint})</span>}
+      </div>
+      {children}
+      {error && <p className="text-xs text-rose-500 mt-1">{error}</p>}
+    </div>
+  );
+}

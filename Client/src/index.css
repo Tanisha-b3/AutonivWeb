@@ -1,0 +1,356 @@
+@import "tailwindcss";
+
+/* ── Tailwind theme override: blue primary (matches Landing.tsx #0077ff) ── */
+@theme {
+  --color-cyan-50:  #e8f1ff;
+  --color-cyan-100: #c8dfff;
+  --color-cyan-200: #99c2ff;
+  --color-cyan-300: #66a3ff;
+  --color-cyan-400: #3389ff;
+  --color-cyan-500: #0077ff;
+  --color-cyan-600: #005fe6;
+  --color-cyan-700: #0049b3;
+  --color-cyan-800: #003380;
+  --color-cyan-900: #001d4d;
+  --color-cyan-950: #001229;
+}
+
+
+:root {
+  /* Primary Backgrounds */
+  --bg: linear-gradient(165deg, #ffffff 0%, #ecfeff 40%, #d5f5f6 100%);
+  --s1: #f8fafc;
+  --s2: #f1f5f9;
+  --card: rgba(255,255,255,0.75);
+  --card2: #f8fafc;
+  --surface: #ffffff;
+  --surface-light: #f8fafc;
+  --surface-hover: #f1f5f9;
+
+  /* Primary Blue */
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --primary-soft: rgba(37,99,235,0.12);
+  --g1: #2563eb;
+  --g2: #06b6d4;
+  --g3: #0ea5e9;
+
+  /* Brand Colors */
+  --indigo: #2563eb;
+  --indigo-dark: #1d4ed8;
+  --secondary: #06b6d4;
+  --accent: #2563eb;
+
+  /* Status & Alert Colors */
+  --success: #059669;
+  --success-dark: #047857;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --danger-alt: #ef4444;
+  --warning-alt: #f59e0b;
+  --orange: #f97316;
+
+  /* Accent Colors */
+  --cyan: #06b6d4;
+  --cyan-dark: #0891b2;
+  --cyan-dim: rgba(6,182,212,0.12);
+  --violet: #8b5cf6;
+  --pink: #ec4899;
+  --rose: #f43f5e;
+
+  /* Text Colors */
+  --text-primary: #0f172a;
+  --text: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --text-muted-alt: #64748b;
+  --muted: #64748b;
+  --dim: #94a3b8;
+
+  /* Neutral Grays */
+  --slate-gray: #64748b;
+  --slate-light: #94a3b8;
+  --slate-dark: #475569;
+  --slate-border: #e2e8f0;
+
+  /* Borders & Effects */
+  --border: rgba(37,99,235,0.12);
+  --blit: rgba(37,99,235,0.08);
+
+  /* Gradients */
+  --gg: linear-gradient(135deg, #2563eb, #06b6d4);
+  --ggg: linear-gradient(135deg, #2563eb, #06b6d4, #0ea5e9);
+  --gradient-indigo: linear-gradient(135deg, #2563eb, #06b6d4, #0ea5e9);
+}
+
+body {
+  font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+input, textarea, select, button {
+  font-family: inherit;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-hover) transparent;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(0, 119, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(0, 119, 255, 0.5);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(37,99,235,0.08);
+}
+
+/* Blue-led gradient text (matches Landing.tsx) */
+.gradient-text {
+  background: linear-gradient(135deg, #0077ff 0%, #00c8b4 60%, #00e5a0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-border {
+  position: relative;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, #0077ff, #00c8b4);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.card-hover {
+  transition: transform 0.3s cubic-bezier(.16,1,.3,1), box-shadow 0.3s cubic-bezier(.16,1,.3,1), border-color 0.3s;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0,119,255,0.15), 0 8px 20px rgba(0,0,0,0.3);
+  border-color: rgba(0,119,255,0.3);
+}
+
+.glass-card {
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(37,99,235,0.08);
+}
+.glass-card:hover {
+  border-color: rgba(37,99,235,0.2);
+}
+
+.glow-indigo {
+  box-shadow: 0 0 24px rgba(0,119,255,0.15);
+}
+
+.table-row {
+  transition: background 0.2s, transform 0.2s;
+}
+.table-row:hover {
+  background: rgba(0,119,255,0.06);
+}
+.table-row:active {
+  transform: scale(0.99);
+}
+
+@keyframes shimmer-move {
+  0% { background-position: -200% center }
+  100% { background-position: 200% center }
+}
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgba(0,119,255,0.08), transparent);
+  background-size: 200% auto;
+  animation: shimmer-move 3s ease-in-out infinite;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+/* Add to global.css */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(37, 99, 235, 0.3);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(37, 99, 235, 0.5);
+}
+
+/* ── Scale & slide animations ── */
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.02); opacity: 0.8; }
+}
+@keyframes borderGlow {
+  0%, 100% { border-color: rgba(0, 119, 255, 0.2); }
+  50% { border-color: rgba(0, 119, 255, 0.5); }
+}
+
+.animate-scale-in { animation: scaleIn 0.3s ease-out forwards; }
+.animate-slide-down { animation: slideDown 0.3s ease-out forwards; }
+.animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
+.animate-breathe { animation: breathe 2s ease-in-out infinite; }
+.animate-border-glow { animation: borderGlow 2s ease-in-out infinite; }
+
+/* ── Focus ring consistency (blue) ── */
+*:focus-visible {
+  outline: 2px solid rgba(0, 119, 255, 0.5);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Card base with consistent depth (blue) ── */
+.card-base {
+  background: var(--surface);
+  border: 1px solid rgba(0, 119, 255, 0.08);
+  border-radius: 16px;
+  transition: transform 0.25s cubic-bezier(.16,1,.3,1),
+              box-shadow 0.25s cubic-bezier(.16,1,.3,1),
+              border-color 0.25s ease;
+}
+.card-base:hover {
+  border-color: rgba(0, 119, 255, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 119, 255, 0.08);
+}
+
+/* ── Button press effect ── */
+.btn-press {
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.btn-press:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* ── Primary CTA button (dashboard only, not landing page) ── */
+:not(.landing-page) > .btn-cta,
+.dashboard .btn-cta {
+  background: rgba(0, 119, 255, 0.12);
+  border: 1px solid rgba(0, 119, 255, 0.35);
+  color: #0077ff;
+  box-shadow: 0 0 24px rgba(0, 119, 255, 0.12);
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s, border-color 0.15s;
+}
+:not(.landing-page) > .btn-cta:hover:not(:disabled),
+.dashboard .btn-cta:hover:not(:disabled) {
+  background: rgba(0, 119, 255, 0.20);
+  border-color: rgba(0, 119, 255, 0.5);
+  box-shadow: 0 0 28px rgba(0, 119, 255, 0.22);
+}
+:not(.landing-page) > .btn-cta:active:not(:disabled),
+.dashboard .btn-cta:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* ── Smooth number transitions ── */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Text balance for headings ── */
+.text-balance {
+  text-wrap: balance;
+}
+
+/* ── Gradient glow effect (blue) ── */
+.gradient-glow::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(0,119,255,0.3), transparent, rgba(0,119,255,0.2));
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.gradient-glow:hover::after {
+  opacity: 1;
+}
