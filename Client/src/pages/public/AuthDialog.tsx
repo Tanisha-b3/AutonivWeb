@@ -59,8 +59,8 @@ function getPasswordStrength(password: string): { score: number; label: string; 
   if (/[^A-Za-z0-9]/.test(password)) score++;
   if (score <= 1) return { score, label: 'Weak',   color: 'bg-rose-500' };
   if (score <= 2) return { score, label: 'Fair',   color: 'bg-amber-500' };
-  if (score <= 3) return { score, label: 'Good',   color: 'bg-cyan-500' };
-  return           { score, label: 'Strong', color: 'bg-emerald-500' };
+  if (score <= 3) return { score, label: 'Good',   color: 'bg-emerald-500' };
+  return           { score, label: 'Strong', color: 'bg-emerald-600' };
 }
 
 function parseError(err: unknown, fallback: string): string {
@@ -245,10 +245,14 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={getTitle()} size="md">
       <div className="space-y-5 sm:space-y-6">
-        <p className="text-sm text-slate-500">{getSubtitle()}</p>
+        <p className="text-sm" style={{ color: 'rgba(148,175,210,0.7)' }}>{getSubtitle()}</p>
 
         {success && (
-          <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm flex items-start gap-3">
+          <div className="p-3.5 rounded-xl text-sm flex items-start gap-3" style={{ 
+            background: 'rgba(16,185,129,0.08)',
+            border: '1px solid rgba(16,185,129,0.2)',
+            color: '#34d399'
+          }}>
             <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
@@ -258,7 +262,11 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
 
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
           {error && (
-            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-sm flex items-start gap-3">
+            <div className="p-3.5 rounded-xl text-sm flex items-start gap-3" style={{ 
+              background: 'rgba(239,68,68,0.08)',
+              border: '1px solid rgba(239,68,68,0.2)',
+              color: '#f87171'
+            }}>
               <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -302,8 +310,12 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
                       { label: 'Special character',        met: /[^A-Za-z0-9]/.test(resetPassword) },
                     ].map((check, i) => (
                       <div key={i} className="flex items-center gap-1.5 text-xs">
-                        <span className={check.met ? 'text-emerald-600' : 'text-slate-400'}>{check.met ? '✓' : '○'}</span>
-                        <span className={check.met ? 'text-emerald-600' : 'text-slate-400'}>{check.label}</span>
+                        <span className={check.met ? 'text-emerald-400' : 'text-slate-500'}>
+                          {check.met ? '✓' : '○'}
+                        </span>
+                        <span className={check.met ? 'text-emerald-400' : 'text-slate-500'}>
+                          {check.label}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -319,7 +331,7 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
                   className={inputCls(false)}
                 />
                 {resetConfirm && resetPassword !== resetConfirm && (
-                  <p className="text-xs text-rose-500 mt-1">Passwords do not match</p>
+                  <p className="text-xs text-rose-400 mt-1">Passwords do not match</p>
                 )}
               </Field>
             </>
@@ -403,7 +415,10 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+                    style={{ color: 'rgba(148,175,210,0.5)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(148,175,210,0.8)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(148,175,210,0.5)'}
                     tabIndex={-1}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
@@ -427,12 +442,12 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
                         <div
                           key={i}
                           className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                            i < strength.score ? strength.color : 'bg-slate-200'
+                            i < strength.score ? strength.color : 'bg-slate-700'
                           }`}
                         />
                       ))}
                     </div>
-                    <p className="text-[10px] text-slate-400">
+                    <p className="text-[10px]" style={{ color: 'rgba(148,175,210,0.5)' }}>
                       {strength.label} — 10+ chars, uppercase, lowercase, number & symbol
                     </p>
                   </div>
@@ -444,7 +459,9 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
           {/* ── Demo Credentials (login only) ──────────────────────── */}
           {isLogin && !isAuthFlow && (
             <div className="space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Demo Accounts</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(148,175,210,0.4)' }}>
+                Demo Accounts
+              </p>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { label: 'Admin', email: 'admin@autoniv.ai', pwd: 'Password123@' },
@@ -454,11 +471,24 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
                     key={d.label}
                     type="button"
                     onClick={() => { setEmail(d.email); setPassword(d.pwd); setTouched({}); setFieldErrors({}); }}
-                    className="px-3 py-2 rounded-xl text-left transition-all hover:bg-cyan-50 border border-cyan-100"
-                    style={{ background: 'rgba(6,182,212,0.04)' }}
+                    className="px-3 py-2 rounded-xl text-left transition-all duration-200"
+                    style={{ 
+                      background: 'rgba(16,185,129,0.04)',
+                      border: '1px solid rgba(16,185,129,0.08)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(16,185,129,0.08)';
+                      e.currentTarget.style.borderColor = 'rgba(16,185,129,0.2)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(16,185,129,0.04)';
+                      e.currentTarget.style.borderColor = 'rgba(16,185,129,0.08)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
                   >
-                    <span className="block text-xs font-semibold text-slate-700">{d.label}</span>
-                    <span className="block text-[10px] text-slate-400 mt-0.5 truncate">{d.email}</span>
+                    <span className="block text-xs font-semibold" style={{ color: '#e2e8f0' }}>{d.label}</span>
+                    <span className="block text-[10px] mt-0.5 truncate" style={{ color: 'rgba(148,175,210,0.5)' }}>{d.email}</span>
                   </button>
                 ))}
               </div>
@@ -468,7 +498,24 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
           <button
             type="submit"
             disabled={loading}
-            className="btn-cta w-full py-3.5 rounded-xl font-semibold text-white hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+            className="w-full py-3.5 rounded-xl font-semibold text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+            style={{
+              background: 'linear-gradient(135deg, #10b981, #2563eb, #06b6d4)',
+              backgroundSize: '200% 200%',
+              boxShadow: '0 4px 20px rgba(16,185,129,0.25)',
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 30px rgba(16,185,129,0.35)';
+                e.currentTarget.style.backgroundPosition = '100% 100%';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 20px rgba(16,185,129,0.25)';
+              e.currentTarget.style.backgroundPosition = '0% 0%';
+            }}
           >
             {loading ? (
               <>
@@ -484,11 +531,14 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
 
         {/* ── Footer Links ─────────────────────────────────────────── */}
         {mode === 'login' && (
-          <p className="text-center text-sm text-slate-500">
+          <p className="text-center text-sm" style={{ color: 'rgba(148,175,210,0.5)' }}>
             <button
               type="button"
               onClick={() => onSwitch('forgot_password')}
-              className="text-cyan-600 hover:text-cyan-700 font-medium transition-colors"
+              className="font-medium transition-colors"
+              style={{ color: '#10b981' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#34d399'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#10b981'}
             >
               Forgot Password?
             </button>
@@ -496,12 +546,15 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
         )}
 
         {mode === 'forgot_password' && (
-          <p className="text-center text-sm text-slate-500">
+          <p className="text-center text-sm" style={{ color: 'rgba(148,175,210,0.5)' }}>
             Remember your password?{' '}
             <button
               type="button"
               onClick={() => onSwitch('login')}
-              className="text-cyan-600 hover:text-cyan-700 font-medium transition-colors"
+              className="font-medium transition-colors"
+              style={{ color: '#10b981' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#34d399'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#10b981'}
             >
               Sign in
             </button>
@@ -509,12 +562,15 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
         )}
 
         {!isAuthFlow && (
-          <p className="text-center text-sm text-slate-500">
+          <p className="text-center text-sm" style={{ color: 'rgba(148,175,210,0.5)' }}>
             {isLogin ? "Don't have an account? " : 'Already have an account? '}
             <button
               type="button"
               onClick={() => onSwitch(isLogin ? 'register' : 'login')}
-              className="text-cyan-600 hover:text-cyan-700 font-medium transition-colors"
+              className="font-medium transition-colors"
+              style={{ color: '#10b981' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#34d399'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#10b981'}
             >
               {isLogin ? 'Create one' : 'Sign in'}
             </button>
@@ -529,11 +585,14 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
 
 function inputCls(hasError: boolean) {
   return [
-    'w-full px-4 py-3.5 bg-slate-50 border rounded-xl',
-    'text-slate-900 placeholder-slate-400',
-    'focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent',
-    'transition-all',
-    hasError ? 'border-rose-300' : 'border-slate-200',
+    'w-full px-4 py-3.5 rounded-xl',
+    'text-white placeholder-slate-500',
+    'focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-transparent',
+    'transition-all duration-200',
+    hasError 
+      ? 'border-rose-500/50 bg-rose-500/5' 
+      : 'border-slate-700/50 bg-slate-800/30',
+    'border'
   ].join(' ');
 }
 
@@ -551,11 +610,11 @@ function Field({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center gap-1.5">
-        <label className="block text-sm font-medium text-slate-700">{label}</label>
-        {hint && <span className="text-xs text-slate-400">({hint})</span>}
+        <label className="block text-sm font-medium" style={{ color: 'rgba(148,175,210,0.8)' }}>{label}</label>
+        {hint && <span className="text-xs" style={{ color: 'rgba(148,175,210,0.3)' }}>({hint})</span>}
       </div>
       {children}
-      {error && <p className="text-xs text-rose-500 mt-1">{error}</p>}
+      {error && <p className="text-xs text-rose-400 mt-1">{error}</p>}
     </div>
   );
 }

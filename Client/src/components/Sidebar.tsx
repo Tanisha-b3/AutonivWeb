@@ -174,7 +174,7 @@ const Tooltip: React.FC<{ label: string; visible: boolean }> = ({ label, visible
                    before:content-[''] before:absolute before:right-full before:top-1/2
                    before:-translate-y-1/2 before:border-4 before:border-transparent
                    before:border-r-[#0a1a2e]"
-        style={{ border: '1px solid rgba(0,119,255,0.2)' }}
+        style={{ border: '1px solid rgba(16,185,129,0.2)' }}
       >
         {label}
       </motion.div>
@@ -209,10 +209,10 @@ const NavLinkItem: React.FC<{
         style={
           isActive
             ? {
-                background: 'rgba(0,119,255,0.10)',
-                border: '1px solid rgba(0,119,255,0.30)',
-                color: '#0077ff',
-                boxShadow: '0 0 24px rgba(0,119,255,0.10)',
+                background: 'rgba(16,185,129,0.10)',
+                border: '1px solid rgba(16,185,129,0.30)',
+                color: '#10b981',
+                boxShadow: '0 0 24px rgba(16,185,129,0.10)',
               }
             : { background: 'transparent', boxShadow: 'none' }
         }
@@ -222,7 +222,7 @@ const NavLinkItem: React.FC<{
             layoutId="activeIndicator"
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
             className="absolute left-0 w-1 h-8 rounded-r-full"
-            style={{ background: 'linear-gradient(180deg, #0077ff, #00c8b4)' }}
+            style={{ background: 'linear-gradient(180deg, #10b981, #059669)' }}
           />
         )}
         
@@ -248,7 +248,7 @@ const NavLinkItem: React.FC<{
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full"
-            style={{ backgroundColor: '#0077ff', borderColor: 'var(--s1)', borderWidth: '1.5px' }}
+            style={{ backgroundColor: '#10b981', borderColor: 'var(--s1)', borderWidth: '1.5px' }}
           />
         )}
 
@@ -372,16 +372,16 @@ const UserSection: React.FC<{
         className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${isCollapsed ? 'justify-center' : ''}`}
         onClick={() => !isCollapsed && setOpen(!open)}
         style={{
-          backgroundColor: 'rgba(0, 119, 255, 0.06)',
+          backgroundColor: 'rgba(16,185,129,0.06)',
         }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 119, 255, 0.12)'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 119, 255, 0.06)'}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(16,185,129,0.12)'}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(16,185,129,0.06)'}
       >
         <div className="relative flex-shrink-0">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm"
                style={{
-                 background: 'linear-gradient(135deg, #0077ff 0%, #00c8b4 100%)',
-                 boxShadow: '0 8px 16px rgba(0, 119, 255, 0.25)'
+                 background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                 boxShadow: '0 8px 16px rgba(16,185,129,0.25)'
                }}>
             {initials}
           </div>
@@ -425,13 +425,13 @@ const UserSection: React.FC<{
             className="rounded-xl overflow-hidden shadow-xl"
             style={{
               backgroundColor: '#0a1a2e',
-              border: '1px solid rgba(0, 119, 255, 0.18)'
+              border: '1px solid rgba(16,185,129,0.18)'
             }}
           >
             <button
               onClick={() => { setOpen(false); setShowProfile(true); }}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-white/70 hover:text-white"
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 119, 255, 0.06)')}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(16,185,129,0.06)')}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
             >
               {Icons.settings}
@@ -530,7 +530,7 @@ const UserSection: React.FC<{
                 onClick={handleProfileSave}
                 disabled={saving}
                 className="px-4 py-2 text-sm text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #0077ff, #00c8b4)' }}
+                style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
               >
                 {saving && (
                   <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -619,7 +619,7 @@ const UserSection: React.FC<{
                 onClick={handlePasswordChange}
                 disabled={changingPassword || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword || passwordForm.newPassword !== passwordForm.confirmPassword}
                 className="px-4 py-2 text-sm text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #0077ff, #00c8b4)' }}
+                style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
               >
                 {changingPassword && (
                   <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
