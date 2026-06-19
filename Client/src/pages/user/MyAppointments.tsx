@@ -122,7 +122,7 @@ export function MyAppointments() {
             value={search}
             onChange={setSearch}
             placeholder="Search by name, phone, or service…"
-            className="flex-1 max-w-xs"
+            className="flex-1 max-w-xs ml-1"
           />
           <div className="flex items-center gap-1.5 flex-wrap">
             {FILTERS.map((f) => (

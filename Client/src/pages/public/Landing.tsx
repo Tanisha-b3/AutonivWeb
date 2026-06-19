@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { contactService } from "../../services/api";
 
 const AuthDialog = lazy(() => import('./AuthDialog').then(m => ({ default: m.AuthDialog })));
-const LandingCallWidget = lazy(() => import('../../components/LandingCallWidget'));
+// const LandingCallWidget = lazy(() => import('../../components/LandingCallWidget'));
 import Footer from "./Footer";
 
 const LOGO_SRC = "/autoniv.png";
@@ -329,7 +329,7 @@ export function Landing() {
 
       <Suspense fallback={null}>
         <AuthDialog isOpen={authDialog !== null} mode={authMode} onClose={closeAuth} onSwitch={(m) => { setAuthMode(m); setAuthDialog(m); }} />
-        <LandingCallWidget />
+        
       </Suspense>
       <Aurora />
       <NoiseOverlay />
@@ -522,202 +522,251 @@ export function Landing() {
           {/* ══════════════════════════════════════════════
               HERO — tint box
           ══════════════════════════════════════════════ */}
-          <section className="section-box tint">
-            <div className="section-pad relative overflow-hidden" style={{ paddingTop: 56, paddingBottom: 56 }}>
-              <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(34,197,94,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(34,197,94,0.05) 1px,transparent 1px)", backgroundSize: "48px 48px", maskImage: "radial-gradient(ellipse 80% 50% at 50% 100%,black,transparent)", WebkitMaskImage: "radial-gradient(ellipse 80% 50% at 50% 100%,black,transparent)" }} />
+        <section className="section-box tint">
+  <div className="section-pad relative overflow-hidden" style={{ paddingTop: 40, paddingBottom: 40 }}>
+    <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(34,197,94,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(34,197,94,0.05) 1px,transparent 1px)", backgroundSize: "48px 48px", maskImage: "radial-gradient(ellipse 80% 50% at 50% 100%,black,transparent)", WebkitMaskImage: "radial-gradient(ellipse 80% 50% at 50% 100%,black,transparent)" }} />
 
-              <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center w-full">
-                {/* Left Column */}
-                <div className="lg:col-span-7 flex flex-col justify-center text-left space-y-6 lg:space-y-8 z-10">
-                  <div className="animate-fade-up delay-100">
-                    <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full tag" style={{ color: "#15803d", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.3)" }}>
-                      ✦ AI Voice • Chat Solutions
-                    </span>
-                  </div>
+    <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-center w-full">
+      {/* Text Content - First on mobile (order-1), Left on desktop (lg:order-1) */}
+      <div className="lg:col-span-7 flex flex-col justify-center text-left space-y-4 lg:space-y-6 z-10 order-1 lg:order-1">
+        <div className="animate-fade-up delay-100">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full tag text-xs sm:text-sm" style={{ color: "#15803d", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.3)" }}>
+            ✦ AI Voice • Chat Solutions
+          </span>
+        </div>
 
-                  <div className="animate-fade-up delay-200">
-                    <h1 className="font-extrabold leading-[1.08] tracking-tight" style={{ fontSize: "clamp(38px,5vw,66px)", color: "#0a0a0a" }}>
-                      AI Employees That <span className="block sm:inline" style={{ background: "linear-gradient(135deg,#22c55e,#16a34a,#15803d)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Never Miss A Call</span>
-                    </h1>
-                  </div>
+        <div className="animate-fade-up delay-200">
+          <h1 className="font-extrabold leading-[1.08] tracking-tight" style={{ fontSize: "clamp(32px,8vw,66px)", color: "#0a0a0a" }}>
+            Your Business Never Stops. <br />
+            <span style={{ background: "linear-gradient(135deg,#22c55e,#16a34a,#15803d)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+              Neither Does Your AI Team.
+            </span>
+          </h1>
+        </div>
 
-                  <p className="animate-fade-up delay-300 text-[#475569] text-base sm:text-lg leading-relaxed max-w-[560px] m-0">
-                    Deploy AI Voice Agents and AI Chatbots that handle calls, chats, and more – 24/7. Qualify leads, book appointments, answer questions and delight customers automatically.
-                  </p>
+        <p className="animate-fade-up delay-300 text-[#475569] text-sm sm:text-base lg:text-lg leading-relaxed max-w-[560px] m-0">
+          Deploy AI Voice Agents and AI Chatbots that handle calls, chats, and more – 24/7. Qualify leads, book appointments, answer questions and delight customers automatically.
+        </p>
 
-                  <div className="mt-6 hero-cta-row animate-fade-up delay-400 flex flex-wrap items-center gap-4">
-                    <MagBtn onClick={() => openAuth("register")} className="btn-cta btn-responsive-lg font-bold flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg,#22c55e,#15803d)", boxShadow: "0 4px 16px rgba(34,197,94,0.35)", color: "#ffffff", whiteSpace: "nowrap" }}>
-                      Book a Free Demo
-                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-                    </MagBtn>
-                    <button onClick={() => openAuth("register")} className="btn-ghost btn-responsive-lg font-medium flex items-center justify-center gap-2.5" style={{ background: "#fff", color: "#15803d", borderColor: "rgba(34,197,94,0.4)", cursor: "pointer", whiteSpace: "nowrap" }}>
-                      <span className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(34,197,94,0.1)" }}>
-                        <svg className="w-2.5 h-2.5" style={{ fill: "#16a34a" }} viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" fill="#16a34a" /></svg>
-                      </span>
-                      Watch Live Demo
-                    </button>
-                  </div>
+        {/* Buttons - Mobile Optimized */}
+        <div className="mt-4 hero-cta-row animate-fade-up delay-400 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full">
+          <button 
+            onClick={() => openAuth("register")} 
+            className="font-bold flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl w-full sm:w-auto transition-all hover:scale-105" 
+            style={{ background: "linear-gradient(135deg,#22c55e,#15803d)", boxShadow: "0 4px 16px rgba(34,197,94,0.35)", color: "#ffffff" }}
+          >
+            Book a Free Demo
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </button>
+          <button 
+            onClick={() => openAuth("register")} 
+            className="font-medium flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl w-full sm:w-auto transition-all hover:bg-gray-50" 
+            style={{ background: "#fff", color: "#15803d", border: "1px solid rgba(34,197,94,0.4)", cursor: "pointer" }}
+          >
+            <span className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(34,197,94,0.1)" }}>
+              <svg className="w-2.5 h-2.5" style={{ fill: "#16a34a" }} viewBox="0 0 20 20">
+                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+              </svg>
+            </span>
+            Watch Live Demo
+          </button>
+        </div>
 
-                  {/* Social Proof */}
-                  <div className="animate-fade-up delay-500 flex flex-wrap items-center gap-4 pt-4">
-                    <div className="flex -space-x-2">
-                      {[
-                        { init: "SC", bg: "#16a34a" }, { init: "MJ", bg: "#15803d" }, { init: "ER", bg: "#22c55e" }, { init: "AK", bg: "#166534" }
-                      ].map((av, i) => (
-                        <div key={i} className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-[9px] font-bold text-white shadow-sm" style={{ background: av.bg, zIndex: 5 - i }}>{av.init}</div>
-                      ))}
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                      <div className="flex gap-0.5">
-                        {[...Array(5)].map((_, k) => (
-                          <svg key={k} className="w-4 h-4" style={{ fill: "#f59e0b" }} viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ))}
-                      </div>
-                      <p className="text-xs text-[#475569] m-0">
-                        Trusted by <span className="font-semibold text-slate-800">100+</span> businesses
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Column — Phone mockup & floating cards */}
-                <div className="lg:col-span-5 flex justify-center items-center relative min-h-[400px] lg:min-h-[580px] z-10 w-full pt-10 lg:pt-0">
-                  <div className="absolute top-[20%] left-[20%] w-[320px] h-[320px] rounded-full bg-[radial-gradient(circle,rgba(34,197,94,0.16)_0%,transparent_70%)] filter blur-3xl pointer-events-none" />
-                  <div className="absolute bottom-[20%] right-[10%] w-[260px] h-[260px] rounded-full bg-[radial-gradient(circle,rgba(22,163,74,0.12)_0%,transparent_70%)] filter blur-3xl pointer-events-none" />
-
-                  <div className="w-[180px] h-[360px] sm:w-[245px] sm:h-[490px] bg-[#0a0a0a] rounded-[32px] sm:rounded-[42px] border-[5px] sm:border-[7px] border-[#1a1a1a] shadow-2xl relative flex flex-col items-center p-2 sm:p-3 select-none mx-auto" style={{ transform: "rotate(3deg)", transformStyle: "preserve-3d" }}>
-                    <div className="w-24 h-4 bg-black rounded-full absolute top-2.5 z-30" />
-                    <div className="absolute inset-0 rounded-[35px] overflow-hidden bg-gradient-to-b from-[#0f0f0f] via-[#0a0a0a] to-[#030303] z-0" />
-
-                    <div className="relative z-10 w-full h-full flex flex-col items-center justify-between py-6">
-                      <div className="text-center mt-3">
-                        <p className="text-xs text-slate-400 font-medium tracking-wide uppercase m-0">AI Voice Agent</p>
-                        <p className="text-[10px] text-slate-500 font-mono mt-0.5 m-0">00:24</p>
-                      </div>
-
-                      <div className="relative w-24 h-24 sm:w-36 sm:h-36 flex items-center justify-center">
-                        <div className="absolute w-20 h-20 sm:w-32 sm:h-32 rounded-full border border-green-500/20 animate-ping" style={{ animationDuration: "3s" }} />
-                        <div className="absolute w-16 h-16 sm:w-24 sm:h-24 rounded-full border border-emerald-500/15 animate-ping" style={{ animationDuration: "2s" }} />
-                        <div className="w-18 h-18 rounded-full flex items-center justify-center shadow-lg relative overflow-hidden" style={{ animation: "orbPulseGlow 3s ease-in-out infinite", background: "linear-gradient(135deg,#22c55e,#15803d)", boxShadow: "0 0 24px rgba(34,197,94,0.4)" }}>
-                          <div className="absolute inset-2 rounded-full bg-slate-900/60 flex items-center justify-center">
-                            <svg className="w-5 h-5 text-green-400 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
-                            </svg>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="w-full px-4 space-y-4">
-                        <div className="grid grid-cols-3 gap-y-3 text-center">
-                          {[{ icon: "🎙️", label: "Mute" }, { icon: "🔢", label: "Keypad" }, { icon: "🔊", label: "Speaker" }].map((item, idx) => (
-                            <div key={idx} className="flex flex-col items-center">
-                              <div className="w-9 h-9 rounded-full bg-slate-800/60 border border-slate-700/30 flex items-center justify-center text-sm text-slate-300">{item.icon}</div>
-                              <span className="text-[9px] text-slate-400 mt-1">{item.label}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="flex justify-center">
-                          <div className="w-11 h-11 rounded-full bg-red-500 flex items-center justify-center shadow-lg shadow-red-500/20 cursor-pointer hover:bg-red-600 transition-colors">
-                            <svg className="w-5 h-5 text-white transform rotate-[135deg]" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A1.003 1.003 0 0 1 3.5 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18s.41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9z" />
-                            </svg>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Floating Card 1: Incoming Call */}
-                  <div className="hidden sm:block absolute top-[8%] -left-[8%] sm:-left-[8%] z-20 pointer-events-auto">
-                    <div className="animate-float-1 w-[185px] bg-white/95 backdrop-blur-md rounded-2xl p-3.5 shadow-[0_8px_28px_rgba(34,197,94,0.10)] border border-[rgba(34,197,94,0.2)] flex flex-col gap-1.5">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-semibold text-[#15803d] tracking-wide uppercase">Incoming Call</span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-slate-800 m-0" style={{ color: "#0a0a0a" }}>+1 (415) 555-0178</div>
-                        <p className="text-[9px] text-slate-500 m-0 mt-0.5">Sales Inquiry</p>
-                      </div>
-                      <div className="flex gap-2 justify-end mt-1">
-                        <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center cursor-pointer hover:bg-red-200 transition-colors"><span className="text-[9px]">❌</span></div>
-                        <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center cursor-pointer hover:bg-green-200 transition-colors"><span className="text-[9px]">📞</span></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Floating Card 2: Appointment Booked */}
-                  <div className="hidden sm:block absolute bottom-[16%] -left-[5%] sm:-left-[8%] z-20 pointer-events-auto">
-                    <div className="animate-float-2 w-[180px] bg-white/95 backdrop-blur-md rounded-2xl p-3.5 shadow-[0_8px_28px_rgba(34,197,94,0.10)] border border-[rgba(34,197,94,0.2)] flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.2)] flex items-center justify-center text-lg flex-shrink-0">📅</div>
-                      <div className="min-w-0">
-                        <div className="text-[11px] font-bold text-slate-800 leading-tight m-0" style={{ color: "#0a0a0a" }}>Appointment Booked</div>
-                        <p className="text-[9px] text-slate-500 mt-0.5 m-0">May 24, 2025</p>
-                        <p className="text-[9px] text-[#15803d] font-medium m-0">10:00 AM</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Floating Card 3: AI Assistant */}
-                  <div className="hidden sm:block absolute top-[4%] -right-[8%] sm:-right-[8%] z-20 pointer-events-auto">
-                    <div className="animate-float-3 w-[195px] bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-[0_8px_28px_rgba(34,197,94,0.10)] border border-[rgba(34,197,94,0.2)] flex flex-col gap-2">
-                      <div className="flex items-center gap-1.5"><span className="text-[9px] text-slate-400">🤖 AI Assistant</span></div>
-                      <div className="space-y-1.5">
-                        <div className="bg-[rgba(34,197,94,0.06)] border border-[rgba(34,197,94,0.12)] text-slate-700 p-2 rounded-xl rounded-tl-sm text-[10px] leading-relaxed max-w-[90%]">How can I help you today?</div>
-                        <div className="flex justify-end">
-                          <div className="text-white p-2 rounded-xl rounded-tr-sm text-[10px] leading-relaxed max-w-[90%]" style={{ background: "linear-gradient(135deg,#15803d,#22c55e)" }}>I need help with my order.</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Floating Card 4: Leads Captured */}
-                  <div className="hidden sm:block absolute bottom-[8%] -right-[10%] sm:-right-[10%] z-20 pointer-events-auto">
-                    <div className="animate-float-4 w-[185px] bg-white/95 backdrop-blur-md rounded-2xl p-3.5 shadow-[0_8px_28px_rgba(34,197,94,0.10)] border border-[rgba(34,197,94,0.2)] flex flex-col gap-1.5">
-                      <div>
-                        <p className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider m-0">Leads Captured</p>
-                        <div className="flex items-baseline gap-1.5 mt-0.5">
-                          <span className="text-lg font-bold text-slate-800">2,847</span>
-                          <span className="text-[9px] font-semibold text-emerald-600">+32.6%</span>
-                        </div>
-                      </div>
-                      <div className="h-10 w-full mt-1">
-                        <svg className="w-full h-full" viewBox="0 0 100 30" preserveAspectRatio="none">
-                          <defs>
-                            <linearGradient id="chart-glow" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#22c55e" stopOpacity="0.2" />
-                              <stop offset="100%" stopColor="#22c55e" stopOpacity="0.0" />
-                            </linearGradient>
-                          </defs>
-                          <path d="M0,25 Q15,22 30,12 T60,18 T90,5 L100,5 L100,30 L0,30 Z" fill="url(#chart-glow)" />
-                          <path d="M0,25 Q15,22 30,12 T60,18 T90,5 L100,5" fill="none" stroke="#15803d" strokeWidth="2" strokeLinecap="round" />
-                          <circle cx="100" cy="5" r="2.5" fill="#15803d" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+        {/* Social Proof */}
+        <div className="animate-fade-up delay-500 flex flex-wrap items-center gap-4 pt-2">
+          <div className="flex -space-x-2">
+            {[
+              { init: "SC", bg: "#16a34a" }, 
+              { init: "MJ", bg: "#15803d" }, 
+              { init: "ER", bg: "#22c55e" }, 
+              { init: "AK", bg: "#166534" }
+            ].map((av, i) => (
+              <div key={i} className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-[9px] font-bold text-white shadow-sm" style={{ background: av.bg, zIndex: 5 - i }}>
+                {av.init}
               </div>
+            ))}
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex gap-0.5">
+              {[...Array(5)].map((_, k) => (
+                <svg key={k} className="w-4 h-4" style={{ fill: "#f59e0b" }} viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              ))}
+            </div>
+            <p className="text-xs text-[#475569] m-0">
+              Trusted by <span className="font-semibold text-slate-800">100+</span> businesses
+            </p>
+          </div>
+        </div>
+      </div>
 
-              {/* Logo marquee inside hero box */}
-              <div style={{ marginTop: 56, paddingTop: 32, borderTop: "1px solid rgba(34,197,94,0.12)" }}>
-                <p className="text-center tag mb-6 m-0" style={{ color: "#94a3b8", letterSpacing: "0.18em" }}>Trusted by leading companies</p>
-                <div className="relative w-full overflow-hidden">
-                  <div className="absolute inset-y-0 left-0 w-16 z-10 pointer-events-none" style={{ background: "linear-gradient(90deg, #eafbef, transparent)" }} />
-                  <div className="absolute inset-y-0 right-0 w-16 z-10 pointer-events-none" style={{ background: "linear-gradient(270deg, #eafbef, transparent)" }} />
-                  <div className="flex gap-16 items-center animate-marquee opacity-60">
-                    {[...Array(2)].flatMap((_, dup) => [{ n: "HealthFirst", i: "🏥" }, { n: "BrightHome", i: "🏠" }, { n: "FastTrack", i: "⚡" }, { n: "CloudBase", i: "☁️" }, { n: "NovaTech", i: "🚀" }, { n: "ZenithAI", i: "🧠" }].map((c, i) => (
-                      <div key={`${dup}-${i}`} className="flex items-center gap-3 whitespace-nowrap">
-                        <span className="text-xl grayscale">{c.i}</span>
-                        <span className="text-sm font-semibold tracking-tight" style={{ color: "#475569" }}>{c.n}</span>
-                      </div>
-                    )))}
-                  </div>
+      {/* Phone mockup & floating cards - Second on mobile (order-2), Right on desktop (lg:order-2) */}
+      <div className="mt-4 lg:col-span-5 flex justify-center items-center relative min-h-[380px] sm:min-h-[450px] lg:min-h-[580px] z-10 w-full order-2 lg:order-2 pt-4 lg:pt-0">
+        <div className="absolute top-[20%] left-[20%] w-[320px] h-[320px] rounded-full bg-[radial-gradient(circle,rgba(34,197,94,0.16)_0%,transparent_70%)] filter blur-3xl pointer-events-none" />
+        <div className="absolute bottom-[20%] right-[10%] w-[260px] h-[260px] rounded-full bg-[radial-gradient(circle,rgba(22,163,74,0.12)_0%,transparent_70%)] filter blur-3xl pointer-events-none" />
+
+        {/* Phone Mockup - Smaller on mobile */}
+        <div className="w-[150px] h-[310px] sm:w-[200px] sm:h-[410px] lg:w-[245px] lg:h-[490px] bg-[#0a0a0a] rounded-[28px] sm:rounded-[36px] lg:rounded-[42px] border-[4px] sm:border-[6px] lg:border-[7px] border-[#1a1a1a] shadow-2xl relative flex flex-col items-center p-2 sm:p-3 select-none" style={{ transform: "rotate(2deg)", transformStyle: "preserve-3d" }}>
+          <div className="w-20 sm:w-24 h-3 sm:h-4 bg-black rounded-full absolute top-2 sm:top-2.5 z-30" />
+          <div className="absolute inset-0 rounded-[28px] sm:rounded-[36px] lg:rounded-[42px] overflow-hidden bg-gradient-to-b from-[#0f0f0f] via-[#0a0a0a] to-[#030303] z-0" />
+
+          <div className="relative z-10 w-full h-full flex flex-col items-center justify-between py-4 sm:py-6">
+            <div className="text-center mt-2 sm:mt-3">
+              <p className="text-[8px] sm:text-xs text-slate-400 font-medium tracking-wide uppercase m-0">AI Voice Agent</p>
+              <p className="text-[8px] sm:text-[10px] text-slate-500 font-mono mt-0.5 m-0">00:24</p>
+            </div>
+
+            <div className="relative w-16 h-16 sm:w-24 sm:h-24 lg:w-36 lg:h-36 flex items-center justify-center">
+              <div className="absolute w-14 h-14 sm:w-20 sm:h-20 lg:w-32 lg:h-32 rounded-full border border-green-500/20 animate-ping" style={{ animationDuration: "3s" }} />
+              <div className="absolute w-12 h-12 sm:w-16 sm:h-16 lg:w-24 lg:h-24 rounded-full border border-emerald-500/15 animate-ping" style={{ animationDuration: "2s" }} />
+              <div className="w-12 h-12 sm:w-18 sm:h-18 lg:w-24 lg:h-24 rounded-full flex items-center justify-center shadow-lg relative overflow-hidden" style={{ animation: "orbPulseGlow 3s ease-in-out infinite", background: "linear-gradient(135deg,#22c55e,#15803d)", boxShadow: "0 0 24px rgba(34,197,94,0.4)" }}>
+                <div className="absolute inset-1.5 sm:inset-2 rounded-full bg-slate-900/60 flex items-center justify-center">
+                  <svg className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-green-400 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+                  </svg>
                 </div>
               </div>
             </div>
-          </section>
+
+            <div className="w-full px-2 sm:px-4 space-y-2 sm:space-y-4">
+              <div className="grid grid-cols-3 gap-y-2 sm:gap-y-3 text-center">
+                {[
+                  { icon: "🎙️", label: "Mute" }, 
+                  { icon: "🔢", label: "Keypad" }, 
+                  { icon: "🔊", label: "Speaker" }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex flex-col items-center">
+                    <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-slate-800/60 border border-slate-700/30 flex items-center justify-center text-[10px] sm:text-sm text-slate-300">
+                      {item.icon}
+                    </div>
+                    <span className="text-[7px] sm:text-[9px] text-slate-400 mt-0.5 sm:mt-1">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-center">
+                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-red-500 flex items-center justify-center shadow-lg shadow-red-500/20 cursor-pointer hover:bg-red-600 transition-colors">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white transform rotate-[135deg]" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A1.003 1.003 0 0 1 3.5 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18s.41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Floating Cards - Positioned around the phone */}
+        
+        {/* Card 1: Incoming Call - Top Right */}
+        <div className="absolute top-[-4%] right-[-8%] sm:top-[10%] sm:-right-[8%] z-20 pointer-events-auto w-[140px] sm:w-[185px]">
+          <div className="animate-float-1 bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 shadow-[0_8px_28px_rgba(34,197,94,0.10)] border border-[rgba(34,197,94,0.2)]">
+            <div className="flex justify-between items-center">
+              <span className="text-[8px] sm:text-[10px] font-semibold text-[#15803d] tracking-wide uppercase">Incoming Call</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            </div>
+            <div className="mt-1">
+              <div className="text-[10px] sm:text-xs font-bold text-slate-800 m-0" style={{ color: "#0a0a0a" }}>+1 (415) 555-0178</div>
+              <p className="text-[7px] sm:text-[9px] text-slate-500 m-0 mt-0.5">Sales Inquiry</p>
+            </div>
+            <div className="flex gap-1 sm:gap-2 justify-end mt-1">
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-red-100 flex items-center justify-center cursor-pointer hover:bg-red-200 transition-colors">
+                <span className="text-[7px] sm:text-[9px]">❌</span>
+              </div>
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-green-100 flex items-center justify-center cursor-pointer hover:bg-green-200 transition-colors">
+                <span className="text-[7px] sm:text-[9px]">📞</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: Appointment Booked - Bottom Right */}
+        <div className="absolute bottom-[2%] right-[-8%] sm:bottom-[16%] sm:-right-[8%] z-20 pointer-events-auto w-[130px] sm:w-[180px]">
+          <div className="animate-float-2 bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 shadow-[0_8px_28px_rgba(34,197,94,0.10)] border border-[rgba(34,197,94,0.2)] flex items-center gap-2 sm:gap-3">
+            <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.2)] flex items-center justify-center text-base sm:text-lg flex-shrink-0">
+              📅
+            </div>
+            <div className="min-w-0">
+              <div className="text-[9px] sm:text-[11px] font-bold text-slate-800 leading-tight m-0" style={{ color: "#0a0a0a" }}>Appointment Booked</div>
+              <p className="text-[7px] sm:text-[9px] text-slate-500 mt-0.5 m-0">May 24, 2025</p>
+              <p className="text-[7px] sm:text-[9px] text-[#15803d] font-medium m-0">10:00 AM</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: AI Assistant - Top Left */}
+        <div className="absolute top-[-4%] left-[-8%] sm:top-[4%] sm:-left-[8%] z-20 pointer-events-auto w-[140px] sm:w-[195px]">
+          <div className="animate-float-3 bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl p-2.5 sm:p-3 shadow-[0_8px_28px_rgba(34,197,94,0.10)] border border-[rgba(34,197,94,0.2)]">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[7px] sm:text-[9px] text-slate-400">🤖 AI Assistant</span>
+            </div>
+            <div className="space-y-1 sm:space-y-1.5 mt-1">
+              <div className="bg-[rgba(34,197,94,0.06)] border border-[rgba(34,197,94,0.12)] text-slate-700 p-1.5 sm:p-2 rounded-xl rounded-tl-sm text-[8px] sm:text-[10px] leading-relaxed max-w-[90%]">
+                How can I help you today?
+              </div>
+              <div className="flex justify-end">
+                <div className="text-white p-1.5 sm:p-2 rounded-xl rounded-tr-sm text-[8px] sm:text-[10px] leading-relaxed max-w-[90%]" style={{ background: "linear-gradient(135deg,#15803d,#22c55e)" }}>
+                  I need help with my order.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Leads Captured - Bottom Left */}
+        <div className="absolute bottom-[2%] left-[-8%] sm:bottom-[8%] sm:-left-[8%] z-20 pointer-events-auto w-[140px] sm:w-[185px]">
+          <div className="animate-float-4 bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 shadow-[0_8px_28px_rgba(34,197,94,0.10)] border border-[rgba(34,197,94,0.2)]">
+            <div>
+              <p className="text-[7px] sm:text-[9px] font-semibold text-slate-500 uppercase tracking-wider m-0">Leads Captured</p>
+              <div className="flex items-baseline gap-1 sm:gap-1.5 mt-0.5">
+                <span className="text-base sm:text-lg font-bold text-slate-800">2,847</span>
+                <span className="text-[7px] sm:text-[9px] font-semibold text-emerald-600">+32.6%</span>
+              </div>
+            </div>
+            <div className="h-8 sm:h-10 w-full mt-1">
+              <svg className="w-full h-full" viewBox="0 0 100 30" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="chart-glow" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#22c55e" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="#22c55e" stopOpacity="0.0" />
+                  </linearGradient>
+                </defs>
+                <path d="M0,25 Q15,22 30,12 T60,18 T90,5 L100,5 L100,30 L0,30 Z" fill="url(#chart-glow)" />
+                <path d="M0,25 Q15,22 30,12 T60,18 T90,5 L100,5" fill="none" stroke="#15803d" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="100" cy="5" r="2.5" fill="#15803d" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Logo marquee inside hero box */}
+    <div style={{ marginTop: 40, paddingTop: 24, borderTop: "1px solid rgba(34,197,94,0.12)" }}>
+      <p className="text-center tag mb-4 sm:mb-6 m-0 text-[10px] sm:text-xs" style={{ color: "#94a3b8", letterSpacing: "0.18em" }}>Trusted by leading companies</p>
+      <div className="relative w-full overflow-hidden">
+        <div className="absolute inset-y-0 left-0 w-8 sm:w-16 z-10 pointer-events-none" style={{ background: "linear-gradient(90deg, #eafbef, transparent)" }} />
+        <div className="absolute inset-y-0 right-0 w-8 sm:w-16 z-10 pointer-events-none" style={{ background: "linear-gradient(270deg, #eafbef, transparent)" }} />
+        <div className="flex gap-8 sm:gap-16 items-center animate-marquee opacity-60">
+          {[...Array(2)].flatMap((_, dup) => [
+            { n: "HealthFirst", i: "🏥" }, 
+            { n: "BrightHome", i: "🏠" }, 
+            { n: "FastTrack", i: "⚡" }, 
+            { n: "CloudBase", i: "☁️" }, 
+            { n: "NovaTech", i: "🚀" }, 
+            { n: "ZenithAI", i: "🧠" }
+          ].map((c, i) => (
+            <div key={`${dup}-${i}`} className="flex items-center gap-2 sm:gap-3 whitespace-nowrap">
+              <span className="text-base sm:text-xl grayscale">{c.i}</span>
+              <span className="text-xs sm:text-sm font-semibold tracking-tight" style={{ color: "#475569" }}>{c.n}</span>
+            </div>
+          )))}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
           {/* ══════════════════════════════════════════════
               VOICE DEMO — black box
@@ -1379,7 +1428,7 @@ export function Landing() {
           <section className="section-box black">
             <div className="section-pad relative overflow-hidden">
               <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 50% 50%,rgba(34,197,94,.12) 0%,transparent 65%)" }} />
-              <Reveal className="relative text-center">
+              <Reveal className="relative text-center" >
                 <span className="tag px-4 py-1.5 rounded-full inline-block mb-6" style={{ color: "#4ade80", background: "rgba(34,197,94,.10)", border: "1px solid rgba(34,197,94,.28)" }}>Get Started</span>
                 <h2 className="font-extrabold tracking-tight mb-4" style={{ fontSize: "clamp(28px,4.5vw,60px)", color: "#ffffff" }}>
                   Ready to Transform<span className="gradient-text block">Your Business?</span>

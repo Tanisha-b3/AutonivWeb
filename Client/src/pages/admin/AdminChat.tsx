@@ -36,7 +36,7 @@ function formatResponse(text: string) {
   const parts = text.split(/(\*\*.*?\*\*)/);
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i} className="text-white font-semibold">{part.slice(2, -2)}</strong>;
+      return <strong key={i} className="text-[var(--text)] font-semibold">{part.slice(2, -2)}</strong>;
     }
     return part;
   });
@@ -123,9 +123,9 @@ export function AdminChat() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5 mb-6">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/50 mb-1">Chat</p>
-            <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-white leading-none">Admin Assistant</h1>
-            <p className="mt-1.5 text-xs sm:text-sm text-white/50">Manage users and agents via natural language</p>
+            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[var(--text)]/50 mb-1">Chat</p>
+            <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-[var(--text)] leading-none">Admin Assistant</h1>
+            <p className="mt-1.5 text-xs sm:text-sm text-[var(--text)]/50">Manage users and agents via natural language</p>
           </div>
         </div>
 
@@ -143,18 +143,18 @@ export function AdminChat() {
                 <div
                   className={`max-w-[85%] sm:max-w-[75%] ${
                     msg.role === 'user'
-                      ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white rounded-2xl rounded-br-sm px-4 py-2.5'
+                      ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-[var(--text)] rounded-2xl rounded-br-sm px-4 py-2.5'
                       : `border-l-2 ${getTypeStyles(msg.type)} rounded-2xl px-4 py-2.5`
                   }`}
                 >
                   {msg.role === 'user' ? (
                     <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                   ) : (
-                    <div className="text-sm text-white/70 leading-relaxed whitespace-pre-wrap">
+                    <div className="text-sm text-[var(--text)]/70 leading-relaxed whitespace-pre-wrap">
                       {formatResponse(msg.text)}
                     </div>
                   )}
-                  <p className={`text-[10px] mt-1.5 ${msg.role === 'user' ? 'text-white/50' : 'text-white/40'}`}>
+                  <p className={`text-[10px] mt-1.5 ${msg.role === 'user' ? 'text-[var(--text)]/50' : 'text-[var(--slate-light)]'}`}>
                     {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
@@ -205,12 +205,12 @@ export function AdminChat() {
                 onKeyDown={handleKeyDown}
                 placeholder="Type a command... (Enter to send)"
                 disabled={loading}
-                className="flex-1 px-4 py-2.5 text-sm bg-[#0f1725] border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 text-sm bg-[#0f1725] border border-white/10 rounded-xl text-[var(--text)] placeholder-white/30 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all disabled:opacity-50"
               />
               <button
                 type="submit"
                 disabled={loading || !input.trim()}
-                className="btn-cta p-2.5 text-white rounded-xl transition-all disabled:opacity-40 flex-shrink-0"
+                className="btn-cta p-2.5 text-[var(--text)] rounded-xl transition-all disabled:opacity-40 flex-shrink-0"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19V5m0 0l-7 7m7-7l7 7" />

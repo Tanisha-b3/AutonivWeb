@@ -103,35 +103,35 @@ export function AdminLeads() {
       sortable: true,
       render: (lead) => (
         <div className="flex items-center gap-3">
-          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getAvatarColor(lead.name || 'U')} flex items-center justify-center text-white font-semibold text-xs flex-shrink-0`}>
+          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getAvatarColor(lead.name || 'U')} flex items-center justify-center text-[var(--text)] font-semibold text-xs flex-shrink-0`}>
             {(lead.name || 'U').charAt(0).toUpperCase()}
           </div>
-          <span className="font-medium text-sm text-white/70 group-hover:text-white transition-colors">{lead.name || '—'}</span>
+          <span className="font-medium text-sm text-[var(--text)]/70 group-hover:text-[var(--text)] transition-colors">{lead.name || '—'}</span>
         </div>
       ),
       card: {
         label: 'Name',
-        render: (lead) => <span className="font-medium text-white/80">{lead.name || '—'}</span>,
+        render: (lead) => <span className="font-medium text-[var(--text)]/80">{lead.name || '—'}</span>,
       },
     },
     {
       key: 'phone',
       header: 'Phone',
       sortable: true,
-      render: (lead) => <span className="font-mono text-xs text-white/60">{lead.phone || '—'}</span>,
+      render: (lead) => <span className="font-mono text-xs text-[var(--text)]/60">{lead.phone || '—'}</span>,
       card: {
         label: 'Phone',
-        render: (lead) => <span className="font-mono text-white/70">{lead.phone || '—'}</span>,
+        render: (lead) => <span className="font-mono text-[var(--text)]/70">{lead.phone || '—'}</span>,
       },
     },
     {
       key: 'email',
       header: 'Email',
       sortable: true,
-      render: (lead) => <span className="text-xs text-white/60">{lead.email || '—'}</span>,
+      render: (lead) => <span className="text-xs text-[var(--text)]/60">{lead.email || '—'}</span>,
       card: {
         label: 'Email',
-        render: (lead) => <span className="text-white/70">{lead.email || '—'}</span>,
+        render: (lead) => <span className="text-[var(--text)]/70">{lead.email || '—'}</span>,
       },
     },
     {
@@ -139,11 +139,11 @@ export function AdminLeads() {
       header: 'Purpose',
       sortable: true,
       render: (lead) => lead.purpose ? (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-white/5 text-xs text-white/70 border border-white/5">{lead.purpose}</span>
-      ) : <span className="text-white/40 text-xs">—</span>,
+        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-white/5 text-xs text-[var(--text)]/70 border border-white/5">{lead.purpose}</span>
+      ) : <span className="text-[var(--slate-light)] text-xs">—</span>,
       card: {
         label: 'Purpose',
-        render: (lead) => <span className="text-white/70">{lead.purpose || '—'}</span>,
+        render: (lead) => <span className="text-[var(--text)]/70">{lead.purpose || '—'}</span>,
       },
     },
     {
@@ -177,24 +177,24 @@ export function AdminLeads() {
       header: 'Agent',
       sortable: true,
       render: (lead) => lead.agentName ? (
-        <span className="inline-flex items-center gap-2 text-xs text-white/60">
+        <span className="inline-flex items-center gap-2 text-xs text-[var(--text)]/60">
           <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0"/>
           {lead.agentName}
         </span>
-      ) : <span className="text-white/40 text-xs">—</span>,
+      ) : <span className="text-[var(--slate-light)] text-xs">—</span>,
       card: {
         label: 'Agent',
-        render: (lead) => <span className="text-white/70">{lead.agentName || '—'}</span>,
+        render: (lead) => <span className="text-[var(--text)]/70">{lead.agentName || '—'}</span>,
       },
     },
     {
       key: 'createdAt',
       header: 'Date',
       sortable: true,
-      render: (lead) => <span className="text-xs text-white/50 tabular-nums">{lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : '—'}</span>,
+      render: (lead) => <span className="text-xs text-[var(--text)]/50 tabular-nums">{lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : '—'}</span>,
       card: {
         label: 'Date',
-        render: (lead) => <span className="tabular-nums text-white/70">{lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : '—'}</span>,
+        render: (lead) => <span className="tabular-nums text-[var(--text)]/70">{lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : '—'}</span>,
       },
     },
   ];
@@ -206,9 +206,9 @@ export function AdminLeads() {
         {/* ── Header ── */}
         <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5 pt-1">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/50 mb-1">CRM</p>
-            <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-white leading-none">Leads</h1>
-            <p className="mt-1.5 text-xs sm:text-sm text-white/50">View all leads captured across the platform</p>
+            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[var(--text)]/50 mb-1">CRM</p>
+            <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-[var(--text)] leading-none">Leads</h1>
+            <p className="mt-1.5 text-xs sm:text-sm text-[var(--text)]/50">View all leads captured across the platform</p>
           </div>
         </motion.div>
 
@@ -217,7 +217,7 @@ export function AdminLeads() {
           <button
             onClick={() => setActiveTab('all')}
             className={`px-4 py-2 rounded-lg text-xs font-medium transition-all ${
-              activeTab === 'all' ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'
+              activeTab === 'all' ? 'bg-white/10 text-[var(--text)]' : 'text-[var(--text)]/50 hover:text-[var(--text)]'
             }`}
           >
             All Leads
@@ -225,7 +225,7 @@ export function AdminLeads() {
           <button
             onClick={() => setActiveTab('public')}
             className={`px-4 py-2 rounded-lg text-xs font-medium transition-all ${
-              activeTab === 'public' ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'
+              activeTab === 'public' ? 'bg-white/10 text-[var(--text)]' : 'text-[var(--text)]/50 hover:text-[var(--text)]'
             }`}
           >
             Public Leads
@@ -235,22 +235,22 @@ export function AdminLeads() {
         {/* ── Stats ── */}
         <motion.div variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           {[
-            { label: 'Total',     value: stats.total,     accent: 'bg-slate-700/40',   val: 'text-white'       },
+            { label: 'Total',     value: stats.total,     accent: 'bg-slate-700/40',   val: 'text-[var(--text)]'       },
             { label: 'New',       value: stats.new,       accent: 'bg-cyan-500/10',  val: 'text-cyan-400'  },
             { label: 'Contacted', value: stats.contacted, accent: 'bg-amber-500/10',  val: 'text-amber-400'   },
             { label: 'Converted', value: stats.converted, accent: 'bg-emerald-500/10', val: 'text-emerald-400' },
           ].map((s) => (
             <div key={s.label} className={`${s.accent} rounded-2xl p-3 sm:p-4 border border-white/5 card-hover`}>
-              <p className="text-[10px] sm:text-[11px] font-medium text-white/60 uppercase tracking-widest mb-1.5 sm:mb-2">{s.label}</p>
+              <p className="text-[10px] sm:text-[11px] font-medium text-[var(--text)]/60 uppercase tracking-widest mb-1.5 sm:mb-2">{s.label}</p>
               <p className={`text-2xl sm:text-3xl font-semibold ${s.val} leading-none`}>{s.value}</p>
             </div>
           ))}
         </motion.div>
 
         {/* ── Toolbar ── */}
-        <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3">
+        <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 sm:ml-3">
           <div className="relative flex-1 max-w-xs">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text)]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
             </svg>
             <input
@@ -258,7 +258,7 @@ export function AdminLeads() {
               placeholder="Search by name, phone, or agent…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 text-sm bg-[#0f1725] border border-white/8 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all"
+              className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-white/8 rounded-xl text-[var(--text)] placeholder-white/30 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all"
             />
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -269,7 +269,7 @@ export function AdminLeads() {
                 className={`px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all ${
                   filter === f.value
                     ? 'btn-cta'
-                    : 'text-white/50 hover:text-white bg-white/4 hover:bg-white/8'
+                    : 'text-[var(--text)]/50 hover:text-[var(--text)] bg-white/4 hover:bg-white/8'
                 }`}
               >
                 {f.label}
@@ -302,7 +302,7 @@ export function AdminLeads() {
             emptyState={{
               icon: (
                 <div className="w-14 h-14 rounded-2xl bg-white/4 border border-white/6 flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 text-[var(--slate-light)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a4 4 0 11-6 0 4 4 0 016 0z"/>
                   </svg>
                 </div>
@@ -338,12 +338,12 @@ export function AdminLeads() {
               <div className="sm:hidden w-10 h-1 rounded-full bg-white/20 mx-auto mt-3" />
               <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-white/6">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getAvatarColor(selectedLead.name || 'U')} flex items-center justify-center text-white font-semibold text-sm flex-shrink-0`}>
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getAvatarColor(selectedLead.name || 'U')} flex items-center justify-center text-[var(--text)] font-semibold text-sm flex-shrink-0`}>
                     {(selectedLead.name || 'U').charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <h2 className="text-sm sm:text-base font-semibold text-white leading-tight truncate">{selectedLead.name || 'Unknown Lead'}</h2>
-                    <p className="text-[11px] text-white/50 mt-0.5">
+                    <h2 className="text-sm sm:text-base font-semibold text-[var(--text)] leading-tight truncate">{selectedLead.name || 'Unknown Lead'}</h2>
+                    <p className="text-[11px] text-[var(--text)]/50 mt-0.5">
                       {selectedLead.createdAt
                         ? new Date(selectedLead.createdAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
                         : 'No date'}
@@ -352,7 +352,7 @@ export function AdminLeads() {
                 </div>
                 <button
                   onClick={() => setSelectedLead(null)}
-                  className="p-1.5 rounded-lg text-white/50 hover:text-white/70 hover:bg-white/5 transition-colors flex-shrink-0"
+                  className="p-1.5 rounded-lg text-[var(--text)]/50 hover:text-[var(--text)]/70 hover:bg-white/5 transition-colors flex-shrink-0"
                   aria-label="Close"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -370,8 +370,8 @@ export function AdminLeads() {
                     { label: 'Agent',   value: selectedLead.agentName, mono: false },
                   ].filter((f) => f.value).map((field) => (
                     <div key={field.label} className="rounded-xl bg-white/4 border border-white/5 px-4 py-3">
-                      <p className="text-[10px] font-medium uppercase tracking-widest text-white/50 mb-1">{field.label}</p>
-                      <p className={`text-sm text-white/80 truncate ${field.mono ? 'font-mono' : ''}`}>
+                      <p className="text-[10px] font-medium uppercase tracking-widest text-[var(--text)]/50 mb-1">{field.label}</p>
+                      <p className={`text-sm text-[var(--text)]/80 truncate ${field.mono ? 'font-mono' : ''}`}>
                         {field.value}
                       </p>
                     </div>
@@ -382,9 +382,9 @@ export function AdminLeads() {
                   <>
                     <div className="border-t border-white/5"/>
                     <div>
-                      <p className="text-[10px] font-medium uppercase tracking-widest text-white/50 mb-2">Notes</p>
+                      <p className="text-[10px] font-medium uppercase tracking-widest text-[var(--text)]/50 mb-2">Notes</p>
                       <div className="rounded-xl bg-white/4 border border-white/5 px-4 py-3">
-                        <p className="text-sm text-white/70 leading-relaxed">{selectedLead.notes}</p>
+                        <p className="text-sm text-[var(--text)]/70 leading-relaxed">{selectedLead.notes}</p>
                       </div>
                     </div>
                   </>

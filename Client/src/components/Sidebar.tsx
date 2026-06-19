@@ -118,7 +118,7 @@ const adminNavItems: NavItem[] = [
   { path: '/admin/billing', label: 'Billing', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', badge: null },
   { path: '/admin/upgrade-requests', label: 'Upgrades', icon: 'M13 10V3L4 14h7v7l9-11h-7z', badge: null },
   { path: '/admin/add-ons', label: 'Add-Ons', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', badge: null },
-  { path: '/admin/chat', label: 'AI Chat', icon: 'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z', badge: null },
+  // { path: '/admin/chat', label: 'AI Chat', icon: 'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z', badge: null },
 ];
 
 // ─── Custom Hooks ─────────────────────────────────────────────────────────────

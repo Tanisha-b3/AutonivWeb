@@ -130,7 +130,7 @@ function CatalogCard({
         {/* Price + action */}
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-1">
-            <span className="text-base font-bold text-blue-600">{addon.price}</span>
+            <span className="text-base font-bold text-emerald-500">{addon.price}</span>
             {addon.category === 'recurring' && (
               <span className="text-[10px] text-gray-400 font-medium">/ month</span>
             )}
@@ -138,7 +138,7 @@ function CatalogCard({
           {!isRequested ? (
             <button
               onClick={(e) => { e.stopPropagation(); onRequest(addon.id); }}
-              className="inline-flex items-center justify-center px-4 py-1.5 text-[11px] font-medium text-blue-600 rounded-lg transition-all bg-blue-50 hover:bg-blue-100 border border-blue-200 hover:border-blue-300"
+              className="inline-flex items-center justify-center px-4 py-1.5 text-[11px] font-medium text-emerald-500 rounded-lg transition-all bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 hover:border-emerald-300"
             >
               Request
             </button>

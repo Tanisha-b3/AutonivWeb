@@ -14,11 +14,11 @@ const fadeUp = {
 };
 
 const avatarColors = [
-  'from-cyan-500 to-cyan-600',
-  'from-cyan-500 to-cyan-700',
-  'from-cyan-500 to-cyan-600',
-  'from-cyan-500 to-cyan-700',
-  'from-cyan-500 to-cyan-600',
+  'from-emerald-400 to-emerald-600',
+  'from-emerald-500 to-emerald-700',
+  'from-blue-400 to-blue-600',
+  'from-blue-500 to-blue-700',
+  'from-cyan-400 to-cyan-600',
   'from-cyan-500 to-cyan-700',
 ];
 
@@ -29,10 +29,30 @@ function getAvatarColor(name: string) {
 }
 
 const statusConfig: Record<string, { label: string; pill: string; text: string; dot: string }> = {
-  pending:   { label: 'Pending',   pill: 'bg-amber-500/10 border-amber-500/20',  text: 'text-amber-400',  dot: 'bg-amber-400' },
-  confirmed: { label: 'Confirmed', pill: 'bg-cyan-500/10 border-cyan-500/20', text: 'text-cyan-400', dot: 'bg-cyan-400' },
-  completed: { label: 'Completed', pill: 'bg-emerald-500/10 border-emerald-500/20', text: 'text-emerald-400',  dot: 'bg-emerald-400' },
-  cancelled: { label: 'Cancelled', pill: 'bg-rose-500/10 border-rose-500/20',    text: 'text-rose-400',   dot: 'bg-rose-400' },
+  pending:   { 
+    label: 'Pending',   
+    pill: 'bg-amber-500/10 border-amber-500/20',  
+    text: 'text-amber-400',  
+    dot: 'bg-amber-400' 
+  },
+  confirmed: { 
+    label: 'Confirmed', 
+    pill: 'bg-emerald-500/10 border-emerald-500/20', 
+    text: 'text-emerald-400', 
+    dot: 'bg-emerald-400' 
+  },
+  completed: { 
+    label: 'Completed', 
+    pill: 'bg-green-500/10 border-green-500/20', 
+    text: 'text-green-400',  
+    dot: 'bg-green-400' 
+  },
+  cancelled: { 
+    label: 'Cancelled', 
+    pill: 'bg-rose-500/10 border-rose-500/20',    
+    text: 'text-rose-400',   
+    dot: 'bg-rose-400' 
+  },
 };
 
 const FILTERS = [
@@ -85,12 +105,12 @@ export function AdminAppointments() {
         {/* ── Header ── */}
         <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5 pt-1">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/50 mb-1">Scheduling</p>
-            <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-white leading-none">All Appointments</h1>
-            <p className="mt-1.5 text-xs sm:text-sm text-white/50">View all appointments booked across the platform</p>
+            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-slate-400/70 mb-1">Scheduling</p>
+            <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-slate-800 leading-none">All Appointments</h1>
+            <p className="mt-1.5 text-xs sm:text-sm text-slate-400/70">View all appointments booked across the platform</p>
           </div>
           {loading && (
-            <div className="flex items-center gap-2 text-white/50">
+            <div className="flex items-center gap-2 text-slate-400/70">
               <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
@@ -103,13 +123,16 @@ export function AdminAppointments() {
         {/* ── Stats ── */}
         <motion.div variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           {[
-            { label: 'Total',     value: stats.total,     accent: 'bg-slate-700/40',   val: 'text-white'       },
-            { label: 'Pending',   value: stats.pending,   accent: 'bg-amber-500/10',   val: 'text-amber-400'   },
-            { label: 'Confirmed', value: stats.confirmed, accent: 'bg-cyan-500/10', val: 'text-cyan-400' },
-            { label: 'Completed', value: stats.completed, accent: 'bg-emerald-500/10',  val: 'text-emerald-400'  },
+            { label: 'Total',     value: stats.total,     accent: 'bg-white/50',   val: 'text-slate-800' },
+            { label: 'Pending',   value: stats.pending,   accent: 'bg-amber-50',   val: 'text-amber-600' },
+            { label: 'Confirmed', value: stats.confirmed, accent: 'bg-emerald-50', val: 'text-emerald-600' },
+            { label: 'Completed', value: stats.completed, accent: 'bg-green-50',  val: 'text-green-600' },
           ].map((s) => (
-            <div key={s.label} className={`${s.accent} rounded-2xl p-3 sm:p-4 border border-white/5 card-hover`}>
-              <p className="text-[10px] sm:text-[11px] font-medium text-white/60 uppercase tracking-widest mb-1.5 sm:mb-2">{s.label}</p>
+            <div 
+              key={s.label} 
+              className={`${s.accent} rounded-2xl p-3 sm:p-4 border border-emerald-100/30 card-hover shadow-sm`}
+            >
+              <p className="text-[10px] sm:text-[11px] font-medium text-slate-500/70 uppercase tracking-widest mb-1.5 sm:mb-2">{s.label}</p>
               <p className={`text-2xl sm:text-3xl font-semibold ${s.val} leading-none`}>{s.value}</p>
             </div>
           ))}
@@ -118,7 +141,7 @@ export function AdminAppointments() {
         {/* ── Toolbar ── */}
         <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1 max-w-xs">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
             </svg>
             <input
@@ -126,7 +149,7 @@ export function AdminAppointments() {
               placeholder="Search by name, phone, or service…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 text-sm bg-[#0f1725] border border-white/8 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all"
+              className="w-full pl-9 pr-4 py-2.5 text-sm bg-white/80 border border-emerald-100/30 rounded-xl text-slate-700 placeholder-slate-400/60 focus:outline-none focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/20 transition-all shadow-sm"
             />
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -136,8 +159,8 @@ export function AdminAppointments() {
                 onClick={() => setFilter(f.value)}
                 className={`px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all ${
                   filter === f.value
-                    ? 'btn-cta'
-                    : 'text-white/50 hover:text-white bg-white/4 hover:bg-white/8'
+                    ? 'btn-cta bg-emerald-500 text-white shadow-md shadow-emerald-500/25'
+                    : 'text-slate-500/70 hover:text-slate-700 bg-white/50 hover:bg-white/80 border border-emerald-100/20'
                 }`}
               >
                 {f.label}
@@ -147,16 +170,16 @@ export function AdminAppointments() {
         </motion.div>
 
         {/* ── Table ── */}
-        <motion.div variants={fadeUp} className="rounded-2xl border border-white/6 overflow-hidden bg-[#0a0f1c]">
+        <motion.div variants={fadeUp} className="rounded-2xl border border-emerald-100/30 overflow-hidden bg-white/80 shadow-sm">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center px-8">
-              <div className="w-14 h-14 rounded-2xl bg-white/4 border border-white/6 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50/50 border border-emerald-100/30 flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-emerald-400/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
               </div>
-              <p className="text-sm font-medium text-white/70 mb-1">No appointments found</p>
-              <p className="text-xs text-white/50 max-w-xs">
+              <p className="text-sm font-medium text-slate-600/70 mb-1">No appointments found</p>
+              <p className="text-xs text-slate-400/70 max-w-xs">
                 {search || filter ? 'Try adjusting your search or filter.' : 'Appointments booked through agents will appear here.'}
               </p>
             </div>
@@ -164,10 +187,10 @@ export function AdminAppointments() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[700px]">
                 <thead>
-                  <tr className="border-b border-white/5">
+                  <tr className="border-b border-emerald-100/20">
                     {['Name', 'Phone', 'Service', 'Date', 'Status', 'Agent'].map((col) => (
                       <th key={col} className="px-4 sm:px-5 py-3.5 text-left">
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/60">{col}</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400/70">{col}</span>
                       </th>
                     ))}
                   </tr>
@@ -183,25 +206,27 @@ export function AdminAppointments() {
                         animate={{ opacity: 1 }}
                         transition={{ delay: i * 0.03 }}
                         onClick={() => setSelected(appt)}
-                        className="group border-t border-white/[0.04] hover:bg-white/[0.03] transition-colors cursor-pointer"
+                        className="group border-t border-emerald-100/10 hover:bg-emerald-50/30 transition-colors cursor-pointer"
                       >
                         <td className="px-4 sm:px-5 py-3 sm:py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${ac} flex items-center justify-center text-white font-semibold text-xs flex-shrink-0`}>
+                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${ac} flex items-center justify-center text-white font-semibold text-xs flex-shrink-0 shadow-sm`}>
                               {(appt.name || 'U').charAt(0).toUpperCase()}
                             </div>
-                            <span className="font-medium text-sm text-white/70 group-hover:text-white transition-colors truncate">{appt.name || '—'}</span>
+                            <span className="font-medium text-sm text-slate-600/80 group-hover:text-slate-800 transition-colors truncate">{appt.name || '—'}</span>
                           </div>
                         </td>
                         <td className="px-4 sm:px-5 py-3 sm:py-4 whitespace-nowrap">
-                          <span className="font-mono text-xs text-white/60">{appt.phone || '—'}</span>
+                          <span className="font-mono text-xs text-slate-500/70">{appt.phone || '—'}</span>
                         </td>
                         <td className="px-4 sm:px-5 py-3 sm:py-4 whitespace-nowrap">
                           {appt.service ? (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-white/5 text-xs text-white/70 border border-white/5">{appt.service}</span>
-                          ) : <span className="text-white/40 text-xs">—</span>}
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-emerald-50/50 text-xs text-slate-600/80 border border-emerald-100/30">
+                              {appt.service}
+                            </span>
+                          ) : <span className="text-slate-400 text-xs">—</span>}
                         </td>
-                        <td className="px-4 sm:px-5 py-3 sm:py-4 whitespace-nowrap text-sm text-white/70 tabular-nums">{appt.preferredDate || '—'}</td>
+                        <td className="px-4 sm:px-5 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-600/70 tabular-nums">{appt.preferredDate || '—'}</td>
                         <td className="px-4 sm:px-5 py-3 sm:py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${sc.pill} ${sc.text}`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`}/>
@@ -210,25 +235,26 @@ export function AdminAppointments() {
                         </td>
                         <td className="px-4 sm:px-5 py-3 sm:py-4 whitespace-nowrap">
                           {appt.agentName ? (
-                            <span className="inline-flex items-center gap-2 text-xs text-white/60">
-                              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0"/>
+                            <span className="inline-flex items-center gap-2 text-xs text-slate-500/70">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0"/>
                               {appt.agentName}
                             </span>
-                          ) : <span className="text-white/40 text-xs">—</span>}
+                          ) : <span className="text-slate-400 text-xs">—</span>}
                         </td>
                       </motion.tr>
                     );
                   })}
                 </tbody>
               </table>
-              <div className="px-5 py-3 border-t border-white/5">
-                <p className="text-xs text-white/60">{filtered.length} appointment{filtered.length !== 1 ? 's' : ''}</p>
+              <div className="px-5 py-3 border-t border-emerald-100/20">
+                <p className="text-xs text-slate-500/70">{filtered.length} appointment{filtered.length !== 1 ? 's' : ''}</p>
               </div>
             </div>
           )}
         </motion.div>
         <Pagination pagination={pagination} onPageChange={setPage} />
       </motion.div>
+      
       <AnimatePresence>
         {selected && (
           <motion.div
@@ -236,7 +262,7 @@ export function AdminAppointments() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4"
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4"
             onClick={() => setSelected(null)}
           >
             <motion.div
@@ -245,17 +271,17 @@ export function AdminAppointments() {
               exit={{ scale: 0.97, opacity: 0, y: 8 }}
               transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] as const }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full sm:max-w-md bg-[#0a0f1c] border border-white/10 rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl shadow-black/70 max-h-[90vh] sm:max-h-[85vh]"
+              className="w-full sm:max-w-md bg-white rounded-2xl sm:rounded-2xl overflow-hidden shadow-2xl shadow-emerald-900/20 border border-emerald-100/30 max-h-[90vh] sm:max-h-[85vh]"
             >
-              <div className="sm:hidden w-10 h-1 rounded-full bg-white/20 mx-auto mt-3" />
-              <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-white/6">
+              <div className="sm:hidden w-10 h-1 rounded-full bg-emerald-200/50 mx-auto mt-3" />
+              <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-emerald-100/20">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getAvatarColor(selected.name || 'U')} flex items-center justify-center text-white font-semibold text-sm flex-shrink-0`}>
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getAvatarColor(selected.name || 'U')} flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 shadow-sm`}>
                     {(selected.name || 'U').charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <h2 className="text-base font-semibold text-white leading-tight truncate">{selected.name || 'Unknown'}</h2>
-                    <p className="text-[11px] text-white/50 mt-0.5">
+                    <h2 className="text-base font-semibold text-slate-800 leading-tight truncate">{selected.name || 'Unknown'}</h2>
+                    <p className="text-[11px] text-slate-400/70 mt-0.5">
                       {selected.createdAt
                         ? new Date(selected.createdAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
                         : 'No date'}
@@ -264,7 +290,7 @@ export function AdminAppointments() {
                 </div>
                 <button
                   onClick={() => setSelected(null)}
-                  className="p-1.5 rounded-lg text-white/50 hover:text-white/70 hover:bg-white/5 transition-colors flex-shrink-0"
+                  className="p-1.5 rounded-lg text-slate-400/50 hover:text-slate-600/70 hover:bg-emerald-50/50 transition-colors flex-shrink-0"
                   aria-label="Close"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -284,9 +310,9 @@ export function AdminAppointments() {
                     { label: 'Agent',    value: selected.agentName,      mono: false },
                     { label: 'Status',   value: statusConfig[selected.status]?.label || selected.status, mono: false },
                   ].filter((f) => f.value).map((field) => (
-                    <div key={field.label} className="rounded-xl bg-white/4 border border-white/5 px-4 py-3">
-                      <p className="text-[10px] font-medium uppercase tracking-widest text-white/50 mb-1">{field.label}</p>
-                      <p className={`text-sm text-white/80 truncate ${field.mono ? 'font-mono' : ''}`}>
+                    <div key={field.label} className="rounded-xl bg-emerald-50/40 border border-emerald-100/30 px-4 py-3">
+                      <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400/70 mb-1">{field.label}</p>
+                      <p className={`text-sm text-slate-700/80 truncate ${field.mono ? 'font-mono' : ''}`}>
                         {field.value}
                       </p>
                     </div>

@@ -19,11 +19,11 @@ const fadeUp = {
 };
 
 const avatarColors = [
-  'from-cyan-500 to-cyan-600',
-  'from-cyan-500 to-cyan-700',
-  'from-cyan-500 to-cyan-600',
-  'from-cyan-500 to-cyan-700',
-  'from-cyan-500 to-cyan-600',
+  'from-emerald-400 to-emerald-600',
+  'from-emerald-500 to-emerald-700',
+  'from-blue-400 to-blue-600',
+  'from-blue-500 to-blue-700',
+  'from-cyan-400 to-cyan-600',
   'from-cyan-500 to-cyan-700',
 ];
 
@@ -36,7 +36,7 @@ function getAvatarColor(name: string) {
 // ── Inline field components ────────────────────────────────────────────────
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-[10px] font-semibold uppercase tracking-widest text-white/50 mb-2">{children}</p>;
+  return <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500/70 mb-2">{children}</p>;
 }
 
 function TextInput({ value, onChange, placeholder, type = 'text' }: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
@@ -46,7 +46,7 @@ function TextInput({ value, onChange, placeholder, type = 'text' }: { value: str
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-4 py-2.5 text-sm bg-white/4 border border-white/8 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/20 transition-all"
+      className="w-full px-4 py-2.5 text-sm bg-white/80 border border-emerald-100/30 rounded-xl text-slate-700 placeholder-slate-400/60 focus:outline-none focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/20 transition-all shadow-sm"
     />
   );
 }
@@ -73,16 +73,16 @@ function SelectInput({ value, onChange, options }: {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full px-4 py-2.5 text-sm bg-white/4 border border-white/8 rounded-xl text-white flex items-center justify-between gap-2 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/20 transition-all cursor-pointer"
+        className="w-full px-4 py-2.5 text-sm bg-white/80 border border-emerald-100/30 rounded-xl text-slate-700 flex items-center justify-between gap-2 focus:outline-none focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/20 transition-all cursor-pointer shadow-sm"
       >
         <span className="truncate">{selected?.label}</span>
-        <svg className={`w-3.5 h-3.5 text-white/50 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
         </svg>
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1.5 w-full bg-[#0a0f1c] border border-white/10 rounded-xl shadow-2xl shadow-black/60 overflow-hidden">
+        <div className="absolute z-50 mt-1.5 w-full bg-white border border-emerald-100/30 rounded-xl shadow-2xl shadow-emerald-900/10 overflow-hidden">
           <div className="max-h-48 overflow-y-auto py-1 custom-scrollbar">
             {options.map((opt) => (
               <button
@@ -91,8 +91,8 @@ function SelectInput({ value, onChange, options }: {
                 onClick={() => { onChange(opt.value); setOpen(false); }}
                 className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
                   opt.value === value
-                    ? 'bg-cyan-500/10 text-cyan-400 font-medium'
-                    : 'text-white/50 hover:bg-white/5 hover:text-white'
+                    ? 'bg-emerald-50 text-emerald-600 font-medium'
+                    : 'text-slate-500/70 hover:bg-slate-50 hover:text-slate-700'
                 }`}
               >
                 {opt.label}
@@ -135,21 +135,21 @@ function UserPanel({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] as const }}
-            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-[#0a0f1c] border-l border-white/8 flex flex-col shadow-2xl shadow-black/60"
+            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-white border-l border-emerald-100/30 flex flex-col shadow-2xl shadow-emerald-900/20"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-white/6 flex-shrink-0">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-emerald-100/20 flex-shrink-0">
               <div>
-                <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/50 mb-0.5">
+                <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-emerald-600 mb-0.5">
                   {editing ? 'Edit' : 'New'}
                 </p>
-                <h2 className="text-base font-semibold text-white">
+                <h2 className="text-base font-semibold text-slate-800">
                   {editing ? editing.name : 'Add new user'}
                 </h2>
               </div>
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-white/50 hover:text-white/70 hover:bg-white/5 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400/70 hover:text-slate-600/70 hover:bg-emerald-50 transition-colors"
                 aria-label="Close"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,11 +160,11 @@ function UserPanel({
 
             {/* Body */}
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-              <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-cyan-500/8 border border-cyan-500/15">
-                <svg className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200/50">
+                <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <p className="text-xs text-cyan-400/80 leading-relaxed">
+                <p className="text-xs text-emerald-700/80 leading-relaxed">
                   {editing ? 'Update user account details and plan assignment.' : 'Create a new user account with an initial plan and minutes allocation.'}
                 </p>
               </div>
@@ -212,11 +212,12 @@ function UserPanel({
             </div>
 
             {/* Footer */}
-            <div className="flex-shrink-0 px-6 py-4 border-t border-white/6 flex items-center gap-3">
+            <div className="flex-shrink-0 px-6 py-4 border-t border-emerald-100/20 flex items-center gap-3">
               <button
                 onClick={onSubmit}
                 disabled={submitting || !formData.name.trim() || !formData.email.trim() || (!editing && !formData.password)}
-                className="btn-cta flex-1 py-2.5 rounded-xl text-sm font-medium disabled:opacity-40 text-white transition-colors flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium disabled:opacity-40 text-white transition-all flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-emerald-500/25"
+                style={{ background: 'linear-gradient(135deg, #10b981, #2563eb, #06b6d4)' }}
               >
                 {submitting ? (
                   <>
@@ -231,7 +232,7 @@ function UserPanel({
               <button
                 onClick={onClose}
                 disabled={submitting}
-                className="px-4 py-2.5 rounded-xl text-sm font-medium text-white/50 bg-white/4 hover:bg-white/8 hover:text-white/70 border border-white/6 transition-colors"
+                className="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-500/70 bg-white hover:bg-slate-50 border border-emerald-100/30 transition-colors"
               >
                 Cancel
               </button>
@@ -299,12 +300,12 @@ export function AdminUsers() {
         const ac = getAvatarColor(user.name);
         return (
           <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${user.role === 'admin' ? 'from-rose-500 to-amber-600' : ac} flex items-center justify-center text-white font-semibold text-xs flex-shrink-0`}>
+            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${user.role === 'admin' ? 'from-rose-400 to-amber-500' : ac} flex items-center justify-center text-white font-semibold text-xs flex-shrink-0 shadow-sm`}>
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium text-white/70 group-hover:text-white transition-colors truncate">{user.name}</div>
-              <div className="text-xs text-white/40 truncate">{user.email}</div>
+              <div className="text-sm font-medium text-slate-600/80 group-hover:text-slate-800 transition-colors truncate">{user.name}</div>
+              <div className="text-xs text-slate-400/70 truncate">{user.email}</div>
             </div>
           </div>
         );
@@ -313,12 +314,12 @@ export function AdminUsers() {
         label: 'User',
         render: (user) => (
           <div className="flex items-center gap-2">
-            <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${user.role === 'admin' ? 'from-rose-500 to-amber-600' : getAvatarColor(user.name)} flex items-center justify-center text-white font-semibold text-[10px] flex-shrink-0`}>
+            <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${user.role === 'admin' ? 'from-rose-400 to-amber-500' : getAvatarColor(user.name)} flex items-center justify-center text-white font-semibold text-[10px] flex-shrink-0 shadow-sm`}>
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium text-white/70 truncate">{user.name}</div>
-              <div className="text-xs text-white/40 truncate">{user.email}</div>
+              <div className="text-sm font-medium text-slate-600/80 truncate">{user.name}</div>
+              <div className="text-xs text-slate-400/70 truncate">{user.email}</div>
             </div>
           </div>
         ),
@@ -328,10 +329,10 @@ export function AdminUsers() {
       key: 'company',
       header: 'Company',
       sortable: true,
-      render: (user) => <span className="text-xs text-white/60">{user.company || '—'}</span>,
+      render: (user) => <span className="text-xs text-slate-500/70">{user.company || '—'}</span>,
       card: {
         label: 'Company',
-        render: (user) => <span className="text-white/70">{user.company || '—'}</span>,
+        render: (user) => <span className="text-slate-600/70">{user.company || '—'}</span>,
       },
     },
     {
@@ -340,10 +341,10 @@ export function AdminUsers() {
       sortable: true,
       render: (user) => (
         <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${
-          user.plan === 'dominate' ? 'bg-cyan-500/10 text-cyan-400' :
-          user.plan === 'scale' ? 'bg-emerald-500/10 text-emerald-400' :
-          user.plan === 'foundation' ? 'bg-cyan-500/10 text-cyan-400' :
-          'bg-white/5 text-white/50'
+          user.plan === 'dominate' ? 'bg-blue-50 text-blue-600 border border-blue-200/50' :
+          user.plan === 'scale' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/50' :
+          user.plan === 'foundation' ? 'bg-cyan-50 text-cyan-600 border border-cyan-200/50' :
+          'bg-slate-50 text-slate-500 border border-slate-200/50'
         }`}>
           {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)}
         </span>
@@ -352,10 +353,10 @@ export function AdminUsers() {
         label: 'Plan',
         render: (user) => (
           <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${
-            user.plan === 'dominate' ? 'bg-cyan-500/10 text-cyan-400' :
-            user.plan === 'scale' ? 'bg-emerald-500/10 text-emerald-400' :
-            user.plan === 'foundation' ? 'bg-cyan-500/10 text-cyan-400' :
-            'bg-white/5 text-white/50'
+            user.plan === 'dominate' ? 'bg-blue-50 text-blue-600 border border-blue-200/50' :
+            user.plan === 'scale' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/50' :
+            user.plan === 'foundation' ? 'bg-cyan-50 text-cyan-600 border border-cyan-200/50' :
+            'bg-slate-50 text-slate-500 border border-slate-200/50'
           }`}>
             {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)}
           </span>
@@ -371,17 +372,17 @@ export function AdminUsers() {
         const usagePercent = user.minutesLimit > 0 ? Math.min((mu / user.minutesLimit) * 100, 100) : 0;
         return (
           <div className="flex items-center gap-2 w-28">
-            <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
+            <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full ${
                   usagePercent > 90 ? 'bg-rose-500' :
                   usagePercent > 70 ? 'bg-amber-500' :
-                  'bg-cyan-500'
+                  'bg-emerald-500'
                 }`}
                 style={{ width: `${usagePercent}%` }}
               />
             </div>
-            <span className="text-[11px] text-white/50 tabular-nums w-12 text-right">{usagePercent.toFixed(0)}%</span>
+            <span className="text-[11px] text-slate-400/70 tabular-nums w-12 text-right">{usagePercent.toFixed(0)}%</span>
           </div>
         );
       },
@@ -393,15 +394,15 @@ export function AdminUsers() {
           return (
             <div className="space-y-1">
               <div className="flex justify-between text-xs">
-                <span className="text-white/50">{Math.round(mu)} / {user.minutesLimit || 500} min</span>
-                <span className="tabular-nums text-white/50">{usagePercent.toFixed(0)}%</span>
+                <span className="text-slate-500/70">{Math.round(mu)} / {user.minutesLimit || 500} min</span>
+                <span className="tabular-nums text-slate-500/70">{usagePercent.toFixed(0)}%</span>
               </div>
-              <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full ${
                     usagePercent > 90 ? 'bg-rose-500' :
                     usagePercent > 70 ? 'bg-amber-500' :
-                    'bg-cyan-500'
+                    'bg-emerald-500'
                   }`}
                   style={{ width: `${usagePercent}%` }}
                 />
@@ -418,8 +419,8 @@ export function AdminUsers() {
       render: (user) => (
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
           user.isActive
-            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-            : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+            ? 'bg-emerald-50 border-emerald-200/50 text-emerald-600'
+            : 'bg-rose-50 border-rose-200/50 text-rose-600'
         }`}>
           <span className={`w-1.5 h-1.5 rounded-full ${user.isActive ? 'bg-emerald-400' : 'bg-rose-400'}`}/>
           {user.isActive ? 'Active' : 'Blocked'}
@@ -430,8 +431,8 @@ export function AdminUsers() {
         render: (user) => (
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
             user.isActive
-              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-              : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+              ? 'bg-emerald-50 border-emerald-200/50 text-emerald-600'
+              : 'bg-rose-50 border-rose-200/50 text-rose-600'
           }`}>
             <span className={`w-1.5 h-1.5 rounded-full ${user.isActive ? 'bg-emerald-400' : 'bg-rose-400'}`}/>
             {user.isActive ? 'Active' : 'Blocked'}
@@ -449,7 +450,7 @@ export function AdminUsers() {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={(e) => { e.stopPropagation(); openEdit(user); }}
-            className="p-2 rounded-lg text-white/50 hover:text-cyan-400 hover:bg-white/5 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+            className="p-2 rounded-lg text-slate-400/70 hover:text-emerald-600 hover:bg-emerald-50 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -459,7 +460,11 @@ export function AdminUsers() {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={(e) => { e.stopPropagation(); handleToggleBlock(user.id, user.isActive); }}
-            className={`p-2 rounded-lg transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center ${user.isActive ? 'text-white/50 hover:text-amber-400 hover:bg-white/5' : 'text-white/50 hover:text-emerald-400 hover:bg-white/5'}`}
+            className={`p-2 rounded-lg transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center ${
+              user.isActive 
+                ? 'text-slate-400/70 hover:text-amber-600 hover:bg-amber-50' 
+                : 'text-slate-400/70 hover:text-emerald-600 hover:bg-emerald-50'
+            }`}
           >
             {user.isActive ? (
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -475,7 +480,7 @@ export function AdminUsers() {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={(e) => { e.stopPropagation(); handleDelete(user.id); }}
-            className="p-2 rounded-lg text-white/50 hover:text-rose-400 hover:bg-white/5 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+            className="p-2 rounded-lg text-slate-400/70 hover:text-rose-600 hover:bg-rose-50 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -573,20 +578,20 @@ export function AdminUsers() {
         {/* ── Header ── */}
         <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5 pt-1">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/50 mb-1">Users</p>
-            <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-white leading-none">All Users</h1>
-            <p className="mt-1.5 text-xs sm:text-sm text-white/50">Manage platform users</p>
+            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-emerald-600 mb-1">Users</p>
+            <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-slate-800 leading-none">All Users</h1>
+            <p className="mt-1.5 text-xs sm:text-sm text-slate-400/70">Manage platform users</p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
-            <div className="flex items-center gap-1 bg-white/4 rounded-xl p-1 border border-white/6">
+            <div className="flex items-center gap-1 bg-white/80 rounded-xl p-1 border border-emerald-100/30 shadow-sm">
               {([['all', 'All'], ['7d', '7 Days'], ['30d', '30 Days'], ['90d', '90 Days']] as const).map(([val, label]) => (
                 <button
                   key={val}
                   onClick={() => setTimeRange(val)}
                   className={`flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium transition-all whitespace-nowrap ${
                     timeRange === val
-                      ? 'btn-cta'
-                      : 'text-white/50 hover:text-white'
+                      ? 'bg-emerald-500 text-white shadow-sm'
+                      : 'text-slate-500/70 hover:text-slate-700'
                   }`}
                 >
                   {label}
@@ -597,7 +602,8 @@ export function AdminUsers() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               onClick={openCreate}
-              className="btn-cta px-4 py-2.5 text-white rounded-xl text-sm font-medium shadow-sm shadow-cyan-500/20 transition-all flex items-center justify-center gap-2"
+              className="px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-all flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-emerald-500/25"
+              style={{ background: 'linear-gradient(135deg, #10b981, #2563eb, #06b6d4)' }}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
@@ -610,13 +616,13 @@ export function AdminUsers() {
         {/* ── Stats ── */}
         <motion.div variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           {[
-            { label: 'Total Users',    value: stats.total,         accent: 'bg-slate-700/40',   val: 'text-white'       },
-            { label: 'Active',         value: stats.active,        accent: 'bg-emerald-500/10', val: 'text-emerald-400' },
-            { label: 'Blocked',        value: stats.blocked,       accent: 'bg-rose-500/10',    val: 'text-rose-400'    },
-            { label: 'Total Minutes',  value: stats.totalMinutes.toLocaleString(), accent: 'bg-amber-500/10', val: 'text-amber-400' },
+            { label: 'Total Users',    value: stats.total,         accent: 'bg-white/50',   val: 'text-slate-800' },
+            { label: 'Active',         value: stats.active,        accent: 'bg-emerald-50', val: 'text-emerald-600' },
+            { label: 'Blocked',        value: stats.blocked,       accent: 'bg-rose-50',    val: 'text-rose-600' },
+            { label: 'Total Minutes',  value: stats.totalMinutes.toLocaleString(), accent: 'bg-amber-50', val: 'text-amber-600' },
           ].map((s) => (
-            <div key={s.label} className={`${s.accent} rounded-2xl p-3 sm:p-4 border border-white/5 card-hover`}>
-              <p className="text-[10px] sm:text-[11px] font-medium text-white/60 uppercase tracking-widest mb-1.5 sm:mb-2">{s.label}</p>
+            <div key={s.label} className={`${s.accent} rounded-2xl p-3 sm:p-4 border border-emerald-100/30 card-hover shadow-sm`}>
+              <p className="text-[10px] sm:text-[11px] font-medium text-slate-500/70 uppercase tracking-widest mb-1.5 sm:mb-2">{s.label}</p>
               <p className={`text-2xl sm:text-3xl font-semibold ${s.val} leading-none`}>{s.value}</p>
             </div>
           ))}
@@ -624,8 +630,8 @@ export function AdminUsers() {
 
         {/* ── Search & Filter ── */}
         <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1 max-w-xs">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="relative flex-1 max-w-xs sm:ml-3">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
             </svg>
             <input
@@ -633,7 +639,7 @@ export function AdminUsers() {
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 text-sm bg-[#0f1725] border border-white/8 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all"
+              className="w-full pl-9 pr-4 py-2.5 text-sm bg-white/80 border border-emerald-100/30 rounded-xl text-slate-700 placeholder-slate-400/60 focus:outline-none focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/20 transition-all shadow-sm"
             />
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -647,8 +653,8 @@ export function AdminUsers() {
                 onClick={() => setStatusFilter(f.value)}
                 className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all ${
                   statusFilter === f.value
-                    ? 'btn-cta'
-                    : 'text-white/50 hover:text-white bg-white/4 hover:bg-white/8'
+                    ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/25'
+                    : 'text-slate-500/70 hover:text-slate-700 bg-white/50 hover:bg-white/80 border border-emerald-100/20'
                 }`}
               >
                 {f.label}
@@ -672,8 +678,8 @@ export function AdminUsers() {
             cardBadge={(u) => (
               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${
                 u.isActive
-                  ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                  : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                  ? 'bg-emerald-50 border-emerald-200/50 text-emerald-600'
+                  : 'bg-rose-50 border-rose-200/50 text-rose-600'
               }`}>
                 <span className={`w-1 h-1 rounded-full ${u.isActive ? 'bg-emerald-400' : 'bg-rose-400'}`}/>
                 {u.isActive ? 'Active' : 'Blocked'}
@@ -708,7 +714,7 @@ export function AdminUsers() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4"
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4"
             onClick={() => setDetailOpen(false)}
           >
             <motion.div
@@ -717,25 +723,25 @@ export function AdminUsers() {
               exit={{ scale: 0.97, opacity: 0, y: 8 }}
               transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] as const }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full sm:max-w-lg bg-[#0a0f1c] border border-white/10 rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl shadow-black/70 max-h-[90vh] sm:max-h-[85vh]"
+              className="w-full sm:max-w-lg bg-white border border-emerald-100/30 rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl shadow-emerald-900/20 max-h-[90vh] sm:max-h-[85vh]"
             >
-              <div className="sm:hidden w-10 h-1 rounded-full bg-white/20 mx-auto mt-3" />
+              <div className="sm:hidden w-10 h-1 rounded-full bg-emerald-200/50 mx-auto mt-3" />
               {/* Header */}
-              <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-white/6">
-          <div className="flex flex-wrap items-center gap-3 min-w-0">
+              <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-emerald-100/20">
+                <div className="flex flex-wrap items-center gap-3 min-w-0">
                   <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${
-                    selectedUser.role === 'admin' ? 'from-rose-500 to-amber-600' : getAvatarColor(selectedUser.name)
-                  } flex items-center justify-center text-white font-bold text-sm sm:text-base flex-shrink-0`}>
+                    selectedUser.role === 'admin' ? 'from-rose-400 to-amber-500' : getAvatarColor(selectedUser.name)
+                  } flex items-center justify-center text-white font-bold text-sm sm:text-base flex-shrink-0 shadow-sm`}>
                     {selectedUser.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <h2 className="text-sm sm:text-base font-semibold text-white leading-tight truncate">{selectedUser.name}</h2>
-                    <p className="text-[11px] text-white/50 mt-0.5 truncate">{selectedUser.email}</p>
+                    <h2 className="text-sm sm:text-base font-semibold text-slate-800 leading-tight truncate">{selectedUser.name}</h2>
+                    <p className="text-[11px] text-slate-400/70 mt-0.5 truncate">{selectedUser.email}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setDetailOpen(false)}
-                  className="p-1.5 rounded-lg text-white/50 hover:text-white/70 hover:bg-white/5 transition-colors flex-shrink-0"
+                  className="p-1.5 rounded-lg text-slate-400/70 hover:text-slate-600/70 hover:bg-emerald-50 transition-colors flex-shrink-0"
                   aria-label="Close"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -753,27 +759,27 @@ export function AdminUsers() {
                     { label: 'Phone',  value: (selectedUser as any).phoneNumber || '—', mono: true },
                     { label: 'Status', value: selectedUser.isActive ? 'Active' : 'Blocked' },
                   ].map((item) => (
-                    <div key={item.label} className="rounded-xl bg-white/4 border border-white/5 px-4 py-3">
-                      <p className="text-[10px] font-medium uppercase tracking-widest text-white/50 mb-1">{item.label}</p>
-                      <p className={`text-sm text-white/80 truncate ${item.mono ? 'font-mono' : ''}`}>{item.value}</p>
+                    <div key={item.label} className="rounded-xl bg-emerald-50/40 border border-emerald-100/30 px-4 py-3">
+                      <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400/70 mb-1">{item.label}</p>
+                      <p className={`text-sm text-slate-700/80 truncate ${item.mono ? 'font-mono' : ''}`}>{item.value}</p>
                     </div>
                   ))}
                 </div>
 
                 {/* Usage */}
-                <div className="border-t border-white/5 pt-4">
-                  <p className="text-[10px] font-medium uppercase tracking-widest text-white/50 mb-3">Usage</p>
-                  <div className="rounded-xl bg-white/4 border border-white/5 px-4 py-3 space-y-2">
+                <div className="border-t border-emerald-100/20 pt-4">
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400/70 mb-3">Usage</p>
+                  <div className="rounded-xl bg-emerald-50/40 border border-emerald-100/30 px-4 py-3 space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-white/50">Minutes Used</span>
-                      <span className="font-medium text-white/70">{Math.round(calcMinutes(selectedUser))} / {selectedUser.minutesLimit || 500}</span>
+                      <span className="text-slate-500/70">Minutes Used</span>
+                      <span className="font-medium text-slate-700/80">{Math.round(calcMinutes(selectedUser))} / {selectedUser.minutesLimit || 500}</span>
                     </div>
-                    <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full ${
                           (calcMinutes(selectedUser) / (selectedUser.minutesLimit || 500)) * 100 > 90 ? 'bg-rose-500' :
                           (calcMinutes(selectedUser) / (selectedUser.minutesLimit || 500)) * 100 > 70 ? 'bg-amber-500' :
-                          'bg-cyan-500'
+                          'bg-emerald-500'
                         }`}
                         style={{ width: `${Math.min((calcMinutes(selectedUser) / (selectedUser.minutesLimit || 500)) * 100, 100)}%` }}
                       />
@@ -783,33 +789,33 @@ export function AdminUsers() {
 
                 {/* Call Activity */}
                 <div>
-                  <p className="text-[10px] font-medium uppercase tracking-widest text-white/50 mb-3">Call Activity</p>
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400/70 mb-3">Call Activity</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <div className="rounded-xl bg-white/4 border border-white/5 px-4 py-3">
-                      <p className="text-[10px] font-medium uppercase tracking-widest text-white/50 mb-1">Total Calls</p>
-                      <p className="text-lg font-semibold text-white">{(selectedUser as any).callCount || 0}</p>
+                    <div className="rounded-xl bg-emerald-50/40 border border-emerald-100/30 px-4 py-3">
+                      <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400/70 mb-1">Total Calls</p>
+                      <p className="text-lg font-semibold text-slate-800">{(selectedUser as any).callCount || 0}</p>
                     </div>
-                    <div className="rounded-xl bg-white/4 border border-white/5 px-4 py-3">
-                      <p className="text-[10px] font-medium uppercase tracking-widest text-white/50 mb-1">Period</p>
-                      <p className="text-sm font-medium text-white/70 capitalize">{timeRange === 'all' ? 'All time' : timeRange}</p>
+                    <div className="rounded-xl bg-emerald-50/40 border border-emerald-100/30 px-4 py-3">
+                      <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400/70 mb-1">Period</p>
+                      <p className="text-sm font-medium text-slate-700/80 capitalize">{timeRange === 'all' ? 'All time' : timeRange}</p>
                     </div>
                   </div>
                   {(selectedUser as any).lastCallAt && (
-                    <div className="mt-2.5 rounded-xl bg-white/4 border border-white/5 px-4 py-3 space-y-1.5">
+                    <div className="mt-2.5 rounded-xl bg-emerald-50/40 border border-emerald-100/30 px-4 py-3 space-y-1.5">
                       <div className="flex justify-between text-xs">
-                        <span className="text-white/50">Last Call Start</span>
-                        <span className="text-white/70">{new Date((selectedUser as any).lastCallAt).toLocaleString()}</span>
+                        <span className="text-slate-500/70">Last Call Start</span>
+                        <span className="text-slate-700/80">{new Date((selectedUser as any).lastCallAt).toLocaleString()}</span>
                       </div>
                       {(selectedUser as any).lastCallEnded && (
                         <div className="flex justify-between text-xs">
-                          <span className="text-white/50">Last Call End</span>
-                          <span className="text-white/70">{new Date((selectedUser as any).lastCallEnded).toLocaleString()}</span>
+                          <span className="text-slate-500/70">Last Call End</span>
+                          <span className="text-slate-700/80">{new Date((selectedUser as any).lastCallEnded).toLocaleString()}</span>
                         </div>
                       )}
                       {(selectedUser as any).lastCallAt && (selectedUser as any).lastCallEnded && (
                         <div className="flex justify-between text-xs">
-                          <span className="text-white/50">Duration</span>
-                          <span className="text-emerald-400 font-medium">
+                          <span className="text-slate-500/70">Duration</span>
+                          <span className="text-emerald-600 font-medium">
                             {Math.round((new Date((selectedUser as any).lastCallEnded).getTime() - new Date((selectedUser as any).lastCallAt).getTime()) / 60000)} min
                           </span>
                         </div>
@@ -817,13 +823,13 @@ export function AdminUsers() {
                     </div>
                   )}
                   {!(selectedUser as any).lastCallAt && (
-                    <p className="text-xs text-white/40 mt-2">No calls in this period</p>
+                    <p className="text-xs text-slate-400/70 mt-2">No calls in this period</p>
                   )}
                 </div>
 
                 {/* Plan Selector */}
                 <div>
-                  <p className="text-[10px] font-medium uppercase tracking-widest text-white/50 mb-3">Plan</p>
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400/70 mb-3">Plan</p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {[
                       { id: 'pilot', label: 'Pilot', calls: '30', price: '₹4,999' },
@@ -836,11 +842,11 @@ export function AdminUsers() {
                         onClick={() => handlePlanChange(selectedUser.id, plan.id)}
                         className={`px-3 py-2.5 rounded-xl text-xs font-medium border transition-all ${
                           selectedUser.plan === plan.id
-                            ? plan.id === 'dominate' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
-                            : plan.id === 'scale' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                            : plan.id === 'foundation' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
-                            : 'bg-white/8 text-white border-white/15'
-                            : 'bg-white/4 text-white/50 border-white/5 hover:text-white/70 hover:bg-white/6'
+                            ? plan.id === 'dominate' ? 'bg-blue-50 text-blue-600 border-blue-200/50'
+                            : plan.id === 'scale' ? 'bg-emerald-50 text-emerald-600 border-emerald-200/50'
+                            : plan.id === 'foundation' ? 'bg-cyan-50 text-cyan-600 border-cyan-200/50'
+                            : 'bg-slate-50 text-slate-600 border-slate-200/50'
+                            : 'bg-white/50 text-slate-500/70 border-emerald-100/30 hover:text-slate-700 hover:bg-white/80'
                         }`}
                       >
                         {plan.label}
@@ -854,7 +860,7 @@ export function AdminUsers() {
                 <div className="flex gap-3 pt-2">
                   <button
                     onClick={() => { setDetailOpen(false); openEdit(selectedUser); }}
-                    className="flex-1 py-2.5 bg-white/4 hover:bg-white/8 border border-white/8 rounded-xl text-sm text-white/60 hover:text-white transition-all"
+                    className="flex-1 py-2.5 bg-white/50 hover:bg-emerald-50 border border-emerald-100/30 rounded-xl text-sm text-slate-600/70 hover:text-slate-800 transition-all"
                   >
                     Edit User
                   </button>
@@ -862,8 +868,8 @@ export function AdminUsers() {
                     onClick={() => { setDetailOpen(false); handleToggleBlock(selectedUser.id, selectedUser.isActive); }}
                     className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
                       selectedUser.isActive
-                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'
-                        : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
+                        ? 'bg-amber-50 text-amber-600 border border-amber-200/50 hover:bg-amber-100'
+                        : 'bg-emerald-50 text-emerald-600 border border-emerald-200/50 hover:bg-emerald-100'
                     }`}
                   >
                     {selectedUser.isActive ? 'Block User' : 'Unblock User'}
@@ -883,12 +889,12 @@ export function AdminUsers() {
         size="sm"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setDeleteTarget(null)}>Cancel</Button>
-            <Button variant="danger" onClick={confirmDelete}>Delete</Button>
+            <Button variant="ghost" onClick={() => setDeleteTarget(null)} className="text-slate-600 hover:text-slate-800">Cancel</Button>
+            <Button variant="danger" onClick={confirmDelete} className="bg-rose-500 hover:bg-rose-600 text-white">Delete</Button>
           </>
         }
       >
-        <p className="text-white/60 text-sm leading-relaxed">
+        <p className="text-slate-600/70 text-sm leading-relaxed">
           Are you sure you want to delete this user? This action cannot be undone.
         </p>
       </Modal>

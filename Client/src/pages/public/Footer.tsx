@@ -105,9 +105,9 @@ export default function Footer() {
 
       {/* Main footer body */}
       <div className="max-w-7xl mx-auto px-5 sm:px-8 pt-14 pb-10" style={{ position: 'relative', zIndex: 1 }}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
 
-          {/* Brand column — spans 2 cols on lg, spans all cols on mobile/tablet stack */}
+          {/* Brand column — FULL WIDTH on mobile (col-span-1), spans 2 on tablet, spans 2 on lg */}
           <div className="col-span-1 sm:col-span-2 lg:col-span-2">
             <Link to="/" className="inline-block -mb-8 -mx-6 sm:-mx-4 -mt-10 sm:mt-0">
               <img src={LOGO_SRC} alt="Autoniv" style={{ height: 120 }} />
@@ -179,9 +179,9 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Nav columns */}
+          {/* Nav columns - On mobile: each takes full width (col-span-1) */}
           {NAV_COLS.map((col) => (
-            <div key={col.heading}>
+            <div key={col.heading} className="col-span-1">
               <p
                 style={{
                   fontSize: 11,

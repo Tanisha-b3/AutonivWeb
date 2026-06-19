@@ -7,16 +7,18 @@ import { fetchAllAgents } from '../../store/slices/agentsSlice';
 import { Link } from 'react-router-dom';
 
 const T = {
-  cyan:    '#0077ff',
-  cyanDim: 'rgba(0,119,255,0.12)',
-  emerald: '#10b981',
-  amber:   '#f59e0b',
-  rose:    '#f43f5e',
-  slate:   '#8bb4e0',
-  bg:      '#060a12',
-  surface: 'rgba(255,255,255,0.04)',
-  border:  'rgba(0,119,255,0.10)',
-  borderHover: 'rgba(0,119,255,0.35)',
+  emerald:   '#10b981',
+  emeraldDim: 'rgba(16,185,129,0.12)',
+  blue:      '#2563eb',
+  blueDim:   'rgba(37,99,235,0.12)',
+  cyan:      '#06b6d4',
+  amber:     '#f59e0b',
+  rose:      '#f43f5e',
+  slate:     '#94a3b8',
+  bg:        '#f8fafc',
+  surface:   'rgba(255,255,255,0.8)',
+  border:    'rgba(16,185,129,0.12)',
+  borderHover: 'rgba(16,185,129,0.35)',
 };
 
 const AreaChartBlock = lazy(() => import('../../components/AreaChartBlock'));
@@ -30,9 +32,9 @@ const fadeUp = {
 };
 
 const typeConfig: Record<string, { label: string; accent: string }> = {
-  receptionist: { label: 'Receptionist', accent: 'from-cyan-500 to-cyan-600' },
-  appointment:  { label: 'Appointment',  accent: 'from-cyan-500 to-cyan-700' },
-  faq:          { label: 'FAQ',          accent: 'from-cyan-500 to-cyan-600' },
+  receptionist: { label: 'Receptionist', accent: 'from-emerald-400 to-emerald-600' },
+  appointment:  { label: 'Appointment',  accent: 'from-blue-400 to-blue-600' },
+  faq:          { label: 'FAQ',          accent: 'from-cyan-400 to-cyan-600' },
 };
 
 export function AdminDashboard() {
@@ -63,31 +65,31 @@ export function AdminDashboard() {
       label: 'Total Users',
       value: stats?.totalUsers || 0,
       icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
-      accent: 'bg-cyan-500/10', val: 'text-cyan-400',
+      accent: 'bg-blue-50', val: 'text-blue-600',
     },
     {
       label: 'Active Agents',
       value: stats?.activeAgents || 0,
       icon: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
-      accent: 'bg-emerald-500/10', val: 'text-emerald-400',
+      accent: 'bg-emerald-50', val: 'text-emerald-600',
     },
     {
       label: 'Inactive Agents',
       value: stats?.inactiveAgents || 0,
       icon: 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636',
-      accent: 'bg-amber-500/10', val: 'text-amber-400',
+      accent: 'bg-amber-50', val: 'text-amber-600',
     },
     {
       label: `Calls (${timeRange})`,
       value: po.totalCalls,
       icon: 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z',
-      accent: 'bg-amber-500/10', val: 'text-amber-400',
+      accent: 'bg-cyan-50', val: 'text-cyan-600',
     },
     {
       label: `Minutes (${timeRange})`,
       value: po.totalMinutes.toLocaleString(),
       icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
-      accent: 'bg-cyan-500/10', val: 'text-cyan-400',
+      accent: 'bg-emerald-50', val: 'text-emerald-600',
     },
   ];
 
@@ -119,31 +121,30 @@ export function AdminDashboard() {
           >
             <div>
               <p
-                className="text-[10px] font-semibold tracking-[0.2em] uppercase mb-1"
-                style={{ color: T.cyan }}
+                className="text-[10px] font-semibold tracking-[0.2em] uppercase mb-1 text-emerald-600"
               >
                 Admin Dashboard
               </p>
               <h1
-                className="text-2xl sm:text-[18px] sm:text-[28px] font-bold leading-none text-white"
+                className="text-2xl sm:text-[18px] sm:text-[28px] font-bold leading-none text-slate-800"
               >
                 Admin Dashboard
               </h1>
-              <p className="mt-1.5 text-xs sm:text-sm text-white/50">
+              <p className="mt-1.5 text-xs sm:text-sm text-slate-400/70">
                 Platform analytics and performance metrics
               </p>
             </div>
 
             {/* Time-range picker */}
-            <div className="flex items-center gap-1.5 bg-white/4 rounded-xl p-1 border border-white/6 w-full sm:w-auto">
+            <div className="flex items-center gap-1.5 bg-white/80 rounded-xl p-1 border border-emerald-100/30 shadow-sm w-full sm:w-auto">
               {(['7d', '30d', '90d'] as const).map((r) => (
                 <button
                   key={r}
                   onClick={() => setTimeRange(r)}
                   className={`flex-1 sm:flex-none px-3 sm:px-3.5 py-2 rounded-lg text-xs font-medium transition-all ${
                     timeRange === r
-                      ? 'btn-cta'
-                      : 'text-white/50 hover:text-white'
+                      ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/25'
+                      : 'text-slate-500/70 hover:text-slate-700'
                   }`}
                 >
                   {r === '7d' ? '7 Days' : r === '30d' ? '30 Days' : '90 Days'}
@@ -160,16 +161,16 @@ export function AdminDashboard() {
             {statCards.map((s) => (
               <div
                 key={s.label}
-                className={`${s.accent} rounded-2xl p-3 sm:p-4 border border-white/5 card-hover`}
+                className={`${s.accent} rounded-2xl p-3 sm:p-4 border border-emerald-100/30 card-hover shadow-sm`}
               >
                 <div className="flex items-center justify-between mb-2 sm:mb-3">
                   <p
-                    className="text-[10px] font-medium text-white/60 uppercase tracking-widest leading-tight"
+                    className="text-[10px] font-medium text-slate-500/70 uppercase tracking-widest leading-tight"
                   >
                     {s.label}
                   </p>
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/4 border border-white/5 flex items-center justify-center flex-shrink-0 ml-1">
-                    <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/60 border border-emerald-100/30 flex items-center justify-center flex-shrink-0 ml-1">
+                    <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={s.icon} />
                     </svg>
                   </div>
@@ -193,10 +194,10 @@ export function AdminDashboard() {
               <motion.div variants={fadeUp}>
                 {hasChartData ? (
                   <Suspense fallback={
-                    <div className="rounded-2xl border border-white/6 bg-[#0a0f1c] p-6 flex items-center justify-center h-[280px] sm:h-[352px]">
+                    <div className="rounded-2xl border border-emerald-100/30 bg-white shadow-sm p-6 flex items-center justify-center h-[280px] sm:h-[352px]">
                       <div className="animate-pulse space-y-3 w-full">
-                        <div className="h-4 w-32 bg-white/5 rounded" />
-                        <div className="h-[200px] sm:h-[280px] bg-white/5 rounded" />
+                        <div className="h-4 w-32 bg-emerald-100/50 rounded" />
+                        <div className="h-[200px] sm:h-[280px] bg-emerald-50/50 rounded" />
                       </div>
                     </div>
                   }>
@@ -208,17 +209,17 @@ export function AdminDashboard() {
                   </Suspense>
                 ) : (
                   /* Compact empty state — no fixed height */
-                  <div className="rounded-2xl border border-white/6 bg-[#0a0f1c] p-4 sm:p-5 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-white/4 border border-white/5 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-4 h-4 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="rounded-2xl border border-emerald-100/30 bg-white shadow-sm p-4 sm:p-5 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200/50 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-white/30">
+                      <p className="text-sm font-semibold text-slate-400/70">
                         Call Volume
                       </p>
-                      <p className="text-xs text-white/20 mt-0.5">
+                      <p className="text-xs text-slate-400/50 mt-0.5">
                         No call data for this period
                       </p>
                     </div>
@@ -229,14 +230,14 @@ export function AdminDashboard() {
               {/* All Agents */}
               <motion.div
                 variants={fadeUp}
-                className={`rounded-2xl border border-white/6 overflow-hidden bg-[#0a0f1c] flex flex-col ${
+                className={`rounded-2xl border border-emerald-100/30 overflow-hidden bg-white shadow-sm flex flex-col ${
                   hasAgents ? 'p-4 sm:p-6 lg:h-[400px]' : 'p-4 sm:p-5'
                 }`}
               >
                 {agentsLoading && !hasAgents ? (
                   /* Loading — compact */
-                  <div className="flex items-center gap-3 text-white/50">
-                    <svg className="animate-spin w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                  <div className="flex items-center gap-3 text-slate-500/70">
+                    <svg className="animate-spin w-4 h-4 flex-shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
@@ -247,21 +248,21 @@ export function AdminDashboard() {
                     {/* Card header */}
                     <div className="flex items-center justify-between mb-4 flex-shrink-0 gap-2">
                       <h2
-                        className="text-sm font-bold text-white"
+                        className="text-sm font-bold text-slate-800"
                       >
                         All Agents
                       </h2>
                       <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
-                        <span className="text-xs text-cyan-400">
+                        <span className="text-xs text-emerald-600">
                           <span className="font-semibold">{agentStats.active}</span> active
                         </span>
-                        <span className="text-xs text-white/40">·</span>
-                        <span className="text-xs text-white/60">
+                        <span className="text-xs text-slate-400">·</span>
+                        <span className="text-xs text-slate-500/70">
                           <span className="font-semibold">{agentStats.inactive}</span> inactive
                         </span>
                         <Link
                           to="/admin/agents"
-                          className="text-xs text-cyan-400 hover:text-cyan-300 ml-1 transition-colors"
+                          className="text-xs text-emerald-600 hover:text-emerald-700 ml-1 transition-colors font-medium"
                         >
                           View all
                         </Link>
@@ -279,12 +280,12 @@ export function AdminDashboard() {
                               initial={{ opacity: 0, x: -8 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: i * 0.03 }}
-                              className="flex items-center justify-between p-2.5 sm:p-3 bg-white/4 border border-white/5 rounded-xl hover:bg-white/[0.05] transition-all group"
+                              className="flex items-center justify-between p-2.5 sm:p-3 bg-emerald-50/30 border border-emerald-100/30 rounded-xl hover:bg-emerald-50/60 transition-all group"
                             >
                               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                                 {/* Avatar */}
                                 <div
-                                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br ${tc.accent} flex items-center justify-center text-white font-bold text-xs flex-shrink-0`}
+                                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br ${tc.accent} flex items-center justify-center text-white font-bold text-xs flex-shrink-0 shadow-sm`}
                                 >
                                   {agent.name.charAt(0).toUpperCase()}
                                 </div>
@@ -292,12 +293,12 @@ export function AdminDashboard() {
                                 {/* Name + status */}
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                                    <p className="text-sm font-semibold text-white truncate">{agent.name}</p>
+                                    <p className="text-sm font-semibold text-slate-700 truncate">{agent.name}</p>
                                     <span
                                       className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${
                                         agent.isActive
-                                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                                          : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                                          ? 'bg-emerald-50 border-emerald-200/50 text-emerald-600'
+                                          : 'bg-rose-50 border-rose-200/50 text-rose-600'
                                       }`}
                                     >
                                       <span className={`w-1 h-1 rounded-full ${agent.isActive ? 'bg-emerald-400' : 'bg-rose-400'}`} />
@@ -305,7 +306,7 @@ export function AdminDashboard() {
                                     </span>
                                   </div>
                                   <p
-                                    className="text-[10px] uppercase tracking-wider text-white/50 hidden sm:block"
+                                    className="text-[10px] uppercase tracking-wider text-slate-400/70 hidden sm:block"
                                   >
                                     {tc.label} · {agent.userName || 'Unknown user'}
                                   </p>
@@ -314,7 +315,7 @@ export function AdminDashboard() {
 
                               {/* Call count */}
                               <div className="text-right flex-shrink-0 ml-2">
-                                <p className="text-xs text-white/60">
+                                <p className="text-xs text-slate-500/70">
                                   {agent.callCount || 0} calls
                                 </p>
                               </div>
@@ -327,16 +328,16 @@ export function AdminDashboard() {
                 ) : (
                   /* Empty state — compact, no fixed height */
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-white/4 border border-white/5 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-4 h-4 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200/50 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-white/30">
+                      <p className="text-sm font-semibold text-slate-400/70">
                         All Agents
                       </p>
-                      <p className="text-xs text-white/20 mt-0.5">
+                      <p className="text-xs text-slate-400/50 mt-0.5">
                         No agents created yet
                       </p>
                     </div>

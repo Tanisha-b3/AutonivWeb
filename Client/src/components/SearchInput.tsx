@@ -127,11 +127,7 @@ export function SearchInput({
       </AnimatePresence>
 
       {/* Keyboard shortcut hint */}
-      {!local && !isFocused && (
-        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 bg-gray-50 border border-gray-200 rounded-md hidden sm:block">
-          ⌘K
-        </kbd>
-      )}
+     
     </motion.div>
   );
 }

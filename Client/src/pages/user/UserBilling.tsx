@@ -112,7 +112,7 @@ const fadeSlide = {
 function getUsageBarColor(pct: number) {
   if (pct > 90) return 'from-rose-500 to-pink-500';
   if (pct > 70) return 'from-amber-500 to-orange-500';
-  return 'from-blue-500 to-cyan-500';
+  return 'from-emerald-500 to-cyan-500';
 }
 
 export function UserBilling() {
@@ -170,7 +170,7 @@ export function UserBilling() {
 
           {/* Subtle status pill */}
           <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 border border-gray-200 w-fit">
-            <span className={`w-2 h-2 rounded-full animate-pulse bg-blue-500`} />
+            <span className={`w-2 h-2 rounded-full animate-pulse bg-emerald-500`} />
             <span className="text-xs text-gray-600 font-medium">
               {currentPlan.name} plan active
             </span>
@@ -186,14 +186,14 @@ export function UserBilling() {
             className={`lg:col-span-2 rounded-2xl border border-gray-200 bg-white shadow-sm p-6 sm:p-8 relative overflow-hidden`}
           >
             {/* Subtle corner glow */}
-            <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full bg-blue-500/4 blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-blue-500/4 blur-3xl pointer-events-none" />
+            <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full bg-emerald-500/4 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-emerald-500/4 blur-3xl pointer-events-none" />
 
             {/* Plan header */}
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5 mb-8 relative">
               <div>
-                <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-semibold border bg-blue-50 text-blue-600 border-blue-200 mb-4`}>
-                  <span className={`w-1.5 h-1.5 rounded-full bg-blue-500`} />
+                <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-semibold border bg-emerald-50 text-emerald-600 border-emerald-200 mb-4`}>
+                  <span className={`w-1.5 h-1.5 rounded-full bg-emerald-500`} />
                   Current Plan
                 </span>
                 <h2 className="text-3xl font-bold text-gray-800 tracking-tight">
@@ -207,7 +207,7 @@ export function UserBilling() {
                   <span className="text-gray-500 text-sm">/month</span>
                 </div>
                 {currentPlan.annualPrice && (
-                  <p className="text-xs text-blue-600 mt-1.5 font-medium">
+                  <p className="text-xs text-emerald-500 mt-1.5 font-medium">
                     Annual: ₹{currentPlan.annualPrice.toLocaleString()}/mo — save {Math.round((1 - currentPlan.annualPrice / currentPlan.price) * 100)}%
                   </p>
                 )}
@@ -253,8 +253,8 @@ export function UserBilling() {
             {/* Stats row */}
             <div className="grid grid-cols-3 gap-3 mb-8">
               {[
-                { label: 'Used',      value: user?.minutesUsed || 0, accent: 'text-amber-600',   bg: 'bg-amber-50',  border: 'border-amber-200'  },
-                { label: 'Remaining', value: Math.max(0, remainingCalls), accent: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
+                { label: 'Used',      value: user?.minutesUsed || 0, accent: 'text-emerald-600',   bg: 'bg-emerald-50',  border: 'border-emerald-200'  },
+                { label: 'Remaining', value: Math.max(0, remainingCalls), accent: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
                 { label: 'Total',     value: currentPlan.callsPerMonth,   accent: 'text-gray-600',  bg: 'bg-gray-50',      border: 'border-gray-200'       },
               ].map((stat, i) => (
                 <motion.div
@@ -288,7 +288,7 @@ export function UserBilling() {
                 whileHover={{ scale: 1.01, boxShadow: '0 12px 40px rgba(37,99,235,0.15)' }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowUpgrade(true)}
-                className="w-full py-3.5 rounded-xl font-semibold transition-all shadow-sm bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 text-sm"
+                className="w-full py-3.5 rounded-xl font-semibold transition-all shadow-sm bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 text-sm"
               >
                 Upgrade Plan
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -312,9 +312,9 @@ export function UserBilling() {
                     transition={{ delay: 0.35 + i * 0.05, duration: 0.25, ease }}
                     className="flex items-center gap-3"
                   >
-                    <div className={`w-5 h-5 rounded-md ${feature.included ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50 border border-gray-200'} flex items-center justify-center flex-shrink-0`}>
+                    <div className={`w-5 h-5 rounded-md ${feature.included ? 'bg-emerald-50 border border-emerald-200' : 'bg-gray-50 border border-gray-200'} flex items-center justify-center flex-shrink-0`}>
                       {feature.included ? (
-                        <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/>
                         </svg>
                       ) : (
@@ -330,8 +330,8 @@ export function UserBilling() {
             {/* Support card */}
             <motion.div variants={fadeSlide} className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 12a3 3 0 110-6 3 3 0 010 6z"/>
                   </svg>
                 </div>
@@ -402,10 +402,10 @@ export function UserBilling() {
               </div>
 
               {/* Guarantee banner */}
-              <div className="mx-6 mt-5 p-4 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-4">
+              <div className="mx-6 mt-5 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-4">
                 <div className="text-2xl">🛡️</div>
                 <div>
-                  <p className="text-sm font-semibold text-blue-600">30-Day Performance Guarantee</p>
+                  <p className="text-sm font-semibold text-emerald-600">30-Day Performance Guarantee</p>
                   <p className="text-xs text-gray-600 mt-0.5">If you don't see measurable improvement, we refund your subscription. No questions asked.</p>
                 </div>
               </div>
@@ -427,22 +427,22 @@ export function UserBilling() {
                         disabled={isCurrent}
                         className={`relative p-5 rounded-2xl border text-left transition-all ${
                           isCurrent
-                            ? 'border-blue-300 bg-blue-50 opacity-60 cursor-default'
+                            ? 'border-emerald-300 bg-emerald-50 opacity-60 cursor-default'
                             : isSelected
-                            ? 'border-blue-400 bg-blue-50 shadow-md shadow-blue-100'
+                            ? 'border-emerald-400 bg-emerald-50 shadow-md shadow-emerald-100'
                             : isFeatured
-                            ? 'border-blue-200 bg-gradient-to-b from-blue-50 to-transparent hover:border-blue-300'
+                            ? 'border-emerald-200 bg-gradient-to-b from-emerald-50 to-transparent hover:border-emerald-300'
                             : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'
                         }`}
                       >
                         {/* Badge */}
                         {plan.badge && !isCurrent && (
-                          <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-bold text-white bg-blue-600 shadow-md whitespace-nowrap">
+                          <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-bold text-white bg-emerald-600 shadow-md whitespace-nowrap">
                             {plan.badge}
                           </div>
                         )}
                         {isCurrent && (
-                          <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-bold text-white bg-blue-600">
+                          <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-bold text-white bg-emerald-600">
                             Current
                           </div>
                         )}
@@ -458,7 +458,7 @@ export function UserBilling() {
                             <span className="text-xs text-gray-500">/mo</span>
                           </div>
                           {plan.annualPrice && (
-                            <p className="text-[10px] text-blue-600 mt-1">Annual: ₹{plan.annualPrice.toLocaleString()}/mo — save {Math.round((1 - plan.annualPrice / plan.price) * 100)}%</p>
+                            <p className="text-[10px] text-emerald-500 mt-1">Annual: ₹{plan.annualPrice.toLocaleString()}/mo — save {Math.round((1 - plan.annualPrice / plan.price) * 100)}%</p>
                           )}
                           <p className="text-[10px] text-gray-500 mt-1">Setup: ₹{plan.setupFee.toLocaleString()}</p>
                           <p className="text-[10px] text-gray-500 mt-1 font-medium">{plan.callsPerMonth} calls/mo</p>
@@ -470,7 +470,7 @@ export function UserBilling() {
                           {plan.features.map((f, i) => (
                             <li key={i} className="flex items-center gap-2 text-[11px] text-gray-600">
                               {f.included ? (
-                                <svg className="w-3 h-3 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3 h-3 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/>
                                 </svg>
                               ) : (
@@ -496,7 +496,7 @@ export function UserBilling() {
                       className="overflow-hidden"
                     >
                       <div className="mt-4 p-4 rounded-xl bg-gray-50 border border-gray-200 flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                         <p className="text-sm text-gray-600">
                           Upgrading to{' '}
                           <span className="text-gray-800 font-semibold">{plans.find((p) => p.id === selectedPlan)?.name}</span>
@@ -519,7 +519,7 @@ export function UserBilling() {
                   <button
                     onClick={handleUpgrade}
                     disabled={!selectedPlan || upgrading}
-                    className="flex-1 py-3 rounded-xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 text-white transition-all flex items-center justify-center gap-2"
+                    className="flex-1 py-3 rounded-xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed bg-emerald-600 hover:bg-emerald-700 text-white transition-all flex items-center justify-center gap-2"
                   >
                     {upgrading ? (
                       <>
@@ -553,12 +553,12 @@ export function UserBilling() {
         className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 sm:p-8 relative overflow-hidden"
       >
         {/* Background accent */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/4 via-transparent to-blue-500/4 pointer-events-none rounded-2xl" />
-        <div className="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-blue-500/6 blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/4 via-transparent to-emerald-500/4 pointer-events-none rounded-2xl" />
+        <div className="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-emerald-500/6 blur-3xl pointer-events-none" />
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 relative">
           <div>
-            <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-blue-600 mb-2">
+            <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-emerald-500 mb-2">
               Add-Ons
             </p>
             <h2 className="text-xl sm:text-2xl font-bold text-gray-800 tracking-tight">
@@ -571,7 +571,7 @@ export function UserBilling() {
           </div>
           <Link
             to="/dashboard/add-ons"
-            className="flex-shrink-0 inline-flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
+            className="btn-cta flex-shrink-0 inline-flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-all shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
           >
             Browse Add-Ons
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
