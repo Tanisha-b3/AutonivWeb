@@ -2,7 +2,9 @@ import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { contactService } from "../../services/api";
 
-const AuthDialog = lazy(() => import('./AuthDialog').then(m => ({ default: m.AuthDialog })));
+const AuthDialog = lazy(() =>
+  import("./AuthDialog").then((m) => ({ default: m.AuthDialog })),
+);
 // const LandingCallWidget = lazy(() => import('../../components/LandingCallWidget'));
 import Footer from "./Footer";
 
@@ -10,169 +12,759 @@ const LOGO_SRC = "/autoniv.png";
 
 /* ─── Data ───────────────────────────────────────────────── */
 const features = [
-  { icon: "🎙️", title: "AI Voice Agents", desc: "Deploy intelligent voice assistants with 20+ languages and 100+ realistic voices for natural, human-like conversation.", metric: "3×", metricLabel: "faster response", color: "#2563EB" },
-  { icon: "🌍", title: "Global Language Support", desc: "Serve customers worldwide with AI agents that speak 20+ languages including English, Hindi, Arabic, and more.", metric: "20+", metricLabel: "languages", color: "#10B981" },
-  { icon: "🎧", title: "Premium Voice Selection", desc: "Choose from 100+ realistic voices across different ages, genders, and accents to match your brand perfectly.", metric: "100+", metricLabel: "voices", color: "#10B981" },
-  { icon: "📊", title: "Smart Analytics", desc: "Track call performance, lead conversion, and agent effectiveness with real-time dashboards.", metric: "99.8%", metricLabel: "accuracy rate", color: "#2563EB" },
-  { icon: "🔗", title: "CRM Integration", desc: "Seamlessly sync leads and call data with your existing CRM and business tools.", metric: "50+", metricLabel: "integrations", color: "#10B981" },
-  { icon: "🛡️", title: "Enterprise Security", desc: "Bank-grade encryption and compliance for your business communication needs.", metric: "SOC 2", metricLabel: "certified", color: "#10B981" },
+  {
+    icon: "🎙️",
+    title: "AI Voice Agents",
+    desc: "Deploy intelligent voice assistants with 20+ languages and 100+ realistic voices for natural, human-like conversation.",
+    metric: "3×",
+    metricLabel: "faster response",
+    color: "#2563EB",
+  },
+  {
+    icon: "🌍",
+    title: "Global Language Support",
+    desc: "Serve customers worldwide with AI agents that speak 20+ languages including English, Hindi, Arabic, and more.",
+    metric: "20+",
+    metricLabel: "languages",
+    color: "#10B981",
+  },
+  {
+    icon: "🎧",
+    title: "Premium Voice Selection",
+    desc: "Choose from 100+ realistic voices across different ages, genders, and accents to match your brand perfectly.",
+    metric: "100+",
+    metricLabel: "voices",
+    color: "#10B981",
+  },
+  {
+    icon: "📊",
+    title: "Smart Analytics",
+    desc: "Track call performance, lead conversion, and agent effectiveness with real-time dashboards.",
+    metric: "99.8%",
+    metricLabel: "accuracy rate",
+    color: "#2563EB",
+  },
+  {
+    icon: "🔗",
+    title: "CRM Integration",
+    desc: "Seamlessly sync leads and call data with your existing CRM and business tools.",
+    metric: "50+",
+    metricLabel: "integrations",
+    color: "#10B981",
+  },
+  {
+    icon: "🛡️",
+    title: "Enterprise Security",
+    desc: "Bank-grade encryption and compliance for your business communication needs.",
+    metric: "SOC 2",
+    metricLabel: "certified",
+    color: "#10B981",
+  },
 ];
 
+// Random-ish base heights for an organic spectrum look (in px)
+const WAVE_HEIGHTS = Array.from({ length: 38 }, (_, i) => {
+  return 14 + Math.sin(i * 0.7) * 18 + Math.cos(i * 1.3) * 10 + Math.sin(i * 2.1) * 6;
+});
+
+
 const STEPS = [
-  { n: "01", title: "Describe", desc: "Tell us what your agent should do in plain text — no code, no prompts, no config files.", icon: "✍️" },
-  { n: "02", title: "Configure", desc: "Pick a voice, language, and persona. Fine-tune with drag-and-drop or just keep chatting with the editor.", icon: "🎛️" },
-  { n: "03", title: "Test", desc: "Simulate real calls, edge cases, and stress scenarios before going live. Catch issues early.", icon: "🧪" },
-  { n: "04", title: "Deploy", desc: "Go live on your phone number, website widget, or API in one click.", icon: "🚀" },
-  { n: "05", title: "Observe", desc: "Live dashboards, call transcripts, sentiment scores, and conversion tracking — all in one place.", icon: "📊" },
+  {
+    n: "01",
+    title: "Describe",
+    desc: "Tell us what your agent should do in plain text — no code, no prompts, no config files.",
+    icon: "✍️",
+  },
+  {
+    n: "02",
+    title: "Configure",
+    desc: "Pick a voice, language, and persona. Fine-tune with drag-and-drop or just keep chatting with the editor.",
+    icon: "🎛️",
+  },
+  {
+    n: "03",
+    title: "Test",
+    desc: "Simulate real calls, edge cases, and stress scenarios before going live. Catch issues early.",
+    icon: "🧪",
+  },
+  {
+    n: "04",
+    title: "Deploy",
+    desc: "Go live on your phone number, website widget, or API in one click.",
+    icon: "🚀",
+  },
+  {
+    n: "05",
+    title: "Observe",
+    desc: "Live dashboards, call transcripts, sentiment scores, and conversion tracking — all in one place.",
+    icon: "📊",
+  },
 ];
 
 const COMPARISON = [
-  { capability: "24/7 Availability", autoniv: { text: "Always on", status: "yes" }, human: { text: "9–6 only", status: "no" }, dialers: { text: "Yes but robotic", status: "maybe" } },
-  { capability: "Human-like conversation", autoniv: { text: "Natural AI dialogue", status: "yes" }, human: { text: "Inconsistent", status: "maybe" }, dialers: { text: "Robotic scripts", status: "no" } },
-  { capability: "Custom scripts per business", autoniv: { text: "Fully tailored", status: "yes" }, human: { text: "Depends on rep", status: "maybe" }, dialers: { text: "Generic only", status: "no" } },
-  { capability: "CRM + WhatsApp sync", autoniv: { text: "Full integration", status: "yes" }, human: { text: "Manual entry", status: "no" }, dialers: { text: "Limited", status: "maybe" } },
-  { capability: "Real-time analytics", autoniv: { text: "Live dashboard", status: "yes" }, human: { text: "No structure", status: "no" }, dialers: { text: "Basic only", status: "maybe" } },
-  { capability: "Setup time", autoniv: { text: "48 hours", status: "yes" }, human: { text: "2–4 weeks", status: "no" }, dialers: { text: "1–2 weeks", status: "maybe" } },
-  { capability: "Cost vs. human team", autoniv: { text: "−65% cost", status: "yes" }, human: { text: "Highest cost", status: "highest" }, dialers: { text: "−20% only", status: "maybe" } },
-  { capability: "Scale instantly", autoniv: { text: "120 → 12,000", status: "yes" }, human: { text: "Hire & retrain", status: "no" }, dialers: { text: "Limited", status: "maybe" } }
+  {
+    capability: "24/7 Availability",
+    autoniv: { text: "Always on", status: "yes" },
+    human: { text: "9–6 only", status: "no" },
+    dialers: { text: "Yes but robotic", status: "maybe" },
+  },
+  {
+    capability: "Human-like conversation",
+    autoniv: { text: "Natural AI dialogue", status: "yes" },
+    human: { text: "Inconsistent", status: "maybe" },
+    dialers: { text: "Robotic scripts", status: "no" },
+  },
+  {
+    capability: "Custom scripts per business",
+    autoniv: { text: "Fully tailored", status: "yes" },
+    human: { text: "Depends on rep", status: "maybe" },
+    dialers: { text: "Generic only", status: "no" },
+  },
+  {
+    capability: "CRM + WhatsApp sync",
+    autoniv: { text: "Full integration", status: "yes" },
+    human: { text: "Manual entry", status: "no" },
+    dialers: { text: "Limited", status: "maybe" },
+  },
+  {
+    capability: "Real-time analytics",
+    autoniv: { text: "Live dashboard", status: "yes" },
+    human: { text: "No structure", status: "no" },
+    dialers: { text: "Basic only", status: "maybe" },
+  },
+  {
+    capability: "Setup time",
+    autoniv: { text: "48 hours", status: "yes" },
+    human: { text: "2–4 weeks", status: "no" },
+    dialers: { text: "1–2 weeks", status: "maybe" },
+  },
+  {
+    capability: "Cost vs. human team",
+    autoniv: { text: "−65% cost", status: "yes" },
+    human: { text: "Highest cost", status: "highest" },
+    dialers: { text: "−20% only", status: "maybe" },
+  },
+  {
+    capability: "Scale instantly",
+    autoniv: { text: "120 → 12,000", status: "yes" },
+    human: { text: "Hire & retrain", status: "no" },
+    dialers: { text: "Limited", status: "maybe" },
+  },
 ];
 
 const renderCellContent = (status: string, text: string) => {
-  if (status === "yes") return <span style={{ color: "#10B981", fontWeight: 600 }}><span style={{ marginRight: 6, fontWeight: 700 }}>✓</span>{text}</span>;
-  if (status === "no") return <span style={{ color: "#64748b" }}><span style={{ marginRight: 6, color: "#94a3b8", fontWeight: 700 }}>✗</span>{text}</span>;
-  if (status === "maybe") return <span style={{ color: "#64748b" }}><span style={{ marginRight: 6, color: "#94a3b8", fontWeight: 700 }}>~</span>{text}</span>;
-  if (status === "highest") return <span style={{ color: "#ef4444", fontWeight: 600 }}>{text}</span>;
+  if (status === "yes")
+    return (
+      <span style={{ color: "#10B981", fontWeight: 600 }}>
+        <span style={{ marginRight: 6, fontWeight: 700 }}>✓</span>
+        {text}
+      </span>
+    );
+  if (status === "no")
+    return (
+      <span style={{ color: "#64748b" }}>
+        <span style={{ marginRight: 6, color: "#94a3b8", fontWeight: 700 }}>
+          ✗
+        </span>
+        {text}
+      </span>
+    );
+  if (status === "maybe")
+    return (
+      <span style={{ color: "#64748b" }}>
+        <span style={{ marginRight: 6, color: "#94a3b8", fontWeight: 700 }}>
+          ~
+        </span>
+        {text}
+      </span>
+    );
+  if (status === "highest")
+    return <span style={{ color: "#ef4444", fontWeight: 600 }}>{text}</span>;
   return <span>{text}</span>;
 };
 
 const ADDONS = [
-  { id: "performance-report", icon: "📊", title: "Monthly Performance Report", price: "₹3,999–₹6,999 / month", category: "recurring", description: "Branded PDF with call quality scores, script performance, A/B outcomes, and industry benchmarks." },
-  { id: "ab-testing", icon: "🧪", title: "Script A/B Testing", price: "₹8,999 / month", category: "recurring", description: "Run two scripts simultaneously. Analyze conversion rates and receive an optimized version monthly." },
-  { id: "whatsapp-sequences", icon: "💬", title: "WhatsApp Follow-Up Sequences", price: "₹4,999 / month", category: "recurring", description: "Automated post-call WhatsApp flows: reminders, no-show follow-ups, requalification messages." },
-  { id: "regional-language", icon: "🌐", title: "Regional Language Agent", price: "₹8,000 / month per language", category: "recurring", description: "Hindi, Tamil, Telugu, Bengali — reach Tier 2/3 city leads in their native language." },
-  { id: "reactivation", icon: "🔁", title: "Reactivation Campaigns", price: "₹14,999 / campaign", category: "one-time", description: "We call your dormant lead database quarterly. New pipeline with zero new ad spend." },
-  { id: "white-label", icon: "🏷️", title: "White-Label Reseller", price: "₹49,999 setup + revenue share", category: "one-time", description: "Agencies and consultants: resell Autoniv under your brand with full support." },
+  {
+    id: "performance-report",
+    icon: "📊",
+    title: "Monthly Performance Report",
+    price: "₹3,999–₹6,999 / month",
+    category: "recurring",
+    description:
+      "Branded PDF with call quality scores, script performance, A/B outcomes, and industry benchmarks.",
+  },
+  {
+    id: "ab-testing",
+    icon: "🧪",
+    title: "Script A/B Testing",
+    price: "₹8,999 / month",
+    category: "recurring",
+    description:
+      "Run two scripts simultaneously. Analyze conversion rates and receive an optimized version monthly.",
+  },
+  {
+    id: "whatsapp-sequences",
+    icon: "💬",
+    title: "WhatsApp Follow-Up Sequences",
+    price: "₹4,999 / month",
+    category: "recurring",
+    description:
+      "Automated post-call WhatsApp flows: reminders, no-show follow-ups, requalification messages.",
+  },
+  {
+    id: "regional-language",
+    icon: "🌐",
+    title: "Regional Language Agent",
+    price: "₹8,000 / month per language",
+    category: "recurring",
+    description:
+      "Hindi, Tamil, Telugu, Bengali — reach Tier 2/3 city leads in their native language.",
+  },
+  {
+    id: "reactivation",
+    icon: "🔁",
+    title: "Reactivation Campaigns",
+    price: "₹14,999 / campaign",
+    category: "one-time",
+    description:
+      "We call your dormant lead database quarterly. New pipeline with zero new ad spend.",
+  },
+  {
+    id: "white-label",
+    icon: "🏷️",
+    title: "White-Label Reseller",
+    price: "₹49,999 setup + revenue share",
+    category: "one-time",
+    description:
+      "Agencies and consultants: resell Autoniv under your brand with full support.",
+  },
 ];
 
 const testimonials = [
-  { name: "Sarah Chen", role: "CEO, HealthFirst Clinic", quote: "Autoniv transformed our patient intake. We handle 3× more calls with the same staff.", initials: "SC", metric: "+40% leads" },
-  { name: "Marcus Johnson", role: "Director, BrightHome Services", quote: "The AI receptionist never sleeps. Our leads increased by 40% in the first month alone.", initials: "MJ", metric: "3× capacity" },
-  { name: "Emily Rodriguez", role: "VP Operations, FastTrack Auto", quote: "Setup was instant. The AI sounds so natural, customers don't know it's not human.", initials: "ER", metric: "2min setup" },
+  {
+    name: "Sarah Chen",
+    role: "CEO, HealthFirst Clinic",
+    quote:
+      "Autoniv transformed our patient intake. We handle 3× more calls with the same staff.",
+    initials: "SC",
+    metric: "+40% leads",
+  },
+  {
+    name: "Marcus Johnson",
+    role: "Director, BrightHome Services",
+    quote:
+      "The AI receptionist never sleeps. Our leads increased by 40% in the first month alone.",
+    initials: "MJ",
+    metric: "3× capacity",
+  },
+  {
+    name: "Emily Rodriguez",
+    role: "VP Operations, FastTrack Auto",
+    quote:
+      "Setup was instant. The AI sounds so natural, customers don't know it's not human.",
+    initials: "ER",
+    metric: "2min setup",
+  },
 ];
 
 const useCases = [
-  { title: "Healthcare", desc: "Automate patient scheduling, prescription reminders, and follow-up calls.", icon: "🏥", stat: "60% fewer no-shows" },
-  { title: "Real Estate", desc: "Qualify leads, schedule viewings, and follow up on listings 24/7.", icon: "🏠", stat: "3× more qualified leads" },
-  { title: "Financial Services", desc: "Handle loan inquiries, payment reminders, and account support calls.", icon: "🏦", stat: "50% cost reduction" },
+  {
+    title: "Healthcare",
+    desc: "Automate patient scheduling, prescription reminders, and follow-up calls.",
+    icon: "🏥",
+    stat: "60% fewer no-shows",
+  },
+  {
+    title: "Real Estate",
+    desc: "Qualify leads, schedule viewings, and follow up on listings 24/7.",
+    icon: "🏠",
+    stat: "3× more qualified leads",
+  },
+  {
+    title: "Financial Services",
+    desc: "Handle loan inquiries, payment reminders, and account support calls.",
+    icon: "🏦",
+    stat: "50% cost reduction",
+  },
 ];
 
 const integrationsRow1 = [
-  { name: "Azure", icon: "☁️" }, { name: "Gemini", icon: "💎" }, { name: "Anthropic", icon: "🧠" },
-  { name: "Groq", icon: "⚡" }, { name: "Cartesia", icon: "🎙️" }, { name: "Make", icon: "🔄" },
-  { name: "n8n", icon: "🔗" }, { name: "Google Calendar", icon: "📅" },
+  { name: "Azure", icon: "☁️" },
+  { name: "Gemini", icon: "💎" },
+  { name: "Anthropic", icon: "🧠" },
+  { name: "Groq", icon: "⚡" },
+  { name: "Cartesia", icon: "🎙️" },
+  { name: "Make", icon: "🔄" },
+  { name: "n8n", icon: "🔗" },
+  { name: "Google Calendar", icon: "📅" },
 ];
 
 const integrationsRow2 = [
-  { name: "WhatsApp", icon: "💬" }, { name: "Discord", icon: "💜" }, { name: "Instagram", icon: "📸" },
-  { name: "Facebook", icon: "👤" }, { name: "Telegram", icon: "✈️" }, { name: "Google Docs", icon: "📄" },
-  { name: "Microsoft", icon: "🪟" }, { name: "Twilio", icon: "📞" },
+  { name: "WhatsApp", icon: "💬" },
+  { name: "Discord", icon: "💜" },
+  { name: "Instagram", icon: "📸" },
+  { name: "Facebook", icon: "👤" },
+  { name: "Telegram", icon: "✈️" },
+  { name: "Google Docs", icon: "📄" },
+  { name: "Microsoft", icon: "🪟" },
+  { name: "Twilio", icon: "📞" },
 ];
 
 const CONVERSATION = [
   { role: "user", text: "Hi, I'd like to book an appointment", delay: 800 },
-  { role: "agent", text: "Of course! What day works best for you?", delay: 2400 },
+  {
+    role: "agent",
+    text: "Of course! What day works best for you?",
+    delay: 2400,
+  },
   { role: "user", text: "Next Tuesday around 2 PM if possible", delay: 4200 },
-  { role: "agent", text: "Tuesday 2 PM is available — shall I confirm?", delay: 5900 },
+  {
+    role: "agent",
+    text: "Tuesday 2 PM is available — shall I confirm?",
+    delay: 5900,
+  },
   { role: "user", text: "Yes please!", delay: 7600 },
-  { role: "agent", text: "Done! You're booked. See you Tuesday ✓", delay: 9100 },
+  {
+    role: "agent",
+    text: "Done! You're booked. See you Tuesday ✓",
+    delay: 9100,
+  },
 ];
 
 /* ─── Noise Overlay ──────────────────────────────────────── */
 function NoiseOverlay() {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    const c = ref.current; if (!c) return;
-    const ctx = c.getContext("2d")!; const S = 256;
-    c.width = S; c.height = S;
+    const c = ref.current;
+    if (!c) return;
+    const ctx = c.getContext("2d")!;
+    const S = 256;
+    c.width = S;
+    c.height = S;
     const id = ctx.createImageData(S, S);
     for (let i = 0; i < id.data.length; i += 4) {
       const v = Math.random() * 255;
-      id.data[i] = id.data[i + 1] = id.data[i + 2] = v; id.data[i + 3] = 10;
+      id.data[i] = id.data[i + 1] = id.data[i + 2] = v;
+      id.data[i + 3] = 10;
     }
     ctx.putImageData(id, 0, 0);
   }, []);
-  return <canvas ref={ref} className="fixed inset-0 w-full h-full pointer-events-none z-0 opacity-[0.025]" style={{ imageRendering: "pixelated" }} />;
+  return (
+    <canvas
+      ref={ref}
+      className="fixed inset-0 w-full h-full pointer-events-none z-0 opacity-[0.025]"
+      style={{ imageRendering: "pixelated" }}
+    />
+  );
 }
 
 /* ─── Aurora ─────────────────────────────────────────────── */
 function Aurora() {
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      <div className="aurora-orb aurora-1" /><div className="aurora-orb aurora-2" /><div className="aurora-orb aurora-3" />
+      <div className="aurora-orb aurora-1" />
+      <div className="aurora-orb aurora-2" />
+      <div className="aurora-orb aurora-3" />
     </div>
   );
 }
 
-/* ─── Waveform ───────────────────────────────────────────── */
-function Waveform({ active, color = "#10B981" }: { active: boolean; color?: string }) {
+const PARTICLE_FIELD = Array.from({ length: 90 }).map((_, i) => {
+  const seed = (i * 9301 + 49297) % 233280;
+  const rand = seed / 233280;
+  const x = (i / 90) * 100;
+  const distFromCenter = Math.abs(x - 50) / 50; // 0 center, 1 edges
+  const density = Math.max(0.15, 1 - distFromCenter * 0.7);
+  return {
+    x,
+    y: (rand - 0.5) * 1.3,
+    size: 1 + rand * 1.5,
+    opacity: density * (0.3 + rand * 0.5),
+    delay: rand * 3.5,
+  };
+});
+
+/* ───────────────────────────────────────────────────────────────────
+   2) COMPONENTS — add alongside your other component definitions
+   (e.g. near Waveform / VoiceOrb)
+   ─────────────────────────────────────────────────────────────────── */
+
+/* ─── Full Spectrum Field (bars + particles, low height, slow speed) ── */
+
+function SpectrumField({ active }: { active: boolean }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 2.5, height: 28 }}>
-      {Array.from({ length: 20 }).map((_, i) => (
-        <div key={i} style={{ width: 2.5, borderRadius: 99, background: color, height: active ? `${8 + Math.abs(Math.sin(i * .75)) * 18}px` : "4px", opacity: active ? 1 : .2, animation: active ? `waveBar ${.55 + (i % 6) * .1}s ease-in-out ${i * .03}s infinite alternate` : "none", transition: "height .35s ease, opacity .35s ease" }} />
-      ))}
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        overflow: "hidden",
+        pointerEvents: "none",
+        transform: "none",
+        perspective: "none",
+      }}
+    >
+      {/* Particle dots layer */}
+      <svg
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+        }}
+      >
+        {PARTICLE_FIELD.map((p, i) => (
+          <circle
+            key={i}
+            cx={p.x}
+            cy={50 + p.y * 38}
+            r={p.size * 0.35}
+            fill={p.x < 50 ? "#34D399" : "#60a5fa"}
+            opacity={active ? p.opacity : p.opacity * 0.35}
+            style={{
+              animation: active
+                ? `dotFlicker ${2.2 + p.delay}s ease-in-out ${p.delay}s infinite`
+                : "none",
+            }}
+          />
+        ))}
+      </svg>
+
+      {/* Bar spectrum layer — bars are centered vertically as a column, growing symmetrically
+          from a fixed midline (NOT skewed/rotated). Each bar's own height controls how far
+          it extends above/below that midline equally, capped well inside the panel. */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 3,
+          transform: "none",
+        }}
+      >
+        {Array.from({ length: 64 }).map((_, i) => {
+          const total = 64;
+          const center = (total - 1) / 2;
+          const dist = Math.abs(i - center);
+          const distRatio = dist / center;
+
+          // gap near the very center so the orb sits cleanly on top — widened for breathing room
+          const centerGap = distRatio < 0.3 ? 0 : 1;
+
+          // peak sits a little out from the ring, leaving visible space before bars start
+          const peakPos = 0.18;
+          const envelope =
+            distRatio < peakPos
+              ? 0.45 + (distRatio / peakPos) * 0.35
+              : 1 - ((distRatio - peakPos) / (1 - peakPos)) * 0.78;
+
+          const seed = (i * 7919 + 104729) % 1000;
+          const jitter = 0.75 + (seed / 1000) * 0.4;
+
+          // height capped much lower so bars stay small, leaving the ring's glow clearly visible
+          const h = Math.max(
+            2,
+            Math.min(46, envelope * jitter * 46 * centerGap),
+          );
+
+          const isLeftHalf = i < total / 2;
+
+          return (
+            <div
+              key={i}
+              style={{
+                width: 3,
+                borderRadius: 99,
+                height: active ? `${h}%` : "2%",
+                background: isLeftHalf
+                  ? "linear-gradient(180deg,#5eead4,#10b981)"
+                  : "linear-gradient(180deg,#7dd3fc,#3b82f6)",
+                opacity: active ? 0.92 : 0.18,
+                boxShadow: active
+                  ? isLeftHalf
+                    ? "0 0 6px rgba(16,185,129,0.35)"
+                    : "0 0 6px rgba(59,130,246,0.35)"
+                  : "none",
+                animation: active
+                  ? `waveBounce ${1.9 + (i % 6) * 0.25}s ease-in-out ${i * 0.05}s infinite`
+                  : "none",
+                transition: "height .4s ease, opacity .4s ease",
+                flexShrink: 0,
+                transform: "none",
+              }}
+            />
+          );
+        })}
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "radial-gradient(ellipse 60% 90% at 50% 50%, transparent 0%, transparent 55%, rgba(10,10,10,0.0) 100%)",
+        }}
+      />
     </div>
   );
 }
 
-/* ─── Voice Orb ──────────────────────────────────────────── */
-function VoiceOrb({ speaking }: { speaking: "user" | "agent" | "idle" }) {
-  const isAgent = speaking === "agent", isUser = speaking === "user";
-  const coreColor = isAgent ? "#10B981" : isUser ? "#2563EB" : "#64748b";
-  const ringColor = isAgent ? "rgba(16,185,129,0.15)" : isUser ? "rgba(37,99,235,0.13)" : "rgba(100,116,139,0.05)";
+/* ─── Glow Ring Orb (cyan ring + solid mic circle) ── */
+function GlowRingOrb({
+  active,
+  scale = 1,
+}: {
+  active: boolean;
+  scale?: number;
+}) {
+  const s = (n: number) => n * scale;
   return (
-    <div style={{ position: "relative", width: 160, height: 160, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      {speaking !== "idle" && [0, 1, 2].map(i => (
-        <div key={i} style={{ position: "absolute", inset: 0, borderRadius: "50%", border: `1px solid ${ringColor}`, animation: `ringPulse 2s ease-out ${i * .65}s infinite`, pointerEvents: "none" }} />
-      ))}
-      <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "1px solid rgba(16,185,129,0.10)" }} />
-      <div style={{ position: "absolute", width: 120, height: 120, borderRadius: "50%", background: isAgent ? "rgba(16,185,129,0.18)" : isUser ? "rgba(37,99,235,0.15)" : "rgba(100,116,139,0.05)", filter: "blur(28px)", transition: "background .6s ease" }} />
-      <div style={{ position: "relative", zIndex: 2, width: 76, height: 76, borderRadius: "50%", background: speaking === "idle" ? "radial-gradient(circle at 35% 35%,#1a1a1a,#0a0a0a)" : isAgent ? "radial-gradient(circle at 35% 35%,#34d399 0%,#10b981 45%,#059669 100%)" : "radial-gradient(circle at 35% 35%,#60a5fa 0%,#2563eb 60%,#1d4ed8 100%)", border: `1.5px solid ${coreColor}35`, boxShadow: speaking !== "idle" ? `0 0 0 3px ${coreColor}15,0 0 40px ${coreColor}30,inset 0 1px 0 rgba(255,255,255,.12)` : "0 0 20px rgba(16,185,129,.10),inset 0 1px 0 rgba(255,255,255,.06)", transition: "all .5s cubic-bezier(.16,1,.3,1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={speaking === "idle" ? "#94a3b8" : "#fff"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "stroke .4s ease" }}>
+    <div
+      style={{
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        width: s(150),
+        height: s(150),
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 10,
+      }}
+    >
+      {/* outer soft glow */}
+      <div
+        style={{
+          position: "absolute",
+          width: s(170),
+          height: s(170),
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(34,211,238,0.30) 0%, rgba(34,211,238,0.08) 55%, transparent 75%)",
+          filter: `blur(${s(14)}px)`,
+          animation: active ? "orbPulseGlow 2.6s ease-in-out infinite" : "none",
+        }}
+      />
+      {/* glowing ring */}
+      <div
+        style={{
+          position: "absolute",
+          width: s(126),
+          height: s(126),
+          borderRadius: "50%",
+          border: `${Math.max(2, s(5))}px solid`,
+          borderColor: "#22d3ee",
+          boxShadow: `0 0 ${s(18)}px rgba(34,211,238,0.65), 0 0 ${s(36)}px rgba(59,130,246,0.35), inset 0 0 ${s(14)}px rgba(34,211,238,0.30)`,
+        }}
+      />
+      {/* faint outer ring echo */}
+      <div
+        style={{
+          position: "absolute",
+          width: s(150),
+          height: s(150),
+          borderRadius: "50%",
+          border: "1px solid rgba(34,211,238,0.18)",
+        }}
+      />
+      {/* solid mic circle */}
+      <div
+        style={{
+          position: "relative",
+          width: s(66),
+          height: s(66),
+          borderRadius: "50%",
+          background: "radial-gradient(circle at 35% 35%,#3b82f6,#1d4ed8)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: `0 0 ${s(22)}px rgba(37,99,235,0.55)`,
+        }}
+      >
+        <svg
+          width={s(24)}
+          height={s(24)}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#fff"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <rect x="9" y="2" width="6" height="12" rx="3" />
-          <path d="M5 10a7 7 0 0014 0" /><line x1="12" y1="19" x2="12" y2="22" /><line x1="9" y1="22" x2="15" y2="22" />
+          <path d="M5 10a7 7 0 0014 0" />
+          <line x1="12" y1="19" x2="12" y2="22" />
+          <line x1="9" y1="22" x2="15" y2="22" />
         </svg>
       </div>
     </div>
   );
 }
 
+{
+  /*
+  USAGE — pass a smaller scale when placing inside the hero phone mockup, e.g.:
+    <GlowRingOrb active={true} scale={0.45} />   // ~67px wide, fits a 144px phone screen area
+    <GlowRingOrb active={true} scale={0.6} />    // ~90px wide, for sm breakpoint phone
+  Default scale={1} keeps it at full 150px size for the demo section.
+*/
+}
+
+// /* ─── Waveform ───────────────────────────────────────────── */
+// function Waveform({ active, color = "#10B981" }: { active: boolean; color?: string }) {
+//   return (
+//     <div style={{ display: "flex", alignItems: "center", gap: 2.5, height: 28 }}>
+//       {Array.from({ length: 20 }).map((_, i) => (
+//         <div key={i} style={{ width: 2.5, borderRadius: 99, background: color, height: active ? `${8 + Math.abs(Math.sin(i * .75)) * 18}px` : "4px", opacity: active ? 1 : .2, animation: active ? `waveBar ${.55 + (i % 6) * .1}s ease-in-out ${i * .03}s infinite alternate` : "none", transition: "height .35s ease, opacity .35s ease" }} />
+//       ))}
+//     </div>
+//   );
+// }
+
+// /* ─── Orb Waveform (organic spectrum, wraps radially around the orb) ── */
+// function OrbWaveform({ active, color = "#10B981" }: { active: boolean; color?: string }) {
+//   return (
+//     <div className="absolute inset-0 flex items-center justify-center gap-[2px] sm:gap-[2.5px] z-0 pointer-events-none">
+//       {WAVE_HEIGHTS.map((baseH, i) => {
+//         const center = (WAVE_HEIGHTS.length - 1) / 2;
+//         const dist = Math.abs(i - center);
+//         const envelope = Math.max(0.16, 1 - (dist / center) * 0.84);
+//         const h = Math.max(6, baseH * envelope * 1.6);
+//         return (
+//           <div
+//             key={i}
+//             className="rounded-full"
+//             style={{
+//               width: "3px",
+//               height: active ? `${h}px` : "6px",
+//               background: i % 2 === 0
+//                 ? `linear-gradient(180deg,${color},#0a8f63)`
+//                 : "linear-gradient(180deg,#60a5fa,#1d4ed8)",
+//               opacity: active ? 0.95 : 0.25,
+//               animation: active ? "waveBounce 1s ease-in-out infinite" : "none",
+//               animationDelay: `${i * 0.045}s`,
+//               transition: "height .35s ease, opacity .35s ease"
+//             }}
+//           />
+//         );
+//       })}
+//     </div>
+//   );
+// }
+
+// /* ─── Voice Orb ──────────────────────────────────────────── */
+// function VoiceOrb({ speaking }: { speaking: "user" | "agent" | "idle" }) {
+//   const isAgent = speaking === "agent", isUser = speaking === "user";
+//   const coreColor = isAgent ? "#10B981" : isUser ? "#2563EB" : "#64748b";
+//   const ringColor = isAgent ? "rgba(16,185,129,0.15)" : isUser ? "rgba(37,99,235,0.13)" : "rgba(100,116,139,0.05)";
+//   return (
+//     <div style={{ position: "relative", width: 160, height: 160, display: "flex", alignItems: "center", justifyContent: "center" }}>
+//       {speaking !== "idle" && [0, 1, 2].map(i => (
+//         <div key={i} style={{ position: "absolute", inset: 0, borderRadius: "50%", border: `1px solid ${ringColor}`, animation: `ringPulse 2s ease-out ${i * .65}s infinite`, pointerEvents: "none" }} />
+//       ))}
+//       <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "1px solid rgba(16,185,129,0.10)" }} />
+//       <div style={{ position: "absolute", width: 120, height: 120, borderRadius: "50%", background: isAgent ? "rgba(16,185,129,0.18)" : isUser ? "rgba(37,99,235,0.15)" : "rgba(100,116,139,0.05)", filter: "blur(28px)", transition: "background .6s ease" }} />
+//       <div style={{ position: "relative", zIndex: 2, width: 76, height: 76, borderRadius: "50%", background: speaking === "idle" ? "radial-gradient(circle at 35% 35%,#1a1a1a,#0a0a0a)" : isAgent ? "radial-gradient(circle at 35% 35%,#34d399 0%,#10b981 45%,#059669 100%)" : "radial-gradient(circle at 35% 35%,#60a5fa 0%,#2563eb 60%,#1d4ed8 100%)", border: `1.5px solid ${coreColor}35`, boxShadow: speaking !== "idle" ? `0 0 0 3px ${coreColor}15,0 0 40px ${coreColor}30,inset 0 1px 0 rgba(255,255,255,.12)` : "0 0 20px rgba(16,185,129,.10),inset 0 1px 0 rgba(255,255,255,.06)", transition: "all .5s cubic-bezier(.16,1,.3,1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+//         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={speaking === "idle" ? "#94a3b8" : "#fff"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "stroke .4s ease" }}>
+//           <rect x="9" y="2" width="6" height="12" rx="3" />
+//           <path d="M5 10a7 7 0 0014 0" /><line x1="12" y1="19" x2="12" y2="22" /><line x1="9" y1="22" x2="15" y2="22" />
+//         </svg>
+//       </div>
+//     </div>
+//   );
+// }
+
 /* ─── Scroll Reveal ──────────────────────────────────────── */
-function Reveal({ children, className, delay = 0, from = "bottom" }: { children: React.ReactNode; className?: string; delay?: number; from?: "bottom" | "left" | "right" | "scale" }) {
+function Reveal({
+  children,
+  className,
+  delay = 0,
+  from = "bottom",
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+  from?: "bottom" | "left" | "right" | "scale";
+}) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const el = ref.current; if (!el) return;
-    const t: Record<string, string> = { bottom: "translateY(32px)", left: "translateX(-32px)", right: "translateX(32px)", scale: "scale(0.92)" };
-    el.style.opacity = "0"; el.style.transform = t[from];
+    const el = ref.current;
+    if (!el) return;
+    const t: Record<string, string> = {
+      bottom: "translateY(32px)",
+      left: "translateX(-32px)",
+      right: "translateX(32px)",
+      scale: "scale(0.92)",
+    };
+    el.style.opacity = "0";
+    el.style.transform = t[from];
     el.style.transition = `opacity .85s ${delay}s cubic-bezier(.16,1,.3,1),transform .85s ${delay}s cubic-bezier(.16,1,.3,1)`;
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { el.style.opacity = "1"; el.style.transform = "none"; obs.disconnect(); } }, { threshold: .1 });
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          el.style.opacity = "1";
+          el.style.transform = "none";
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.1 },
+    );
     obs.observe(el);
     return () => obs.disconnect();
   }, [delay, from]);
-  return <div ref={ref} className={className}>{children}</div>;
+  return (
+    <div ref={ref} className={className}>
+      {children}
+    </div>
+  );
 }
 
 /* ─── TiltCard ───────────────────────────────────────────── */
-function TiltCard({ children, className = "", style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
+function TiltCard({
+  children,
+  className = "",
+  style,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = ref.current; if (!el) return;
-    const r = el.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width - .5; const y = (e.clientY - r.top) / r.height - .5;
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
     el.style.transform = `perspective(900px) rotateX(${-y * 10}deg) rotateY(${x * 10}deg) translateZ(14px)`;
-    const sh = el.querySelector<HTMLElement>(".shine"); if (sh) sh.style.background = `radial-gradient(circle at ${(x + .5) * 100}% ${(y + .5) * 100}%,rgba(34,197,94,.10) 0%,transparent 60%)`;
+    const sh = el.querySelector<HTMLElement>(".shine");
+    if (sh)
+      sh.style.background = `radial-gradient(circle at ${(x + 0.5) * 100}% ${(y + 0.5) * 100}%,rgba(34,197,94,.10) 0%,transparent 60%)`;
   };
-  const onLeave = () => { const el = ref.current; if (!el) return; el.style.transform = "perspective(900px) rotateX(0) rotateY(0)"; const sh = el.querySelector<HTMLElement>(".shine"); if (sh) sh.style.background = "transparent"; };
+  const onLeave = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.transform = "perspective(900px) rotateX(0) rotateY(0)";
+    const sh = el.querySelector<HTMLElement>(".shine");
+    if (sh) sh.style.background = "transparent";
+  };
   return (
-    <div ref={ref} onMouseMove={onMove} onMouseLeave={onLeave} className={className} style={{ transition: "transform .14s ease-out", transformStyle: "preserve-3d", ...style }}>
+    <div
+      ref={ref}
+      onMouseMove={onMove}
+      onMouseLeave={onLeave}
+      className={className}
+      style={{
+        transition: "transform .14s ease-out",
+        transformStyle: "preserve-3d",
+        ...style,
+      }}
+    >
       <div className="shine absolute inset-0 rounded-[inherit] pointer-events-none z-10 transition-all duration-200" />
       {children}
     </div>
@@ -180,56 +772,292 @@ function TiltCard({ children, className = "", style }: { children: React.ReactNo
 }
 
 /* ─── Magnetic Button ────────────────────────────────────── */
-function MagBtn({ children, className, to, onClick, style }: { children: React.ReactNode; className: string; to?: string; onClick?: () => void; style?: React.CSSProperties }) {
+function MagBtn({
+  children,
+  className,
+  to,
+  onClick,
+  style,
+}: {
+  children: React.ReactNode;
+  className: string;
+  to?: string;
+  onClick?: () => void;
+  style?: React.CSSProperties;
+}) {
   const ref = useRef<HTMLDivElement>(null);
-  const onMove = (e: React.MouseEvent) => { const el = ref.current; if (!el) return; const r = el.getBoundingClientRect(); el.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * .35}px,${(e.clientY - r.top - r.height / 2) * .35}px)`; };
-  const onLeave = () => { if (ref.current) ref.current.style.transform = "none"; };
-  const inner = to ? <Link to={to} className={className} style={style}>{children}</Link> : <button onClick={onClick} className={className} style={style}>{children}</button>;
-  return <div ref={ref} onMouseMove={onMove} onMouseLeave={onLeave} style={{ transition: "transform .28s cubic-bezier(.23,1,.32,1)", display: "inline-block" }}>{inner}</div>;
+  const onMove = (e: React.MouseEvent) => {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    el.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * 0.35}px,${(e.clientY - r.top - r.height / 2) * 0.35}px)`;
+  };
+  const onLeave = () => {
+    if (ref.current) ref.current.style.transform = "none";
+  };
+  const inner = to ? (
+    <Link to={to} className={className} style={style}>
+      {children}
+    </Link>
+  ) : (
+    <button onClick={onClick} className={className} style={style}>
+      {children}
+    </button>
+  );
+  return (
+    <div
+      ref={ref}
+      onMouseMove={onMove}
+      onMouseLeave={onLeave}
+      style={{
+        transition: "transform .28s cubic-bezier(.23,1,.32,1)",
+        display: "inline-block",
+      }}
+    >
+      {inner}
+    </div>
+  );
 }
 
 /* ─── Contact Form ───────────────────────────────────────── */
 function ContactForm() {
-  const [name, setName] = useState(""); const [email, setEmail] = useState(""); const [phone, setPhone] = useState("");
-  const [company, setCompany] = useState(""); const [message, setMessage] = useState("");
-  const [submitted, setSubmitted] = useState(false); const [loading, setLoading] = useState(false); const [error, setError] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [company, setCompany] = useState("");
+  const [message, setMessage] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const WA = "917065990307";
-  const openWA = () => { const lines = ["Hello! I have an inquiry via Contact Us form:", "", `Name: ${name}`, `Email: ${email}`, phone ? `Phone: ${phone}` : "", company ? `Company: ${company}` : "", "", `Message: ${message}`].filter(Boolean); window.open(`https://wa.me/${WA}?text=${encodeURIComponent(lines.join("\n"))}`, "_blank"); };
-  const handleSubmit = async (e: React.FormEvent) => { e.preventDefault(); setLoading(true); setError(""); try { await contactService.submit({ name, email, phone, company, message }); openWA(); setSubmitted(true); } catch (err: any) { setError(err.response?.data?.message || "Something went wrong."); } finally { setLoading(false); }; };
-  const inputStyle = { background: "rgba(37,99,235,.03)", border: "1px solid rgba(37,99,235,.18)", color: "#0a0a0a" } as React.CSSProperties;
-  const onFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => e.target.style.borderColor = "rgba(37,99,235,.5)";
-  const onBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => e.target.style.borderColor = "rgba(37,99,235,.18)";
-  if (submitted) return (
-    <div className="text-center py-8 space-y-4">
-      <div className="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center" style={{ background: "rgba(16,185,129,.1)", border: "1px solid rgba(16,185,129,.25)" }}>
-        <svg className="w-7 h-7" fill="none" stroke="#10B981" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+  const openWA = () => {
+    const lines = [
+      "Hello! I have an inquiry via Contact Us form:",
+      "",
+      `Name: ${name}`,
+      `Email: ${email}`,
+      phone ? `Phone: ${phone}` : "",
+      company ? `Company: ${company}` : "",
+      "",
+      `Message: ${message}`,
+    ].filter(Boolean);
+    window.open(
+      `https://wa.me/${WA}?text=${encodeURIComponent(lines.join("\n"))}`,
+      "_blank",
+    );
+  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      await contactService.submit({ name, email, phone, company, message });
+      openWA();
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const inputStyle = {
+    background: "rgba(37,99,235,.03)",
+    border: "1px solid rgba(37,99,235,.18)",
+    color: "#0a0a0a",
+  } as React.CSSProperties;
+  const onFocus = (
+    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => (e.target.style.borderColor = "rgba(37,99,235,.5)");
+  const onBlur = (
+    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => (e.target.style.borderColor = "rgba(37,99,235,.18)");
+  if (submitted)
+    return (
+      <div className="text-center py-8 space-y-4">
+        <div
+          className="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center"
+          style={{
+            background: "rgba(16,185,129,.1)",
+            border: "1px solid rgba(16,185,129,.25)",
+          }}
+        >
+          <svg
+            className="w-7 h-7"
+            fill="none"
+            stroke="#10B981"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+        </div>
+        <h3 className="text-xl font-bold" style={{ color: "#0a0a0a" }}>
+          Thank you!
+        </h3>
+        <p className="text-sm" style={{ color: "#52525b" }}>
+          Your details have been sent to our team on WhatsApp. We'll get back to
+          you within 24 hours.
+        </p>
       </div>
-      <h3 className="text-xl font-bold" style={{ color: "#0a0a0a" }}>Thank you!</h3>
-      <p className="text-sm" style={{ color: "#52525b" }}>Your details have been sent to our team on WhatsApp. We'll get back to you within 24 hours.</p>
-    </div>
-  );
+    );
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {[{ label: "Full Name *", type: "text", val: name, set: setName, ph: "John Doe", req: true }, { label: "Email *", type: "email", val: email, set: setEmail, ph: "you@company.com", req: true }].map(f => (
-          <div key={f.label}><label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: "#52525b" }}>{f.label}</label>
-            <input type={f.type} required={f.req} value={f.val} onChange={e => f.set(e.target.value)} placeholder={f.ph} className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all placeholder-black/30" style={inputStyle} onFocus={onFocus} onBlur={onBlur} /></div>
+        {[
+          {
+            label: "Full Name *",
+            type: "text",
+            val: name,
+            set: setName,
+            ph: "John Doe",
+            req: true,
+          },
+          {
+            label: "Email *",
+            type: "email",
+            val: email,
+            set: setEmail,
+            ph: "you@company.com",
+            req: true,
+          },
+        ].map((f) => (
+          <div key={f.label}>
+            <label
+              className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+              style={{ color: "#52525b" }}
+            >
+              {f.label}
+            </label>
+            <input
+              type={f.type}
+              required={f.req}
+              value={f.val}
+              onChange={(e) => f.set(e.target.value)}
+              placeholder={f.ph}
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all placeholder-black/30"
+              style={inputStyle}
+              onFocus={onFocus}
+              onBlur={onBlur}
+            />
+          </div>
         ))}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {[{ label: "Phone", type: "tel", val: phone, set: setPhone, ph: "9876543210" }, { label: "Company", type: "text", val: company, set: setCompany, ph: "Your Company" }].map(f => (
-          <div key={f.label}><label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: "#52525b" }}>{f.label}</label>
-            <input type={f.type} value={f.val} onChange={e => f.set(e.target.value)} placeholder={f.ph} className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all placeholder-black/30" style={inputStyle} onFocus={onFocus} onBlur={onBlur} /></div>
+        {[
+          {
+            label: "Phone",
+            type: "tel",
+            val: phone,
+            set: setPhone,
+            ph: "9876543210",
+          },
+          {
+            label: "Company",
+            type: "text",
+            val: company,
+            set: setCompany,
+            ph: "Your Company",
+          },
+        ].map((f) => (
+          <div key={f.label}>
+            <label
+              className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+              style={{ color: "#52525b" }}
+            >
+              {f.label}
+            </label>
+            <input
+              type={f.type}
+              value={f.val}
+              onChange={(e) => f.set(e.target.value)}
+              placeholder={f.ph}
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all placeholder-black/30"
+              style={inputStyle}
+              onFocus={onFocus}
+              onBlur={onBlur}
+            />
+          </div>
         ))}
       </div>
-      <div><label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: "#52525b" }}>Message *</label>
-        <textarea required rows={4} value={message} onChange={e => setMessage(e.target.value)} placeholder="Tell us about your needs — team size, call volume, use case..." className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all resize-none placeholder-black/30" style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+      <div>
+        <label
+          className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+          style={{ color: "#52525b" }}
+        >
+          Message *
+        </label>
+        <textarea
+          required
+          rows={4}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Tell us about your needs — team size, call volume, use case..."
+          className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all resize-none placeholder-black/30"
+          style={inputStyle}
+          onFocus={onFocus}
+          onBlur={onBlur}
+        />
       </div>
-      {error && <p className="text-sm font-medium" style={{ color: "#ff4d4d" }}>{error}</p>}
-      <button type="submit" disabled={loading} className="btn-cta btn-responsive-lg w-full font-bold text-white flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: "var(--gg)", color: "#ffffff" }}>
-        {loading ? <><svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Sending…</> : <>Send Message<svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg></>}
+      {error && (
+        <p className="text-sm font-medium" style={{ color: "#ff4d4d" }}>
+          {error}
+        </p>
+      )}
+      <button
+        type="submit"
+        disabled={loading}
+        className="btn-cta btn-responsive-lg w-full font-bold text-white flex items-center justify-center gap-2 disabled:opacity-50"
+        style={{ background: "var(--gg)", color: "#ffffff" }}
+      >
+        {loading ? (
+          <>
+            <svg
+              className="animate-spin w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
+            </svg>
+            Sending…
+          </>
+        ) : (
+          <>
+            Send Message
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+              />
+            </svg>
+          </>
+        )}
       </button>
-      <p className="text-center text-[11px]" style={{ color: "#a1a1aa" }}>No spam. We'll only reach out to discuss your requirements.</p>
+      <p className="text-center text-[11px]" style={{ color: "#a1a1aa" }}>
+        No spam. We'll only reach out to discuss your requirements.
+      </p>
     </form>
   );
 }
@@ -238,11 +1066,17 @@ function ContactForm() {
 export function Landing() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [authDialog, setAuthDialog] = useState<"login" | "register" | "forgot_password" | "reset_password" | null>(null);
-  const [authMode, setAuthMode] = useState<"login" | "register" | "forgot_password" | "reset_password">("login");
+  const [authDialog, setAuthDialog] = useState<
+    "login" | "register" | "forgot_password" | "reset_password" | null
+  >(null);
+  const [authMode, setAuthMode] = useState<
+    "login" | "register" | "forgot_password" | "reset_password"
+  >("login");
   const [activeUseCase, setActiveUseCase] = useState(0);
   // Demo state
-  const [demoMsgs, setDemoMsgs] = useState<{ role: string; text: string; id: number }[]>([]);
+  const [demoMsgs, setDemoMsgs] = useState<
+    { role: string; text: string; id: number }[]
+  >([]);
   const [speaking, setSpeaking] = useState<"user" | "agent" | "idle">("idle");
   const [demoRunning, setDemoRunning] = useState(false);
   const [demoDone, setDemoDone] = useState(false);
@@ -250,86 +1084,217 @@ export function Landing() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
 
-  const openAuth = (mode: typeof authMode) => { setAuthMode(mode); setAuthDialog(mode); };
+  const openAuth = (mode: typeof authMode) => {
+    setAuthMode(mode);
+    setAuthDialog(mode);
+  };
   const closeAuth = () => setAuthDialog(null);
-  const scrollTo = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => { e.preventDefault(); document.querySelector(id)?.scrollIntoView({ behavior: "smooth" }); };
+  const scrollTo = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
+  };
 
-  useEffect(() => { const f = () => setScrolled(window.scrollY > 24); window.addEventListener("scroll", f, { passive: true }); return () => window.removeEventListener("scroll", f); }, []);
-  useEffect(() => { if (!mobileMenuOpen) return; const c = (e: MouseEvent) => { if (navRef.current && !navRef.current.contains(e.target as Node)) setMobileMenuOpen(false); }; document.addEventListener("mousedown", c); return () => document.removeEventListener("mousedown", c); }, [mobileMenuOpen]);
-  useEffect(() => { const t = setInterval(() => setActiveUseCase(i => (i + 1) % useCases.length), 3500); return () => clearInterval(t); }, []);
+  useEffect(() => {
+    const f = () => setScrolled(window.scrollY > 24);
+    window.addEventListener("scroll", f, { passive: true });
+    return () => window.removeEventListener("scroll", f);
+  }, []);
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const c = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node))
+        setMobileMenuOpen(false);
+    };
+    document.addEventListener("mousedown", c);
+    return () => document.removeEventListener("mousedown", c);
+  }, [mobileMenuOpen]);
+  useEffect(() => {
+    const t = setInterval(
+      () => setActiveUseCase((i) => (i + 1) % useCases.length),
+      3500,
+    );
+    return () => clearInterval(t);
+  }, []);
   useEffect(() => {
     const container = chatEndRef.current?.parentElement;
     if (container) container.scrollTop = container.scrollHeight;
   }, [demoMsgs]);
-  useEffect(() => () => { demoTimers.current.forEach(clearTimeout); }, []);
+  useEffect(
+    () => () => {
+      demoTimers.current.forEach(clearTimeout);
+    },
+    [],
+  );
 
   // Auto-play demo when section is visible
   const demoSectionRef = useRef<HTMLDivElement>(null);
   const demoRunningRef = useRef(false);
-  useEffect(() => { demoRunningRef.current = demoRunning; }, [demoRunning]);
+  useEffect(() => {
+    demoRunningRef.current = demoRunning;
+  }, [demoRunning]);
   useEffect(() => {
     const el = demoSectionRef.current;
     if (!el) return;
-    const obs = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !demoRunningRef.current) {
-        setTimeout(() => startDemo(), 600);
-      }
-    }, { threshold: 0.3 });
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !demoRunningRef.current) {
+          setTimeout(() => startDemo(), 600);
+        }
+      },
+      { threshold: 0.3 },
+    );
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
 
   const startDemo = () => {
-    demoTimers.current.forEach(clearTimeout); demoTimers.current = [];
-    setDemoMsgs([]); setSpeaking("idle"); setDemoDone(false); setDemoRunning(true);
+    demoTimers.current.forEach(clearTimeout);
+    demoTimers.current = [];
+    setDemoMsgs([]);
+    setSpeaking("idle");
+    setDemoDone(false);
+    setDemoRunning(true);
     CONVERSATION.forEach((msg, i) => {
-      const tS = setTimeout(() => setSpeaking(msg.role as "user" | "agent"), msg.delay - 350);
+      const tS = setTimeout(
+        () => setSpeaking(msg.role as "user" | "agent"),
+        msg.delay - 350,
+      );
       const tM = setTimeout(() => {
-        setDemoMsgs(p => [...p, { ...msg, id: i }]);
-        const next = CONVERSATION[i + 1]; const gap = next ? next.delay - msg.delay : 1800;
-        if (gap > 900) { const tI = setTimeout(() => setSpeaking("idle"), Math.min(gap - 400, 1200)); demoTimers.current.push(tI); }
-        if (i === CONVERSATION.length - 1) { const tD = setTimeout(() => { setDemoMsgs([]); setDemoDone(false); startDemo(); }, 1800); demoTimers.current.push(tD); }
+        setDemoMsgs((p) => [...p, { ...msg, id: i }]);
+        const next = CONVERSATION[i + 1];
+        const gap = next ? next.delay - msg.delay : 1800;
+        if (gap > 900) {
+          const tI = setTimeout(
+            () => setSpeaking("idle"),
+            Math.min(gap - 400, 1200),
+          );
+          demoTimers.current.push(tI);
+        }
+        if (i === CONVERSATION.length - 1) {
+          const tD = setTimeout(() => {
+            setDemoMsgs([]);
+            setDemoDone(false);
+            startDemo();
+          }, 1800);
+          demoTimers.current.push(tD);
+        }
       }, msg.delay);
       demoTimers.current.push(tS, tM);
     });
   };
 
+  const waveKeyframes = `
+    @keyframes waveBounce {
+      0%, 100% { transform: scaleY(1); }
+      50% { transform: scaleY(2.2); }
+    }
+    @keyframes bgWaveBounce {
+      0%, 100% { transform: scaleY(1); }
+      50% { transform: scaleY(1.8); }
+    }
+    @keyframes orbPulseGlow {
+      0%, 100% { box-shadow: 0 0 30px rgba(34,211,238,0.5), 0 0 60px rgba(34,211,238,0.2); }
+      50% { box-shadow: 0 0 50px rgba(34,211,238,0.85), 0 0 100px rgba(34,211,238,0.4); }
+    }
+  `;
+  
+    const styleRef = useRef<HTMLStyleElement | null>(null);
+
+  useEffect(() => {
+    if (!styleRef.current) {
+      const style = document.createElement("style");
+      style.textContent = waveKeyframes;
+      document.head.appendChild(style);
+      styleRef.current = style;
+    }
+    return () => {
+      if (styleRef.current) {
+        document.head.removeChild(styleRef.current);
+        styleRef.current = null;
+      }
+    };
+  }, []);
   return (
-    <div className="min-h-screen overflow-x-hidden" style={{ background: "#ffffff", fontFamily: "'Plus Jakarta Sans',sans-serif", color: "#475569" }}>
+    <div
+      className="min-h-screen overflow-x-hidden"
+      style={{
+        background: "#ffffff",
+        fontFamily: "'Plus Jakarta Sans',sans-serif",
+        color: "#475569",
+      }}
+    >
       {/* JSON-LD Structured Data for SEO/AEO/GEO */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "SoftwareApplication",
-          "name": "Autoniv",
-          "applicationCategory": "BusinessApplication",
-          "operatingSystem": "Web",
-          "description": "Deploy intelligent AI voice agents that handle calls 24/7 in 20+ languages. Automate appointments, qualify leads, and boost conversions.",
-          "url": "https://autoniv.com",
-          "logo": "https://autoniv.com/logo-autoniv.png",
-          "screenshot": "https://autoniv.com/og-image.png",
-          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR", "description": "Free tier available" },
-          "featureList": ["AI Voice Agents", "20+ Languages Support", "100+ Realistic Voices", "Smart Analytics", "CRM Integration", "Enterprise Security"],
-          "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "ratingCount": "150" },
-          "author": { "@type": "Organization", "name": "Autoniv", "url": "https://autoniv.com" }
-        })
-      }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          "name": "Autoniv",
-          "url": "https://autoniv.com",
-          "logo": "https://autoniv.com/logo-autoniv.png",
-          "description": "AI Voice Agents for Business Communication",
-          "sameAs": [],
-          "contactPoint": { "@type": "ContactPoint", "contactType": "Sales", "availableLanguage": ["English", "Hindi"] }
-        })
-      }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            name: "Autoniv",
+            applicationCategory: "BusinessApplication",
+            operatingSystem: "Web",
+            description:
+              "Deploy intelligent AI voice agents that handle calls 24/7 in 20+ languages. Automate appointments, qualify leads, and boost conversions.",
+            url: "https://autoniv.com",
+            logo: "https://autoniv.com/logo-autoniv.png",
+            screenshot: "https://autoniv.com/og-image.png",
+            offers: {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "INR",
+              description: "Free tier available",
+            },
+            featureList: [
+              "AI Voice Agents",
+              "20+ Languages Support",
+              "100+ Realistic Voices",
+              "Smart Analytics",
+              "CRM Integration",
+              "Enterprise Security",
+            ],
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: "4.8",
+              ratingCount: "150",
+            },
+            author: {
+              "@type": "Organization",
+              name: "Autoniv",
+              url: "https://autoniv.com",
+            },
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "Autoniv",
+            url: "https://autoniv.com",
+            logo: "https://autoniv.com/logo-autoniv.png",
+            description: "AI Voice Agents for Business Communication",
+            sameAs: [],
+            contactPoint: {
+              "@type": "ContactPoint",
+              contactType: "Sales",
+              availableLanguage: ["English", "Hindi"],
+            },
+          }),
+        }}
+      />
 
       <Suspense fallback={null}>
-        <AuthDialog isOpen={authDialog !== null} mode={authMode} onClose={closeAuth} onSwitch={(m) => { setAuthMode(m); setAuthDialog(m); }} />
-        
+        <AuthDialog
+          isOpen={authDialog !== null}
+          mode={authMode}
+          onClose={closeAuth}
+          onSwitch={(m) => {
+            setAuthMode(m);
+            setAuthDialog(m);
+          }}
+        />
       </Suspense>
       <Aurora />
       <NoiseOverlay />
@@ -393,6 +1358,26 @@ export function Landing() {
         @keyframes borderFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
         @keyframes progressBar{from{width:0%}to{width:100%}}
         @keyframes orbIdle{0%,100%{opacity:.7}50%{opacity:1}}
+        
+        @keyframes waveBounce {
+  0%, 100% { transform: scaleY(0.4); opacity: 0.3; }
+  50% { transform: scaleY(1); opacity: 0.8; }
+}
+
+@keyframes waveBounce {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.25); }
+}
+
+@keyframes bgWaveBounce {
+  0%, 100% { transform: scaleY(1); opacity: 0.2; }
+  50% { transform: scaleY(0.15); opacity: 0.06; }
+}
+
+@keyframes orbPulseGlow {
+  0%, 100% { box-shadow: 0 0 30px rgba(34,211,238,0.5), 0 0 60px rgba(34,211,238,0.2); }
+  50% { box-shadow: 0 0 50px rgba(34,211,238,0.7), 0 0 90px rgba(34,211,238,0.3); }
+}
 
         .gradient-text{background:linear-gradient(135deg,#2563EB 0%,#10B981 60%,#34D399 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 4s linear infinite;}
         .aurora-orb{position:absolute;border-radius:50%;filter:blur(80px);animation:auroraPulse ease-in-out infinite;}
@@ -451,6 +1436,7 @@ export function Landing() {
 
         .use-case-tabs::-webkit-scrollbar{display:none;}
 
+
         @media(max-width:640px){
           .section-box{ border-radius: 20px; margin: 12px auto; }
           .section-pad{ padding: 48px 18px; }
@@ -478,39 +1464,153 @@ export function Landing() {
       {/* ══════════════════════════════════════════════
           NAV
       ══════════════════════════════════════════════ */}
-      <nav ref={navRef} className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 nav-glass${scrolled ? " scrolled" : ""}`}>
+      <nav
+        ref={navRef}
+        className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 nav-glass${scrolled ? " scrolled" : ""}`}
+      >
         <div className="max-w-7xl mx-auto px-2 sm:px-4 h-[68px] flex items-center justify-between">
-          <Link to="/"><img src={LOGO_SRC} alt="Autoniv" className="logo-img" /></Link>
+          <Link to="/">
+            <img src={LOGO_SRC} alt="Autoniv" className="logo-img" />
+          </Link>
           <div className="hidden sm:flex items-center gap-7">
-            {["#features", "#how-it-works", "#addons", "#contact"].map((href, i) => (
-              <a key={href} href={href} onClick={e => scrollTo(e, href)} className="text-sm font-medium transition-colors" style={{ color: "#475569" }}
-                onMouseEnter={e => (e.currentTarget.style.color = "#0a0a0a")} onMouseLeave={e => (e.currentTarget.style.color = "#475569")}>
-                {["Features", "How It Works", "Add-Ons", "Contact"][i]}
-              </a>
-            ))}
+            {["#features", "#how-it-works", "#addons", "#contact"].map(
+              (href, i) => (
+                <a
+                  key={href}
+                  href={href}
+                  onClick={(e) => scrollTo(e, href)}
+                  className="text-sm font-medium transition-colors"
+                  style={{ color: "#475569" }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = "#0a0a0a")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = "#475569")
+                  }
+                >
+                  {["Features", "How It Works", "Add-Ons", "Contact"][i]}
+                </a>
+              ),
+            )}
           </div>
           <div className="hidden sm:flex items-center gap-3">
-            <button onClick={() => openAuth("login")} className="px-4 py-2 text-sm font-medium rounded-lg transition-colors" style={{ color: "#475569" }}
-              onMouseEnter={e => { e.currentTarget.style.color = "#0a0a0a"; e.currentTarget.style.background = "rgba(37,99,235,.07)"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "#475569"; e.currentTarget.style.background = "transparent"; }}>Sign In</button>
-            <MagBtn onClick={() => openAuth("register")} className="btn-responsive font-bold text-white" style={{ background: "var(--gg)", boxShadow: "0 4px 14px rgba(16,185,129,0.25)", borderRadius: 9999, padding: "10px 18px" }}>Get Started Free</MagBtn>
+            <button
+              onClick={() => openAuth("login")}
+              className="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+              style={{ color: "#475569" }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "#0a0a0a";
+                e.currentTarget.style.background = "rgba(37,99,235,.07)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "#475569";
+                e.currentTarget.style.background = "transparent";
+              }}
+            >
+              Sign In
+            </button>
+            <MagBtn
+              onClick={() => openAuth("register")}
+              className="btn-responsive font-bold text-white"
+              style={{
+                background: "var(--gg)",
+                boxShadow: "0 4px 14px rgba(16,185,129,0.25)",
+                borderRadius: 9999,
+                padding: "10px 18px",
+              }}
+            >
+              Get Started Free
+            </MagBtn>
           </div>
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="sm:hidden p-2" style={{ color: "#475569", background: "none", border: "none", cursor: "pointer" }}>
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {mobileMenuOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="sm:hidden p-2"
+            style={{
+              color: "#475569",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              {mobileMenuOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
             </svg>
           </button>
         </div>
         {mobileMenuOpen && (
-          <div className="sm:hidden px-5 py-4 space-y-1" style={{ background: "rgba(255,255,255,.98)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(37,99,235,.10)" }}>
-            {["#features", "#how-it-works", "#addons", "#contact"].map((href, i) => (
-              <a key={href} href={href} onClick={e => { scrollTo(e, href); setMobileMenuOpen(false); }} className="block px-4 py-3 text-sm font-medium rounded-xl" style={{ color: "#475569" }}>
-                {["Features", "How It Works", "Add-Ons", "Contact"][i]}
-              </a>
-            ))}
+          <div
+            className="sm:hidden px-5 py-4 space-y-1"
+            style={{
+              background: "rgba(255,255,255,.98)",
+              backdropFilter: "blur(20px)",
+              borderTop: "1px solid rgba(37,99,235,.10)",
+            }}
+          >
+            {["#features", "#how-it-works", "#addons", "#contact"].map(
+              (href, i) => (
+                <a
+                  key={href}
+                  href={href}
+                  onClick={(e) => {
+                    scrollTo(e, href);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block px-4 py-3 text-sm font-medium rounded-xl"
+                  style={{ color: "#475569" }}
+                >
+                  {["Features", "How It Works", "Add-Ons", "Contact"][i]}
+                </a>
+              ),
+            )}
             <div className="pt-2 space-y-2">
-              <button onClick={() => { openAuth("login"); setMobileMenuOpen(false); }} className="block w-full text-left px-4 py-3 text-sm font-medium rounded-xl" style={{ color: "#475569", background: "none", border: "none", cursor: "pointer" }}>Sign In</button>
-              <button onClick={() => { openAuth("register"); setMobileMenuOpen(false); }} className="btn-responsive block w-full text-center font-bold text-white" style={{ background: "var(--gg)", boxShadow: "0 4px 14px rgba(16,185,129,0.25)", borderRadius: 12 }}>Get Started Free</button>
+              <button
+                onClick={() => {
+                  openAuth("login");
+                  setMobileMenuOpen(false);
+                }}
+                className="block w-full text-left px-4 py-3 text-sm font-medium rounded-xl"
+                style={{
+                  color: "#475569",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => {
+                  openAuth("register");
+                  setMobileMenuOpen(false);
+                }}
+                className="btn-responsive block w-full text-center font-bold text-white"
+                style={{
+                  background: "var(--gg)",
+                  boxShadow: "0 4px 14px rgba(16,185,129,0.25)",
+                  borderRadius: 12,
+                }}
+              >
+                Get Started Free
+              </button>
             </div>
           </div>
         )}
@@ -518,332 +1618,972 @@ export function Landing() {
 
       <div className="page-bg" style={{ paddingTop: 84, paddingBottom: 8 }}>
         <div className="box-wrap">
+          <section className="section-box tint">
+            <div
+              className="section-pad relative overflow-hidden"
+              style={{ paddingTop: 40, paddingBottom: 40 }}
+            >
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(rgba(37,99,235,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,0.05) 1px,transparent 1px)",
+                  backgroundSize: "48px 48px",
+                  maskImage:
+                    "radial-gradient(ellipse 80% 50% at 50% 100%,black,transparent)",
+                  WebkitMaskImage:
+                    "radial-gradient(ellipse 80% 50% at 50% 100%,black,transparent)",
+                }}
+              />
 
-          {/* ══════════════════════════════════════════════
-              HERO — tint box
-          ══════════════════════════════════════════════ */}
-        <section className="section-box tint">
-  <div className="section-pad relative overflow-hidden" style={{ paddingTop: 40, paddingBottom: 40 }}>
-    <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(37,99,235,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,0.05) 1px,transparent 1px)", backgroundSize: "48px 48px", maskImage: "radial-gradient(ellipse 80% 50% at 50% 100%,black,transparent)", WebkitMaskImage: "radial-gradient(ellipse 80% 50% at 50% 100%,black,transparent)" }} />
+              <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-center w-full">
+                {/* Text Content - First on mobile (order-1), Left on desktop (lg:order-1) */}
+                <div className="lg:col-span-7 flex flex-col justify-center text-left space-y-4 lg:space-y-6 z-10 order-1 lg:order-1">
+                  <div className="animate-fade-up delay-100">
+                    <span
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full tag text-xs sm:text-sm"
+                      style={{
+                        color: "#2563EB",
+                        background: "rgba(37,99,235,0.08)",
+                        border: "1px solid rgba(37,99,235,0.3)",
+                      }}
+                    >
+                      ✦ AI Voice • Chat Solutions
+                    </span>
+                  </div>
 
-    <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-center w-full">
-      {/* Text Content - First on mobile (order-1), Left on desktop (lg:order-1) */}
-      <div className="lg:col-span-7 flex flex-col justify-center text-left space-y-4 lg:space-y-6 z-10 order-1 lg:order-1">
-        <div className="animate-fade-up delay-100">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full tag text-xs sm:text-sm" style={{ color: "#2563EB", background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.3)" }}>
-            ✦ AI Voice • Chat Solutions
-          </span>
-        </div>
+                  <div className="animate-fade-up delay-200">
+                    <h1
+                      className="font-extrabold leading-[1.08] tracking-tight"
+                      style={{
+                        fontSize: "clamp(32px,8vw,66px)",
+                        color: "#0a0a0a",
+                      }}
+                    >
+                      Your Business Never Stops. <br />
+                      <span
+                        style={{
+                          background:
+                            "linear-gradient(135deg,#2563EB,#10B981,#34D399)",
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          backgroundClip: "text",
+                        }}
+                      >
+                        Neither Does Your AI Team.
+                      </span>
+                    </h1>
+                  </div>
 
-        <div className="animate-fade-up delay-200">
-          <h1 className="font-extrabold leading-[1.08] tracking-tight" style={{ fontSize: "clamp(32px,8vw,66px)", color: "#0a0a0a" }}>
-            Your Business Never Stops. <br />
-            <span style={{ background: "linear-gradient(135deg,#2563EB,#10B981,#34D399)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              Neither Does Your AI Team.
-            </span>
-          </h1>
-        </div>
+                  <p className="animate-fade-up delay-300 text-[#475569] text-sm sm:text-base lg:text-lg leading-relaxed max-w-[560px] m-0">
+                    Deploy AI Voice Agents and AI Chatbots that handle calls,
+                    chats, and more – 24/7. Qualify leads, book appointments,
+                    answer questions and delight customers automatically.
+                  </p>
 
-        <p className="animate-fade-up delay-300 text-[#475569] text-sm sm:text-base lg:text-lg leading-relaxed max-w-[560px] m-0">
-          Deploy AI Voice Agents and AI Chatbots that handle calls, chats, and more – 24/7. Qualify leads, book appointments, answer questions and delight customers automatically.
-        </p>
-
-        {/* Buttons - Mobile Optimized */}
-        <div className="mt-4 hero-cta-row animate-fade-up delay-400 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full">
-          <button 
-            onClick={() => openAuth("register")} 
-            className="font-bold flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-white btn-responsive-lg"
-            style={{ background: "var(--gg)", boxShadow: "0 4px 14px rgba(16,185,129,0.25)" }}
-          >
-            Get Started Free
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-          </button>
-          <button 
-            onClick={() => openAuth("register")} 
-            className="font-bold flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-white btn-responsive-lg"
-            style={{ background: "var(--gg)", boxShadow: "0 4px 14px rgba(16,185,129,0.25)" }}
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-            Watch Demo
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="flex -space-x-2">
-              {[
-                { init: "SC", bg: "#2563EB" }, 
-                { init: "MJ", bg: "#10B981" }, 
-                { init: "ER", bg: "#059669" }, 
-                { init: "AK", bg: "#030B2E" }
-              ].map((av, i) => (
-                <div key={i} className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-[9px] font-bold text-white shadow-sm" style={{ background: av.bg, zIndex: 5 - i }}>
-                  {av.init}
+                  {/* Buttons - Mobile Optimized */}
+                  <div className="mt-4 hero-cta-row animate-fade-up delay-400 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full">
+                    <button
+                      onClick={() => openAuth("register")}
+                      className="font-bold flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-white btn-responsive-lg"
+                      style={{
+                        background: "var(--gg)",
+                        boxShadow: "0 4px 14px rgba(16,185,129,0.25)",
+                      }}
+                    >
+                      Get Started Free
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => openAuth("register")}
+                      className="font-bold flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-white btn-responsive-lg"
+                      style={{
+                        background: "var(--gg)",
+                        boxShadow: "0 4px 14px rgba(16,185,129,0.25)",
+                      }}
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                      Watch Demo
+                    </button>
+                    <div className="flex items-center gap-3">
+                      <div className="flex -space-x-2">
+                        {[
+                          { init: "SC", bg: "#2563EB" },
+                          { init: "MJ", bg: "#10B981" },
+                          { init: "ER", bg: "#059669" },
+                          { init: "AK", bg: "#030B2E" },
+                        ].map((av, i) => (
+                          <div
+                            key={i}
+                            className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-[9px] font-bold text-white shadow-sm"
+                            style={{ background: av.bg, zIndex: 5 - i }}
+                          >
+                            {av.init}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex gap-0.5">
+                          {[...Array(5)].map((_, k) => (
+                            <svg
+                              key={k}
+                              className="w-4 h-4"
+                              style={{ fill: "#f59e0b" }}
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                        </div>
+                        <p className="text-xs text-[#475569] m-0">
+                          Trusted by{" "}
+                          <span className="font-semibold text-[var(--text)]">
+                            100+
+                          </span>{" "}
+                          businesses
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <div className="flex gap-0.5">
-                {[...Array(5)].map((_, k) => (
-                  <svg key={k} className="w-4 h-4" style={{ fill: "#f59e0b" }} viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-              </div>
-              <p className="text-xs text-[#475569] m-0">
-                Trusted by <span className="font-semibold text-[var(--text)]">100+</span> businesses
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
- 
-      <div className="mt-4 lg:col-span-5 flex justify-center items-center relative min-h-[380px] sm:min-h-[450px] lg:min-h-[580px] z-10 w-full order-2 lg:order-2 pt-4 lg:pt-0">
-  <div className="absolute top-[20%] left-[20%] w-[320px] h-[320px] rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.16)_0%,transparent_70%)] filter blur-3xl pointer-events-none" />
-  <div className="absolute bottom-[20%] right-[10%] w-[260px] h-[260px] rounded-full bg-[radial-gradient(circle,rgba(37,99,235,0.12)_0%,transparent_70%)] filter blur-3xl pointer-events-none" />
- 
-  {/* Phone Mockup - Smaller on mobile */}
-  <div className="w-[150px] h-[310px] sm:w-[200px] sm:h-[410px] lg:w-[245px] lg:h-[490px] bg-[#0a0a0a] rounded-[28px] sm:rounded-[36px] lg:rounded-[42px] border-[4px] sm:border-[6px] lg:border-[7px] border-[#1a1a1a] shadow-2xl relative flex flex-col items-center p-2 sm:p-3 select-none" style={{ transform: "rotate(2deg)", transformStyle: "preserve-3d" }}>
-    <div className="w-20 sm:w-24 h-3 sm:h-4 bg-black rounded-full absolute top-2 sm:top-2.5 z-30" />
-    <div className="absolute inset-0 rounded-[28px] sm:rounded-[36px] lg:rounded-[42px] overflow-hidden bg-gradient-to-b from-[#0f0f0f] via-[#0a0a0a] to-[#030303] z-0" />
- 
-    <div className="relative z-10 w-full h-full flex flex-col items-center justify-between py-4 sm:py-6">
-      <div className="text-center mt-2 sm:mt-3">
-        <p className="text-[8px] sm:text-xs text-[var(--muted)] font-medium tracking-wide uppercase m-0">AI Voice Agent</p>
-        <p className="text-[8px] sm:text-[10px] text-[var(--muted)] font-mono mt-0.5 m-0">00:24</p>
-      </div>
- 
-      <div className="relative w-16 h-16 sm:w-24 sm:h-24 lg:w-36 lg:h-36 flex items-center justify-center">
-        <div className="absolute w-14 h-14 sm:w-20 sm:h-20 lg:w-32 lg:h-32 rounded-full border border-blue-500/20 animate-ping" style={{ animationDuration: "3s" }} />
-        <div className="absolute w-12 h-12 sm:w-16 sm:h-16 lg:w-24 lg:h-24 rounded-full border border-[var(--border)] animate-ping" style={{ animationDuration: "2s" }} />
-        <div className="w-12 h-12 sm:w-18 sm:h-18 lg:w-24 lg:h-24 rounded-full flex items-center justify-center shadow-lg relative overflow-hidden" style={{ animation: "orbPulseGlow 3s ease-in-out infinite", background: "linear-gradient(135deg,#10B981,#2563EB)", boxShadow: "0 0 24px rgba(16,185,129,0.4)" }}>
-          <div className="absolute inset-1.5 sm:inset-2 rounded-full bg-[var(--surface)] flex items-center justify-center">
-            <svg className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-blue-400 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
-            </svg>
-          </div>
-        </div>
-      </div>
- 
-      <div className="w-full px-2 sm:px-4 space-y-2 sm:space-y-4">
-        <div className="grid grid-cols-3 gap-y-2 sm:gap-y-3 text-center">
-          {[
-            { icon: "🎙️", label: "Mute" }, 
-            { icon: "🔢", label: "Keypad" }, 
-            { icon: "🔊", label: "Speaker" }
-          ].map((item, idx) => (
-            <div key={idx} className="flex flex-col items-center">
-              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-[var(--surface)] border border-slate-700/30 flex items-center justify-center text-[10px] sm:text-sm text-[var(--muted)]">
-                {item.icon}
-              </div>
-              <span className="text-[7px] sm:text-[9px] text-[var(--muted)] mt-0.5 sm:mt-1">{item.label}</span>
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-center">
-          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-red-500 flex items-center justify-center shadow-lg shadow-red-500/20 cursor-pointer hover:bg-red-600 transition-colors">
-            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white transform rotate-[135deg]" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A1.003 1.003 0 0 1 3.5 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18s.41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9z" />
-            </svg>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
- 
-  {/* Floating Cards - Smaller on mobile */}
-  
-  {/* Card 1: Incoming Call - Top Right */}
-  <div className="absolute top-[-2%] right-[-4%] sm:top-[10%] sm:-right-[8%] z-20 pointer-events-auto w-[100px] sm:w-[185px]">
-    <div className="animate-float-1 bg-[var(--surface)] backdrop-blur-md rounded-lg sm:rounded-2xl p-1.5 sm:p-3.5 shadow-[0_8px_28px_rgba(37,99,235,0.10)] border border-[rgba(37,99,235,0.2)]">
-      <div className="flex justify-between items-center">
-        <span className="text-[6px] sm:text-[10px] font-semibold text-[#2563EB] tracking-wide uppercase">Incoming Call</span>
-        <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-blue-500 animate-pulse" />
-      </div>
-      <div className="mt-0.5 sm:mt-1">
-        <div className="text-[8px] sm:text-xs font-bold text-[var(--text)] m-0 truncate" style={{ color: "#0a0a0a" }}>+1 (415) 555-0178</div>
-        <p className="text-[6px] sm:text-[9px] text-[var(--muted)] m-0 mt-0.5">Sales Inquiry</p>
-      </div>
-      <div className="flex gap-0.5 sm:gap-2 justify-end mt-0.5 sm:mt-1">
-        <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-red-100 flex items-center justify-center cursor-pointer hover:bg-red-200 transition-colors">
-          <span className="text-[5px] sm:text-[9px]">❌</span>
-        </div>
-        <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-green-100 flex items-center justify-center cursor-pointer hover:bg-green-200 transition-colors">
-          <span className="text-[5px] sm:text-[9px]">📞</span>
-        </div>
-      </div>
-    </div>
-  </div>
- 
-  {/* Card 2: Appointment Booked - Bottom Right */}
-  <div className="absolute bottom-[2%] right-[-4%] sm:bottom-[16%] sm:-right-[8%] z-20 pointer-events-auto w-[95px] sm:w-[180px]">
-    <div className="animate-float-2 bg-[var(--surface)] backdrop-blur-md rounded-lg sm:rounded-2xl p-1.5 sm:p-3.5 shadow-[0_8px_28px_rgba(37,99,235,0.10)] border border-[rgba(37,99,235,0.2)] flex items-center gap-1.5 sm:gap-3">
-      <div className="w-5 h-5 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(37,99,235,0.08)] border border-[rgba(37,99,235,0.2)] flex items-center justify-center text-xs sm:text-lg flex-shrink-0">
-        📅
-      </div>
-      <div className="min-w-0">
-        <div className="text-[7px] sm:text-[11px] font-bold text-[var(--text)] leading-tight m-0 truncate" style={{ color: "#0a0a0a" }}>Appointment Booked</div>
-        <p className="text-[5px] sm:text-[9px] text-[var(--muted)] mt-0.5 m-0">May 24, 2025</p>
-        <p className="text-[5px] sm:text-[9px] text-[#2563EB] font-medium m-0">10:00 AM</p>
-      </div>
-    </div>
-  </div>
- 
-  {/* Card 3: AI Assistant - Top Left */}
-  <div className="absolute top-[-2%] left-[-4%] sm:top-[4%] sm:-left-[8%] z-20 pointer-events-auto w-[100px] sm:w-[195px]">
-    <div className="animate-float-3 bg-[var(--surface)] backdrop-blur-md rounded-lg sm:rounded-2xl p-1.5 sm:p-3 shadow-[0_8px_28px_rgba(37,99,235,0.10)] border border-[rgba(37,99,235,0.2)]">
-      <div className="flex items-center gap-1 sm:gap-1.5">
-        <span className="text-[6px] sm:text-[9px] text-[var(--muted)]">🤖 AI Assistant</span>
-      </div>
-      <div className="space-y-0.5 sm:space-y-1.5 mt-0.5 sm:mt-1">
-        <div className="bg-[rgba(37,99,235,0.06)] border border-[rgba(37,99,235,0.12)] text-[var(--text-secondary)] p-1 sm:p-2 rounded-lg sm:rounded-xl rounded-tl-sm text-[6px] sm:text-[10px] leading-relaxed max-w-[90%]">
-          How can I help you today?
-        </div>
-        <div className="flex justify-end">
-          <div className="text-white p-1 sm:p-2 rounded-lg sm:rounded-xl rounded-tr-sm text-[6px] sm:text-[10px] leading-relaxed max-w-[90%]" style={{ background: "linear-gradient(135deg,#2563EB,#10B981)" }}>
-            I need help with my order.
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
- 
-  {/* Card 4: Leads Captured - Bottom Left */}
-  <div className="absolute bottom-[2%] left-[-4%] sm:bottom-[8%] sm:-left-[8%] z-20 pointer-events-auto w-[100px] sm:w-[185px]">
-    <div className="animate-float-4 bg-[var(--surface)] backdrop-blur-md rounded-lg sm:rounded-2xl p-1.5 sm:p-3.5 shadow-[0_8px_28px_rgba(37,99,235,0.10)] border border-[rgba(37,99,235,0.2)]">
-      <div>
-        <p className="text-[5px] sm:text-[9px] font-semibold text-[var(--muted)] uppercase tracking-wider m-0">Leads Captured</p>
-        <div className="flex items-baseline gap-0.5 sm:gap-1.5 mt-0.5">
-          <span className="text-sm sm:text-lg font-bold text-[var(--text)]">2,847</span>
-          <span className="text-[5px] sm:text-[9px] font-semibold text-[var(--primary)]">+32.6%</span>
-        </div>
-      </div>
-      <div className="h-5 sm:h-10 w-full mt-0.5 sm:mt-1">
-        <svg className="w-full h-full" viewBox="0 0 100 30" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="chart-glow" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#2563EB" stopOpacity="0.2" />
-              <stop offset="100%" stopColor="#2563EB" stopOpacity="0.0" />
-            </linearGradient>
-          </defs>
-          <path d="M0,25 Q15,22 30,12 T60,18 T90,5 L100,5 L100,30 L0,30 Z" fill="url(#chart-glow)" />
-          <path d="M0,25 Q15,22 30,12 T60,18 T90,5 L100,5" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" />
-          <circle cx="100" cy="5" r="2.5" fill="#2563EB" />
-        </svg>
-      </div>
-    </div>
-  </div>
-</div>
-    </div>
- 
-    {/* Logo marquee inside hero box */}
-    <div style={{ marginTop: 40, paddingTop: 24, borderTop: "1px solid rgba(37,99,235,0.12)" }}>
-      <p className="text-center tag mb-4 sm:mb-6 m-0 text-[10px] sm:text-xs" style={{ color: "#94a3b8", letterSpacing: "0.18em" }}>Trusted by leading companies</p>
-      <div className="relative w-full overflow-hidden">
-        <div className="absolute inset-y-0 left-0 w-8 sm:w-16 z-10 pointer-events-none" style={{ background: "linear-gradient(90deg, #F5F7FA, transparent)" }} />
-        <div className="absolute inset-y-0 right-0 w-8 sm:w-16 z-10 pointer-events-none" style={{ background: "linear-gradient(270deg, #F5F7FA, transparent)" }} />
-        <div className="flex gap-8 sm:gap-16 items-center animate-marquee opacity-60">
-          {[...Array(2)].flatMap((_, dup) => [
-            { n: "HealthFirst", i: "🏥" }, 
-            { n: "BrightHome", i: "🏠" }, 
-            { n: "FastTrack", i: "⚡" }, 
-            { n: "CloudBase", i: "☁️" }, 
-            { n: "NovaTech", i: "🚀" }, 
-            { n: "ZenithAI", i: "🧠" }
-          ].map((c, i) => (
-            <div key={`${dup}-${i}`} className="flex items-center gap-2 sm:gap-3 whitespace-nowrap">
-              <span className="text-base sm:text-xl grayscale">{c.i}</span>
-              <span className="text-xs sm:text-sm font-semibold tracking-tight" style={{ color: "#475569" }}>{c.n}</span>
-            </div>
-          )))}
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
 
-          {/* ══════════════════════════════════════════════
-              VOICE DEMO — black box
-          ══════════════════════════════════════════════ */}
+                <div className="mt-4 lg:col-span-5 flex justify-center items-center relative min-h-[380px] sm:min-h-[450px] lg:min-h-[580px] z-10 w-full order-2 lg:order-2 pt-4 lg:pt-0">
+                  <div className="absolute top-[20%] left-[20%] w-[320px] h-[320px] rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.16)_0%,transparent_70%)] filter blur-3xl pointer-events-none" />
+                  <div className="absolute bottom-[20%] right-[10%] w-[260px] h-[260px] rounded-full bg-[radial-gradient(circle,rgba(37,99,235,0.12)_0%,transparent_70%)] filter blur-3xl pointer-events-none" />
+
+                  {/* Phone Mockup - Smaller on mobile */}
+                 <div
+      className="w-[150px] h-[310px] sm:w-[200px] sm:h-[410px] lg:w-[245px] lg:h-[490px] bg-[#0a0a0a] rounded-[28px] sm:rounded-[36px] lg:rounded-[42px] border-[4px] sm:border-[6px] lg:border-[7px] border-[#1a1a1a] shadow-2xl relative flex flex-col items-center p-2 sm:p-3 select-none"
+      style={{
+        transform: "perspective(1000px) rotateY(-18deg) rotateX(6deg) rotate(6deg)",
+        transformStyle: "flat",
+        overflow: "visible",
+      }}
+    >
+      {/* Notch */}
+      <div className="w-20 sm:w-24 h-3 sm:h-4 bg-black rounded-full absolute top-2 sm:top-2.5 z-30" />
+      {/* Screen bg */}
+      <div className="absolute inset-0 rounded-[28px] sm:rounded-[36px] lg:rounded-[42px] overflow-hidden bg-gradient-to-b from-[#0f0f0f] via-[#0a0a0a] to-[#030303] z-0" />
+
+      <div className="relative z-10 w-full h-full flex flex-col items-center justify-between py-4 sm:py-6">
+        {/* Header */}
+        <div className="text-center mt-2 sm:mt-3">
+          <p className="text-[8px] sm:text-xs text-white/40 font-medium tracking-wide uppercase m-0">
+            AI Voice Agent
+          </p>
+          <p className="text-[8px] sm:text-[10px] text-white/30 font-mono mt-0.5 m-0">
+            00:24
+          </p>
+        </div>
+
+        {/* Orb + Waves */}
+        <div
+          className="relative flex items-center justify-center"
+          style={{ width: "160px", height: "100px" }}
+        >
+          {/* Rings */}
+          <div className="absolute rounded-full border border-cyan-400/20 z-0" style={{ width: "90px", height: "90px" }} />
+          <div className="absolute rounded-full border border-cyan-400/10 z-0" style={{ width: "120px", height: "120px" }} />
+          <div className="absolute rounded-full border border-cyan-400/[0.06] z-0" style={{ width: "155px", height: "155px" }} />
+
+          {/* BG wave bars — behind orb, z-10 */}
+          <div className="absolute inset-0 flex items-center justify-center gap-[2px] z-10 pointer-events-none">
+            {WAVE_HEIGHTS.map((baseH, i) => {
+              const center = (WAVE_HEIGHTS.length - 1) / 2;
+              const dist = Math.abs(i - center);
+              const envelope = Math.max(0.15, 1 - (dist / center) * 0.7);
+              const h = Math.max(4, baseH * envelope * 0.45);
+              return (
+                <div
+                  key={i}
+                  className="rounded-full flex-shrink-0"
+                  style={{
+                    width: "2px",
+                    height: `${h}px`,
+                    background: "rgba(34,211,238,0.2)",
+                    animation: "bgWaveBounce 1.2s ease-in-out infinite",
+                    animationDelay: `${i * 0.045}s`,
+                    transformOrigin: "center",
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          {/* Orb — z-20 */}
+          <div
+            className="relative z-20 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{
+              width: "64px",
+              height: "64px",
+              background: "radial-gradient(circle at 35% 35%, #22d3ee, #0ea5e9, #1d4ed8)",
+              animation: "orbPulseGlow 3s ease-in-out infinite",
+            }}
+          >
+            <div
+              className="absolute rounded-full flex items-center justify-center"
+              style={{
+                inset: "4px",
+                background: "radial-gradient(circle at 35% 35%, #0e7490, #0c4a6e)",
+                boxShadow: "inset 0 0 20px rgba(0,0,0,0.5)",
+              }}
+            >
+              <svg width="22" height="22" fill="none" stroke="#22d3ee" strokeWidth="2" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"
+                />
+              </svg>
+            </div>
+          </div>
+
+          {/* FG wave bars — in front of orb, z-30, center hidden */}
+          <div className="absolute inset-0 flex items-center justify-center gap-[2px] z-30 pointer-events-none">
+            {WAVE_HEIGHTS.map((baseH, i) => {
+              const center = (WAVE_HEIGHTS.length - 1) / 2;
+              const dist = Math.abs(i - center);
+              const envelope = Math.max(0.15, 1 - (dist / center) * 0.7);
+              // Full height — no * 0.5 reduction, taller bars
+              const h = Math.max(5, baseH * envelope);
+
+              if (dist < 7) {
+                return (
+                  <div
+                    key={i}
+                    className="flex-shrink-0"
+                    style={{ width: "2px", height: `${h}px`, opacity: 0 }}
+                  />
+                );
+              }
+              return (
+                <div
+                  key={i}
+                  className="rounded-full flex-shrink-0"
+                  style={{
+                    width: "2px",
+                    height: `${h}px`,
+                    background:
+                      i % 3 === 0
+                        ? "linear-gradient(180deg,#67e8f9,#0891b2)"
+                        : i % 3 === 1
+                        ? "linear-gradient(180deg,#34d399,#059669)"
+                        : "linear-gradient(180deg,#22d3ee,#0e7490)",
+                    opacity: 0.9,
+                    animation: "waveBounce 1s ease-in-out infinite",
+                    animationDelay: `${i * 0.045}s`,
+                  }}
+                />
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="w-full px-2 sm:px-4 space-y-2 sm:space-y-4">
+          <div className="grid grid-cols-3 gap-y-2 sm:gap-y-3 text-center">
+            {[
+              { icon: "🎙️", label: "Mute" },
+              { icon: "🔢", label: "Keypad" },
+              { icon: "🔊", label: "Speaker" },
+            ].map((item, idx) => (
+              <div key={idx} className="flex flex-col items-center">
+                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-[#141414] border border-slate-700/30 flex items-center justify-center text-[10px] sm:text-sm text-white/40">
+                  {item.icon}
+                </div>
+                <span className="text-[7px] sm:text-[9px] text-white/30 mt-0.5 sm:mt-1">
+                  {item.label}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-center">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-red-500 flex items-center justify-center shadow-lg shadow-red-500/20 cursor-pointer hover:bg-red-600 transition-colors">
+              <svg
+                className="w-4 h-4 sm:w-5 sm:h-5 text-white transform rotate-[135deg]"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A1.003 1.003 0 0 1 3.5 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18s.41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+                  {/* Floating Cards - Smaller on mobile */}
+
+                  {/* Card 1: Incoming Call - Top Right */}
+                  <div className="absolute top-[-2%] right-[-4%] sm:top-[10%] sm:-right-[8%] z-20 pointer-events-auto w-[100px] sm:w-[185px]">
+                    <div className="animate-float-1 bg-[var(--surface)] backdrop-blur-md rounded-lg sm:rounded-2xl p-1.5 sm:p-3.5 shadow-[0_8px_28px_rgba(37,99,235,0.10)] border border-[rgba(37,99,235,0.2)]">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[6px] sm:text-[10px] font-semibold text-[#2563EB] tracking-wide uppercase">
+                          Incoming Call
+                        </span>
+                        <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                      </div>
+                      <div className="mt-0.5 sm:mt-1">
+                        <div
+                          className="text-[8px] sm:text-xs font-bold text-[var(--text)] m-0 truncate"
+                          style={{ color: "#0a0a0a" }}
+                        >
+                          +1 (415) 555-0178
+                        </div>
+                        <p className="text-[6px] sm:text-[9px] text-[var(--muted)] m-0 mt-0.5">
+                          Sales Inquiry
+                        </p>
+                      </div>
+                      <div className="flex gap-0.5 sm:gap-2 justify-end mt-0.5 sm:mt-1">
+                        <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-red-100 flex items-center justify-center cursor-pointer hover:bg-red-200 transition-colors">
+                          <span className="text-[5px] sm:text-[9px]">❌</span>
+                        </div>
+                        <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-green-100 flex items-center justify-center cursor-pointer hover:bg-green-200 transition-colors">
+                          <span className="text-[5px] sm:text-[9px]">📞</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Appointment Booked - Bottom Right */}
+                  <div className="absolute bottom-[2%] right-[-4%] sm:bottom-[16%] sm:-right-[8%] z-20 pointer-events-auto w-[95px] sm:w-[180px]">
+                    <div className="animate-float-2 bg-[var(--surface)] backdrop-blur-md rounded-lg sm:rounded-2xl p-1.5 sm:p-3.5 shadow-[0_8px_28px_rgba(37,99,235,0.10)] border border-[rgba(37,99,235,0.2)] flex items-center gap-1.5 sm:gap-3">
+                      <div className="w-5 h-5 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(37,99,235,0.08)] border border-[rgba(37,99,235,0.2)] flex items-center justify-center text-xs sm:text-lg flex-shrink-0">
+                        📅
+                      </div>
+                      <div className="min-w-0">
+                        <div
+                          className="text-[7px] sm:text-[11px] font-bold text-[var(--text)] leading-tight m-0 truncate"
+                          style={{ color: "#0a0a0a" }}
+                        >
+                          Appointment Booked
+                        </div>
+                        <p className="text-[5px] sm:text-[9px] text-[var(--muted)] mt-0.5 m-0">
+                          May 24, 2025
+                        </p>
+                        <p className="text-[5px] sm:text-[9px] text-[#2563EB] font-medium m-0">
+                          10:00 AM
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 3: AI Assistant - Top Left */}
+                  <div className="absolute top-[-2%] left-[-4%] sm:top-[4%] sm:-left-[8%] z-20 pointer-events-auto w-[100px] sm:w-[195px]">
+                    <div className="animate-float-3 bg-[var(--surface)] backdrop-blur-md rounded-lg sm:rounded-2xl p-1.5 sm:p-3 shadow-[0_8px_28px_rgba(37,99,235,0.10)] border border-[rgba(37,99,235,0.2)]">
+                      <div className="flex items-center gap-1 sm:gap-1.5">
+                        <span className="text-[6px] sm:text-[9px] text-[var(--muted)]">
+                          🤖 AI Assistant
+                        </span>
+                      </div>
+                      <div className="space-y-0.5 sm:space-y-1.5 mt-0.5 sm:mt-1">
+                        <div className="bg-[rgba(37,99,235,0.06)] border border-[rgba(37,99,235,0.12)] text-[var(--text-secondary)] p-1 sm:p-2 rounded-lg sm:rounded-xl rounded-tl-sm text-[6px] sm:text-[10px] leading-relaxed max-w-[90%]">
+                          How can I help you today?
+                        </div>
+                        <div className="flex justify-end">
+                          <div
+                            className="text-white p-1 sm:p-2 rounded-lg sm:rounded-xl rounded-tr-sm text-[6px] sm:text-[10px] leading-relaxed max-w-[90%]"
+                            style={{
+                              background:
+                                "linear-gradient(135deg,#2563EB,#10B981)",
+                            }}
+                          >
+                            I need help with my order.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 4: Leads Captured - Bottom Left */}
+                  <div className="absolute bottom-[2%] left-[-4%] sm:bottom-[8%] sm:-left-[8%] z-20 pointer-events-auto w-[100px] sm:w-[185px]">
+                    <div className="animate-float-4 bg-[var(--surface)] backdrop-blur-md rounded-lg sm:rounded-2xl p-1.5 sm:p-3.5 shadow-[0_8px_28px_rgba(37,99,235,0.10)] border border-[rgba(37,99,235,0.2)]">
+                      <div>
+                        <p className="text-[5px] sm:text-[9px] font-semibold text-[var(--muted)] uppercase tracking-wider m-0">
+                          Leads Captured
+                        </p>
+                        <div className="flex items-baseline gap-0.5 sm:gap-1.5 mt-0.5">
+                          <span className="text-sm sm:text-lg font-bold text-[var(--text)]">
+                            2,847
+                          </span>
+                          <span className="text-[5px] sm:text-[9px] font-semibold text-[var(--primary)]">
+                            +32.6%
+                          </span>
+                        </div>
+                      </div>
+                      <div className="h-5 sm:h-10 w-full mt-0.5 sm:mt-1">
+                        <svg
+                          className="w-full h-full"
+                          viewBox="0 0 100 30"
+                          preserveAspectRatio="none"
+                        >
+                          <defs>
+                            <linearGradient
+                              id="chart-glow"
+                              x1="0"
+                              y1="0"
+                              x2="0"
+                              y2="1"
+                            >
+                              <stop
+                                offset="0%"
+                                stopColor="#2563EB"
+                                stopOpacity="0.2"
+                              />
+                              <stop
+                                offset="100%"
+                                stopColor="#2563EB"
+                                stopOpacity="0.0"
+                              />
+                            </linearGradient>
+                          </defs>
+                          <path
+                            d="M0,25 Q15,22 30,12 T60,18 T90,5 L100,5 L100,30 L0,30 Z"
+                            fill="url(#chart-glow)"
+                          />
+                          <path
+                            d="M0,25 Q15,22 30,12 T60,18 T90,5 L100,5"
+                            fill="none"
+                            stroke="#2563EB"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                          <circle cx="100" cy="5" r="2.5" fill="#2563EB" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Logo marquee inside hero box */}
+              <div
+                style={{
+                  marginTop: 40,
+                  paddingTop: 24,
+                  borderTop: "1px solid rgba(37,99,235,0.12)",
+                }}
+              >
+                <p
+                  className="text-center tag mb-4 sm:mb-6 m-0 text-[10px] sm:text-xs"
+                  style={{ color: "#94a3b8", letterSpacing: "0.18em" }}
+                >
+                  Trusted by leading companies
+                </p>
+                <div className="relative w-full overflow-hidden">
+                  <div
+                    className="absolute inset-y-0 left-0 w-8 sm:w-16 z-10 pointer-events-none"
+                    style={{
+                      background:
+                        "linear-gradient(90deg, #F5F7FA, transparent)",
+                    }}
+                  />
+                  <div
+                    className="absolute inset-y-0 right-0 w-8 sm:w-16 z-10 pointer-events-none"
+                    style={{
+                      background:
+                        "linear-gradient(270deg, #F5F7FA, transparent)",
+                    }}
+                  />
+                  <div className="flex gap-8 sm:gap-16 items-center animate-marquee opacity-60">
+                    {[...Array(2)].flatMap((_, dup) =>
+                      [
+                        { n: "HealthFirst", i: "🏥" },
+                        { n: "BrightHome", i: "🏠" },
+                        { n: "FastTrack", i: "⚡" },
+                        { n: "CloudBase", i: "☁️" },
+                        { n: "NovaTech", i: "🚀" },
+                        { n: "ZenithAI", i: "🧠" },
+                      ].map((c, i) => (
+                        <div
+                          key={`${dup}-${i}`}
+                          className="flex items-center gap-2 sm:gap-3 whitespace-nowrap"
+                        >
+                          <span className="text-base sm:text-xl grayscale">
+                            {c.i}
+                          </span>
+                          <span
+                            className="text-xs sm:text-sm font-semibold tracking-tight"
+                            style={{ color: "#475569" }}
+                          >
+                            {c.n}
+                          </span>
+                        </div>
+                      )),
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <section ref={demoSectionRef} id="demo" className="section-box black">
             <div className="section-pad relative overflow-hidden">
-              <div style={{ position: "absolute", bottom: 0, right: "10%", width: "400px", height: "400px", background: "radial-gradient(circle, rgba(37,99,235,0.10), transparent 70%)", pointerEvents: "none" }} />
-              <div style={{ position: "absolute", top: 0, left: "10%", width: "400px", height: "400px", background: "radial-gradient(circle, rgba(16,185,129,0.08), transparent 70%)", pointerEvents: "none" }} />
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  right: "10%",
+                  width: "400px",
+                  height: "400px",
+                  background:
+                    "radial-gradient(circle, rgba(37,99,235,0.10), transparent 70%)",
+                  pointerEvents: "none",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: "10%",
+                  width: "400px",
+                  height: "400px",
+                  background:
+                    "radial-gradient(circle, rgba(16,185,129,0.08), transparent 70%)",
+                  pointerEvents: "none",
+                }}
+              />
 
               <div className="relative" style={{ zIndex: 1 }}>
                 <Reveal className="text-center mb-14 space-y-4">
-                  <span className="tag px-4 py-1.5 rounded-full inline-block" style={{ color: "#ffffff", background: "var(--gg)", border: "none" }}>Live Demo</span>
-                  <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight mt-4" style={{ color: "#ffffff", fontSize: "clamp(30px,4vw,52px)" }}>
+                  <span
+                    className="tag px-4 py-1.5 rounded-full inline-block"
+                    style={{
+                      color: "#ffffff",
+                      background: "var(--gg)",
+                      border: "none",
+                    }}
+                  >
+                    Live Demo
+                  </span>
+                  <h2
+                    className="text-4xl sm:text-5xl font-extrabold tracking-tight mt-4"
+                    style={{
+                      color: "#ffffff",
+                      fontSize: "clamp(30px,4vw,52px)",
+                    }}
+                  >
                     Hear It in <span className="gradient-text">Action</span>
                   </h2>
-                  <p style={{ color: "#94a3b8", fontSize: 16, maxWidth: 440, margin: "0 auto" }}>
-                    Watch Autoniv handle a real customer booking — start to finish.
+                  <p
+                    style={{
+                      color: "#94a3b8",
+                      fontSize: 16,
+                      maxWidth: 440,
+                      margin: "0 auto",
+                    }}
+                  >
+                    Watch Autoniv handle a real customer booking — start to
+                    finish.
                   </p>
-                 
                 </Reveal>
 
                 <Reveal>
-                  <div style={{ background: "linear-gradient(160deg,#141414,#0a0a0a)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, overflow: "hidden", boxShadow: "0 20px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
+                  <div
+                    style={{
+                      background: "linear-gradient(160deg,#141414,#0a0a0a)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: 24,
+                      overflow: "hidden",
+                      boxShadow:
+                        "0 20px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
+                    }}
+                  >
                     {/* Title bar */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "linear-gradient(135deg, rgba(37,99,235,0.08), rgba(16,185,129,0.06))", overflow: "hidden" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                        <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#ff5f57" }} />
-                        <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#febc2e" }} />
-                        <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#28c840" }} />
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "14px 20px",
+                        borderBottom: "1px solid rgba(255,255,255,0.08)",
+                        background:
+                          "linear-gradient(135deg, rgba(37,99,235,0.08), rgba(16,185,129,0.06))",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          flexShrink: 0,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: "50%",
+                            background: "#ff5f57",
+                          }}
+                        />
+                        <div
+                          style={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: "50%",
+                            background: "#febc2e",
+                          }}
+                        />
+                        <div
+                          style={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: "50%",
+                            background: "#28c840",
+                          }}
+                        />
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 7, overflow: "hidden", margin: "0 8px" }}>
-                        <div style={{ width: 7, height: 7, borderRadius: "50%", background: demoRunning ? "#10B981" : "#94a3b8", flexShrink: 0, animation: demoRunning ? "livePulse 1.8s infinite" : "none" }} />
-                        <span style={{ fontSize: 11, fontFamily: "'JetBrains Mono',monospace", color: "#94a3b8", letterSpacing: "0.1em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {demoRunning ? "autoniv-agent · live call" : demoDone ? "call ended · booked ✓" : "autoniv-agent · ready"}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 7,
+                          overflow: "hidden",
+                          margin: "0 8px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 7,
+                            height: 7,
+                            borderRadius: "50%",
+                            background: demoRunning ? "#10B981" : "#94a3b8",
+                            flexShrink: 0,
+                            animation: demoRunning
+                              ? "livePulse 1.8s infinite"
+                              : "none",
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontFamily: "'JetBrains Mono',monospace",
+                            color: "#94a3b8",
+                            letterSpacing: "0.1em",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {demoRunning
+                            ? "autoniv-agent · live call"
+                            : demoDone
+                              ? "call ended · booked ✓"
+                              : "autoniv-agent · ready"}
                         </span>
                       </div>
                       <div style={{ width: 52, flexShrink: 0 }} />
                     </div>
 
                     {/* Two-column layout */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", minHeight: 420 }} className="demo-grid">
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        minHeight: 420,
+                      }}
+                      className="demo-grid"
+                    >
                       {/* LEFT — Orb */}
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "44px 32px", borderRight: "1px solid rgba(255,255,255,0.08)", background: "linear-gradient(180deg, rgba(37,99,235,0.10) 0%, rgba(16,185,129,0.10) 100%)", position: "relative", gap: 28 }}>
-                        <div style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: .2, backgroundImage: "linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px)", backgroundSize: "32px 32px", maskImage: "radial-gradient(ellipse at 50% 60%,black 20%,transparent 75%)", WebkitMaskImage: "radial-gradient(ellipse at 50% 60%,black 20%,transparent 75%)" }} />
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: "44px 32px",
+                          borderRight: "1px solid rgba(255,255,255,0.08)",
+                          background: "#0a0e16",
+                          position: "relative",
+                          gap: 28,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            pointerEvents: "none",
+                            opacity: 0.2,
+                            backgroundImage:
+                              "linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px)",
+                            backgroundSize: "32px 32px",
+                            maskImage:
+                              "radial-gradient(ellipse at 50% 60%,black 20%,transparent 75%)",
+                            WebkitMaskImage:
+                              "radial-gradient(ellipse at 50% 60%,black 20%,transparent 75%)",
+                          }}
+                        />
 
-                        <div className={!demoRunning && !demoDone ? "orb-idle" : ""}>
-                           <VoiceOrb speaking={speaking} />
-                        </div>
+                        <SpectrumField
+                          active={speaking !== "idle" || demoRunning}
+                        />
 
-                        <div style={{ textAlign: "center" }}>
-                          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 16px", borderRadius: 99, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", fontSize: 12, fontFamily: "'JetBrains Mono',monospace", color: speaking === "agent" ? "#10B981" : speaking === "user" ? "#2563EB" : "#94a3b8", transition: "color .3s ease", justifyContent: "center", whiteSpace: "nowrap" }}>
-                            {speaking === "agent" ? "🤖 AI Agent speaking" : speaking === "user" ? "👤 Caller speaking" : "🔄 Restarting…"}
+                        <div
+                          style={{
+                            position: "relative",
+                            zIndex: 10,
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            gap: 28,
+                          }}
+                        >
+                          <GlowRingOrb
+                            active={speaking !== "idle" || demoRunning}
+                          />
+
+                          <div
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 10,
+                              padding: "8px 18px",
+                              borderRadius: 99,
+                              background: "rgba(10,14,22,0.85)",
+                              border: "1px solid rgba(255,255,255,0.10)",
+                              fontSize: 13,
+                              color: "#e2e8f0",
+                              backdropFilter: "blur(8px)",
+                            }}
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 20 20"
+                              style={{ flexShrink: 0 }}
+                            >
+                              {[0, 1, 2, 3, 4].map((i) => (
+                                <rect
+                                  key={i}
+                                  x={i * 4}
+                                  y={10 - [6, 9, 5, 8, 4][i] / 2}
+                                  width="2.5"
+                                  rx="1.25"
+                                  height={[6, 9, 5, 8, 4][i]}
+                                  fill="#34D399"
+                                  style={{
+                                    animation:
+                                      speaking !== "idle" || demoRunning
+                                        ? `waveBounce 0.9s ease-in-out ${i * 0.1}s infinite`
+                                        : "none",
+                                  }}
+                                />
+                              ))}
+                            </svg>
                           </div>
                         </div>
-
-                        <Waveform active={speaking !== "idle"} color={speaking === "agent" ? "#10B981" : speaking === "user" ? "#2563EB" : "#94a3b8"} />
                       </div>
 
                       {/* RIGHT — Chat */}
-                      <div style={{ display: "flex", flexDirection: "column", padding: "28px 24px", gap: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid rgba(255,255,255,0.08)", gap: 8 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          padding: "28px 24px",
+                          gap: 0,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            marginBottom: 16,
+                            paddingBottom: 12,
+                            borderBottom: "1px solid rgba(255,255,255,0.08)",
+                            gap: 8,
+                          }}
+                        >
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: "#ffffff", marginBottom: 2 }}>Booking Assistant</div>
-                            <div style={{ fontSize: 11, color: "#94a3b8", fontFamily: "'JetBrains Mono',monospace", letterSpacing: "0.08em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{demoMsgs.length > 0 ? `${demoMsgs.length}/${CONVERSATION.length} turns` : "starting…"}</div>
+                            <div
+                              style={{
+                                fontSize: 13,
+                                fontWeight: 700,
+                                color: "#ffffff",
+                                marginBottom: 2,
+                              }}
+                            >
+                              Booking Assistant
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 11,
+                                color: "#94a3b8",
+                                fontFamily: "'JetBrains Mono',monospace",
+                                letterSpacing: "0.08em",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {demoMsgs.length > 0
+                                ? `${demoMsgs.length}/${CONVERSATION.length} turns`
+                                : "starting…"}
+                            </div>
                           </div>
-                          <div style={{ display: "flex", gap: 5, alignItems: "center", padding: "5px 10px", borderRadius: 99, background: "linear-gradient(135deg, rgba(37,99,235,0.10), rgba(16,185,129,0.10))", border: "1px solid rgba(16,185,129,0.20)", flexShrink: 0 }}>
-                            <div style={{ width: 6, height: 6, borderRadius: "50%", background: demoRunning ? "#10B981" : "#94a3b8" }} />
-                            <span style={{ fontSize: 10, fontFamily: "'JetBrains Mono',monospace", color: demoRunning ? "#10B981" : "#94a3b8", letterSpacing: "0.1em" }}>{demoRunning ? "LIVE" : "IDLE"}</span>
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: 5,
+                              alignItems: "center",
+                              padding: "5px 10px",
+                              borderRadius: 99,
+                              background:
+                                "linear-gradient(135deg, rgba(37,99,235,0.10), rgba(16,185,129,0.10))",
+                              border: "1px solid rgba(16,185,129,0.20)",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: "50%",
+                                background: demoRunning ? "#10B981" : "#94a3b8",
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: 10,
+                                fontFamily: "'JetBrains Mono',monospace",
+                                color: demoRunning ? "#10B981" : "#94a3b8",
+                                letterSpacing: "0.1em",
+                              }}
+                            >
+                              {demoRunning ? "LIVE" : "IDLE"}
+                            </span>
                           </div>
                         </div>
 
-                        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10, overflowY: "auto", minHeight: 240 }}>
-                          {demoMsgs.length === 0 && !demoRunning && !demoDone && (
-                            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: 13, textAlign: "center", padding: "20px 0" }}>
-                              Press Start Demo to watch<br />the conversation unfold
-                            </div>
-                          )}
+                        <div
+                          style={{
+                            flex: 1,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 10,
+                            overflowY: "auto",
+                            minHeight: 240,
+                          }}
+                        >
+                          {demoMsgs.length === 0 &&
+                            !demoRunning &&
+                            !demoDone && (
+                              <div
+                                style={{
+                                  flex: 1,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: "#94a3b8",
+                                  fontSize: 13,
+                                  textAlign: "center",
+                                  padding: "20px 0",
+                                }}
+                              >
+                                Press Start Demo to watch
+                                <br />
+                                the conversation unfold
+                              </div>
+                            )}
                           {demoMsgs.map((msg, i) => {
                             const isAgent = msg.role === "agent";
                             return (
-                              <div key={msg.id} className="chat-bubble-in" style={{ display: "flex", justifyContent: isAgent ? "flex-start" : "flex-end", animationDelay: `${i * .04}s` }}>
-                                {isAgent && <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, marginRight: 8, marginTop: 2, background: "linear-gradient(135deg,#10B981,#2563EB)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#ffffff" }}>A</div>}
-                                <div style={{ maxWidth: "76%", padding: "9px 13px", borderRadius: isAgent ? "4px 14px 14px 14px" : "14px 4px 14px 14px", fontSize: 13.5, lineHeight: 1.45, background: isAgent ? "rgba(16,185,129,0.08)" : "rgba(37,99,235,0.08)", border: isAgent ? "1px solid rgba(16,185,129,0.2)" : "1px solid rgba(37,99,235,0.2)", color: "#e2e8f0" }}>
+                              <div
+                                key={msg.id}
+                                className="chat-bubble-in"
+                                style={{
+                                  display: "flex",
+                                  justifyContent: isAgent
+                                    ? "flex-start"
+                                    : "flex-end",
+                                  animationDelay: `${i * 0.04}s`,
+                                }}
+                              >
+                                {isAgent && (
+                                  <div
+                                    style={{
+                                      width: 26,
+                                      height: 26,
+                                      borderRadius: "50%",
+                                      flexShrink: 0,
+                                      marginRight: 8,
+                                      marginTop: 2,
+                                      background:
+                                        "linear-gradient(135deg,#10B981,#2563EB)",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      fontSize: 11,
+                                      fontWeight: 700,
+                                      color: "#ffffff",
+                                    }}
+                                  >
+                                    A
+                                  </div>
+                                )}
+                                <div
+                                  style={{
+                                    maxWidth: "76%",
+                                    padding: "9px 13px",
+                                    borderRadius: isAgent
+                                      ? "4px 14px 14px 14px"
+                                      : "14px 4px 14px 14px",
+                                    fontSize: 13.5,
+                                    lineHeight: 1.45,
+                                    background: isAgent
+                                      ? "rgba(16,185,129,0.08)"
+                                      : "rgba(37,99,235,0.08)",
+                                    border: isAgent
+                                      ? "1px solid rgba(16,185,129,0.2)"
+                                      : "1px solid rgba(37,99,235,0.2)",
+                                    color: "#e2e8f0",
+                                  }}
+                                >
                                   {msg.text}
                                 </div>
-                                {!isAgent && <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, marginLeft: 8, marginTop: 2, background: "linear-gradient(135deg,#2563EB,#10B981)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#ffffff" }}>U</div>}
+                                {!isAgent && (
+                                  <div
+                                    style={{
+                                      width: 26,
+                                      height: 26,
+                                      borderRadius: "50%",
+                                      flexShrink: 0,
+                                      marginLeft: 8,
+                                      marginTop: 2,
+                                      background:
+                                        "linear-gradient(135deg,#2563EB,#10B981)",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      fontSize: 11,
+                                      fontWeight: 700,
+                                      color: "#ffffff",
+                                    }}
+                                  >
+                                    U
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
@@ -851,8 +2591,19 @@ export function Landing() {
                         </div>
 
                         {demoDone && (
-                          <div style={{ display: "flex", gap: 8, marginTop: 16, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.08)", justifyContent: "center" }}>
-                            <span style={{ fontSize: 12, color: "#94a3b8" }}>Demo complete — restarting…</span>
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: 8,
+                              marginTop: 16,
+                              paddingTop: 14,
+                              borderTop: "1px solid rgba(255,255,255,0.08)",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <span style={{ fontSize: 12, color: "#94a3b8" }}>
+                              Demo complete — restarting…
+                            </span>
                           </div>
                         )}
                       </div>
@@ -868,30 +2619,120 @@ export function Landing() {
           ══════════════════════════════════════════════ */}
           <section id="features" className="section-box white">
             <div className="section-pad relative overflow-hidden">
-              <div style={{ position: "absolute", bottom: 0, right: "10%", width: "400px", height: "400px", background: "radial-gradient(circle, rgba(37,99,235,0.05), transparent 70%)", pointerEvents: "none" }} />
-              <div style={{ position: "absolute", top: "10%", left: "5%", width: "300px", height: "300px", background: "radial-gradient(circle, rgba(16,185,129,0.04), transparent 70%)", pointerEvents: "none" }} />
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  right: "10%",
+                  width: "400px",
+                  height: "400px",
+                  background:
+                    "radial-gradient(circle, rgba(37,99,235,0.05), transparent 70%)",
+                  pointerEvents: "none",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  top: "10%",
+                  left: "5%",
+                  width: "300px",
+                  height: "300px",
+                  background:
+                    "radial-gradient(circle, rgba(16,185,129,0.04), transparent 70%)",
+                  pointerEvents: "none",
+                }}
+              />
 
               <div className="relative" style={{ zIndex: 1 }}>
                 <Reveal className="text-center mb-16 space-y-4">
-                  <span className="tag px-4 py-1.5 rounded-full inline-block" style={{ color: "#ffffff", background: "var(--gg)" }}>Platform Capabilities</span>
-                  <h2 className="font-extrabold tracking-tight mt-4" style={{ fontSize: "clamp(28px,4vw,48px)", color: "#0a0a0a" }}>
-                    Everything You Need<span className="gradient-text block">to Scale</span>
+                  <span
+                    className="tag px-4 py-1.5 rounded-full inline-block"
+                    style={{ color: "#ffffff", background: "var(--gg)" }}
+                  >
+                    Platform Capabilities
+                  </span>
+                  <h2
+                    className="font-extrabold tracking-tight mt-4"
+                    style={{
+                      fontSize: "clamp(28px,4vw,48px)",
+                      color: "#0a0a0a",
+                    }}
+                  >
+                    Everything You Need
+                    <span className="gradient-text block">to Scale</span>
                   </h2>
-                  <p style={{ color: "#475569", fontSize: 16, maxWidth: 520, margin: "0 auto" }}>Powerful AI infrastructure designed to capture more leads and serve customers around the clock.</p>
+                  <p
+                    style={{
+                      color: "#475569",
+                      fontSize: 16,
+                      maxWidth: 520,
+                      margin: "0 auto",
+                    }}
+                  >
+                    Powerful AI infrastructure designed to capture more leads
+                    and serve customers around the clock.
+                  </p>
                 </Reveal>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                   {features.map((f, i) => (
-                    <Reveal key={i} delay={i * .08}>
-                      <TiltCard className="feature-card group relative p-7 rounded-2xl overflow-hidden h-full cursor-default" style={{ background: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(12px)", border: "1px solid rgba(37, 99, 235, 0.14)", boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.04)" }}>
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl" style={{ background: `radial-gradient(ellipse at 30% 30%,${f.color}14,transparent 60%)` }} />
-                        <div className="relative w-12 h-12 rounded-xl flex items-center justify-center mb-5 text-2xl" style={{ background: `${f.color}14`, border: `1px solid ${f.color}26` }}>
-                           <span className="group-hover:scale-110 transition-transform duration-300 inline-block">{f.icon}</span>
+                    <Reveal key={i} delay={i * 0.08}>
+                      <TiltCard
+                        className="feature-card group relative p-7 rounded-2xl overflow-hidden h-full cursor-default"
+                        style={{
+                          background: "rgba(255, 255, 255, 0.9)",
+                          backdropFilter: "blur(12px)",
+                          border: "1px solid rgba(37, 99, 235, 0.14)",
+                          boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.04)",
+                        }}
+                      >
+                        <div
+                          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"
+                          style={{
+                            background: `radial-gradient(ellipse at 30% 30%,${f.color}14,transparent 60%)`,
+                          }}
+                        />
+                        <div
+                          className="relative w-12 h-12 rounded-xl flex items-center justify-center mb-5 text-2xl"
+                          style={{
+                            background: `${f.color}14`,
+                            border: `1px solid ${f.color}26`,
+                          }}
+                        >
+                          <span className="group-hover:scale-110 transition-transform duration-300 inline-block">
+                            {f.icon}
+                          </span>
                         </div>
-                        <h3 className="text-base font-bold mb-2" style={{ color: "#0a0a0a" }}>{f.title}</h3>
-                        <p className="text-sm leading-relaxed mb-5" style={{ color: "#475569" }}>{f.desc}</p>
-                        <div className="flex items-baseline gap-2 pt-4" style={{ borderTop: "1px solid rgba(37, 99, 235, 0.14)" }}>
-                          <span className="text-2xl font-extrabold" style={{ color: f.color }}>{f.metric}</span>
-                          <span className="tag text-[10px]" style={{ color: "#2563EB" }}>{f.metricLabel}</span>
+                        <h3
+                          className="text-base font-bold mb-2"
+                          style={{ color: "#0a0a0a" }}
+                        >
+                          {f.title}
+                        </h3>
+                        <p
+                          className="text-sm leading-relaxed mb-5"
+                          style={{ color: "#475569" }}
+                        >
+                          {f.desc}
+                        </p>
+                        <div
+                          className="flex items-baseline gap-2 pt-4"
+                          style={{
+                            borderTop: "1px solid rgba(37, 99, 235, 0.14)",
+                          }}
+                        >
+                          <span
+                            className="text-2xl font-extrabold"
+                            style={{ color: f.color }}
+                          >
+                            {f.metric}
+                          </span>
+                          <span
+                            className="tag text-[10px]"
+                            style={{ color: "#2563EB" }}
+                          >
+                            {f.metricLabel}
+                          </span>
                         </div>
                       </TiltCard>
                     </Reveal>
@@ -906,33 +2747,108 @@ export function Landing() {
           ══════════════════════════════════════════════ */}
           <section id="how-it-works" className="section-box black">
             <div className="section-pad relative overflow-hidden">
-              <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "100%", height: "100%", background: "radial-gradient(circle at top, rgba(16,185,129,0.10), transparent 70%)", pointerEvents: "none" }} />
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: "100%",
+                  height: "100%",
+                  background:
+                    "radial-gradient(circle at top, rgba(16,185,129,0.10), transparent 70%)",
+                  pointerEvents: "none",
+                }}
+              />
               <div className="relative" style={{ zIndex: 1 }}>
                 <Reveal className="text-center mb-16 space-y-4">
-                  <span className="tag px-4 py-1.5 rounded-full inline-block" style={{ color: "#ffffff", background: "var(--gg)" }}>Simple Process</span>
-                  <h2 className="font-extrabold tracking-tight mt-4" style={{ fontSize: "clamp(28px,4vw,48px)", color: "#ffffff" }}>
+                  <span
+                    className="tag px-4 py-1.5 rounded-full inline-block"
+                    style={{ color: "#ffffff", background: "var(--gg)" }}
+                  >
+                    Simple Process
+                  </span>
+                  <h2
+                    className="font-extrabold tracking-tight mt-4"
+                    style={{
+                      fontSize: "clamp(28px,4vw,48px)",
+                      color: "#ffffff",
+                    }}
+                  >
                     Live in <span className="gradient-text">5 Steps</span>
                   </h2>
-                  <p style={{ color: "#94a3b8", fontSize: 16, maxWidth: 440, margin: "0 auto" }}>From idea to deployed voice agent in under 5 minutes — no code required.</p>
+                  <p
+                    style={{
+                      color: "#94a3b8",
+                      fontSize: 16,
+                      maxWidth: 440,
+                      margin: "0 auto",
+                    }}
+                  >
+                    From idea to deployed voice agent in under 5 minutes — no
+                    code required.
+                  </p>
                 </Reveal>
 
                 <Reveal>
-                  <div style={{ background: "linear-gradient(135deg, #161616 0%, #0a0a0a 50%, #161616 100%)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, padding: "40px 36px", boxShadow: "0 20px 50px -15px rgba(0,0,0,0.5)" }}>
+                  <div
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #161616 0%, #0a0a0a 50%, #161616 100%)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: 24,
+                      padding: "40px 36px",
+                      boxShadow: "0 20px 50px -15px rgba(0,0,0,0.5)",
+                    }}
+                  >
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative">
                       {STEPS.map((step, i) => (
-                        <div key={i} className="flex flex-col items-center text-center relative h-full group">
+                        <div
+                          key={i}
+                          className="flex flex-col items-center text-center relative h-full group"
+                        >
                           {i < STEPS.length - 1 && (
                             <div className="hidden md:block absolute top-5 left-[50%] right-[-50%] h-[2px] bg-gradient-to-r from-blue-500/25 via-emerald-500/20 to-[var(--primary)]/5 z-0 pointer-events-none" />
                           )}
-                          <div className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shadow-md z-10 mb-4 group-hover:scale-110 transition-all duration-300" style={{ color: "#ffffff", background: "linear-gradient(135deg,#2563EB,#10B981)", boxShadow: "0 4px 14px rgba(16,185,129,0.35)" }}>
+                          <div
+                            className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shadow-md z-10 mb-4 group-hover:scale-110 transition-all duration-300"
+                            style={{
+                              color: "#ffffff",
+                              background:
+                                "linear-gradient(135deg,#2563EB,#10B981)",
+                              boxShadow: "0 4px 14px rgba(16,185,129,0.35)",
+                            }}
+                          >
                             {step.n}
                           </div>
-                          <div className="rounded-2xl p-5 flex-1 flex flex-col items-center w-full transition-all duration-300" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                            <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-3 flex-shrink-0" style={{ background: "rgba(16,185,129,0.10)", border: "1px solid rgba(16,185,129,0.20)" }}>
+                          <div
+                            className="rounded-2xl p-5 flex-1 flex flex-col items-center w-full transition-all duration-300"
+                            style={{
+                              background: "rgba(255,255,255,0.04)",
+                              border: "1px solid rgba(255,255,255,0.08)",
+                            }}
+                          >
+                            <div
+                              className="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-3 flex-shrink-0"
+                              style={{
+                                background: "rgba(16,185,129,0.10)",
+                                border: "1px solid rgba(16,185,129,0.20)",
+                              }}
+                            >
                               {step.icon}
                             </div>
-                            <h3 className="text-sm font-bold mb-2" style={{ color: "#ffffff" }}>{step.title}</h3>
-                            <p className="text-[12px] leading-relaxed m-0" style={{ color: "#94a3b8" }}>{step.desc}</p>
+                            <h3
+                              className="text-sm font-bold mb-2"
+                              style={{ color: "#ffffff" }}
+                            >
+                              {step.title}
+                            </h3>
+                            <p
+                              className="text-[12px] leading-relaxed m-0"
+                              style={{ color: "#94a3b8" }}
+                            >
+                              {step.desc}
+                            </p>
                           </div>
                         </div>
                       ))}
@@ -941,9 +2857,30 @@ export function Landing() {
                 </Reveal>
 
                 <Reveal className="text-center mt-14">
-                  <MagBtn onClick={() => openAuth("register")} className="btn-responsive-lg font-bold text-white flex items-center gap-2 mx-auto" style={{ background: "var(--gg)", boxShadow: "0 4px 14px rgba(16,185,129,0.25)", borderRadius: 14, padding: "14px 24px" }}>
+                  <MagBtn
+                    onClick={() => openAuth("register")}
+                    className="btn-responsive-lg font-bold text-white flex items-center gap-2 mx-auto"
+                    style={{
+                      background: "var(--gg)",
+                      boxShadow: "0 4px 14px rgba(16,185,129,0.25)",
+                      borderRadius: 14,
+                      padding: "14px 24px",
+                    }}
+                  >
                     Build Your First Agent Free
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                      />
+                    </svg>
                   </MagBtn>
                 </Reveal>
               </div>
@@ -955,34 +2892,144 @@ export function Landing() {
           ══════════════════════════════════════════════ */}
           <section id="comparison" className="section-box tint">
             <div className="section-pad relative overflow-hidden">
-              <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "100%", height: "100%", background: "radial-gradient(circle at center, rgba(34,197,94,0.06), transparent 70%)", pointerEvents: "none" }} />
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: "100%",
+                  height: "100%",
+                  background:
+                    "radial-gradient(circle at center, rgba(34,197,94,0.06), transparent 70%)",
+                  pointerEvents: "none",
+                }}
+              />
               <div className="relative" style={{ zIndex: 1 }}>
                 <Reveal className="text-center mb-16 space-y-4">
-                  <span className="tag px-4 py-1.5 rounded-full inline-block" style={{ color: "#ffffff", background: "var(--gg)" }}>Why Autoniv</span>
-                  <h2 className="font-extrabold tracking-tight mt-4" style={{ fontSize: "clamp(28px,4vw,48px)", color: "#0a0a0a" }}>
-                    A Clear <span className="gradient-text">Competitive Advantage</span>
+                  <span
+                    className="tag px-4 py-1.5 rounded-full inline-block"
+                    style={{ color: "#ffffff", background: "var(--gg)" }}
+                  >
+                    Why Autoniv
+                  </span>
+                  <h2
+                    className="font-extrabold tracking-tight mt-4"
+                    style={{
+                      fontSize: "clamp(28px,4vw,48px)",
+                      color: "#0a0a0a",
+                    }}
+                  >
+                    A Clear{" "}
+                    <span className="gradient-text">Competitive Advantage</span>
                   </h2>
-                  <p style={{ color: "#475569", fontSize: 16, maxWidth: 520, margin: "0 auto" }}>An honest side-by-side against the alternatives you're considering.</p>
+                  <p
+                    style={{
+                      color: "#475569",
+                      fontSize: 16,
+                      maxWidth: 520,
+                      margin: "0 auto",
+                    }}
+                  >
+                    An honest side-by-side against the alternatives you're
+                    considering.
+                  </p>
                 </Reveal>
 
                 <Reveal>
-                  <div className="overflow-x-auto" style={{ border: "1px solid rgba(34,197,94,0.16)", borderRadius: 20, background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)", boxShadow: "0 20px 40px -15px rgba(0,0,0,0.04)" }}>
-                    <table className="w-full text-left border-collapse" style={{ minWidth: 720 }}>
+                  <div
+                    className="overflow-x-auto"
+                    style={{
+                      border: "1px solid rgba(34,197,94,0.16)",
+                      borderRadius: 20,
+                      background: "rgba(255,255,255,0.85)",
+                      backdropFilter: "blur(12px)",
+                      boxShadow: "0 20px 40px -15px rgba(0,0,0,0.04)",
+                    }}
+                  >
+                    <table
+                      className="w-full text-left border-collapse"
+                      style={{ minWidth: 720 }}
+                    >
                       <thead>
-                        <tr style={{ borderBottom: "1px solid rgba(34,197,94,0.16)", background: "rgba(34,197,94,0.03)" }}>
-                          <th className="p-5 text-xs font-bold uppercase tracking-wider text-[#475569]" style={{ width: "28%" }}>Capability</th>
-                          <th className="p-5 text-xs font-bold uppercase tracking-wider text-[#15803d]" style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.06), rgba(16,185,129,0.06))", width: "24%" }}>✦ Autoniv</th>
-                          <th className="p-5 text-xs font-bold uppercase tracking-wider text-[#64748b]" style={{ width: "24%" }}>Human Callers</th>
-                          <th className="p-5 text-xs font-bold uppercase tracking-wider text-[#64748b]" style={{ width: "24%" }}>Generic Dialers</th>
+                        <tr
+                          style={{
+                            borderBottom: "1px solid rgba(34,197,94,0.16)",
+                            background: "rgba(34,197,94,0.03)",
+                          }}
+                        >
+                          <th
+                            className="p-5 text-xs font-bold uppercase tracking-wider text-[#475569]"
+                            style={{ width: "28%" }}
+                          >
+                            Capability
+                          </th>
+                          <th
+                            className="p-5 text-xs font-bold uppercase tracking-wider text-[#15803d]"
+                            style={{
+                              background:
+                                "linear-gradient(135deg, rgba(37,99,235,0.06), rgba(16,185,129,0.06))",
+                              width: "24%",
+                            }}
+                          >
+                            ✦ Autoniv
+                          </th>
+                          <th
+                            className="p-5 text-xs font-bold uppercase tracking-wider text-[#64748b]"
+                            style={{ width: "24%" }}
+                          >
+                            Human Callers
+                          </th>
+                          <th
+                            className="p-5 text-xs font-bold uppercase tracking-wider text-[#64748b]"
+                            style={{ width: "24%" }}
+                          >
+                            Generic Dialers
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
                         {COMPARISON.map((row, index) => (
-                          <tr key={index} className="table-row" style={{ borderBottom: index < COMPARISON.length - 1 ? "1px solid rgba(34,197,94,0.08)" : "none" }}>
-                            <td className="p-5 text-xs font-semibold text-[var(--text)]" style={{ color: "#0a0a0a" }}>{row.capability}</td>
-                            <td className="p-5 text-xs" style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.04), rgba(16,185,129,0.04))" }}>{renderCellContent(row.autoniv.status, row.autoniv.text)}</td>
-                            <td className="p-5 text-xs">{renderCellContent(row.human.status, row.human.text)}</td>
-                            <td className="p-5 text-xs">{renderCellContent(row.dialers.status, row.dialers.text)}</td>
+                          <tr
+                            key={index}
+                            className="table-row"
+                            style={{
+                              borderBottom:
+                                index < COMPARISON.length - 1
+                                  ? "1px solid rgba(34,197,94,0.08)"
+                                  : "none",
+                            }}
+                          >
+                            <td
+                              className="p-5 text-xs font-semibold text-[var(--text)]"
+                              style={{ color: "#0a0a0a" }}
+                            >
+                              {row.capability}
+                            </td>
+                            <td
+                              className="p-5 text-xs"
+                              style={{
+                                background:
+                                  "linear-gradient(135deg, rgba(37,99,235,0.04), rgba(16,185,129,0.04))",
+                              }}
+                            >
+                              {renderCellContent(
+                                row.autoniv.status,
+                                row.autoniv.text,
+                              )}
+                            </td>
+                            <td className="p-5 text-xs">
+                              {renderCellContent(
+                                row.human.status,
+                                row.human.text,
+                              )}
+                            </td>
+                            <td className="p-5 text-xs">
+                              {renderCellContent(
+                                row.dialers.status,
+                                row.dialers.text,
+                              )}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -997,455 +3044,825 @@ export function Landing() {
               USE CASES + INTEGRATIONS — white box
           ══════════════════════════════════════════════ */}
           <section className="section-box white">
-  <div className="section-pad">
-    <Reveal className="text-center mb-12 sm:mb-16 space-y-4">
-      <span className="tag px-3 sm:px-4 py-1 sm:py-1.5 rounded-full inline-block text-xs sm:text-sm" style={{ color: "#ffffff", background: "var(--gg)" }}>
-        Industry Solutions
-      </span>
-      <h2 className="font-extrabold tracking-tight mt-3 sm:mt-4" style={{ fontSize: "clamp(24px,6vw,48px)", color: "#0a0a0a" }}>
-        Built for <span className="gradient-text">Every Industry</span>
-      </h2>
-    </Reveal>
+            <div className="section-pad">
+              <Reveal className="text-center mb-12 sm:mb-16 space-y-4">
+                <span
+                  className="tag px-3 sm:px-4 py-1 sm:py-1.5 rounded-full inline-block text-xs sm:text-sm"
+                  style={{ color: "#ffffff", background: "var(--gg)" }}
+                >
+                  Industry Solutions
+                </span>
+                <h2
+                  className="font-extrabold tracking-tight mt-3 sm:mt-4"
+                  style={{ fontSize: "clamp(24px,6vw,48px)", color: "#0a0a0a" }}
+                >
+                  Built for{" "}
+                  <span className="gradient-text">Every Industry</span>
+                </h2>
+              </Reveal>
 
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 items-start">
-      {/* Use case tabs */}
-      <div>
-        {/* Mobile swipe hint */}
-        <div className="flex items-center justify-between mb-2 sm:hidden">
-          <span className="text-[10px] text-[var(--muted)]/70 font-medium">Swipe to see more →</span>
-        </div>
-        
-        <div className="use-case-tabs" style={{ 
-          borderBottom: "1px solid rgba(34,197,94,0.10)", 
-          display: "flex", 
-          gap: 4, 
-          marginBottom: 16, 
-          overflowX: "auto", 
-          WebkitOverflowScrolling: "touch", 
-          scrollbarWidth: "none",
-          paddingBottom: 2,
-        }}>
-          <style>{`
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 items-start">
+                {/* Use case tabs */}
+                <div>
+                  {/* Mobile swipe hint */}
+                  <div className="flex items-center justify-between mb-2 sm:hidden">
+                    <span className="text-[10px] text-[var(--muted)]/70 font-medium">
+                      Swipe to see more →
+                    </span>
+                  </div>
+
+                  <div
+                    className="use-case-tabs"
+                    style={{
+                      borderBottom: "1px solid rgba(34,197,94,0.10)",
+                      display: "flex",
+                      gap: 4,
+                      marginBottom: 16,
+                      overflowX: "auto",
+                      WebkitOverflowScrolling: "touch",
+                      scrollbarWidth: "none",
+                      paddingBottom: 2,
+                    }}
+                  >
+                    <style>{`
             .use-case-tabs::-webkit-scrollbar { display: none; }
           `}</style>
-          {useCases.map((uc, i) => (
-            <button 
-              key={i} 
-              onClick={() => setActiveUseCase(i)} 
-              className={`use-case-tab px-3 sm:px-4 py-2 sm:py-2.5 text-[11px] sm:text-sm font-medium rounded-t-lg whitespace-nowrap flex-shrink-0 ${
-                activeUseCase === i ? " active" : ""
-              }`} 
-              style={{ 
-                color: activeUseCase === i ? "#0a0a0a" : "#94a3b8", 
-                background: activeUseCase === i ? "linear-gradient(135deg, rgba(37,99,235,0.08), rgba(16,185,129,0.06))" : "transparent", 
-                border: "none", 
-                cursor: "pointer",
-                transition: "all 0.2s",
-                position: "relative",
-              }}
-            >
-              <span className="mr-1 sm:mr-1.5">{uc.icon}</span> {uc.title}
-              {activeUseCase === i && (
-                <span style={{
-                  position: "absolute",
-                  bottom: -1,
-                  left: 0,
-                  right: 0,
-                  height: 2,
-                  background: "linear-gradient(90deg,#2563EB,#10B981)",
-                  borderRadius: "99px 99px 0 0",
-                }} />
-              )}
-            </button>
-          ))}
-        </div>
-        
-        <div key={activeUseCase} className="use-case-card glass-card rounded-2xl p-5 sm:p-8 animate-fade-up" style={{
-          background: "rgba(255,255,255,0.7)",
-          backdropFilter: "blur(16px)",
-          border: "1px solid rgba(16,185,129,0.08)",
-        }}>
-          <div className="icon" style={{ fontSize: 40, marginBottom: 12 }}>{useCases[activeUseCase].icon}</div>
-          <h3 style={{ fontSize: "clamp(18px,4vw,22px)", fontWeight: 700, color: "#0a0a0a", marginBottom: 8 }}>{useCases[activeUseCase].title}</h3>
-          <p style={{ color: "#475569", lineHeight: 1.65, marginBottom: 14, fontSize: "clamp(13px,2vw,15px)" }}>{useCases[activeUseCase].desc}</p>
-          <div style={{ 
-            display: "inline-flex", 
-            alignItems: "center", 
-            gap: 6, 
-            padding: "6px 14px", 
-            borderRadius: 99, 
-            background: "linear-gradient(135deg, rgba(37,99,235,0.08), rgba(16,185,129,0.08))", 
-            border: "1px solid rgba(16,185,129,0.22)" 
-          }}>
-            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: "#10B981" }} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-            <span style={{ fontSize: "clamp(12px,2vw,14px)", fontWeight: 600, color: "#10B981" }}>{useCases[activeUseCase].stat}</span>
-          </div>
-          <div style={{ height: 2, borderRadius: 99, background: "rgba(34,197,94,0.10)", marginTop: 16, overflow: "hidden" }}>
-            <div 
-              key={`pb-${activeUseCase}`} 
-              className="progress-bar h-full rounded-full" 
-              style={{ 
-                background: "linear-gradient(90deg,#2563EB,#10B981)",
-                width: "100%",
-                animation: "progressFill 0.6s ease-out forwards",
-              }} 
-            />
-          </div>
-        </div>
-      </div>
+                    {useCases.map((uc, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setActiveUseCase(i)}
+                        className={`use-case-tab px-3 sm:px-4 py-2 sm:py-2.5 text-[11px] sm:text-sm font-medium rounded-t-lg whitespace-nowrap flex-shrink-0 ${
+                          activeUseCase === i ? " active" : ""
+                        }`}
+                        style={{
+                          color: activeUseCase === i ? "#0a0a0a" : "#94a3b8",
+                          background:
+                            activeUseCase === i
+                              ? "linear-gradient(135deg, rgba(37,99,235,0.08), rgba(16,185,129,0.06))"
+                              : "transparent",
+                          border: "none",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                          position: "relative",
+                        }}
+                      >
+                        <span className="mr-1 sm:mr-1.5">{uc.icon}</span>{" "}
+                        {uc.title}
+                        {activeUseCase === i && (
+                          <span
+                            style={{
+                              position: "absolute",
+                              bottom: -1,
+                              left: 0,
+                              right: 0,
+                              height: 2,
+                              background:
+                                "linear-gradient(90deg,#2563EB,#10B981)",
+                              borderRadius: "99px 99px 0 0",
+                            }}
+                          />
+                        )}
+                      </button>
+                    ))}
+                  </div>
 
-      {/* Integrations grid */}
-      <Reveal from="right">
-        <div>
-          <h3 style={{ fontSize: "clamp(16px,3vw,18px)", fontWeight: 700, color: "#0a0a0a", marginBottom: 4 }}>Plug into the tools your team already uses</h3>
-          <p style={{ fontSize: "clamp(13px,2vw,14px)", color: "#475569", marginBottom: 16, lineHeight: 1.6 }}>Connects with your existing CRM, telephony, and automation tools instantly — no developer needed.</p>
-          
-          <div className="integrations-grid grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3">
-            {[...integrationsRow1.slice(0, 4), ...integrationsRow2.slice(0, 4)].map((intg, i) => (
-              <div key={i} className="glass-card rounded-xl p-3 sm:p-4 flex flex-col items-center gap-1.5 sm:gap-2 group hover:scale-105 transition-all duration-300 cursor-default" style={{
-                background: "rgba(255,255,255,0.7)",
-                backdropFilter: "blur(16px)",
-                border: "1px solid rgba(16,185,129,0.08)",
-              }}>
-                <span style={{ fontSize: "clamp(18px,3vw,22px)" }}>{intg.icon}</span>
-                <span style={{ 
-                  fontSize: "clamp(9px,1.5vw,11px)", 
-                  color: "#10B981", 
-                  fontFamily: "'JetBrains Mono',monospace", 
-                  letterSpacing: "0.04em", 
-                  textAlign: "center",
-                  lineHeight: 1.2,
-                }}>
-                  {intg.name}
-                </span>
+                  <div
+                    key={activeUseCase}
+                    className="use-case-card glass-card rounded-2xl p-5 sm:p-8 animate-fade-up"
+                    style={{
+                      background: "rgba(255,255,255,0.7)",
+                      backdropFilter: "blur(16px)",
+                      border: "1px solid rgba(16,185,129,0.08)",
+                    }}
+                  >
+                    <div
+                      className="icon"
+                      style={{ fontSize: 40, marginBottom: 12 }}
+                    >
+                      {useCases[activeUseCase].icon}
+                    </div>
+                    <h3
+                      style={{
+                        fontSize: "clamp(18px,4vw,22px)",
+                        fontWeight: 700,
+                        color: "#0a0a0a",
+                        marginBottom: 8,
+                      }}
+                    >
+                      {useCases[activeUseCase].title}
+                    </h3>
+                    <p
+                      style={{
+                        color: "#475569",
+                        lineHeight: 1.65,
+                        marginBottom: 14,
+                        fontSize: "clamp(13px,2vw,15px)",
+                      }}
+                    >
+                      {useCases[activeUseCase].desc}
+                    </p>
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "6px 14px",
+                        borderRadius: 99,
+                        background:
+                          "linear-gradient(135deg, rgba(37,99,235,0.08), rgba(16,185,129,0.08))",
+                        border: "1px solid rgba(16,185,129,0.22)",
+                      }}
+                    >
+                      <svg
+                        className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                        style={{ color: "#10B981" }}
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                        />
+                      </svg>
+                      <span
+                        style={{
+                          fontSize: "clamp(12px,2vw,14px)",
+                          fontWeight: 600,
+                          color: "#10B981",
+                        }}
+                      >
+                        {useCases[activeUseCase].stat}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        height: 2,
+                        borderRadius: 99,
+                        background: "rgba(34,197,94,0.10)",
+                        marginTop: 16,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div
+                        key={`pb-${activeUseCase}`}
+                        className="progress-bar h-full rounded-full"
+                        style={{
+                          background: "linear-gradient(90deg,#2563EB,#10B981)",
+                          width: "100%",
+                          animation: "progressFill 0.6s ease-out forwards",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Integrations grid */}
+                <Reveal from="right">
+                  <div>
+                    <h3
+                      style={{
+                        fontSize: "clamp(16px,3vw,18px)",
+                        fontWeight: 700,
+                        color: "#0a0a0a",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Plug into the tools your team already uses
+                    </h3>
+                    <p
+                      style={{
+                        fontSize: "clamp(13px,2vw,14px)",
+                        color: "#475569",
+                        marginBottom: 16,
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      Connects with your existing CRM, telephony, and automation
+                      tools instantly — no developer needed.
+                    </p>
+
+                    <div className="integrations-grid grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3">
+                      {[
+                        ...integrationsRow1.slice(0, 4),
+                        ...integrationsRow2.slice(0, 4),
+                      ].map((intg, i) => (
+                        <div
+                          key={i}
+                          className="glass-card rounded-xl p-3 sm:p-4 flex flex-col items-center gap-1.5 sm:gap-2 group hover:scale-105 transition-all duration-300 cursor-default"
+                          style={{
+                            background: "rgba(255,255,255,0.7)",
+                            backdropFilter: "blur(16px)",
+                            border: "1px solid rgba(16,185,129,0.08)",
+                          }}
+                        >
+                          <span style={{ fontSize: "clamp(18px,3vw,22px)" }}>
+                            {intg.icon}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: "clamp(9px,1.5vw,11px)",
+                              color: "#10B981",
+                              fontFamily: "'JetBrains Mono',monospace",
+                              letterSpacing: "0.04em",
+                              textAlign: "center",
+                              lineHeight: 1.2,
+                            }}
+                          >
+                            {intg.name}
+                          </span>
+                        </div>
+                      ))}
+                      <div
+                        className="glass-card rounded-xl p-3 sm:p-4 flex flex-col items-center gap-1.5 sm:gap-2 cursor-default col-span-full sm:col-span-1"
+                        style={{
+                          background: "rgba(255,255,255,0.7)",
+                          backdropFilter: "blur(16px)",
+                          border: "1px dashed rgba(37,99,235,0.25)",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "clamp(11px,2vw,13px)",
+                            color: "#10B981",
+                            fontFamily: "'JetBrains Mono',monospace",
+                            letterSpacing: "0.06em",
+                            textAlign: "center",
+                          }}
+                        >
+                          +40 more →
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Reveal>
               </div>
-            ))}
-            <div className="glass-card rounded-xl p-3 sm:p-4 flex flex-col items-center gap-1.5 sm:gap-2 cursor-default col-span-full sm:col-span-1" style={{
-              background: "rgba(255,255,255,0.7)",
-              backdropFilter: "blur(16px)",
-              border: "1px dashed rgba(37,99,235,0.25)",
-            }}>
-              <span style={{ fontSize: "clamp(11px,2vw,13px)", color: "#10B981", fontFamily: "'JetBrains Mono',monospace", letterSpacing: "0.06em", textAlign: "center" }}>
-                +40 more →
-              </span>
             </div>
-          </div>
-        </div>
-      </Reveal>
-    </div>
-  </div>
 
-  <style>{`
+            <style>{`
     @keyframes progressFill {
       from { width: 0%; }
       to { width: 100%; }
     }
   `}</style>
-</section>
+          </section>
 
           {/* ══════════════════════════════════════════════
               INTEGRATIONS MARQUEE — black box
           ══════════════════════════════════════════════ */}
-         <section id="integrations" style={{ 
-  padding: "96px 20px", 
-  background: "#090d16", 
-  position: "relative", 
-  overflow: "hidden" 
-}}>
-  {/* Enhanced background with multiple layers */}
-  <div style={{ 
-    position: "absolute", 
-    inset: 0, 
-    background: "radial-gradient(ellipse at 30% 20%, rgba(16,185,129,0.06), transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(5,150,105,0.04), transparent 50%)", 
-    pointerEvents: "none" 
-  }} />
-  
-  {/* Floating glow orbs */}
-  <div style={{ 
-    position: "absolute", 
-    top: "10%", 
-    right: "5%", 
-    width: "300px", 
-    height: "300px", 
-    background: "radial-gradient(circle, rgba(37,99,235,0.06), rgba(16,185,129,0.04), transparent 70%)", 
-    borderRadius: "50%",
-    filter: "blur(60px)",
-    animation: "auroraPulse 20s ease-in-out infinite"
-  }} />
-  <div style={{ 
-    position: "absolute", 
-    bottom: "20%", 
-    left: "5%", 
-    width: "250px", 
-    height: "250px", 
-    background: "radial-gradient(circle, rgba(16,185,129,0.06), rgba(37,99,235,0.04), transparent 70%)", 
-    borderRadius: "50%",
-    filter: "blur(60px)",
-    animation: "auroraPulse 25s ease-in-out infinite reverse"
-  }} />
-
-  <div className="max-w-6xl mx-auto" style={{ position: "relative", zIndex: 1 }}>
-    {/* Header */}
-    <Reveal className="text-center mb-12">
-      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4" style={{ 
-        background: "linear-gradient(135deg, rgba(37,99,235,0.10), rgba(16,185,129,0.08))", 
-        border: "1px solid rgba(16,185,129,0.20)" 
-      }}>
-        <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--gg)" }} />
-        <span className="text-xs font-medium tracking-wider uppercase" style={{ color: "#34D399" }}>Integrations</span>
-      </div>
-      <h2 className="font-extrabold tracking-tight" style={{ 
-        fontSize: "clamp(32px,4vw,52px)", 
-        color: "#ffffff",
-        lineHeight: 1.1
-      }}>
-        Connect Your Favorite
-        <span className="block" style={{ 
-          background: "var(--gg)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          backgroundClip: "text"
-        }}>Tools & Platforms</span>
-      </h2>
-      <p className="mt-3" style={{ color: "#94a3b8", fontSize: 15, maxWidth: 500, margin: "0 auto" }}>
-        Seamlessly integrate with 40+ apps or build custom workflows with our flexible API.
-      </p>
-    </Reveal>
-
-    {/* Main Integration Grid */}
-    <Reveal>
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4 mb-8">
-        {[...integrationsRow1, ...integrationsRow2].slice(0, 12).map((item, i) => (
-          <div
-            key={i}
-            className="group relative rounded-2xl p-4 text-center transition-all duration-300 cursor-default"
+          <section
+            id="integrations"
             style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.06)",
-              transition: "all 0.3s cubic-bezier(.16,1,.3,1)"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "linear-gradient(135deg, rgba(37,99,235,0.06), rgba(16,185,129,0.06))";
-              e.currentTarget.style.borderColor = "rgba(16,185,129,0.2)";
-              e.currentTarget.style.transform = "translateY(-4px)";
-              e.currentTarget.style.boxShadow = "0 12px 40px rgba(16,185,129,0.08)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
+              padding: "96px 20px",
+              background: "#090d16",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            <div className="text-3xl mb-2 group-hover:scale-110 transition-transform duration-300">
-              {item.icon}
-            </div>
-            <div className="text-xs font-medium truncate" style={{ color: "#e2e8f0" }}>
-              {item.name}
-            </div>
-            <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{
-              background: "linear-gradient(135deg, rgba(37,99,235,0.04), rgba(16,185,129,0.04), transparent)"
-            }} />
-          </div>
-        ))}
-      </div>
-    </Reveal>
+            {/* Enhanced background with multiple layers */}
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background:
+                  "radial-gradient(ellipse at 30% 20%, rgba(16,185,129,0.06), transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(5,150,105,0.04), transparent 50%)",
+                pointerEvents: "none",
+              }}
+            />
 
-    {/* Scrolling Marquee Rows */}
-    <div className="space-y-4">
-      <Reveal>
-        <div className="relative overflow-hidden rounded-2xl" style={{
-          background: "rgba(255,255,255,0.02)",
-          border: "1px solid rgba(255,255,255,0.04)"
-        }}>
-          <div className="absolute inset-y-0 left-0 w-24 z-10 pointer-events-none" style={{ 
-            background: "linear-gradient(90deg, #090d16, transparent)" 
-          }} />
-          <div className="absolute inset-y-0 right-0 w-24 z-10 pointer-events-none" style={{ 
-            background: "linear-gradient(270deg, #090d16, transparent)" 
-          }} />
-          
-          <div className="flex gap-4 animate-marquee py-4" style={{ width: "max-content" }}>
-            {[...integrationsRow1, ...integrationsRow1, ...integrationsRow1].map((item, i) => (
-              <div 
-                key={i} 
-                className="flex items-center gap-3 px-5 py-2 rounded-xl flex-shrink-0"
-                style={{
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.04)"
-                }}
-              >
-                <span className="text-xl">{item.icon}</span>
-                <span className="text-sm font-medium" style={{ color: "#94a3b8" }}>{item.name}</span>
+            {/* Floating glow orbs */}
+            <div
+              style={{
+                position: "absolute",
+                top: "10%",
+                right: "5%",
+                width: "300px",
+                height: "300px",
+                background:
+                  "radial-gradient(circle, rgba(37,99,235,0.06), rgba(16,185,129,0.04), transparent 70%)",
+                borderRadius: "50%",
+                filter: "blur(60px)",
+                animation: "auroraPulse 20s ease-in-out infinite",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                bottom: "20%",
+                left: "5%",
+                width: "250px",
+                height: "250px",
+                background:
+                  "radial-gradient(circle, rgba(16,185,129,0.06), rgba(37,99,235,0.04), transparent 70%)",
+                borderRadius: "50%",
+                filter: "blur(60px)",
+                animation: "auroraPulse 25s ease-in-out infinite reverse",
+              }}
+            />
+
+            <div
+              className="max-w-6xl mx-auto"
+              style={{ position: "relative", zIndex: 1 }}
+            >
+              {/* Header */}
+              <Reveal className="text-center mb-12">
+                <div
+                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, rgba(37,99,235,0.10), rgba(16,185,129,0.08))",
+                    border: "1px solid rgba(16,185,129,0.20)",
+                  }}
+                >
+                  <span
+                    className="w-1.5 h-1.5 rounded-full animate-pulse"
+                    style={{ background: "var(--gg)" }}
+                  />
+                  <span
+                    className="text-xs font-medium tracking-wider uppercase"
+                    style={{ color: "#34D399" }}
+                  >
+                    Integrations
+                  </span>
+                </div>
+                <h2
+                  className="font-extrabold tracking-tight"
+                  style={{
+                    fontSize: "clamp(32px,4vw,52px)",
+                    color: "#ffffff",
+                    lineHeight: 1.1,
+                  }}
+                >
+                  Connect Your Favorite
+                  <span
+                    className="block"
+                    style={{
+                      background: "var(--gg)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                    }}
+                  >
+                    Tools & Platforms
+                  </span>
+                </h2>
+                <p
+                  className="mt-3"
+                  style={{
+                    color: "#94a3b8",
+                    fontSize: 15,
+                    maxWidth: 500,
+                    margin: "0 auto",
+                  }}
+                >
+                  Seamlessly integrate with 40+ apps or build custom workflows
+                  with our flexible API.
+                </p>
+              </Reveal>
+
+              {/* Main Integration Grid */}
+              <Reveal>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4 mb-8">
+                  {[...integrationsRow1, ...integrationsRow2]
+                    .slice(0, 12)
+                    .map((item, i) => (
+                      <div
+                        key={i}
+                        className="group relative rounded-2xl p-4 text-center transition-all duration-300 cursor-default"
+                        style={{
+                          background: "rgba(255,255,255,0.03)",
+                          border: "1px solid rgba(255,255,255,0.06)",
+                          transition: "all 0.3s cubic-bezier(.16,1,.3,1)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background =
+                            "linear-gradient(135deg, rgba(37,99,235,0.06), rgba(16,185,129,0.06))";
+                          e.currentTarget.style.borderColor =
+                            "rgba(16,185,129,0.2)";
+                          e.currentTarget.style.transform = "translateY(-4px)";
+                          e.currentTarget.style.boxShadow =
+                            "0 12px 40px rgba(16,185,129,0.08)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background =
+                            "rgba(255,255,255,0.03)";
+                          e.currentTarget.style.borderColor =
+                            "rgba(255,255,255,0.06)";
+                          e.currentTarget.style.transform = "translateY(0)";
+                          e.currentTarget.style.boxShadow = "none";
+                        }}
+                      >
+                        <div className="text-3xl mb-2 group-hover:scale-110 transition-transform duration-300">
+                          {item.icon}
+                        </div>
+                        <div
+                          className="text-xs font-medium truncate"
+                          style={{ color: "#e2e8f0" }}
+                        >
+                          {item.name}
+                        </div>
+                        <div
+                          className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, rgba(37,99,235,0.04), rgba(16,185,129,0.04), transparent)",
+                          }}
+                        />
+                      </div>
+                    ))}
+                </div>
+              </Reveal>
+
+              {/* Scrolling Marquee Rows */}
+              <div className="space-y-4">
+                <Reveal>
+                  <div
+                    className="relative overflow-hidden rounded-2xl"
+                    style={{
+                      background: "rgba(255,255,255,0.02)",
+                      border: "1px solid rgba(255,255,255,0.04)",
+                    }}
+                  >
+                    <div
+                      className="absolute inset-y-0 left-0 w-24 z-10 pointer-events-none"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, #090d16, transparent)",
+                      }}
+                    />
+                    <div
+                      className="absolute inset-y-0 right-0 w-24 z-10 pointer-events-none"
+                      style={{
+                        background:
+                          "linear-gradient(270deg, #090d16, transparent)",
+                      }}
+                    />
+
+                    <div
+                      className="flex gap-4 animate-marquee py-4"
+                      style={{ width: "max-content" }}
+                    >
+                      {[
+                        ...integrationsRow1,
+                        ...integrationsRow1,
+                        ...integrationsRow1,
+                      ].map((item, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center gap-3 px-5 py-2 rounded-xl flex-shrink-0"
+                          style={{
+                            background: "rgba(255,255,255,0.03)",
+                            border: "1px solid rgba(255,255,255,0.04)",
+                          }}
+                        >
+                          <span className="text-xl">{item.icon}</span>
+                          <span
+                            className="text-sm font-medium"
+                            style={{ color: "#94a3b8" }}
+                          >
+                            {item.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Reveal>
+
+                <Reveal from="right">
+                  <div
+                    className="relative overflow-hidden rounded-2xl"
+                    style={{
+                      background: "rgba(255,255,255,0.02)",
+                      border: "1px solid rgba(255,255,255,0.04)",
+                    }}
+                  >
+                    <div
+                      className="absolute inset-y-0 left-0 w-24 z-10 pointer-events-none"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, #090d16, transparent)",
+                      }}
+                    />
+                    <div
+                      className="absolute inset-y-0 right-0 w-24 z-10 pointer-events-none"
+                      style={{
+                        background:
+                          "linear-gradient(270deg, #090d16, transparent)",
+                      }}
+                    />
+
+                    <div
+                      className="flex gap-4 py-4"
+                      style={{
+                        width: "max-content",
+                        animation: "marquee 30s linear infinite reverse",
+                      }}
+                    >
+                      {[
+                        ...integrationsRow2,
+                        ...integrationsRow2,
+                        ...integrationsRow2,
+                      ].map((item, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center gap-3 px-5 py-2 rounded-xl flex-shrink-0"
+                          style={{
+                            background: "rgba(255,255,255,0.03)",
+                            border: "1px solid rgba(255,255,255,0.04)",
+                          }}
+                        >
+                          <span className="text-xl">{item.icon}</span>
+                          <span
+                            className="text-sm font-medium"
+                            style={{ color: "#94a3b8" }}
+                          >
+                            {item.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Reveal>
               </div>
-            ))}
-          </div>
-        </div>
-      </Reveal>
 
-      <Reveal from="right">
-        <div className="relative overflow-hidden rounded-2xl" style={{
-          background: "rgba(255,255,255,0.02)",
-          border: "1px solid rgba(255,255,255,0.04)"
-        }}>
-          <div className="absolute inset-y-0 left-0 w-24 z-10 pointer-events-none" style={{ 
-            background: "linear-gradient(90deg, #090d16, transparent)" 
-          }} />
-          <div className="absolute inset-y-0 right-0 w-24 z-10 pointer-events-none" style={{ 
-            background: "linear-gradient(270deg, #090d16, transparent)" 
-          }} />
-          
-          <div className="flex gap-4 py-4" style={{ 
-            width: "max-content", 
-            animation: "marquee 30s linear infinite reverse" 
-          }}>
-            {[...integrationsRow2, ...integrationsRow2, ...integrationsRow2].map((item, i) => (
-              <div 
-                key={i} 
-                className="flex items-center gap-3 px-5 py-2 rounded-xl flex-shrink-0"
-                style={{
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.04)"
-                }}
-              >
-                <span className="text-xl">{item.icon}</span>
-                <span className="text-sm font-medium" style={{ color: "#94a3b8" }}>{item.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Reveal>
-    </div>
+              {/* Integration Stats & CTA */}
+              <Reveal className="mt-12">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div
+                    className="rounded-2xl p-6 text-center"
+                    style={{
+                      background: "rgba(255,255,255,0.02)",
+                      border: "1px solid rgba(255,255,255,0.04)",
+                    }}
+                  >
+                    <div
+                      className="text-3xl font-bold mb-1"
+                      style={{
+                        background: "var(--gg)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}
+                    >
+                      40+
+                    </div>
+                    <div className="text-xs" style={{ color: "#64748b" }}>
+                      Pre-built integrations
+                    </div>
+                  </div>
 
-    {/* Integration Stats & CTA */}
-    <Reveal className="mt-12">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-2xl p-6 text-center" style={{
-          background: "rgba(255,255,255,0.02)",
-          border: "1px solid rgba(255,255,255,0.04)"
-        }}>
-          <div className="text-3xl font-bold mb-1" style={{ 
-            background: "var(--gg)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text"
-          }}>40+</div>
-          <div className="text-xs" style={{ color: "#64748b" }}>Pre-built integrations</div>
-        </div>
-        
-        <div className="rounded-2xl p-6 text-center" style={{
-          background: "rgba(255,255,255,0.02)",
-          border: "1px solid rgba(255,255,255,0.04)"
-        }}>
-          <div className="text-3xl font-bold mb-1" style={{ 
-            background: "var(--gg)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text"
-          }}>∞</div>
-          <div className="text-xs" style={{ color: "#64748b" }}>Custom API possibilities</div>
-        </div>
-        
-        <div className="rounded-2xl p-6 text-center" style={{
-          background: "rgba(255,255,255,0.02)",
-          border: "1px solid rgba(255,255,255,0.04)"
-        }}>
-          <div className="text-3xl font-bold mb-1" style={{ 
-            background: "var(--gg)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text"
-          }}>5 min</div>
-          <div className="text-xs" style={{ color: "#64748b" }}>Average setup time</div>
-        </div>
-      </div>
-    </Reveal>
+                  <div
+                    className="rounded-2xl p-6 text-center"
+                    style={{
+                      background: "rgba(255,255,255,0.02)",
+                      border: "1px solid rgba(255,255,255,0.04)",
+                    }}
+                  >
+                    <div
+                      className="text-3xl font-bold mb-1"
+                      style={{
+                        background: "var(--gg)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}
+                    >
+                      ∞
+                    </div>
+                    <div className="text-xs" style={{ color: "#64748b" }}>
+                      Custom API possibilities
+                    </div>
+                  </div>
 
-    {/* CTA Section */}
-    <Reveal className="mt-8">
-      <div className="rounded-2xl p-8 relative overflow-hidden" style={{
-        background: "linear-gradient(135deg, rgba(16,185,129,0.04), rgba(5,150,105,0.02))",
-        border: "1px solid rgba(16,185,129,0.06)"
-      }}>
-        <div className="absolute inset-0 opacity-50" style={{
-          background: "radial-gradient(circle at 70% 30%, rgba(16,185,129,0.04), transparent 70%)"
-        }} />
-        
-        <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <h3 className="text-lg font-bold text-white mb-1">
-              Need a custom integration?
-            </h3>
-            <p className="text-sm" style={{ color: "#94a3b8" }}>
-              Our API supports webhooks, real-time events, and everything in between.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <button className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-300" style={{
-              background: "var(--gg)",
-              boxShadow: "0 4px 16px rgba(16,185,129,0.2)"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = "0 8px 24px rgba(16,185,129,0.3)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 4px 16px rgba(16,185,129,0.2)";
-            }}>
-              View API Docs →
-            </button>
-            <button className="px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300" style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.06)",
-              color: "#94a3b8"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.08)";
-              e.currentTarget.style.color = "#e2e8f0";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-              e.currentTarget.style.color = "#94a3b8";
-            }}>
-              Contact Support
-            </button>
-          </div>
-        </div>
-      </div>
-    </Reveal>
-  </div>
-</section>
+                  <div
+                    className="rounded-2xl p-6 text-center"
+                    style={{
+                      background: "rgba(255,255,255,0.02)",
+                      border: "1px solid rgba(255,255,255,0.04)",
+                    }}
+                  >
+                    <div
+                      className="text-3xl font-bold mb-1"
+                      style={{
+                        background: "var(--gg)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}
+                    >
+                      5 min
+                    </div>
+                    <div className="text-xs" style={{ color: "#64748b" }}>
+                      Average setup time
+                    </div>
+                  </div>
+                </div>
+              </Reveal>
+
+              {/* CTA Section */}
+              <Reveal className="mt-8">
+                <div
+                  className="rounded-2xl p-8 relative overflow-hidden"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, rgba(16,185,129,0.04), rgba(5,150,105,0.02))",
+                    border: "1px solid rgba(16,185,129,0.06)",
+                  }}
+                >
+                  <div
+                    className="absolute inset-0 opacity-50"
+                    style={{
+                      background:
+                        "radial-gradient(circle at 70% 30%, rgba(16,185,129,0.04), transparent 70%)",
+                    }}
+                  />
+
+                  <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-white mb-1">
+                        Need a custom integration?
+                      </h3>
+                      <p className="text-sm" style={{ color: "#94a3b8" }}>
+                        Our API supports webhooks, real-time events, and
+                        everything in between.
+                      </p>
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-300"
+                        style={{
+                          background: "var(--gg)",
+                          boxShadow: "0 4px 16px rgba(16,185,129,0.2)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                          e.currentTarget.style.boxShadow =
+                            "0 8px 24px rgba(16,185,129,0.3)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "translateY(0)";
+                          e.currentTarget.style.boxShadow =
+                            "0 4px 16px rgba(16,185,129,0.2)";
+                        }}
+                      >
+                        View API Docs →
+                      </button>
+                      <button
+                        className="px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300"
+                        style={{
+                          background: "rgba(255,255,255,0.04)",
+                          border: "1px solid rgba(255,255,255,0.06)",
+                          color: "#94a3b8",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background =
+                            "rgba(255,255,255,0.08)";
+                          e.currentTarget.style.color = "#e2e8f0";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background =
+                            "rgba(255,255,255,0.04)";
+                          e.currentTarget.style.color = "#94a3b8";
+                        }}
+                      >
+                        Contact Support
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </Reveal>
+            </div>
+          </section>
 
           {/* ══════════════════════════════════════════════
               ADD-ONS — white box
           ══════════════════════════════════════════════ */}
           <section id="addons" className="section-box white">
             <div className="section-pad relative overflow-hidden">
-              <div style={{ position: "absolute", bottom: 0, right: "10%", width: "400px", height: "400px", background: "radial-gradient(circle, rgba(34,197,94,0.05), transparent 70%)", pointerEvents: "none" }} />
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  right: "10%",
+                  width: "400px",
+                  height: "400px",
+                  background:
+                    "radial-gradient(circle, rgba(34,197,94,0.05), transparent 70%)",
+                  pointerEvents: "none",
+                }}
+              />
               <div className="relative" style={{ zIndex: 1 }}>
                 <Reveal className="text-center mb-16 space-y-4">
-                  <span className="tag px-4 py-1.5 rounded-full inline-block" style={{ color: "#ffffff", background: "var(--gg)" }}>Add-Ons</span>
-                  <h2 className="font-extrabold tracking-tight mt-4" style={{ fontSize: "clamp(28px,4vw,48px)", color: "#0a0a0a" }}>
-                    Supercharge Your Results<span className="gradient-text block">Further</span>
+                  <span
+                    className="tag px-4 py-1.5 rounded-full inline-block"
+                    style={{ color: "#ffffff", background: "var(--gg)" }}
+                  >
+                    Add-Ons
+                  </span>
+                  <h2
+                    className="font-extrabold tracking-tight mt-4"
+                    style={{
+                      fontSize: "clamp(28px,4vw,48px)",
+                      color: "#0a0a0a",
+                    }}
+                  >
+                    Supercharge Your Results
+                    <span className="gradient-text block">Further</span>
                   </h2>
-                  <p style={{ color: "#475569", fontSize: 16, maxWidth: 500, margin: "0 auto" }}>Customize your AI voice solution with powerful add-ons for every business need.</p>
+                  <p
+                    style={{
+                      color: "#475569",
+                      fontSize: 16,
+                      maxWidth: 500,
+                      margin: "0 auto",
+                    }}
+                  >
+                    Customize your AI voice solution with powerful add-ons for
+                    every business need.
+                  </p>
                 </Reveal>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {ADDONS.map((addon, i) => (
-                    <Reveal key={addon.id} delay={i * .06}>
-                      <TiltCard className="feature-card group relative p-6 rounded-2xl overflow-hidden h-full cursor-default" style={{ background: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(12px)", border: "1px solid rgba(34, 197, 94, 0.14)", boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.04)" }}>
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl" style={{ background: "radial-gradient(ellipse at 30% 30%,rgba(34,197,94,0.10),transparent 60%)" }} />
-                        <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between", marginBottom: 16 }}>
-                          <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.22)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>{addon.icon}</div>
-                          <span className="tag px-2.5 py-1 rounded-full text-[9px]" style={{ background: addon.category === "recurring" ? "rgba(34,197,94,0.12)" : "rgba(22,163,74,0.12)", color: addon.category === "recurring" ? "#15803d" : "#166534", border: `1px solid ${addon.category === "recurring" ? "rgba(34,197,94,0.25)" : "rgba(22,163,74,0.25)"}` }}>
-                            {addon.category === "recurring" ? "Monthly" : "One-time"}
+                    <Reveal key={addon.id} delay={i * 0.06}>
+                      <TiltCard
+                        className="feature-card group relative p-6 rounded-2xl overflow-hidden h-full cursor-default"
+                        style={{
+                          background: "rgba(255, 255, 255, 0.9)",
+                          backdropFilter: "blur(12px)",
+                          border: "1px solid rgba(34, 197, 94, 0.14)",
+                          boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.04)",
+                        }}
+                      >
+                        <div
+                          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"
+                          style={{
+                            background:
+                              "radial-gradient(ellipse at 30% 30%,rgba(34,197,94,0.10),transparent 60%)",
+                          }}
+                        />
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "start",
+                            justifyContent: "space-between",
+                            marginBottom: 16,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: 12,
+                              background: "rgba(34,197,94,0.08)",
+                              border: "1px solid rgba(34,197,94,0.22)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: 20,
+                            }}
+                          >
+                            {addon.icon}
+                          </div>
+                          <span
+                            className="tag px-2.5 py-1 rounded-full text-[9px]"
+                            style={{
+                              background:
+                                addon.category === "recurring"
+                                  ? "rgba(34,197,94,0.12)"
+                                  : "rgba(22,163,74,0.12)",
+                              color:
+                                addon.category === "recurring"
+                                  ? "#15803d"
+                                  : "#166534",
+                              border: `1px solid ${addon.category === "recurring" ? "rgba(34,197,94,0.25)" : "rgba(22,163,74,0.25)"}`,
+                            }}
+                          >
+                            {addon.category === "recurring"
+                              ? "Monthly"
+                              : "One-time"}
                           </span>
                         </div>
-                        <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0a0a0a", marginBottom: 8 }}>{addon.title}</h3>
-                        <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.6 }}>{addon.description}</p>
+                        <h3
+                          style={{
+                            fontSize: 15,
+                            fontWeight: 700,
+                            color: "#0a0a0a",
+                            marginBottom: 8,
+                          }}
+                        >
+                          {addon.title}
+                        </h3>
+                        <p
+                          style={{
+                            fontSize: 13,
+                            color: "#475569",
+                            lineHeight: 1.6,
+                          }}
+                        >
+                          {addon.description}
+                        </p>
                       </TiltCard>
                     </Reveal>
                   ))}
@@ -1460,27 +3877,112 @@ export function Landing() {
           <section className="section-box tint">
             <div className="section-pad">
               <Reveal className="text-center mb-16 space-y-4">
-                <span className="tag px-4 py-1.5 rounded-full inline-block" style={{ color: "#ffffff", background: "var(--gg)" }}>What Our Users Say</span>
-                <h2 className="font-extrabold tracking-tight mt-4" style={{ fontSize: "clamp(28px,4vw,48px)", color: "#0a0a0a" }}>
-                  Trusted by <span className="gradient-text">Industry Leaders</span>
+                <span
+                  className="tag px-4 py-1.5 rounded-full inline-block"
+                  style={{ color: "#ffffff", background: "var(--gg)" }}
+                >
+                  What Our Users Say
+                </span>
+                <h2
+                  className="font-extrabold tracking-tight mt-4"
+                  style={{ fontSize: "clamp(28px,4vw,48px)", color: "#0a0a0a" }}
+                >
+                  Trusted by{" "}
+                  <span className="gradient-text">Industry Leaders</span>
                 </h2>
               </Reveal>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {testimonials.map((t, i) => (
-                  <Reveal key={i} delay={i * .1}>
+                  <Reveal key={i} delay={i * 0.1}>
                     <div className="testimonial-card group relative p-7 rounded-2xl glass-card overflow-hidden h-full flex flex-col cursor-default">
-                      <span className="absolute top-2 right-5 text-[90px] leading-none font-serif select-none" style={{ color: "rgba(34,197,94,.06)" }}>"</span>
-                      <div className="flex gap-0.5 mb-5">{[...Array(5)].map((_, k) => <svg key={k} className="w-4 h-4" style={{ fill: "#ffe484" }} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>)}</div>
-                      <p style={{ fontSize: 14, color: "#475569", lineHeight: 1.7, flex: 1, marginBottom: 16 }}>"{t.quote}"</p>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 14, borderTop: "1px solid rgba(34,197,94,0.10)" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#22c55e,#15803d)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#ffffff", flexShrink: 0 }}>{t.initials}</div>
+                      <span
+                        className="absolute top-2 right-5 text-[90px] leading-none font-serif select-none"
+                        style={{ color: "rgba(34,197,94,.06)" }}
+                      >
+                        "
+                      </span>
+                      <div className="flex gap-0.5 mb-5">
+                        {[...Array(5)].map((_, k) => (
+                          <svg
+                            key={k}
+                            className="w-4 h-4"
+                            style={{ fill: "#ffe484" }}
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <p
+                        style={{
+                          fontSize: 14,
+                          color: "#475569",
+                          lineHeight: 1.7,
+                          flex: 1,
+                          marginBottom: 16,
+                        }}
+                      >
+                        "{t.quote}"
+                      </p>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          paddingTop: 14,
+                          borderTop: "1px solid rgba(34,197,94,0.10)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: 38,
+                              height: 38,
+                              borderRadius: "50%",
+                              background:
+                                "linear-gradient(135deg,#22c55e,#15803d)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: "#ffffff",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {t.initials}
+                          </div>
                           <div>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: "#0a0a0a" }}>{t.name}</div>
-                            <div style={{ fontSize: 11, color: "#94a3b8" }}>{t.role}</div>
+                            <div
+                              style={{
+                                fontSize: 13,
+                                fontWeight: 700,
+                                color: "#0a0a0a",
+                              }}
+                            >
+                              {t.name}
+                            </div>
+                            <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                              {t.role}
+                            </div>
                           </div>
                         </div>
-                        <span className="tag px-3 py-1.5 rounded-full text-[10px]" style={{ color: "#15803d", background: "rgba(34,197,94,.08)", border: "1px solid rgba(34,197,94,.18)" }}>{t.metric}</span>
+                        <span
+                          className="tag px-3 py-1.5 rounded-full text-[10px]"
+                          style={{
+                            color: "#15803d",
+                            background: "rgba(34,197,94,.08)",
+                            border: "1px solid rgba(34,197,94,.18)",
+                          }}
+                        >
+                          {t.metric}
+                        </span>
                       </div>
                     </div>
                   </Reveal>
@@ -1494,25 +3996,91 @@ export function Landing() {
           ══════════════════════════════════════════════ */}
           <section className="section-box black">
             <div className="section-pad relative overflow-hidden">
-              <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 50% 50%,rgba(37,99,235,.10) 0%,rgba(16,185,129,.08) 40%,transparent 65%)" }} />
-              <Reveal className="relative text-center" >
-                <span className="tag px-4 py-1.5 rounded-full inline-block mb-6" style={{ color: "#ffffff", background: "var(--gg)" }}>Get Started</span>
-                <h2 className="font-extrabold tracking-tight mb-4" style={{ fontSize: "clamp(28px,4.5vw,60px)", color: "#ffffff" }}>
-                  Ready to Transform<span className="gradient-text block">Your Business?</span>
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at 50% 50%,rgba(37,99,235,.10) 0%,rgba(16,185,129,.08) 40%,transparent 65%)",
+                }}
+              />
+              <Reveal className="relative text-center">
+                <span
+                  className="tag px-4 py-1.5 rounded-full inline-block mb-6"
+                  style={{ color: "#ffffff", background: "var(--gg)" }}
+                >
+                  Get Started
+                </span>
+                <h2
+                  className="font-extrabold tracking-tight mb-4"
+                  style={{
+                    fontSize: "clamp(28px,4.5vw,60px)",
+                    color: "#ffffff",
+                  }}
+                >
+                  Ready to Transform
+                  <span className="gradient-text block">Your Business?</span>
                 </h2>
-                <p style={{ color: "#94a3b8", fontSize: 16, maxWidth: 480, margin: "0 auto 32px" }}>Join 10,000+ businesses already using AI voice agents to capture more leads and grow faster.</p>
+                <p
+                  style={{
+                    color: "#94a3b8",
+                    fontSize: 16,
+                    maxWidth: 480,
+                    margin: "0 auto 32px",
+                  }}
+                >
+                  Join 10,000+ businesses already using AI voice agents to
+                  capture more leads and grow faster.
+                </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
-                  <MagBtn onClick={() => openAuth("register")} className="btn-responsive-xl font-bold text-white flex items-center gap-2.5" style={{ background: "var(--gg)", boxShadow: "0 4px 14px rgba(16,185,129,0.25)", borderRadius: 16, padding: "16px 28px" }}>
+                  <MagBtn
+                    onClick={() => openAuth("register")}
+                    className="btn-responsive-xl font-bold text-white flex items-center gap-2.5"
+                    style={{
+                      background: "var(--gg)",
+                      boxShadow: "0 4px 14px rgba(16,185,129,0.25)",
+                      borderRadius: 16,
+                      padding: "16px 28px",
+                    }}
+                  >
                     Start Your Free Trial
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                      />
+                    </svg>
                   </MagBtn>
-                  <button onClick={() => openAuth("login")} className="btn-ghost-dark btn-responsive-xl font-medium" style={{ background: "none", cursor: "pointer" }}>Sign In Instead</button>
+                  <button
+                    onClick={() => openAuth("login")}
+                    className="btn-ghost-dark btn-responsive-xl font-medium"
+                    style={{ background: "none", cursor: "pointer" }}
+                  >
+                    Sign In Instead
+                  </button>
                 </div>
                 <div className="flex justify-center gap-10">
-                  {[{ n: "5M+", l: "Calls handled" }, { n: "99.8%", l: "Accuracy" }, { n: "2 min", l: "Setup time" }].map((s, i) => (
+                  {[
+                    { n: "5M+", l: "Calls handled" },
+                    { n: "99.8%", l: "Accuracy" },
+                    { n: "2 min", l: "Setup time" },
+                  ].map((s, i) => (
                     <div key={i} className="text-center">
-                      <div className="text-xl font-extrabold gradient-text">{s.n}</div>
-                      <div className="tag text-[10px] mt-1" style={{ color: "#94a3b8" }}>{s.l}</div>
+                      <div className="text-xl font-extrabold gradient-text">
+                        {s.n}
+                      </div>
+                      <div
+                        className="tag text-[10px] mt-1"
+                        style={{ color: "#94a3b8" }}
+                      >
+                        {s.l}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1525,22 +4093,94 @@ export function Landing() {
           ══════════════════════════════════════════════ */}
           <section id="contact" className="section-box white">
             <div className="section-pad relative overflow-hidden">
-              <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "100%", height: "100%", background: "radial-gradient(circle at center, rgba(37,99,94,0.05), transparent 70%)", pointerEvents: "none" }} />
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: "100%",
+                  height: "100%",
+                  background:
+                    "radial-gradient(circle at center, rgba(37,99,94,0.05), transparent 70%)",
+                  pointerEvents: "none",
+                }}
+              />
               <div className="relative" style={{ zIndex: 1 }}>
                 <Reveal className="text-center mb-16 space-y-4">
-                  <span className="tag px-4 py-1.5 rounded-full inline-block" style={{ color: "#ffffff", background: "var(--gg)" }}>Contact Us</span>
-                  <h2 className="font-extrabold tracking-tight mt-4" style={{ fontSize: "clamp(26px,3.5vw,44px)", color: "#0a0a0a" }}>Get In Touch for Pricing</h2>
-                  <p style={{ color: "#475569", fontSize: 16 }}>Tell us about your needs. Our team will get back within 24 hours.</p>
+                  <span
+                    className="tag px-4 py-1.5 rounded-full inline-block"
+                    style={{ color: "#ffffff", background: "var(--gg)" }}
+                  >
+                    Contact Us
+                  </span>
+                  <h2
+                    className="font-extrabold tracking-tight mt-4"
+                    style={{
+                      fontSize: "clamp(26px,3.5vw,44px)",
+                      color: "#0a0a0a",
+                    }}
+                  >
+                    Get In Touch for Pricing
+                  </h2>
+                  <p style={{ color: "#475569", fontSize: 16 }}>
+                    Tell us about your needs. Our team will get back within 24
+                    hours.
+                  </p>
                 </Reveal>
                 <div className="grid lg:grid-cols-2 gap-10 max-w-5xl mx-auto items-start">
                   {/* Contact card */}
                   <Reveal from="left">
-                    <div className="rounded-3xl p-8 sm:p-10" style={{ background: "linear-gradient(135deg, rgba(37,99,235,.04), rgba(16,185,129,.03), #ffffff)", border: "1px solid rgba(16,185,129,.16)", boxShadow: "0 0 60px rgba(16,185,129,.05), 0 40px 80px rgba(0,0,0,.05)" }}>
+                    <div
+                      className="rounded-3xl p-8 sm:p-10"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(37,99,235,.04), rgba(16,185,129,.03), #ffffff)",
+                        border: "1px solid rgba(16,185,129,.16)",
+                        boxShadow:
+                          "0 0 60px rgba(16,185,129,.05), 0 40px 80px rgba(0,0,0,.05)",
+                      }}
+                    >
                       <ContactForm />
-                      <div style={{ marginTop: 24, paddingTop: 24, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, borderTop: "1px solid rgba(37,99,235,.10)" }}>
-                        <span style={{ fontSize: 14, color: "#0a0a0a" }}>Or chat directly on</span>
-                        <a href="https://wa.me/917065990307" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "7px 14px", borderRadius: 99, background: "rgba(37,211,102,.1)", border: "1px solid rgba(37,211,102,.25)", color: "#25d366", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
+                      <div
+                        style={{
+                          marginTop: 24,
+                          paddingTop: 24,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 12,
+                          borderTop: "1px solid rgba(37,99,235,.10)",
+                        }}
+                      >
+                        <span style={{ fontSize: 14, color: "#0a0a0a" }}>
+                          Or chat directly on
+                        </span>
+                        <a
+                          href="https://wa.me/917065990307"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "7px 14px",
+                            borderRadius: 99,
+                            background: "rgba(37,211,102,.1)",
+                            border: "1px solid rgba(37,211,102,.25)",
+                            color: "#25d366",
+                            fontSize: 13,
+                            fontWeight: 600,
+                            textDecoration: "none",
+                          }}
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                          >
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                          </svg>
                           WhatsApp
                         </a>
                       </div>
@@ -1548,34 +4188,161 @@ export function Landing() {
                   </Reveal>
 
                   {/* Contact info panel */}
-                  <Reveal from="right" delay={.1}>
+                  <Reveal from="right" delay={0.1}>
                     <div className="space-y-6">
-                      <div className="rounded-2xl p-6" style={{ background: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(12px)", border: "1px solid rgba(37, 99, 235, 0.14)", boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.04)" }}>
-                        <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0a0a0a", marginBottom: 14 }}>Why businesses choose Autoniv</h3>
+                      <div
+                        className="rounded-2xl p-6"
+                        style={{
+                          background: "rgba(255, 255, 255, 0.9)",
+                          backdropFilter: "blur(12px)",
+                          border: "1px solid rgba(37, 99, 235, 0.14)",
+                          boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.04)",
+                        }}
+                      >
+                        <h3
+                          style={{
+                            fontSize: 16,
+                            fontWeight: 700,
+                            color: "#0a0a0a",
+                            marginBottom: 14,
+                          }}
+                        >
+                          Why businesses choose Autoniv
+                        </h3>
                         <div className="space-y-4">
                           {[
-                            { icon: "⚡", title: "2-min setup", desc: "No code, no engineers. Describe your agent and go live instantly." },
-                            { icon: "🌍", title: "20+ languages", desc: "Serve customers in their native language across India and worldwide." },
-                            { icon: "📊", title: "Real-time analytics", desc: "Live dashboards with call logs, transcripts, and conversion scores." },
-                            { icon: "🔗", title: "50+ integrations", desc: "Plugs into your existing CRM, scheduling tools, and APIs." },
+                            {
+                              icon: "⚡",
+                              title: "2-min setup",
+                              desc: "No code, no engineers. Describe your agent and go live instantly.",
+                            },
+                            {
+                              icon: "🌍",
+                              title: "20+ languages",
+                              desc: "Serve customers in their native language across India and worldwide.",
+                            },
+                            {
+                              icon: "📊",
+                              title: "Real-time analytics",
+                              desc: "Live dashboards with call logs, transcripts, and conversion scores.",
+                            },
+                            {
+                              icon: "🔗",
+                              title: "50+ integrations",
+                              desc: "Plugs into your existing CRM, scheduling tools, and APIs.",
+                            },
                           ].map((item, i) => (
-                            <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                              <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.18)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>{item.icon}</div>
+                            <div
+                              key={i}
+                              style={{
+                                display: "flex",
+                                gap: 12,
+                                alignItems: "flex-start",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: 36,
+                                  height: 36,
+                                  borderRadius: 10,
+                                  background: "rgba(37,99,235,0.08)",
+                                  border: "1px solid rgba(37,99,235,0.18)",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  fontSize: 16,
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {item.icon}
+                              </div>
                               <div>
-                                <div style={{ fontSize: 14, fontWeight: 600, color: "#0a0a0a", marginBottom: 2 }}>{item.title}</div>
-                                <div style={{ fontSize: 12, color: "#475569", lineHeight: 1.55 }}>{item.desc}</div>
+                                <div
+                                  style={{
+                                    fontSize: 14,
+                                    fontWeight: 600,
+                                    color: "#0a0a0a",
+                                    marginBottom: 2,
+                                  }}
+                                >
+                                  {item.title}
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: 12,
+                                    color: "#475569",
+                                    lineHeight: 1.55,
+                                  }}
+                                >
+                                  {item.desc}
+                                </div>
                               </div>
                             </div>
                           ))}
                         </div>
                       </div>
 
-                      <div className="rounded-2xl p-6" style={{ background: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(12px)", border: "1px solid rgba(37, 99, 235, 0.14)", boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.04)" }}>
-                        <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0a0a0a", marginBottom: 12 }}>What happens next?</h3>
-                        {[{ n: "1", t: "We review your message within 24 hours" }, { n: "2", t: "Schedule a 15-min discovery call" }, { n: "3", t: "Get a custom pricing plan for your use case" }].map((s, i) => (
-                          <div key={i} style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: i < 2 ? 12 : 0 }}>
-                            <div style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.22)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#2563EB", flexShrink: 0, fontFamily: "'JetBrains Mono',monospace" }}>{s.n}</div>
-                            <span style={{ fontSize: 13, color: "#475569" }}>{s.t}</span>
+                      <div
+                        className="rounded-2xl p-6"
+                        style={{
+                          background: "rgba(255, 255, 255, 0.9)",
+                          backdropFilter: "blur(12px)",
+                          border: "1px solid rgba(37, 99, 235, 0.14)",
+                          boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.04)",
+                        }}
+                      >
+                        <h3
+                          style={{
+                            fontSize: 15,
+                            fontWeight: 700,
+                            color: "#0a0a0a",
+                            marginBottom: 12,
+                          }}
+                        >
+                          What happens next?
+                        </h3>
+                        {[
+                          {
+                            n: "1",
+                            t: "We review your message within 24 hours",
+                          },
+                          { n: "2", t: "Schedule a 15-min discovery call" },
+                          {
+                            n: "3",
+                            t: "Get a custom pricing plan for your use case",
+                          },
+                        ].map((s, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              display: "flex",
+                              gap: 12,
+                              alignItems: "center",
+                              marginBottom: i < 2 ? 12 : 0,
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: 24,
+                                height: 24,
+                                borderRadius: "50%",
+                                background: "rgba(37,99,235,0.12)",
+                                border: "1px solid rgba(37,99,235,0.22)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: 10,
+                                fontWeight: 700,
+                                color: "#2563EB",
+                                flexShrink: 0,
+                                fontFamily: "'JetBrains Mono',monospace",
+                              }}
+                            >
+                              {s.n}
+                            </div>
+                            <span style={{ fontSize: 13, color: "#475569" }}>
+                              {s.t}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -1585,7 +4352,6 @@ export function Landing() {
               </div>
             </div>
           </section>
-
         </div>
       </div>
 
