@@ -241,7 +241,6 @@ export function extractVapiCallData(vapiCall) {
     vapiCall.duration ??
     (vapiCall.durationMs != null ? vapiCall.durationMs / 1000 : null) ??
     0;
-  const duration = Math.round(rawDuration);
   const callerNumber =
     vapiCall.customer?.number ?? vapiCall.callerNumber ?? vapiCall.phoneNumber ?? vapiCall.from ?? vapiCall.to ?? vapiCall.callerId ?? null;
   const startedAt =
@@ -250,6 +249,15 @@ export function extractVapiCallData(vapiCall) {
   const endedAt =
     vapiCall.endedAt ?? vapiCall.endTime ??
     (vapiCall.endedAtUnix != null ? new Date(vapiCall.endedAtUnix * 1000).toISOString() : null) ?? null;
+
+  let duration = Math.round(rawDuration);
+  if (duration <= 0 && startedAt && endedAt) {
+    const diff = new Date(endedAt).getTime() - new Date(startedAt).getTime();
+    if (diff > 0) {
+      duration = Math.round(diff / 1000);
+    }
+  }
+
   const recordingUrl = vapiCall.recordingUrl ?? vapiCall.recordingURL ?? vapiCall.recording ?? null;
   const status       = vapiCall.status ?? vapiCall.callStatus ?? null;
   const endedReason  = vapiCall.endedReason ?? vapiCall.endReason ?? vapiCall.disconnectionReason ?? null;

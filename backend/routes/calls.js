@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import express from 'express';
 import Call from '../db/models/Call.js';
 import Agent from '../db/models/Agent.js';
+import User from '../db/models/User.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 import { log } from '../services/logger.js';
 import { getVapiCalls, extractVapiCallData, createVapiOutboundCall } from '../services/vapi.js';
@@ -171,6 +172,7 @@ router.post('/sync', requireAdmin, async (req, res) => {
 
         const existing = await Call.findOne({ vapiCallId: vapiCall.id });
         if (existing) {
+          const oldStatus = existing.status;
           await Call.updateOne(
             { _id: existing._id },
             {
@@ -184,6 +186,14 @@ router.post('/sync', requireAdmin, async (req, res) => {
               ...(vapiData.callerNumber ? { callerNumber: vapiData.callerNumber } : {}),
             }
           );
+          if (oldStatus !== 'completed' && status === 'completed') {
+            await User.findByIdAndUpdate(agent.userId, {
+              $inc: {
+                minutesUsed: Math.ceil((vapiData.duration || 0) / 60),
+                callsUsed: 1
+              }
+            });
+          }
           updated++;
         } else {
           await Call.create({
@@ -199,6 +209,11 @@ router.post('/sync', requireAdmin, async (req, res) => {
             endedAt:      vapiData.endedAt,
             endedReason:  vapiData.endedReason,
           });
+          const incObj = { callsUsed: 1 };
+          if (status === 'completed' && vapiData.duration > 0) {
+            incObj.minutesUsed = Math.ceil(vapiData.duration / 60);
+          }
+          await User.findByIdAndUpdate(agent.userId, { $inc: incObj });
           synced++;
         }
       } catch (callErr) {
@@ -266,6 +281,11 @@ router.post('/sync-my', async (req, res) => {
           startedAt:    vapiData.startedAt,
           endedAt:      vapiData.endedAt,
         });
+        const incObj = { callsUsed: 1 };
+        if (status === 'completed' && vapiData.duration > 0) {
+          incObj.minutesUsed = Math.ceil(vapiData.duration / 60);
+        }
+        await User.findByIdAndUpdate(agent.userId, { $inc: incObj });
         synced++;
       } catch (callErr) {
         log.warn('sync_my_call_error', { vapiCallId: vapiCall.id, error: callErr.message });
