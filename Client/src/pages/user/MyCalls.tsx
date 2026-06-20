@@ -185,7 +185,7 @@ const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-white/95 backdrop-blur-md border-l border-slate-200 shadow-2xl flex flex-col"
+            className="fixed right-0 top-0 bottom-0 z-100 w-full max-w-md bg-white/95 backdrop-blur-md border-l border-slate-200 shadow-2xl flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5.5 py-4.5 border-b border-slate-100 bg-slate-50/30">
@@ -607,9 +607,9 @@ export function MyCalls() {
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="self-start group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-[var(--primary-blue)] bg-white border border-slate-200 hover:border-slate-350 hover:bg-slate-50 transition-all disabled:opacity-40 shadow-sm cursor-pointer btn-press"
+            className="btn-cta self-start group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-[var(--primary-blue)] bg-white border border-slate-200 hover:border-slate-350 hover:bg-slate-50 transition-all disabled:opacity-40 shadow-sm cursor-pointer btn-press"
           >
-            <svg className={`w-3.5 h-3.5 text-[var(--primary-blue)] transition-transform ${syncing ? 'animate-spin' : 'group-hover:rotate-180 duration-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
+            <svg className={`w-3.5 h-3.5 text-[var(--primary)] transition-transform ${syncing ? 'animate-spin' : 'group-hover:rotate-180 duration-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
             </svg>
             {syncing ? 'Syncing...' : 'Sync from Vapi'}
@@ -714,7 +714,7 @@ export function MyCalls() {
               onClick={() => setFilter(f.value)}
               className={`flex-1 sm:flex-none px-3.5 py-2 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer whitespace-nowrap ${
                 filter === f.value
-                  ? 'bg-[var(--primary-blue-soft)] text-[var(--primary-blue)]'
+                  ? 'btn-cta'
                   : 'text-slate-400 hover:text-slate-600'
               }`}
             >

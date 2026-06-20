@@ -1090,7 +1090,7 @@ export function UserDashboard() {
               </button>
             </Tip>
 
-            <Link to="/dashboard/agents">
+            <Link to="/dashboard/agents/new">
               <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all text-white shadow-sm cursor-pointer hover:shadow-md"
                 style={{ background: T.gradient }}
