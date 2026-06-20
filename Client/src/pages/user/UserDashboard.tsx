@@ -346,13 +346,12 @@ const AgentCard = memo(({ agent, index, onSimulateCall }: { agent: any; index: n
           {(agent.callCount || 0).toLocaleString()} calls
         </span>
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => onSimulateCall(agent)}
+          <Link to={"/dashboard/agents"}
             className="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-[var(--primary-blue-soft)] text-[var(--primary-blue)] hover:bg-[var(--primary-blue)] hover:text-white transition-all cursor-pointer"
           >
             Test Call
-          </button>
-          <Link to={`/dashboard/agents/${agent.id}`}
+          </Link>
+          <Link to={`/dashboard/agents`}
             className="px-2.5 py-1 text-[10px] font-bold rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
           >
             Configure
