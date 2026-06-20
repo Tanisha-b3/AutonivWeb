@@ -377,7 +377,7 @@ export function AdminBilling() {
                   onClick={() => setActiveTab(tab)}
                   className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all ${
                     activeTab === tab
-                      ? 'bg-[#2563eb] text-white shadow-sm'
+                      ? 'btn-cta text-white shadow-sm'
                       : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
@@ -393,7 +393,7 @@ export function AdminBilling() {
                   onClick={() => setPeriod(r)}
                   className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all ${
                     period === r
-                      ? 'bg-[#2563eb] text-white shadow-sm'
+                      ? 'btn-cta text-white shadow-sm'
                       : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >

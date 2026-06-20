@@ -383,7 +383,7 @@ export function AdminUpgradeRequests() {
         </motion.div>
 
         {/* ── Stats Cards ── */}
-        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           {[
             { label: 'Total',      value: stats.total,     accentColor: '37,99,235',   colorHex: '#2563EB', delta: 'All requests' },
             { label: 'Pending',    value: stats.pending,   accentColor: '245,158,11',  colorHex: '#f59e0b', delta: 'Awaiting review', trend: 'up' as const },
@@ -431,36 +431,52 @@ export function AdminUpgradeRequests() {
         </div>
 
         {/* ── Search & Filter ── */}
-        <motion.div variants={fadeUp} className="flex flex-col gap-3">
-          <div className="relative w-full">
-            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
-            </svg>
-            <input
-              type="text"
-              placeholder="Search by name, email, or plan…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white/80 border border-slate-200 text-slate-700 placeholder-slate-400 shadow-sm focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all"
-            />
-          </div>
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 -mx-0.5 px-0.5">
-            {FILTERS.map((f) => (
-              <button
-                key={f.value}
-                onClick={() => setFilter(f.value)}
-                className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer whitespace-nowrap flex-1 sm:flex-none ${
-                  filter === f.value
-                    ? 'bg-[#2563eb] text-white border-[#2563eb] shadow-sm'
-                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-        </motion.div>
+        <motion.div
+  variants={fadeUp}
+  className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3"
+>
+  {/* Search */}
+  <div className="relative w-full lg:max-w-md">
+    <svg
+      className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"
+      />
+    </svg>
 
+    <input
+      type="text"
+      placeholder="Search by name, email, or plan…"
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white/80 border border-slate-200"
+    />
+  </div>
+
+  {/* Filters */}
+  <div className="flex items-center gap-2 flex-wrap lg:justify-end">
+    {FILTERS.map((f) => (
+      <button
+        key={f.value}
+        onClick={() => setFilter(f.value)}
+        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+          filter === f.value
+            ? "btn-cta text-white border-[#2563eb]"
+            : "bg-white text-slate-500 border-slate-200"
+        }`}
+      >
+        {f.label}
+      </button>
+    ))}
+  </div>
+</motion.div>
         {/* ── DataTable ── */}
         <motion.div variants={fadeUp}>
           <DataTable

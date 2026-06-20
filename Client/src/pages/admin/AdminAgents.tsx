@@ -705,7 +705,7 @@ export function AdminAgents() {
                 onClick={() => setStatusFilter(f.value)}
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                   statusFilter === f.value
-                    ? 'bg-[#2563eb] text-white border-[#2563eb] shadow-sm'
+                    ? 'btn-cta text-white border-[#2563eb] shadow-sm'
                     : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700'
                 }`}
               >
