@@ -1,31 +1,50 @@
 // AdminBilling.tsx
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useState, memo } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../../hooks/useStore';
 import { fetchUsage, fetchOverview } from '../../store/slices/analyticsSlice';
+import { DataTable } from '../../components/DataTable';
+import type { Column } from '../../components/DataTable';
 
-const stagger = {
-  container: { animate: { transition: { staggerChildren: 0.04 } } },
-};
+// ─── Animation presets ────────────────────────────────────────────────
+const spring = { type: 'spring', stiffness: 380, damping: 30 } as const;
 const fadeUp = {
-  initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as const } },
+  hidden: { opacity: 0, y: 16 },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as const } },
+};
+const staggerContainer = {
+  hidden: {},
+  show:   { transition: { staggerChildren: 0.06 } },
 };
 
-const avatarColors = [
-  'from-emerald-400 to-emerald-600',
-  'from-emerald-500 to-emerald-700',
-  'from-blue-400 to-blue-600',
-  'from-blue-500 to-blue-700',
-  'from-cyan-400 to-cyan-600',
-  'from-cyan-500 to-cyan-700',
+const avatarPalette = [
+  '#2563eb', '#10B981', '#00A3FF', '#14B8A6', '#8b5cf6', '#f59e0b',
 ];
 
 function getAvatarColor(name: string) {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return avatarColors[Math.abs(hash) % avatarColors.length];
+  return avatarPalette[Math.abs(hash) % avatarPalette.length];
 }
+
+// ─── Animated Counter ─────────────────────────────────────────────────
+const AnimatedCounter = memo(({ value, className = '' }: { value: number; className?: string }) => {
+  const [display, setDisplay] = useState(0);
+  const prefersReduced = useReducedMotion();
+  useEffect(() => {
+    if (prefersReduced) { setDisplay(value); return; }
+    let frame = 0;
+    const total = 35;
+    const tick = () => {
+      frame++;
+      const eased = 1 - Math.pow(1 - frame / total, 3);
+      setDisplay(Math.round(eased * value));
+      if (frame < total) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [value, prefersReduced]);
+  return <span className={className}>{display.toLocaleString()}</span>;
+});
 
 interface UsageData {
   id: string;
@@ -80,11 +99,11 @@ const plans = [
   },
 ];
 
-const planColors: Record<string, string> = {
-  pilot: 'from-cyan-400 to-cyan-600',
-  foundation: 'from-blue-400 to-blue-600',
-  scale: 'from-emerald-400 to-emerald-600',
-  dominate: 'from-cyan-500 to-cyan-700',
+const planGradients: Record<string, string> = {
+  pilot: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+  foundation: 'linear-gradient(135deg, #2563EB, #1d4ed8)',
+  scale: 'linear-gradient(135deg, #10B981, #2563EB)',
+  dominate: 'linear-gradient(135deg, #06b6d4, #0e7490)',
 };
 
 export function AdminBilling() {
@@ -95,11 +114,21 @@ export function AdminBilling() {
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
   const [activeTab, setActiveTab] = useState<'usage' | 'plans'>('usage');
   const [search, setSearch] = useState('');
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
   useEffect(() => {
     dispatch(fetchUsage(period));
     dispatch(fetchOverview());
   }, [dispatch, period]);
+
+  const filteredUsage = usage.filter((u: UsageData) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return u.name.toLowerCase().includes(q) ||
+      (u.email || '').toLowerCase().includes(q) ||
+      u.plan.toLowerCase().includes(q);
+  });
 
   const totalCalls = usage.reduce((acc, u) => acc + (u.callCount || 0), 0);
   const totalRevenue = usage.reduce((acc, u) => {
@@ -107,89 +136,265 @@ export function AdminBilling() {
     return acc + (plan?.price || 0);
   }, 0);
 
-  const stats: Array<{ label: string; value: string | number; icon: string; accent: string; val: string }> = [
+  const stats = [
     { 
       label: 'Total Users',    
       value: overview?.totalUsers ?? 0,           
-      icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z', 
-      accent: 'bg-blue-50', 
-      val: 'text-blue-600' 
+      accentColor: '37,99,235',
+      colorHex: '#2563EB',
+      delta: 'Platform accounts'
     },
     { 
       label: 'Active Agents',  
       value: overview?.activeAgents ?? 0,         
-      icon: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', 
-      accent: 'bg-emerald-50', 
-      val: 'text-emerald-600' 
+      accentColor: '16,185,129',
+      colorHex: '#10B981',
+      delta: 'Currently active',
+      trend: 'up' as const
     },
     { 
       label: 'Total Minutes',  
-      value: `${(overview?.totalMinutes ?? 0).toLocaleString()}m`, 
-      icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', 
-      accent: 'bg-amber-50', 
-      val: 'text-amber-600' 
+      value: overview?.totalMinutes ?? 0,         
+      accentColor: '245,158,11',
+      colorHex: '#f59e0b',
+      delta: 'Minutes consumed',
+      format: (v: number) => `${v.toLocaleString()}m`
     },
     { 
       label: 'Total Calls',    
       value: totalCalls,                          
-      icon: 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z', 
-      accent: 'bg-cyan-50', 
-      val: 'text-cyan-600' 
+      accentColor: '37,99,235',
+      colorHex: '#2563EB',
+      delta: 'All calls'
     },
     { 
       label: 'MRR',            
-      value: `₹${(totalRevenue / 1000).toFixed(1)}K`, 
-      icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', 
-      accent: 'bg-emerald-50', 
-      val: 'text-emerald-600' 
+      value: totalRevenue,                         
+      accentColor: '16,185,129',
+      colorHex: '#10B981',
+      delta: 'Monthly recurring',
+      format: (v: number) => `₹${(v / 1000).toFixed(1)}K`
+    },
+  ];
+
+  const usageColumns: Column<UsageData>[] = [
+    {
+      key: 'name',
+      header: 'User',
+      sortable: true,
+      render: (user) => {
+        const name = user.name || 'Unknown';
+        return (
+          <div className="flex items-center gap-3">
+            <div
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-bold text-xs flex-shrink-0 shadow-sm"
+              style={{ background: getAvatarColor(name) }}
+            >
+              {name.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-bold text-slate-700 group-hover:text-slate-900 transition-colors truncate">
+                {user.name}
+              </div>
+              {user.email && (
+                <div className="text-[10px] text-slate-400 truncate">{user.email}</div>
+              )}
+            </div>
+          </div>
+        );
+      },
+      card: {
+        label: 'User',
+        render: (user) => (
+          <div className="flex items-center gap-2">
+            <div
+              className="w-7 h-7 rounded-xl flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0 shadow-sm"
+              style={{ background: getAvatarColor(user.name) }}
+            >
+              {user.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-bold text-slate-700 truncate">{user.name}</div>
+              {user.email && (
+                <div className="text-[10px] text-slate-400 truncate">{user.email}</div>
+              )}
+            </div>
+          </div>
+        ),
+      },
+    },
+    {
+      key: 'plan',
+      header: 'Plan',
+      sortable: true,
+      render: (user) => {
+        const plan = plans.find(p => p.id === user.plan);
+        return (
+          <span 
+            className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium text-white shadow-sm"
+            style={{ background: planGradients[user.plan] || 'var(--gg)' }}
+          >
+            {plan?.name || user.plan}
+          </span>
+        );
+      },
+      card: {
+        label: 'Plan',
+        render: (user) => {
+          const plan = plans.find(p => p.id === user.plan);
+          return (
+            <span 
+              className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium text-white shadow-sm"
+              style={{ background: planGradients[user.plan] || 'var(--gg)' }}
+            >
+              {plan?.name || user.plan}
+            </span>
+          );
+        },
+      },
+    },
+    {
+      key: 'callCount',
+      header: 'Calls',
+      sortable: true,
+      render: (user) => (
+        <span className="text-xs font-bold text-slate-700 tabular-nums">{user.callCount || 0}</span>
+      ),
+      card: {
+        label: 'Calls',
+        render: (user) => (
+          <span className="text-sm font-bold text-slate-700 tabular-nums">{user.callCount || 0}</span>
+        ),
+      },
+    },
+    {
+      key: 'revenue',
+      header: 'Revenue',
+      sortable: true,
+      render: (user) => {
+        const plan = plans.find(p => p.id === user.plan);
+        return (
+          <span className="text-xs font-bold text-[#10B981] tabular-nums">
+            ₹{plan?.price.toLocaleString() || 0}
+          </span>
+        );
+      },
+      card: {
+        label: 'Revenue',
+        render: (user) => {
+          const plan = plans.find(p => p.id === user.plan);
+          return (
+            <span className="text-sm font-bold text-[#10B981] tabular-nums">
+              ₹{plan?.price.toLocaleString() || 0}
+            </span>
+          );
+        },
+      },
+    },
+    {
+      key: 'usage',
+      header: 'Usage',
+      sortable: true,
+      render: (user) => {
+        const plan = plans.find(p => p.id === user.plan);
+        const callLimit = plan?.callsPerMonth || 120;
+        const usagePercent = Math.min((user.callCount / callLimit) * 100, 100);
+        return (
+          <div className="w-32">
+            <div className="h-2 rounded-full overflow-hidden bg-slate-100">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${usagePercent}%` }}
+                transition={{ delay: 0.1, duration: 0.6, ease: 'easeOut' }}
+                className={`h-full rounded-full ${
+                  usagePercent > 90 ? 'bg-gradient-to-r from-rose-500 to-amber-500' :
+                  usagePercent > 70 ? 'bg-gradient-to-r from-amber-400 to-orange-400' :
+                  'bg-gradient-to-r from-[#2563eb] to-[#10B981]'
+                }`}
+              />
+            </div>
+            <div className="text-[10px] mt-1 text-slate-400 tabular-nums font-semibold">
+              {usagePercent.toFixed(0)}%
+            </div>
+          </div>
+        );
+      },
+      card: {
+        label: 'Usage',
+        render: (user) => {
+          const plan = plans.find(p => p.id === user.plan);
+          const callLimit = plan?.callsPerMonth || 120;
+          const usagePercent = Math.min((user.callCount / callLimit) * 100, 100);
+          return (
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-500 font-medium">{user.callCount} / {callLimit} calls</span>
+                <span className="tabular-nums text-slate-400 font-semibold">{usagePercent.toFixed(0)}%</span>
+              </div>
+              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${
+                    usagePercent > 90 ? 'bg-gradient-to-r from-rose-500 to-amber-500' :
+                    usagePercent > 70 ? 'bg-gradient-to-r from-amber-400 to-orange-400' :
+                    'bg-gradient-to-r from-[#2563eb] to-[#10B981]'
+                  }`}
+                  style={{ width: `${usagePercent}%` }}
+                />
+              </div>
+            </div>
+          );
+        },
+      },
     },
   ];
 
   return (
     <div className="h-full overflow-y-auto overflow-x-hidden pb-10 pr-1">
-      <motion.div variants={stagger.container} initial="initial" animate="animate" className="space-y-8">
+      <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-6">
 
         {/* ── Header ── */}
-        <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5 pt-1">
+        <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5 pt-1">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-emerald-600 mb-1">Finance</p>
-            <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-slate-800 leading-none">Billing & Revenue</h1>
-            <p className="mt-1.5 text-xs sm:text-sm text-slate-400/70">Monitor platform usage, plans, and revenue</p>
-          </div>
-          {loading && (
-            <div className="flex items-center gap-2 text-slate-400/70">
-              <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-              </svg>
-              <span className="text-xs">Loading…</span>
+            <div className="flex items-center gap-2.5 mb-1.5">
+              <span className="text-[9px] font-extrabold tracking-[0.22em] text-[#10B981] uppercase">
+                ◈ FINANCE
+              </span>
+              <span className="px-2 py-0.5 text-[9px] font-bold uppercase rounded-md border bg-blue-50 text-[#2563eb] border-blue-200/50">
+                Billing
+              </span>
             </div>
-          )}
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight leading-none">Billing & Revenue</h1>
+            <p className="mt-1.5 text-xs text-slate-500 font-medium">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+            </p>
+          </div>
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            <div className="flex items-center gap-1 bg-white/80 rounded-xl p-1 border border-emerald-100/30 shadow-sm">
+            {/* Tab Toggle */}
+            <div className="flex gap-1 p-1 rounded-xl bg-white/80 border border-slate-200 shadow-sm">
               {(['usage', 'plans'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all ${
+                  className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all ${
                     activeTab === tab
-                      ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/25'
-                      : 'text-slate-500/70 hover:text-slate-700'
+                      ? 'bg-[#2563eb] text-white shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
                   {tab === 'usage' ? 'User Usage' : 'Plan Management'}
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-1 bg-white/80 rounded-xl p-1 border border-emerald-100/30 shadow-sm">
+            {/* Period Toggle */}
+            <div className="flex gap-1 p-1 rounded-xl bg-white/80 border border-slate-200 shadow-sm">
               {(['7d', '30d', '90d'] as const).map((r) => (
                 <button
                   key={r}
                   onClick={() => setPeriod(r)}
-                  className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all ${
+                  className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all ${
                     period === r
-                      ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/25'
-                      : 'text-slate-500/70 hover:text-slate-700'
+                      ? 'bg-[#2563eb] text-white shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
                   {r === '7d' ? '7 Days' : r === '30d' ? '30 Days' : '90 Days'}
@@ -199,121 +404,112 @@ export function AdminBilling() {
           </div>
         </motion.div>
 
-        {/* ── Stats ── */}
-        <motion.div variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3">
-          {stats.map((s) => (
-            <div key={s.label} className={`${s.accent} rounded-2xl p-3 sm:p-4 border border-emerald-100/30 card-hover shadow-sm`}>
-              <div className="flex items-center justify-between mb-2 sm:mb-3">
-                <p className="text-[10px] sm:text-[11px] font-medium text-slate-500/70 uppercase tracking-widest">{s.label}</p>
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/60 border border-emerald-100/30 flex items-center justify-center">
-                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={s.icon}/>
-                  </svg>
+        {/* ── Stats Cards ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {stats.map((s) => {
+            const isHov = hoveredCard === s.label;
+            const displayValue = s.format ? s.format(s.value) : s.value;
+            return (
+              <motion.div
+                key={s.label}
+                variants={fadeUp}
+                whileHover={{ y: -4, scale: 1.01 }}
+                transition={spring}
+                onMouseEnter={() => setHoveredCard(s.label)}
+                onMouseLeave={() => setHoveredCard(null)}
+                className="rounded-2xl p-5 border relative overflow-hidden transition-all duration-300 bg-white/70 shadow-sm backdrop-blur-md cursor-default"
+                style={{
+                  borderColor: isHov ? `rgba(${s.accentColor},0.3)` : '#e2e8f0',
+                  boxShadow: isHov ? `0 12px 36px rgba(${s.accentColor},0.08)` : '0 1px 3px rgba(37,99,235,0.01)',
+                }}
+              >
+                <motion.div
+                  className="absolute top-0 right-0 w-32 h-32 rounded-full pointer-events-none"
+                  animate={{ opacity: isHov ? 1 : 0, scale: isHov ? 1 : 0.8 }}
+                  transition={{ duration: 0.35 }}
+                  style={{ background: `radial-gradient(circle, rgba(${s.accentColor},0.08) 0%, transparent 70%)` }}
+                />
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 mb-3 relative z-10">{s.label}</p>
+                <div className="flex items-baseline gap-2 relative z-10">
+                  <p className="text-2xl sm:text-[28px] font-extrabold text-slate-800 tracking-tight leading-none">
+                    {typeof displayValue === 'number' ? (
+                      <AnimatedCounter value={displayValue} />
+                    ) : (
+                      displayValue
+                    )}
+                  </p>
+                  {s.trend && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md text-green-600 bg-green-50">
+                      ↑ {s.delta}
+                    </span>
+                  )}
                 </div>
-              </div>
-              <p className={`text-2xl sm:text-3xl font-semibold ${s.val} leading-none`}>{s.value}</p>
+                {!s.trend && (
+                  <p className="text-[10px] font-bold mt-1 text-slate-400 uppercase tracking-wider relative z-10">{s.delta}</p>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* ── Search ── */}
+        {activeTab === 'usage' && (
+          <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1 max-w-sm">
+              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+              </svg>
+              <input
+                type="text"
+                placeholder="Search by name, email, or plan…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white/80 border border-slate-200 text-slate-700 placeholder-slate-400 shadow-sm focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all"
+              />
             </div>
-          ))}
-        </motion.div>
+            {loading && (
+              <div className="flex items-center gap-2 text-slate-400">
+                <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                <span className="text-xs font-bold">Loading…</span>
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* ── Usage Table ── */}
         {activeTab === 'usage' && (
-          <motion.div variants={fadeUp} className="rounded-2xl border border-emerald-100/30 overflow-hidden bg-white shadow-sm">
-            {usage.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24 text-center px-8">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-200/50 flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-emerald-400/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                  </svg>
-                </div>
-                <p className="text-sm font-medium text-slate-600/70 mb-1">No usage data</p>
-                <p className="text-xs text-slate-400/70 max-w-xs">User usage statistics will appear here once calls start.</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                {/* ── Search ── */}
-                <div className="px-5 pt-4 pb-2">
-                  <div className="relative max-w-xs">
-                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+          <motion.div variants={fadeUp}>
+            <DataTable
+              columns={usageColumns}
+              data={filteredUsage}
+              loading={loading}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              keyExtractor={(u) => u.id}
+              cardTitle={(u) => u.name}
+              pageSize={filteredUsage.length || 20}
+              emptyState={{
+                icon: (
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-slate-50 border border-slate-200">
+                    <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                     </svg>
-                    <input
-                      type="text"
-                      placeholder="Search by name, email, or plan…"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2.5 text-sm bg-white/80 border border-emerald-100/30 rounded-xl text-slate-700 placeholder-slate-400/60 focus:outline-none focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/20 transition-all shadow-sm"
-                    />
                   </div>
-                </div>
-                <table className="w-full min-w-[600px]">
-                  <thead>
-                    <tr className="border-b border-emerald-100/20">
-                      {['User', 'Plan', 'Calls', 'Revenue', 'Usage'].map((col) => (
-                        <th key={col} className="px-4 sm:px-5 py-3.5 text-left">
-                          <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400/70">{col}</span>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {usage.map((user: UsageData, i) => {
-                      const plan = plans.find(p => p.id === user.plan);
-                      const callLimit = plan?.callsPerMonth || 120;
-                      const usagePercent = (user.callCount / callLimit) * 100;
-                      const ac = getAvatarColor(user.name);
-                      return (
-                        <motion.tr
-                          key={user.id}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: i * 0.03 }}
-                          className="group border-t border-emerald-100/10 hover:bg-emerald-50/30 transition-colors"
-                        >
-                          <td className="px-4 sm:px-5 py-3 sm:py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${ac} flex items-center justify-center text-white font-semibold text-xs flex-shrink-0 shadow-sm`}>
-                                {user.name.charAt(0).toUpperCase()}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="text-sm font-medium text-slate-600/80 group-hover:text-slate-800 transition-colors truncate">{user.name}</div>
-                                {user.email && <div className="text-xs text-slate-400/70 truncate">{user.email}</div>}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 sm:px-5 py-3 sm:py-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-gradient-to-r ${planColors[user.plan] || 'from-emerald-400 to-emerald-600'} text-white shadow-sm`}>
-                              {plan?.name || user.plan}
-                            </span>
-                          </td>
-                          <td className="px-4 sm:px-5 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-600/70 tabular-nums font-medium">{user.callCount || 0}</td>
-                          <td className="px-4 sm:px-5 py-3 sm:py-4 whitespace-nowrap text-sm text-emerald-600 tabular-nums font-medium">₹{plan?.price.toLocaleString() || 0}</td>
-                          <td className="px-4 sm:px-5 py-3 sm:py-4 whitespace-nowrap w-32">
-                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${Math.min(usagePercent, 100)}%` }}
-                                transition={{ delay: 0.3 + i * 0.03, duration: 0.5 }}
-                                className={`h-full rounded-full ${
-                                  usagePercent > 90 ? 'bg-rose-500' :
-                                  usagePercent > 70 ? 'bg-amber-500' :
-                                  'bg-emerald-500'
-                                }`}
-                              />
-                            </div>
-                            <div className="text-xs text-slate-400/70 mt-1 tabular-nums">{usagePercent.toFixed(0)}%</div>
-                          </td>
-                        </motion.tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-                <div className="px-5 py-3 border-t border-emerald-100/20 flex items-center justify-between">
-                  <p className="text-xs text-slate-500/70">{usage.length} user{usage.length !== 1 ? 's' : ''}</p>
-                  <p className="text-xs text-emerald-600 font-medium">Total MRR: ₹{totalRevenue.toLocaleString()}/mo</p>
-                </div>
-              </div>
-            )}
+                ),
+                title: 'No usage data',
+                description: 'User usage statistics will appear here once calls start.',
+              }}
+              defaultSort={{ key: 'callCount', direction: 'desc' }}
+            />
+            
+            {/* Footer Summary - rendered outside DataTable */}
+            <div className="mt-4 flex items-center justify-between px-4 py-3 bg-white/70 rounded-xl border border-slate-200">
+              <p className="text-xs text-slate-400">{filteredUsage.length} user{filteredUsage.length !== 1 ? 's' : ''}</p>
+              <p className="text-xs font-bold text-[#2563eb]">Total MRR: ₹{totalRevenue.toLocaleString()}/mo</p>
+            </div>
           </motion.div>
         )}
 
@@ -324,45 +520,63 @@ export function AdminBilling() {
               {plans.map((plan) => {
                 const usersOnPlan = usage.filter(u => u.plan === plan.id).length;
                 const revenue = usersOnPlan * plan.price;
+                const isPopular = plan.badge === 'Most Popular';
                 return (
-                  <div key={plan.id} className={`rounded-2xl border p-5 bg-white shadow-sm ${
-                    plan.badge ? 'border-emerald-400/50 ring-1 ring-emerald-400/30' : 'border-emerald-100/30'
-                  }`}>
-                    {plan.badge && (
-                      <div className="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200/50 mb-3">
-                        {plan.badge}
+                  <motion.div
+                    key={plan.id}
+                    variants={fadeUp}
+                    whileHover={{ y: -4, scale: 1.02 }}
+                    transition={spring}
+                    className="rounded-2xl p-6 border relative overflow-hidden transition-all duration-300 bg-white/70 shadow-sm backdrop-blur-md"
+                    style={{
+                      borderColor: isPopular ? '#10B981' : '#e2e8f0',
+                      borderWidth: isPopular ? '2px' : '1px',
+                      boxShadow: isPopular ? '0 8px 30px rgba(16,185,129,0.15)' : '0 1px 3px rgba(37,99,235,0.01)',
+                    }}
+                  >
+                    {isPopular && (
+                      <div className="absolute top-0 right-0">
+                        <div className="bg-[#10B981] text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-bl-xl">
+                          {plan.badge}
+                        </div>
                       </div>
                     )}
-                    <h3 className="text-lg font-bold text-slate-800">{plan.name}</h3>
+                    <div 
+                      className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm mb-3"
+                      style={{ background: planGradients[plan.id] }}
+                    >
+                      {plan.name.charAt(0)}
+                    </div>
+                    <h3 className="text-lg font-extrabold text-slate-800">{plan.name}</h3>
                     <div className="flex items-baseline gap-1 mt-2">
-                      <span className="text-2xl font-bold text-slate-800">₹{plan.price.toLocaleString()}</span>
-                      <span className="text-xs text-slate-400/70">/mo</span>
+                      <span className="text-3xl font-extrabold text-slate-800">₹{plan.price.toLocaleString()}</span>
+                      <span className="text-xs text-slate-400">/mo</span>
                     </div>
                     {plan.annualPrice && (
-                      <p className="text-[10px] text-emerald-600 mt-1">Annual: ₹{plan.annualPrice.toLocaleString()}/mo</p>
+                      <p className="text-[10px] font-bold text-[#2563eb] mt-1">Annual: ₹{plan.annualPrice.toLocaleString()}/mo</p>
                     )}
-                    <div className="h-px bg-emerald-100/30 my-4" />
-                    <ul className="space-y-2 mb-4">
+                    <div className="h-px my-4 bg-slate-200" />
+                    <ul className="space-y-2.5 mb-5">
                       {plan.features.map((f, i) => (
-                        <li key={i} className="flex items-center gap-2 text-xs text-slate-600/70">
-                          <svg className="w-3 h-3 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <li key={i} className="flex items-center gap-2.5 text-xs text-slate-600">
+                          <svg className="w-3.5 h-3.5 flex-shrink-0 text-[#10B981]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/>
                           </svg>
                           {f}
                         </li>
                       ))}
                     </ul>
-                    <div className="p-3 rounded-xl bg-emerald-50/40 border border-emerald-100/30">
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-500/70">Subscribers</span>
-                        <span className="text-sm font-bold text-slate-700">{usersOnPlan}</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Subscribers</span>
+                        <span className="text-sm font-extrabold text-slate-800">{usersOnPlan}</span>
                       </div>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-xs text-slate-500/70">Revenue</span>
-                        <span className="text-sm font-bold text-emerald-600">₹{revenue.toLocaleString()}/mo</span>
+                      <div className="flex items-center justify-between mt-1.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Revenue</span>
+                        <span className="text-sm font-extrabold text-[#10B981]">₹{revenue.toLocaleString()}/mo</span>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>

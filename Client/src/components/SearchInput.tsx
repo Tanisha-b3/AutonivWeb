@@ -93,7 +93,7 @@ export function SearchInput({
         disabled={disabled}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
-        className={`w-full ${sizeClasses[size]} rounded-xl border transition-all duration-200 bg-white text-gray-700 placeholder-gray-400 outline-none
+        className={`w-full ${sizeClasses[size]} rounded-xl border transition-all duration-200 bg-[var(--surface)] text-gray-700 placeholder-gray-400 outline-none
           ${isFocused 
             ? 'border-blue-400 shadow-[0_0_0_3px_rgba(37,99,235,0.1)]' 
             : 'border-gray-200 hover:border-gray-300'

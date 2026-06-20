@@ -37,7 +37,7 @@ const stagger = { animate: { transition: { staggerChildren: 0.05 } } };
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const CATEGORY_STYLE: Record<string, string> = {
-  recurring:  'text-cyan-600 bg-cyan-50 border-cyan-200',
+  recurring:  'text-[var(--primary)] bg-[var(--primary-soft)] border-[var(--border)]',
   'one-time': 'text-violet-600 bg-violet-50 border-violet-200',
 };
 
@@ -85,7 +85,7 @@ function CatalogCard({
       animate={{ opacity: 1, y: 0 }}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      className="relative rounded-2xl border overflow-hidden transition-all cursor-pointer bg-white group"
+      className="relative rounded-2xl border overflow-hidden transition-all cursor-pointer bg-[var(--surface)] group"
       style={{
         borderColor: hover ? T.borderHover : 'rgba(37,99,235,0.08)',
         boxShadow: hover 
@@ -130,15 +130,13 @@ function CatalogCard({
         {/* Price + action */}
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-1">
-            <span className="text-base font-bold text-emerald-500">{addon.price}</span>
-            {addon.category === 'recurring' && (
-              <span className="text-[10px] text-gray-400 font-medium">/ month</span>
-            )}
+            <span className="text-base font-bold text-[var(--gg)]">{addon.price}</span>
+           
           </div>
           {!isRequested ? (
             <button
               onClick={(e) => { e.stopPropagation(); onRequest(addon.id); }}
-              className="inline-flex items-center justify-center px-4 py-1.5 text-[11px] font-medium text-emerald-500 rounded-lg transition-all bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 hover:border-emerald-300"
+              className="inline-flex items-center justify-center px-4 py-1.5 text-[11px] font-medium text-[var(--primary)] rounded-lg transition-all bg-[var(--primary-soft)] hover:bg-[var(--primary-soft)] border border-[var(--border)] hover-border-[var(--primary)]"
             >
               Request
             </button>
@@ -169,7 +167,7 @@ function MyAddOnRow({ item, onCancel, onDownload }: { item: UserAddOn; onCancel:
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border p-4 transition-all bg-white hover:shadow-md"
+      className="rounded-2xl border p-4 transition-all bg-[var(--surface)] hover:shadow-md"
       style={{ borderColor: 'rgba(37,99,235,0.08)' }}
     >
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -186,7 +184,7 @@ function MyAddOnRow({ item, onCancel, onDownload }: { item: UserAddOn; onCancel:
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-medium text-sm text-gray-800">{addon?.title || item.addOnId}</span>
               {addon?.price && (
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-blue-100 bg-blue-50 text-blue-600">
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-blue-100 bg-blue-50 text-[var(--primary)]">
                   {addon.price}
                 </span>
               )}
@@ -354,9 +352,7 @@ export function MyAddOns() {
                 {myAddOns.length} active
               </span>
             </div>
-            <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-gray-800 leading-none">
-              Add-On Marketplace
-            </h1>
+             <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-slate-800 leading-none">Add-0n MarketPlace</h1>
             <p className="mt-2 text-xs sm:text-sm text-gray-500">
               Enhance your plan with powerful add-ons and manage your subscriptions.
             </p>
@@ -388,7 +384,7 @@ export function MyAddOns() {
 
           {catalog.length === 0 ? (
             <div className="rounded-2xl border border-gray-200 bg-gray-50 py-12 sm:py-20 flex flex-col items-center justify-center text-center px-4 sm:px-8">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white border border-gray-200 flex items-center justify-center mb-4 sm:mb-5 text-2xl">📦</div>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[var(--surface)] border border-gray-200 flex items-center justify-center mb-4 sm:mb-5 text-2xl">📦</div>
               <p className="text-sm font-medium text-gray-600 mb-1">No add-ons available yet</p>
               <p className="text-xs text-gray-400 max-w-xs mb-5 sm:mb-6">Check back soon for new offerings.</p>
             </div>
@@ -436,7 +432,7 @@ export function MyAddOns() {
                     {isActive && (
                       <motion.div
                         layoutId="myAddOnFilterBg"
-                        className="absolute inset-0 rounded-lg bg-white border border-blue-200 shadow-sm"
+                        className="absolute inset-0 rounded-lg bg-[var(--surface)] border border-blue-200 shadow-sm"
                         transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                       />
                     )}
@@ -459,7 +455,7 @@ export function MyAddOns() {
             </div>
           ) : filteredMyAddOns.length === 0 ? (
             <div className="rounded-2xl border border-gray-200 bg-gray-50 py-12 sm:py-20 flex flex-col items-center justify-center text-center px-4 sm:px-8">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white border border-gray-200 flex items-center justify-center mb-4 sm:mb-5 text-2xl">🧩</div>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[var(--surface)] border border-gray-200 flex items-center justify-center mb-4 sm:mb-5 text-2xl">🧩</div>
               <p className="text-sm font-medium text-gray-600 mb-1">
                 {filter === 'all' ? 'No add-ons yet' : `No ${filter} add-ons`}
               </p>

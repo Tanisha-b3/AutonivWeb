@@ -32,7 +32,7 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-md" />
+          <div className="fixed inset-0  bg-black/40  backdrop-blur-sm" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">

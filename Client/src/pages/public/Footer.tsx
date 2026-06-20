@@ -172,7 +172,7 @@ export default function Footer() {
               background: 'rgba(16,185,129,0.05)',
               border: '1px solid rgba(16,185,129,0.08)',
             }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] animate-pulse" />
               <span style={{ fontSize: 11, color: 'rgba(148,175,210,0.6)' }}>
                 Trusted by 2,000+ businesses
               </span>

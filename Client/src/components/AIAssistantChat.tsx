@@ -3,11 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { publicLeadService } from '../services/api';
 
 const T = {
-  cyan: '#0077ff',
-  cyanDim: 'rgba(0,119,255,0.12)',
+  cyan: '#2563EB',
+  cyanDim: 'rgba(37,99,235,0.12)',
   slate: 'var(--slate-light)',
   surface: 'rgba(255,255,255,0.04)',
-  border: 'rgba(0,119,255,0.10)',
+  border: 'rgba(37,99,235,0.10)',
 };
 
 interface Message {
@@ -450,19 +450,19 @@ export default function AIAssistantChat() {
               <div className="flex-1">
                 <p className="text-xs font-semibold text-white">AI Assistant</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] animate-pulse" />
                   <span className="text-[10px]" style={{ color: T.slate }}>online</span>
                 </div>
               </div>
               <button onClick={clearChat}
-                className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-white/8"
+                className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-[var(--surface)]"
                 style={{ color: T.slate }} title="Clear chat">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </button>
               <button onClick={() => setIsOpen(false)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-white/8"
+                className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-[var(--surface)]"
                 style={{ color: T.slate }}>
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -481,7 +481,7 @@ export default function AIAssistantChat() {
                     'Contact sales'
                   );
                 }}
-                  className="px-2.5 py-1 text-[10px] font-medium rounded-full border transition-all hover:border-cyan-500/40"
+                  className="px-2.5 py-1 text-[10px] font-medium rounded-full border transition-all hover:border-[var(--border)]"
                   style={{ background: T.surface, borderColor: T.border, color: T.slate }}>
                   {chip}
                 </button>
@@ -539,7 +539,7 @@ export default function AIAssistantChat() {
                   </div>
                   <div className="px-3 py-2.5 rounded-xl border flex items-center gap-1" style={{ background: T.surface, borderColor: T.border }}>
                     {[0, 0.15, 0.3].map((delay, i) => (
-                      <motion.span key={i} className="w-1 h-1 rounded-full bg-slate-500"
+                      <motion.span key={i} className="w-1 h-1 rounded-full bg-[var(--surface)]0"
                         animate={{ y: [0, -4, 0] }} transition={{ duration: 0.7, repeat: Infinity, delay }} />
                     ))}
                   </div>
@@ -606,7 +606,7 @@ export default function AIAssistantChat() {
               </motion.svg>
           }
         </AnimatePresence>
-        {!isOpen && <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#060a12]" />}
+        {!isOpen && <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[var(--primary)] border-2 border-[#060a12]" />}
       </motion.button>
     </div>
   );

@@ -7,7 +7,7 @@ interface LeadRowProps {
 
 export function LeadRow({ lead, onEdit }: LeadRowProps) {
   return (
-    <tr className="hover:bg-white/5 transition-colors">
+    <tr className="hover:bg-[var(--surface)] transition-colors">
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--indigo)] to-[var(--secondary)] flex items-center justify-center text-white font-semibold text-sm">

@@ -107,7 +107,7 @@ function formatTime(date: Date) {
 function formatText(text: string): React.ReactNode[] {
   return text.split(/(\*\*.*?\*\*)/).map((part, i) =>
     part.startsWith('**') && part.endsWith('**')
-      ? <strong key={i} style={{ color: '#e2e8f0', fontWeight: 600 }}>{part.slice(2, -2)}</strong>
+      ? <strong key={i} style={{ color: 'var(--text)', fontWeight: 600 }}>{part.slice(2, -2)}</strong>
       : <span key={i}>{part}</span>
   );
 }
@@ -122,10 +122,10 @@ function BulletText({ text }: { text: string }) {
     if (!listItems.length) return null;
     const isOrdered = listType === 'ol';
     const items = listItems.map((item, idx) => (
-      <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12.5, lineHeight: 1.65, color: 'rgba(203,213,225,0.9)', marginBottom: 2 }}>
+      <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12.5, lineHeight: 1.65, color: 'var(--text-secondary)', marginBottom: 2 }}>
         {!isOrdered
-          ? <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(99,102,241,0.7)', flexShrink: 0, marginTop: 7 }} />
-          : <span style={{ color: '#818cf8', fontWeight: 500, fontSize: 11, flexShrink: 0, minWidth: 14, marginTop: 1 }}>{idx + 1}.</span>
+          ? <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--primary)', flexShrink: 0, marginTop: 7 }} />
+          : <span style={{ color: 'var(--primary)', fontWeight: 500, fontSize: 11, flexShrink: 0, minWidth: 14, marginTop: 1 }}>{idx + 1}.</span>
         }
         <span>{formatText(item.text)}</span>
       </li>
@@ -160,13 +160,13 @@ function BulletText({ text }: { text: string }) {
     const l = flushList(i); if (l) elements.push(l);
     if (/^#{1,3}\s/.test(trimmed)) {
       elements.push(
-        <p key={`h-${i}`} style={{ fontWeight: 600, color: '#e2e8f0', fontSize: 13, margin: '4px 0 2px' }}>
+        <p key={`h-${i}`} style={{ fontWeight: 600, color: 'var(--text)', fontSize: 13, margin: '4px 0 2px' }}>
           {formatText(trimmed.replace(/^#{1,3}\s/, ''))}
         </p>
       );
     } else {
       elements.push(
-        <p key={`p-${i}`} style={{ fontSize: 12.5, lineHeight: 1.65, color: 'rgba(203,213,225,0.88)', margin: '1px 0' }}>
+        <p key={`p-${i}`} style={{ fontSize: 12.5, lineHeight: 1.65, color: 'var(--text-secondary)', margin: '1px 0' }}>
           {formatText(line)}
         </p>
       );
@@ -182,7 +182,7 @@ function TypingDots() {
       {[0, 1, 2].map(i => (
         <motion.span
           key={i}
-          style={{ width: 6, height: 6, borderRadius: '50%', background: '#6366f1', display: 'block' }}
+          style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)', display: 'block' }}
           animate={{ y: [0, -5, 0], opacity: [0.4, 1, 0.4] }}
           transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.18, ease: 'easeInOut' }}
         />
@@ -194,9 +194,9 @@ function TypingDots() {
 const BotAvatar = () => (
   <div style={{
     width: 30, height: 30, borderRadius: 10, flexShrink: 0,
-    background: 'linear-gradient(135deg, #4f46e5 0%, #0284c7 100%)',
+    background: 'var(--gg)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    marginTop: 1, boxShadow: '0 2px 10px rgba(79,70,229,0.35)',
+    marginTop: 1, boxShadow: '0 2px 10px rgba(16,185,129,0.2)',
   }}>
     <svg width="14" height="14" fill="none" stroke="white" viewBox="0 0 24 24" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -207,12 +207,12 @@ const BotAvatar = () => (
 const UserAvatar = () => (
   <div style={{
     width: 30, height: 30, borderRadius: 10, flexShrink: 0,
-    background: 'rgba(255,255,255,0.06)',
-    border: '1px solid rgba(255,255,255,0.1)',
+    background: 'rgba(0,0,0,0.04)',
+    border: '1px solid rgba(0,0,0,0.08)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     marginTop: 1,
   }}>
-    <svg width="14" height="14" fill="none" stroke="rgba(255,255,255,0.55)" viewBox="0 0 24 24" strokeWidth={2}>
+    <svg width="14" height="14" fill="none" stroke="rgba(0,0,0,0.4)" viewBox="0 0 24 24" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
     </svg>
   </div>
@@ -403,7 +403,7 @@ export function MyChat() {
          
           <div>
             <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[var(--slate-light)] mb-1">Support</p>
-            <h1 className="text-[28px] sm:text-[28px] mb-4 font-semibold tracking-tight text-[var(--text)] leading-none">My Chat</h1>
+             <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-slate-800 leading-none">My Chat</h1>
           </div>
         </div>
 
@@ -413,9 +413,9 @@ export function MyChat() {
             style={{
               display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 6,
               padding: isMobile ? '5px 10px' : '8px 14px', borderRadius: 10, fontSize: isMobile ? 11 : 12, fontWeight: 500,
-              background: showHistory ? 'rgba(79,70,229,0.15)' : 'rgba(255,255,255,0.04)',
-              border: `1px solid ${showHistory ? 'rgba(79,70,229,0.3)' : 'rgba(255,255,255,0.08)'}`,
-              color: showHistory ? '#a5b4fc' : 'rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.15s',
+              background: showHistory ? 'var(--primary-soft)' : 'rgba(0,0,0,0.04)',
+              border: `1px solid ${showHistory ? 'var(--primary)' : 'rgba(0,0,0,0.08)'}`,
+              color: showHistory ? 'var(--primary-dark)' : 'var(--text-secondary)', cursor: 'pointer', transition: 'all 0.15s',
             }}
           >
             <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -428,11 +428,11 @@ export function MyChat() {
             style={{
               display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 6,
               padding: isMobile ? '5px 10px' : '8px 14px', borderRadius: 10, fontSize: isMobile ? 11 : 12, fontWeight: 500,
-              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-              color: 'rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.15s',
+              background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)',
+              color: 'var(--text-secondary)', cursor: 'pointer', transition: 'all 0.15s',
             }}
-            onMouseEnter={e => { const b = e.currentTarget; b.style.background = 'rgba(255,255,255,0.08)'; b.style.color = 'rgba(255,255,255,0.7)'; }}
-            onMouseLeave={e => { const b = e.currentTarget; b.style.background = 'rgba(255,255,255,0.04)'; b.style.color = 'rgba(255,255,255,0.4)'; }}
+            onMouseEnter={e => { const b = e.currentTarget; b.style.background = 'rgba(0,0,0,0.08)'; b.style.color = 'var(--text)'; }}
+            onMouseLeave={e => { const b = e.currentTarget; b.style.background = 'rgba(0,0,0,0.04)'; b.style.color = 'var(--text-secondary)'; }}
           >
             <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -452,7 +452,7 @@ export function MyChat() {
             exit={{ opacity: 0 }}
             onClick={() => setShowHistory(false)}
             style={{
-              position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 35,
+              position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 35,
             }}
           />
         )}
@@ -468,16 +468,16 @@ export function MyChat() {
             transition={{ duration: 0.2 }}
             style={{
               position: 'absolute', top: 0, left: 0, bottom: 0, width: isMobile ? '85%' : 300,
-              background: 'rgba(8,12,24,0.98)', borderRight: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--surface)', borderRight: '1px solid var(--slate-border)',
               zIndex: 40, display: 'flex', flexDirection: 'column',
-              boxShadow: '4px 0 24px rgba(0,0,0,0.5)',
+              boxShadow: '4px 0 24px rgba(0,0,0,0.08)',
             }}
           >
-            <div style={{ padding: '16px 14px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>Chat History</h3>
+            <div style={{ padding: '16px 14px 12px', borderBottom: '1px solid var(--slate-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Chat History</h3>
               <button
                 onClick={() => setShowHistory(false)}
-                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: 4 }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 4 }}
               >
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -492,7 +492,7 @@ export function MyChat() {
                 </div>
               ) : sessions.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '30px 16px' }}>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: 0 }}>No chat history yet</p>
+                  <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>No chat history yet</p>
                 </div>
               ) : (
                 sessions.map(s => (
@@ -501,32 +501,32 @@ export function MyChat() {
                     onClick={() => loadSession(s.id)}
                     style={{
                       width: '100%', textAlign: 'left', padding: '10px 12px', borderRadius: 10,
-                      background: sessionId === s.id ? 'rgba(79,70,229,0.12)' : 'transparent',
-                      border: sessionId === s.id ? '1px solid rgba(79,70,229,0.25)' : '1px solid transparent',
+                      background: sessionId === s.id ? 'var(--primary-soft)' : 'transparent',
+                      border: sessionId === s.id ? '1px solid var(--border)' : '1px solid transparent',
                       cursor: 'pointer', transition: 'all 0.15s', marginBottom: 4,
                     }}
-                    onMouseEnter={e => { if (sessionId !== s.id) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                    onMouseEnter={e => { if (sessionId !== s.id) e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; }}
                     onMouseLeave={e => { if (sessionId !== s.id) e.currentTarget.style.background = 'transparent'; }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                      <p style={{ fontSize: 12, fontWeight: 500, color: '#e2e8f0', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
                         {s.title}
                       </p>
                       <button
                         onClick={(e) => deleteSession(s.id, e)}
                         style={{
-                          background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', cursor: 'pointer',
+                          background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer',
                           padding: 2, flexShrink: 0, borderRadius: 4, transition: 'color 0.15s',
                         }}
                         onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; }}
-                        onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.2)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; }}
                       >
                         <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                       </button>
                     </div>
-                    <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', margin: '3px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: '3px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {s.messageCount} messages · {new Date(s.updatedAt).toLocaleDateString()}
                     </p>
                   </button>
@@ -544,21 +544,21 @@ export function MyChat() {
         transition={{ duration: 0.4, delay: 0.08 }}
         style={{
           flex: 1, display: 'flex', flexDirection: 'column',
-          borderRadius: isMobile ? 12 : 20, border: '1px solid rgba(255,255,255,0.07)',
-          background: 'rgba(8,12,24,0.96)', overflow: 'hidden', minHeight: 0,
-          boxShadow: '0 0 0 1px rgba(79,70,229,0.07), inset 0 1px 0 rgba(255,255,255,0.04)',
+          borderRadius: isMobile ? 12 : 20, border: '1px solid var(--slate-border)',
+          background: 'var(--surface)', overflow: 'hidden', minHeight: 0,
+          boxShadow: '0 8px 32px rgba(37,99,235,0.04), inset 0 1px 0 rgba(255,255,255,0.8)',
         }}
       >
         {/* Status bar */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8,
-          padding: '10px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)',
-          background: 'rgba(255,255,255,0.016)', flexShrink: 0,
+          padding: '10px 18px', borderBottom: '1px solid var(--slate-border)',
+          background: 'rgba(0,0,0,0.01)', flexShrink: 0,
         }}>
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', display: 'block', boxShadow: '0 0 7px #34d399' }} />
-          <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Online</span>
-          <span style={{ color: 'rgba(255,255,255,0.1)' }}>·</span>
-          <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.25)' }}>AI Assistant</span>
+          <span style={{ fontSize: 11.5, color: 'var(--text-secondary)', fontWeight: 500 }}>Online</span>
+          <span style={{ color: 'rgba(0,0,0,0.1)' }}>·</span>
+          <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>AI Assistant</span>
 
           <AnimatePresence>
             {stepInfo && (
@@ -595,7 +595,7 @@ export function MyChat() {
             flex: 1, overflowY: 'auto', padding: isMobile ? '12px 10px' : '18px 16px',
             display: 'flex', flexDirection: 'column', gap: 2,
             scrollbarWidth: 'thin',
-            scrollbarColor: 'rgba(79,70,229,0.2) transparent',
+            scrollbarColor: 'var(--primary-soft) transparent',
           }}
         >
           <AnimatePresence initial={false}>
@@ -612,7 +612,7 @@ export function MyChat() {
                   transition={{ duration: 0.2, ease: [0.22, 0.61, 0.36, 1] }}
                 >
                   {showTime && (
-                    <p style={{ textAlign: 'center', fontSize: 10.5, color: 'rgba(255,255,255,0.18)', margin: '10px 0 12px', letterSpacing: '0.04em' }}>
+                    <p style={{ textAlign: 'center', fontSize: 10.5, color: 'var(--text-muted)', margin: '10px 0 12px', letterSpacing: '0.04em' }}>
                       {formatTime(msg.timestamp)}
                     </p>
                   )}
@@ -625,13 +625,13 @@ export function MyChat() {
                       padding: '10px 14px',
                       borderRadius: isUser ? '16px 16px 4px 16px' : '4px 16px 16px 16px',
                       background: isUser
-                        ? 'linear-gradient(135deg, #4f46e5 0%, #0369a1 100%)'
-                        : 'rgba(255,255,255,0.04)',
-                      border: isUser ? 'none' : '1px solid rgba(255,255,255,0.07)',
-                      boxShadow: isUser ? '0 4px 18px rgba(79,70,229,0.32)' : 'none',
+                        ? 'var(--gg)'
+                        : '#f1f5f9',
+                      border: isUser ? 'none' : '1px solid var(--slate-border)',
+                      boxShadow: isUser ? '0 4px 14px rgba(37,99,235,0.2)' : 'none',
                     }}>
                       {isUser
-                        ? <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.95)', margin: 0, lineHeight: 1.55 }}>{msg.text}</p>
+                        ? <p style={{ fontSize: 13, color: '#ffffff', margin: 0, lineHeight: 1.55 }}>{msg.text}</p>
                         : <BulletText text={msg.text} />
                       }
                     </div>
@@ -657,8 +657,8 @@ export function MyChat() {
                 <div style={{
                   padding: '2px 14px 4px',
                   borderRadius: '4px 16px 16px 16px',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.07)',
+                  background: '#f1f5f9',
+                  border: '1px solid var(--slate-border)',
                 }}>
                   <TypingDots />
                 </div>
@@ -676,7 +676,7 @@ export function MyChat() {
                 exit={{ opacity: 0 }}
                 style={{ paddingTop: 10 }}
               >
-                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', margin: '0 0 10px', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>
+                <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: '0 0 10px', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>
                   ❓ FAQ — select a topic
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -689,19 +689,19 @@ export function MyChat() {
                         display: 'flex', alignItems: 'center', gap: 5,
                         padding: isMobile ? '7px 12px' : '5px 11px', borderRadius: 8,
                         fontSize: isMobile ? 12.5 : 11.5, fontWeight: 500,
-                        background: 'rgba(52,211,153,0.08)',
-                        border: '1px solid rgba(52,211,153,0.2)',
-                        color: '#6ee7b7', cursor: 'pointer',
+                        background: 'var(--primary-soft)',
+                        border: '1px solid var(--primary-soft)',
+                        color: 'var(--primary-dark)', cursor: 'pointer',
                         transition: 'all 0.15s',
                       }}
                       onMouseEnter={e => {
-                        e.currentTarget.style.background = 'rgba(52,211,153,0.16)';
-                        e.currentTarget.style.borderColor = 'rgba(52,211,153,0.4)';
+                        e.currentTarget.style.background = 'rgba(80, 200, 120, 0.2)';
+                        e.currentTarget.style.borderColor = 'rgba(80, 200, 120, 0.4)';
                         e.currentTarget.style.transform = 'translateY(-1px)';
                       }}
                       onMouseLeave={e => {
-                        e.currentTarget.style.background = 'rgba(52,211,153,0.08)';
-                        e.currentTarget.style.borderColor = 'rgba(52,211,153,0.2)';
+                        e.currentTarget.style.background = 'var(--primary-soft)';
+                        e.currentTarget.style.borderColor = 'var(--primary-soft)';
                         e.currentTarget.style.transform = 'translateY(0)';
                       }}
                     >
@@ -715,18 +715,18 @@ export function MyChat() {
                       display: 'flex', alignItems: 'center', gap: 5,
                       padding: isMobile ? '7px 12px' : '5px 11px', borderRadius: 8,
                       fontSize: isMobile ? 12.5 : 11.5, fontWeight: 500,
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      color: 'rgba(255,255,255,0.4)', cursor: 'pointer',
+                      background: 'rgba(0,0,0,0.04)',
+                      border: '1px solid rgba(0,0,0,0.08)',
+                      color: 'var(--text-secondary)', cursor: 'pointer',
                       transition: 'all 0.15s',
                     }}
                     onMouseEnter={e => {
-                      e.currentTarget.style.background = 'rgba(255,255,255,0.07)';
-                      e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
+                      e.currentTarget.style.background = 'rgba(0,0,0,0.08)';
+                      e.currentTarget.style.color = 'var(--text)';
                     }}
                     onMouseLeave={e => {
-                      e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                      e.currentTarget.style.color = 'rgba(255,255,255,0.4)';
+                      e.currentTarget.style.background = 'rgba(0,0,0,0.04)';
+                      e.currentTarget.style.color = 'var(--text-secondary)';
                     }}
                   >
                     ← Back
@@ -747,7 +747,7 @@ export function MyChat() {
                 transition={{ delay: 0.1 }}
                 style={{ paddingTop: 6 }}
               >
-                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.22)', margin: '0 0 8px', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>
+                <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: '0 0 8px', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>
                   Quick actions
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
@@ -762,27 +762,30 @@ export function MyChat() {
                           sendMessage(action.cmd);
                         }}
                         disabled={loading}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: 6,
-                            padding: isMobile ? '8px 14px' : '6px 13px', borderRadius: 10,
-                            fontSize: isMobile ? 13 : 12, fontWeight: 500,
-                          background: isFaq && showFaqTopics ? 'rgba(129,140,248,0.2)' : 'rgba(79,70,229,0.09)',
-                          border: isFaq && showFaqTopics ? '1px solid rgba(129,140,248,0.4)' : '1px solid rgba(79,70,229,0.22)',
-                          color: '#a5b4fc', cursor: 'pointer',
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          padding: isMobile ? '8px 14px' : '6px 13px', borderRadius: 10,
+                          fontSize: isMobile ? 13 : 12, fontWeight: 500,
+                          background: isFaq && showFaqTopics ? 'var(--primary-blue-soft)' : 'var(--primary-soft)',
+                          border: isFaq && showFaqTopics ? '1px solid var(--primary-blue)' : '1px solid var(--border)',
+                          color: isFaq && showFaqTopics ? 'var(--primary-blue)' : 'var(--primary-dark)', cursor: 'pointer',
                           transition: 'all 0.15s', opacity: loading ? 0.4 : 1,
                         }}
                         onMouseEnter={e => {
                           const b = e.currentTarget;
-                          b.style.background = 'rgba(79,70,229,0.18)';
-                          b.style.borderColor = 'rgba(79,70,229,0.4)';
+                          b.style.background = 'rgba(80, 200, 120, 0.18)';
+                          b.style.borderColor = 'rgba(80, 200, 120, 0.4)';
                           b.style.transform = 'translateY(-1px)';
-                          b.style.boxShadow = '0 4px 12px rgba(79,70,229,0.2)';
+                          b.style.boxShadow = '0 4px 12px rgba(80, 200, 120, 0.2)';
                         }}
                         onMouseLeave={e => {
                           const b = e.currentTarget;
                           if (!(isFaq && showFaqTopics)) {
-                            b.style.background = 'rgba(79,70,229,0.09)';
-                            b.style.borderColor = 'rgba(79,70,229,0.22)';
+                            b.style.background = 'var(--primary-soft)';
+                            b.style.borderColor = 'var(--border)';
+                          } else {
+                            b.style.background = 'var(--primary-blue-soft)';
+                            b.style.borderColor = 'var(--primary-blue)';
                           }
                           b.style.transform = 'translateY(0)';
                           b.style.boxShadow = 'none';
@@ -804,16 +807,16 @@ export function MyChat() {
         {/* ── Input bar ── */}
         <div style={{
           flexShrink: 0, padding: isMobile ? '8px 10px 10px' : '12px 14px 14px',
-          borderTop: '1px solid rgba(255,255,255,0.05)',
-          background: 'rgba(255,255,255,0.012)',
+          borderTop: '1px solid var(--slate-border)',
+          background: 'rgba(0,0,0,0.01)',
         }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10,
-            background: focused ? 'rgba(255,255,255,0.065)' : 'rgba(255,255,255,0.04)',
-            border: `1px solid ${focused ? 'rgba(79,70,229,0.5)' : 'rgba(255,255,255,0.08)'}`,
+            background: focused ? '#ffffff' : '#f8fafc',
+            border: `1px solid ${focused ? 'var(--primary)' : 'var(--slate-border)'}`,
             borderRadius: isMobile ? 12 : 14, padding: isMobile ? '4px 4px 4px 12px' : '4px 4px 4px 14px',
             transition: 'all 0.2s',
-            boxShadow: focused ? '0 0 0 3px rgba(79,70,229,0.1)' : 'none',
+            boxShadow: focused ? '0 0 0 3px var(--primary-soft)' : 'none',
           }}>
             <input
               ref={inputRef}
@@ -827,7 +830,7 @@ export function MyChat() {
               disabled={loading}
               style={{
                 flex: 1, background: 'none', border: 'none', outline: 'none',
-                fontSize: isMobile ? 15 : 13, color: '#e2e8f0', caretColor: '#818cf8',
+                fontSize: isMobile ? 15 : 13, color: 'var(--text)', caretColor: 'var(--primary)',
                 lineHeight: 1.5, padding: isMobile ? '10px 0' : '7px 0',
               }}
             />
@@ -838,13 +841,13 @@ export function MyChat() {
                 width: isMobile ? 40 : 36, height: isMobile ? 40 : 36, borderRadius: 10, flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: input.trim() && !loading
-                  ? 'linear-gradient(135deg, #4f46e5, #0284c7)'
-                  : 'rgba(255,255,255,0.05)',
+                  ? 'var(--gg)'
+                  : 'rgba(0,0,0,0.05)',
                 border: 'none',
                 cursor: input.trim() && !loading ? 'pointer' : 'default',
                 transition: 'all 0.18s',
                 opacity: !input.trim() || loading ? 0.35 : 1,
-                boxShadow: input.trim() && !loading ? '0 2px 12px rgba(79,70,229,0.45)' : 'none',
+                boxShadow: input.trim() && !loading ? '0 2px 12px rgba(16,185,129,0.3)' : 'none',
               }}
               onMouseEnter={e => { if (input.trim() && !loading) e.currentTarget.style.transform = 'scale(1.07)'; }}
               onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
@@ -855,7 +858,7 @@ export function MyChat() {
             </button>
           </div>
 
-          <p style={{ fontSize: isMobile ? 9 : 10.5, textAlign: 'center', color: 'rgba(255,255,255,0.16)', margin: isMobile ? '5px 0 0' : '8px 0 0', letterSpacing: '0.025em' }}>
+          <p style={{ fontSize: isMobile ? 9 : 10.5, textAlign: 'center', color: 'var(--text-muted)', margin: isMobile ? '5px 0 0' : '8px 0 0', letterSpacing: '0.025em' }}>
             Powered by Autoniv AI · End-to-end encrypted
           </p>
         </div>

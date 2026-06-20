@@ -25,10 +25,10 @@ const suggestedPrompts = [
 
 function getTypeStyles(type?: string) {
   switch (type) {
-    case 'success': return 'border-l-emerald-500 bg-emerald-500/5';
-    case 'error': return 'border-l-rose-500 bg-rose-500/5';
-    case 'info': return 'border-l-cyan-500 bg-cyan-500/5';
-    default: return 'border-l-cyan-500/30 bg-white/4';
+    case 'success': return 'border-l-emerald-500 bg-emerald-50/50';
+    case 'error': return 'border-l-rose-500 bg-rose-50/50';
+    case 'info': return 'border-l-[var(--primary-blue)] bg-blue-50/50';
+    default: return 'border-l-gray-300 bg-gray-50/50';
   }
 }
 
@@ -130,7 +130,7 @@ export function AdminChat() {
         </div>
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col bg-[#0a0f1c] border border-white/6 rounded-2xl overflow-hidden">
+        <div className="flex-1 flex flex-col bg-[var(--surface)] border border-[var(--slate-border)] rounded-2xl overflow-hidden shadow-sm shadow-indigo-100/10">
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
             {messages.map((msg) => (
@@ -143,18 +143,18 @@ export function AdminChat() {
                 <div
                   className={`max-w-[85%] sm:max-w-[75%] ${
                     msg.role === 'user'
-                      ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-[var(--text)] rounded-2xl rounded-br-sm px-4 py-2.5'
+                      ? 'bg-gradient-to-r from-[var(--primary-blue)] to-[var(--primary-blue-dark)] text-white rounded-2xl rounded-br-sm px-4 py-2.5 shadow-sm shadow-[var(--primary-blue)]/20'
                       : `border-l-2 ${getTypeStyles(msg.type)} rounded-2xl px-4 py-2.5`
                   }`}
                 >
                   {msg.role === 'user' ? (
                     <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                   ) : (
-                    <div className="text-sm text-[var(--text)]/70 leading-relaxed whitespace-pre-wrap">
+                    <div className="text-sm text-[var(--text)]/80 leading-relaxed whitespace-pre-wrap">
                       {formatResponse(msg.text)}
                     </div>
                   )}
-                  <p className={`text-[10px] mt-1.5 ${msg.role === 'user' ? 'text-[var(--text)]/50' : 'text-[var(--slate-light)]'}`}>
+                  <p className={`text-[10px] mt-1.5 ${msg.role === 'user' ? 'text-white/70' : 'text-gray-400'}`}>
                     {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
@@ -167,11 +167,11 @@ export function AdminChat() {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex justify-start"
               >
-                <div className="border-l-2 border-l-cyan-500/30 bg-white/4 rounded-2xl px-4 py-3">
+                <div className="border-l-2 border-l-gray-300 bg-gray-50/50 rounded-2xl px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-[var(--primary)] animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-[var(--primary)] animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-[var(--primary)] animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                 </div>
               </motion.div>
@@ -183,7 +183,7 @@ export function AdminChat() {
                   <button
                     key={prompt}
                     onClick={() => sendMessage(prompt)}
-                    className="px-3 py-2 text-xs font-medium text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/20 transition-colors min-h-[36px]"
+                    className="px-3 py-2 text-xs font-medium text-[var(--primary)] bg-[var(--primary-soft)]/10 border border-[var(--border)] rounded-lg hover:bg-[var(--primary-soft)]/20 transition-colors min-h-[36px]"
                   >
                     {prompt}
                   </button>
@@ -195,7 +195,7 @@ export function AdminChat() {
           </div>
 
           {/* Input */}
-          <form onSubmit={handleSubmit} className="flex-shrink-0 p-3 sm:p-4 border-t border-white/6">
+          <form onSubmit={handleSubmit} className="flex-shrink-0 p-3 sm:p-4 border-t border-[var(--slate-border)] bg-gray-50/20">
             <div className="flex items-center gap-2">
               <input
                 ref={inputRef}
@@ -205,12 +205,12 @@ export function AdminChat() {
                 onKeyDown={handleKeyDown}
                 placeholder="Type a command... (Enter to send)"
                 disabled={loading}
-                className="flex-1 px-4 py-2.5 text-sm bg-[#0f1725] border border-white/10 rounded-xl text-[var(--text)] placeholder-white/30 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 text-sm bg-white border border-gray-200 rounded-xl text-[var(--text)] placeholder-gray-400 focus:outline-none focus:border-[var(--primary-blue)] focus:ring-1 focus:ring-[var(--primary-blue)]/20 transition-all disabled:opacity-50"
               />
               <button
                 type="submit"
                 disabled={loading || !input.trim()}
-                className="btn-cta p-2.5 text-[var(--text)] rounded-xl transition-all disabled:opacity-40 flex-shrink-0"
+                className="btn-cta p-2.5 text-white rounded-xl transition-all disabled:opacity-40 flex-shrink-0"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19V5m0 0l-7 7m7-7l7 7" />

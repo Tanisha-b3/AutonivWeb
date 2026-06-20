@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import VapiModule from '@vapi-ai/web';
 
 // Handle both ESM default and CJS double-default export shapes
@@ -210,10 +211,10 @@ export function VoicePreviewButton({ voiceId, language, prompt }: VoicePreviewBu
         }
         className={`p-2 rounded-xl border transition-all flex-shrink-0 relative ${
           isLoading
-            ? 'bg-white/4 border-white/8 text-[var(--text-secondary)] cursor-wait'
+            ? 'bg-[var(--surface)] border-white/8 text-[var(--text-secondary)] cursor-wait'
             : isActive
-            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
-            : 'bg-white/4 border-white/8 text-[var(--text-secondary)] hover:text-violet-400 hover:bg-violet-500/10 hover:border-violet-500/30'
+            ? 'bg-[var(--primary-soft)]/10 border-[var(--border)] text-[var(--primary)] hover:bg-[var(--primary-soft)]/20'
+            : 'bg-[var(--surface)] border-white/8 text-[var(--text-secondary)] hover:text-violet-400 hover:bg-violet-500/10 hover:border-violet-500/30'
         }`}
       >
         {isLoading ? (
@@ -222,12 +223,23 @@ export function VoicePreviewButton({ voiceId, language, prompt }: VoicePreviewBu
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
           </svg>
         ) : isActive ? (
-          <>
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-            </svg>
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-          </>
+          <div className="flex items-center gap-[2px] h-4 w-4 justify-center">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <motion.span
+                key={i}
+                className="w-[2.5px] bg-[var(--primary)] rounded-full"
+                initial={{ height: 4 }}
+                animate={{ height: [4, 14, 4] }}
+                transition={{
+                  duration: 0.6,
+                  repeat: Infinity,
+                  repeatType: 'reverse',
+                  delay: i * 0.12,
+                  ease: 'easeInOut',
+                }}
+              />
+            ))}
+          </div>
         ) : (
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
             <path d="M8 5v14l11-7z"/>
@@ -238,7 +250,7 @@ export function VoicePreviewButton({ voiceId, language, prompt }: VoicePreviewBu
       {/* Call duration badge */}
       {isActive && callSeconds > 0 && (
         <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
-          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-1.5 py-0.5">
+          <span className="text-[10px] font-mono text-[var(--primary)] bg-[var(--primary-soft)]/10 border border-[var(--border)] rounded-full px-1.5 py-0.5">
             {formatTime(callSeconds)}
           </span>
         </div>

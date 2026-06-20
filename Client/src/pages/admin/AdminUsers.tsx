@@ -1,7 +1,8 @@
-import { useEffect, useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState, useRef, memo } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../../hooks/useStore';
 import { fetchAllUsers, createUser, updateUser, toggleBlockUser, deleteUser, upgradePlan } from '../../store/slices/usersSlice';
+import { useNavigate } from 'react-router-dom';
 import { Modal } from '../../components/Modal';
 import { Button } from '../../components/FormElements';
 import { DataTable } from '../../components/DataTable';
@@ -9,34 +10,49 @@ import type { Column } from '../../components/DataTable';
 import { Pagination } from '../../components/Pagination';
 import type { User } from '../../types';
 
-const ease = [0.16, 1, 0.3, 1] as const;
-const stagger = {
-  container: { animate: { transition: { staggerChildren: 0.04 } } },
-};
+const spring = { type: 'spring', stiffness: 380, damping: 30 } as const;
 const fadeUp = {
-  initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.3, ease } },
+  hidden: { opacity: 0, y: 16 },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as const } },
+};
+const staggerContainer = {
+  hidden: {},
+  show:   { transition: { staggerChildren: 0.06 } },
 };
 
-const avatarColors = [
-  'from-emerald-400 to-emerald-600',
-  'from-emerald-500 to-emerald-700',
-  'from-blue-400 to-blue-600',
-  'from-blue-500 to-blue-700',
-  'from-cyan-400 to-cyan-600',
-  'from-cyan-500 to-cyan-700',
+const avatarPalette = [
+  '#2563eb', '#10B981', '#00A3FF', '#14B8A6', '#8b5cf6', '#f59e0b',
 ];
 
 function getAvatarColor(name: string) {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return avatarColors[Math.abs(hash) % avatarColors.length];
+  return avatarPalette[Math.abs(hash) % avatarPalette.length];
 }
+
+// ─── Animated Counter ─────────────────────────────────────────────────
+const AnimatedCounter = memo(({ value, className = '' }: { value: number; className?: string }) => {
+  const [display, setDisplay] = useState(0);
+  const prefersReduced = useReducedMotion();
+  useEffect(() => {
+    if (prefersReduced) { setDisplay(value); return; }
+    let frame = 0;
+    const total = 35;
+    const tick = () => {
+      frame++;
+      const eased = 1 - Math.pow(1 - frame / total, 3);
+      setDisplay(Math.round(eased * value));
+      if (frame < total) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [value, prefersReduced]);
+  return <span className={className}>{display.toLocaleString()}</span>;
+});
 
 // ── Inline field components ────────────────────────────────────────────────
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500/70 mb-2">{children}</p>;
+  return <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--muted)' }}>{children}</p>;
 }
 
 function TextInput({ value, onChange, placeholder, type = 'text' }: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
@@ -46,7 +62,8 @@ function TextInput({ value, onChange, placeholder, type = 'text' }: { value: str
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-4 py-2.5 text-sm bg-white/80 border border-emerald-100/30 rounded-xl text-slate-700 placeholder-slate-400/60 focus:outline-none focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/20 transition-all shadow-sm"
+      className="w-full px-4 py-2.5 text-sm rounded-xl transition-all"
+      style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
     />
   );
 }
@@ -73,27 +90,28 @@ function SelectInput({ value, onChange, options }: {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full px-4 py-2.5 text-sm bg-white/80 border border-emerald-100/30 rounded-xl text-slate-700 flex items-center justify-between gap-2 focus:outline-none focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/20 transition-all cursor-pointer shadow-sm"
+        className="w-full px-4 py-2.5 text-sm rounded-xl flex items-center justify-between gap-2 transition-all cursor-pointer"
+        style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
       >
         <span className="truncate">{selected?.label}</span>
-        <svg className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className={`w-3.5 h-3.5 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--muted)' }}>
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
         </svg>
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1.5 w-full bg-white border border-emerald-100/30 rounded-xl shadow-2xl shadow-emerald-900/10 overflow-hidden">
+        <div className="absolute z-50 mt-1.5 w-full rounded-xl shadow-2xl overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
           <div className="max-h-48 overflow-y-auto py-1 custom-scrollbar">
             {options.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => { onChange(opt.value); setOpen(false); }}
-                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
-                  opt.value === value
-                    ? 'bg-emerald-50 text-emerald-600 font-medium'
-                    : 'text-slate-500/70 hover:bg-slate-50 hover:text-slate-700'
-                }`}
+                className="w-full text-left px-4 py-2.5 text-sm transition-colors"
+                style={{
+                  background: opt.value === value ? 'var(--primary-soft)' : 'transparent',
+                  color: opt.value === value ? 'var(--primary)' : 'var(--text-secondary)',
+                }}
               >
                 {opt.label}
               </button>
@@ -135,21 +153,23 @@ function UserPanel({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] as const }}
-            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-white border-l border-emerald-100/30 flex flex-col shadow-2xl shadow-emerald-900/20"
+            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md flex flex-col"
+            style={{ background: 'var(--surface)', borderLeft: '1px solid var(--border)' }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-emerald-100/20 flex-shrink-0">
+            <div className="flex items-center justify-between px-6 py-5 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
               <div>
-                <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-emerald-600 mb-0.5">
+                <p className="text-[10px] font-semibold tracking-[0.2em] uppercase mb-0.5" style={{ color: 'var(--primary)' }}>
                   {editing ? 'Edit' : 'New'}
                 </p>
-                <h2 className="text-base font-semibold text-slate-800">
+                <h2 className="text-base font-semibold" style={{ color: 'var(--text)' }}>
                   {editing ? editing.name : 'Add new user'}
                 </h2>
               </div>
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-slate-400/70 hover:text-slate-600/70 hover:bg-emerald-50 transition-colors"
+                className="p-1.5 rounded-lg transition-colors"
+                style={{ color: 'var(--muted)' }}
                 aria-label="Close"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,11 +180,11 @@ function UserPanel({
 
             {/* Body */}
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-              <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200/50">
-                <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-start gap-3 px-4 py-3 rounded-xl" style={{ background: 'var(--primary-soft)', border: '1px solid var(--border)' }}>
+                <svg className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--primary)' }}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <p className="text-xs text-emerald-700/80 leading-relaxed">
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                   {editing ? 'Update user account details and plan assignment.' : 'Create a new user account with an initial plan and minutes allocation.'}
                 </p>
               </div>
@@ -212,12 +232,12 @@ function UserPanel({
             </div>
 
             {/* Footer */}
-            <div className="flex-shrink-0 px-6 py-4 border-t border-emerald-100/20 flex items-center gap-3">
+            <div className="flex-shrink-0 px-6 py-4 flex items-center gap-3" style={{ borderTop: '1px solid var(--border)' }}>
               <button
                 onClick={onSubmit}
                 disabled={submitting || !formData.name.trim() || !formData.email.trim() || (!editing && !formData.password)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium disabled:opacity-40 text-white transition-all flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-emerald-500/25"
-                style={{ background: 'linear-gradient(135deg, #10b981, #2563eb, #06b6d4)' }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium disabled:opacity-40 text-white transition-all flex items-center justify-center gap-2"
+                style={{ background: 'var(--gg)' }}
               >
                 {submitting ? (
                   <>
@@ -232,7 +252,8 @@ function UserPanel({
               <button
                 onClick={onClose}
                 disabled={submitting}
-                className="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-500/70 bg-white hover:bg-slate-50 border border-emerald-100/30 transition-colors"
+                className="px-4 py-2.5 rounded-xl text-sm font-medium transition-colors"
+                style={{ color: 'var(--text-secondary)', background: 'var(--surface)', border: '1px solid var(--border)' }}
               >
                 Cancel
               </button>
@@ -246,6 +267,7 @@ function UserPanel({
 
 export function AdminUsers() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { items: users, loading, pagination } = useAppSelector((state) => state.users);
   const [modalOpen, setModalOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -257,6 +279,7 @@ export function AdminUsers() {
   const [timeRange, setTimeRange] = useState<'all' | '7d' | '30d' | '90d'>('all');
   const [submitting, setSubmitting] = useState(false);
   const [page, setPage] = useState(1);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -281,8 +304,6 @@ export function AdminUsers() {
     return matchesSearch && matchesStatus;
   });
 
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
-
   const calcMinutes = (u: User) => (u as any).calcMinutes ?? u.minutesUsed ?? 0;
   const stats = {
     total: users.length,
@@ -290,6 +311,8 @@ export function AdminUsers() {
     blocked: users.filter(u => !u.isActive).length,
     totalMinutes: users.reduce((acc, u) => acc + calcMinutes(u), 0),
   };
+
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
   const columns: Column<User>[] = [
     {
@@ -300,12 +323,15 @@ export function AdminUsers() {
         const ac = getAvatarColor(user.name);
         return (
           <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${user.role === 'admin' ? 'from-rose-400 to-amber-500' : ac} flex items-center justify-center text-white font-semibold text-xs flex-shrink-0 shadow-sm`}>
+            <div
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-bold text-xs flex-shrink-0 shadow-sm"
+              style={{ background: user.role === 'admin' ? 'linear-gradient(135deg,#f43f5e,#f59e0b)' : ac }}
+            >
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium text-slate-600/80 group-hover:text-slate-800 transition-colors truncate">{user.name}</div>
-              <div className="text-xs text-slate-400/70 truncate">{user.email}</div>
+              <div className="text-xs font-bold text-slate-700 group-hover:text-slate-900 transition-colors truncate">{user.name}</div>
+              <div className="text-[10px] text-slate-400 truncate">{user.email}</div>
             </div>
           </div>
         );
@@ -314,12 +340,15 @@ export function AdminUsers() {
         label: 'User',
         render: (user) => (
           <div className="flex items-center gap-2">
-            <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${user.role === 'admin' ? 'from-rose-400 to-amber-500' : getAvatarColor(user.name)} flex items-center justify-center text-white font-semibold text-[10px] flex-shrink-0 shadow-sm`}>
+            <div
+              className="w-7 h-7 rounded-xl flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0 shadow-sm"
+              style={{ background: user.role === 'admin' ? 'linear-gradient(135deg,#f43f5e,#f59e0b)' : getAvatarColor(user.name) }}
+            >
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium text-slate-600/80 truncate">{user.name}</div>
-              <div className="text-xs text-slate-400/70 truncate">{user.email}</div>
+              <div className="text-xs font-bold text-slate-700 truncate">{user.name}</div>
+              <div className="text-[10px] text-slate-400 truncate">{user.email}</div>
             </div>
           </div>
         ),
@@ -329,10 +358,10 @@ export function AdminUsers() {
       key: 'company',
       header: 'Company',
       sortable: true,
-      render: (user) => <span className="text-xs text-slate-500/70">{user.company || '—'}</span>,
+      render: (user) => <span className="text-xs text-[var(--muted)]/70">{user.company || '—'}</span>,
       card: {
         label: 'Company',
-        render: (user) => <span className="text-slate-600/70">{user.company || '—'}</span>,
+        render: (user) => <span className="text-[var(--text-secondary)]/70">{user.company || '—'}</span>,
       },
     },
     {
@@ -342,9 +371,9 @@ export function AdminUsers() {
       render: (user) => (
         <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${
           user.plan === 'dominate' ? 'bg-blue-50 text-blue-600 border border-blue-200/50' :
-          user.plan === 'scale' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/50' :
-          user.plan === 'foundation' ? 'bg-cyan-50 text-cyan-600 border border-cyan-200/50' :
-          'bg-slate-50 text-slate-500 border border-slate-200/50'
+          user.plan === 'scale' ? 'bg-[var(--primary-soft)] text-[var(--primary)] border border-[var(--border)]/50' :
+          user.plan === 'foundation' ? 'bg-[var(--primary-soft)] text-[var(--primary)] border border-[var(--border)]/50' :
+          'bg-[var(--surface)] text-[var(--muted)] border border-slate-200/50'
         }`}>
           {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)}
         </span>
@@ -354,9 +383,9 @@ export function AdminUsers() {
         render: (user) => (
           <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${
             user.plan === 'dominate' ? 'bg-blue-50 text-blue-600 border border-blue-200/50' :
-            user.plan === 'scale' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/50' :
-            user.plan === 'foundation' ? 'bg-cyan-50 text-cyan-600 border border-cyan-200/50' :
-            'bg-slate-50 text-slate-500 border border-slate-200/50'
+            user.plan === 'scale' ? 'bg-[var(--primary-soft)] text-[var(--primary)] border border-[var(--border)]/50' :
+            user.plan === 'foundation' ? 'bg-[var(--primary-soft)] text-[var(--primary)] border border-[var(--border)]/50' :
+            'bg-[var(--surface)] text-[var(--muted)] border border-slate-200/50'
           }`}>
             {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)}
           </span>
@@ -373,16 +402,18 @@ export function AdminUsers() {
         return (
           <div className="flex items-center gap-2 w-28">
             <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${usagePercent}%` }}
+                transition={{ delay: 0.1, duration: 0.6, ease: 'easeOut' }}
                 className={`h-full rounded-full ${
-                  usagePercent > 90 ? 'bg-rose-500' :
-                  usagePercent > 70 ? 'bg-amber-500' :
-                  'bg-emerald-500'
+                  usagePercent > 90 ? 'bg-gradient-to-r from-rose-500 to-amber-500' :
+                  usagePercent > 70 ? 'bg-gradient-to-r from-amber-400 to-orange-400' :
+                  'bg-gradient-to-r from-[#2563eb] to-[#10B981]'
                 }`}
-                style={{ width: `${usagePercent}%` }}
               />
             </div>
-            <span className="text-[11px] text-slate-400/70 tabular-nums w-12 text-right">{usagePercent.toFixed(0)}%</span>
+            <span className="text-[11px] text-slate-400 tabular-nums w-12 text-right font-semibold">{usagePercent.toFixed(0)}%</span>
           </div>
         );
       },
@@ -394,15 +425,15 @@ export function AdminUsers() {
           return (
             <div className="space-y-1">
               <div className="flex justify-between text-xs">
-                <span className="text-slate-500/70">{Math.round(mu)} / {user.minutesLimit || 500} min</span>
-                <span className="tabular-nums text-slate-500/70">{usagePercent.toFixed(0)}%</span>
+                <span className="text-slate-500 font-medium">{Math.round(mu)} / {user.minutesLimit || 500} min</span>
+                <span className="tabular-nums text-slate-400 font-semibold">{usagePercent.toFixed(0)}%</span>
               </div>
               <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full ${
-                    usagePercent > 90 ? 'bg-rose-500' :
-                    usagePercent > 70 ? 'bg-amber-500' :
-                    'bg-emerald-500'
+                    usagePercent > 90 ? 'bg-gradient-to-r from-rose-500 to-amber-500' :
+                    usagePercent > 70 ? 'bg-gradient-to-r from-amber-400 to-orange-400' :
+                    'bg-gradient-to-r from-[#2563eb] to-[#10B981]'
                   }`}
                   style={{ width: `${usagePercent}%` }}
                 />
@@ -419,10 +450,10 @@ export function AdminUsers() {
       render: (user) => (
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
           user.isActive
-            ? 'bg-emerald-50 border-emerald-200/50 text-emerald-600'
-            : 'bg-rose-50 border-rose-200/50 text-rose-600'
+            ? 'bg-[var(--primary-soft)] border-[var(--border)]/50 text-[var(--primary)]'
+            : 'bg-[rgba(239,68,68,0.12)] border-rose-200/50 text-[var(--danger)]'
         }`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${user.isActive ? 'bg-emerald-400' : 'bg-rose-400'}`}/>
+          <span className={`w-1.5 h-1.5 rounded-full ${user.isActive ? 'bg-[var(--primary)]' : 'bg-rose-400'}`}/>
           {user.isActive ? 'Active' : 'Blocked'}
         </span>
       ),
@@ -431,10 +462,10 @@ export function AdminUsers() {
         render: (user) => (
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
             user.isActive
-              ? 'bg-emerald-50 border-emerald-200/50 text-emerald-600'
-              : 'bg-rose-50 border-rose-200/50 text-rose-600'
+              ? 'bg-[var(--primary-soft)] border-[var(--border)]/50 text-[var(--primary)]'
+              : 'bg-[rgba(239,68,68,0.12)] border-rose-200/50 text-[var(--danger)]'
           }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${user.isActive ? 'bg-emerald-400' : 'bg-rose-400'}`}/>
+            <span className={`w-1.5 h-1.5 rounded-full ${user.isActive ? 'bg-[var(--primary)]' : 'bg-rose-400'}`}/>
             {user.isActive ? 'Active' : 'Blocked'}
           </span>
         ),
@@ -450,7 +481,7 @@ export function AdminUsers() {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={(e) => { e.stopPropagation(); openEdit(user); }}
-            className="p-2 rounded-lg text-slate-400/70 hover:text-emerald-600 hover:bg-emerald-50 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+            className="p-2 rounded-lg text-[var(--muted)]/70 hover:text-[var(--primary)] hover:bg-[var(--primary-soft)] transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -462,8 +493,8 @@ export function AdminUsers() {
             onClick={(e) => { e.stopPropagation(); handleToggleBlock(user.id, user.isActive); }}
             className={`p-2 rounded-lg transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center ${
               user.isActive 
-                ? 'text-slate-400/70 hover:text-amber-600 hover:bg-amber-50' 
-                : 'text-slate-400/70 hover:text-emerald-600 hover:bg-emerald-50'
+                ? 'text-[var(--muted)]/70 hover:text-[var(--warning)] hover:bg-[rgba(245,158,11,0.12)]' 
+                : 'text-[var(--muted)]/70 hover:text-[var(--primary)] hover:bg-[var(--primary-soft)]'
             }`}
           >
             {user.isActive ? (
@@ -480,7 +511,7 @@ export function AdminUsers() {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={(e) => { e.stopPropagation(); handleDelete(user.id); }}
-            className="p-2 rounded-lg text-slate-400/70 hover:text-rose-600 hover:bg-rose-50 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+            className="p-2 rounded-lg text-[var(--muted)]/70 hover:text-[var(--danger)] hover:bg-[rgba(239,68,68,0.12)] transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -492,9 +523,7 @@ export function AdminUsers() {
   ];
 
   const openCreate = () => {
-    setEditingUser(null);
-    setFormData({ name: '', email: '', password: '', company: '', plan: 'pilot', phoneNumber: '', minutesLimit: 30 });
-    setModalOpen(true);
+    navigate('/admin/users/new');
   };
 
   const openEdit = (user: User) => {
@@ -573,88 +602,133 @@ export function AdminUsers() {
 
   return (
     <div className="h-full overflow-y-auto overflow-x-hidden pb-10 pr-1">
-      <motion.div variants={stagger.container} initial="initial" animate="animate" className="space-y-8">
+      <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-6">
 
         {/* ── Header ── */}
-        <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5 pt-1">
+        <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5 pt-1">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-emerald-600 mb-1">Users</p>
-            <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-slate-800 leading-none">All Users</h1>
-            <p className="mt-1.5 text-xs sm:text-sm text-slate-400/70">Manage platform users</p>
+            <div className="flex items-center gap-2.5 mb-1.5">
+              <span className="text-[9px] font-extrabold tracking-[0.22em] text-[#10B981] uppercase">
+                ◈ USER MANAGEMENT
+              </span>
+              <span className="px-2 py-0.5 text-[9px] font-bold uppercase rounded-md border bg-blue-50 text-[#2563eb] border-blue-200/50">
+                Admin
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight leading-none">All Users</h1>
+            <p className="mt-1.5 text-xs text-slate-500 font-medium">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+            </p>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
-            <div className="flex items-center gap-1 bg-white/80 rounded-xl p-1 border border-emerald-100/30 shadow-sm">
-              {([['all', 'All'], ['7d', '7 Days'], ['30d', '30 Days'], ['90d', '90 Days']] as const).map(([val, label]) => (
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Time range toggle */}
+            <div className="flex rounded-xl border bg-white p-0.5" style={{ borderColor: '#e2e8f0' }}>
+              {([['all', 'All'], ['7d', '7D'], ['30d', '30D'], ['90d', '90D']] as const).map(([val, label]) => (
                 <button
                   key={val}
                   onClick={() => setTimeRange(val)}
-                  className={`flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium transition-all whitespace-nowrap ${
+                  className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer ${
                     timeRange === val
-                      ? 'bg-emerald-500 text-white shadow-sm'
-                      : 'text-slate-500/70 hover:text-slate-700'
+                      ? 'bg-[var(--primary-soft,#eff6ff)] text-[#2563eb]'
+                      : 'text-slate-400 hover:text-slate-600'
                   }`}
                 >
                   {label}
                 </button>
               ))}
             </div>
+
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               onClick={openCreate}
-              className="px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-all flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-emerald-500/25"
-              style={{ background: 'linear-gradient(135deg, #10b981, #2563eb, #06b6d4)' }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all text-white shadow-sm cursor-pointer hover:shadow-md"
+              style={{ background: 'var(--gg, linear-gradient(135deg,#2563eb 0%,#10b981 100%))' }}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4"/>
               </svg>
               Add User
             </motion.button>
           </div>
         </motion.div>
 
-        {/* ── Stats ── */}
-        <motion.div variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        {/* ── Stats Cards ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'Total Users',    value: stats.total,         accent: 'bg-white/50',   val: 'text-slate-800' },
-            { label: 'Active',         value: stats.active,        accent: 'bg-emerald-50', val: 'text-emerald-600' },
-            { label: 'Blocked',        value: stats.blocked,       accent: 'bg-rose-50',    val: 'text-rose-600' },
-            { label: 'Total Minutes',  value: stats.totalMinutes.toLocaleString(), accent: 'bg-amber-50', val: 'text-amber-600' },
-          ].map((s) => (
-            <div key={s.label} className={`${s.accent} rounded-2xl p-3 sm:p-4 border border-emerald-100/30 card-hover shadow-sm`}>
-              <p className="text-[10px] sm:text-[11px] font-medium text-slate-500/70 uppercase tracking-widest mb-1.5 sm:mb-2">{s.label}</p>
-              <p className={`text-2xl sm:text-3xl font-semibold ${s.val} leading-none`}>{s.value}</p>
-            </div>
-          ))}
-        </motion.div>
+            { label: 'Total Users',   value: stats.total,        accentColor: '37,99,235',   colorHex: '#2563EB', delta: 'Platform accounts' },
+            { label: 'Active Users',  value: stats.active,       accentColor: '16,185,129',  colorHex: '#10B981', delta: 'Currently enabled', trend: 'up' as const },
+            { label: 'Blocked',       value: stats.blocked,      accentColor: '239,68,68',   colorHex: '#ef4444', delta: 'Access restricted' },
+            { label: 'Total Minutes', value: stats.totalMinutes, accentColor: '245,158,11',  colorHex: '#f59e0b', delta: 'Minutes consumed' },
+          ].map((s) => {
+            const isHov = hoveredCard === s.label;
+            return (
+              <motion.div
+                key={s.label}
+                variants={fadeUp}
+                whileHover={{ y: -4, scale: 1.01 }}
+                transition={spring}
+                onMouseEnter={() => setHoveredCard(s.label)}
+                onMouseLeave={() => setHoveredCard(null)}
+                className="rounded-2xl p-5 border relative overflow-hidden transition-all duration-300 bg-white/70 shadow-sm backdrop-blur-md cursor-default"
+                style={{
+                  borderColor: isHov ? `rgba(${s.accentColor},0.3)` : '#e2e8f0',
+                  boxShadow: isHov ? `0 12px 36px rgba(${s.accentColor},0.08)` : '0 1px 3px rgba(37,99,235,0.01)',
+                }}
+              >
+                <motion.div
+                  className="absolute top-0 right-0 w-32 h-32 rounded-full pointer-events-none"
+                  animate={{ opacity: isHov ? 1 : 0, scale: isHov ? 1 : 0.8 }}
+                  transition={{ duration: 0.35 }}
+                  style={{ background: `radial-gradient(circle, rgba(${s.accentColor},0.08) 0%, transparent 70%)` }}
+                />
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 mb-3 relative z-10">{s.label}</p>
+                <div className="flex items-baseline gap-2 relative z-10">
+                  <p className="text-2xl sm:text-[28px] font-extrabold text-slate-800 tracking-tight leading-none">
+                    <AnimatedCounter value={s.value} />
+                  </p>
+                  {s.trend && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md text-green-600 bg-green-50">
+                      ↑ {s.delta}
+                    </span>
+                  )}
+                </div>
+                {!s.trend && (
+                  <p className="text-[10px] font-bold mt-1 text-slate-400 uppercase tracking-wider relative z-10">{s.delta}</p>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
 
         {/* ── Search & Filter ── */}
         <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1 max-w-xs sm:ml-3">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="relative flex-1 max-w-sm">
+            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
             </svg>
             <input
               type="text"
-              placeholder="Search users..."
+              placeholder="Search by name or email…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 text-sm bg-white/80 border border-emerald-100/30 rounded-xl text-slate-700 placeholder-slate-400/60 focus:outline-none focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/20 transition-all shadow-sm"
+              className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white/80 border border-slate-200 text-slate-700 placeholder-slate-400 shadow-sm focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all"
             />
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5">
             {[
-              { value: '', label: 'All' },
+              { value: '', label: 'All Status' },
               { value: 'active', label: 'Active' },
               { value: 'blocked', label: 'Blocked' },
             ].map((f) => (
               <button
                 key={f.value}
                 onClick={() => setStatusFilter(f.value)}
-                className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                   statusFilter === f.value
-                    ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/25'
-                    : 'text-slate-500/70 hover:text-slate-700 bg-white/50 hover:bg-white/80 border border-emerald-100/20'
+                    ? 'bg-[#2563eb] text-white border-[#2563eb] shadow-sm'
+                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700'
                 }`}
               >
                 {f.label}
@@ -678,10 +752,10 @@ export function AdminUsers() {
             cardBadge={(u) => (
               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${
                 u.isActive
-                  ? 'bg-emerald-50 border-emerald-200/50 text-emerald-600'
-                  : 'bg-rose-50 border-rose-200/50 text-rose-600'
+                  ? 'bg-[var(--primary-soft)] border-[var(--border)]/50 text-[var(--primary)]'
+                  : 'bg-[rgba(239,68,68,0.12)] border-rose-200/50 text-[var(--danger)]'
               }`}>
-                <span className={`w-1 h-1 rounded-full ${u.isActive ? 'bg-emerald-400' : 'bg-rose-400'}`}/>
+                <span className={`w-1 h-1 rounded-full ${u.isActive ? 'bg-[var(--primary)]' : 'bg-rose-400'}`}/>
                 {u.isActive ? 'Active' : 'Blocked'}
               </span>
             )}
@@ -723,29 +797,31 @@ export function AdminUsers() {
               exit={{ scale: 0.97, opacity: 0, y: 8 }}
               transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] as const }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full sm:max-w-lg bg-white border border-emerald-100/30 rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl shadow-emerald-900/20 max-h-[90vh] sm:max-h-[85vh]"
+              className="w-full sm:max-w-lg bg-[var(--surface)] border border-[var(--border)]/30 rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl shadow-[var(--primary)]/20 max-h-[90vh] sm:max-h-[85vh]"
             >
-              <div className="sm:hidden w-10 h-1 rounded-full bg-emerald-200/50 mx-auto mt-3" />
+              <div className="sm:hidden w-10 h-1 rounded-full bg-blue-200 mx-auto mt-3" />
               {/* Header */}
-              <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-emerald-100/20">
-                <div className="flex flex-wrap items-center gap-3 min-w-0">
-                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${
-                    selectedUser.role === 'admin' ? 'from-rose-400 to-amber-500' : getAvatarColor(selectedUser.name)
-                  } flex items-center justify-center text-white font-bold text-sm sm:text-base flex-shrink-0 shadow-sm`}>
+              <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 bg-slate-50/30">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow-sm"
+                    style={{ background: selectedUser.role === 'admin' ? 'linear-gradient(135deg,#f43f5e,#f59e0b)' : getAvatarColor(selectedUser.name) }}
+                  >
                     {selectedUser.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <h2 className="text-sm sm:text-base font-semibold text-slate-800 leading-tight truncate">{selectedUser.name}</h2>
-                    <p className="text-[11px] text-slate-400/70 mt-0.5 truncate">{selectedUser.email}</p>
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-[#2563eb]">User Detail</p>
+                    <h2 className="text-sm font-extrabold text-slate-800 leading-tight truncate">{selectedUser.name}</h2>
+                    <p className="text-[10px] text-slate-400 mt-0.5 truncate">{selectedUser.email}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setDetailOpen(false)}
-                  className="p-1.5 rounded-lg text-slate-400/70 hover:text-slate-600/70 hover:bg-emerald-50 transition-colors flex-shrink-0"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors flex-shrink-0 cursor-pointer"
                   aria-label="Close"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
                   </svg>
                 </button>
               </div>
@@ -759,63 +835,78 @@ export function AdminUsers() {
                     { label: 'Phone',  value: (selectedUser as any).phoneNumber || '—', mono: true },
                     { label: 'Status', value: selectedUser.isActive ? 'Active' : 'Blocked' },
                   ].map((item) => (
-                    <div key={item.label} className="rounded-xl bg-emerald-50/40 border border-emerald-100/30 px-4 py-3">
-                      <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400/70 mb-1">{item.label}</p>
-                      <p className={`text-sm text-slate-700/80 truncate ${item.mono ? 'font-mono' : ''}`}>{item.value}</p>
+                    <div key={item.label} className="rounded-xl bg-slate-50/60 border border-slate-100 px-3.5 py-2.5">
+                      <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">{item.label}</span>
+                      <span className={`text-[11px] font-semibold text-slate-700 block truncate ${item.mono ? 'font-mono' : ''}`}>{item.value}</span>
                     </div>
                   ))}
                 </div>
 
                 {/* Usage */}
-                <div className="border-t border-emerald-100/20 pt-4">
-                  <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400/70 mb-3">Usage</p>
-                  <div className="rounded-xl bg-emerald-50/40 border border-emerald-100/30 px-4 py-3 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-500/70">Minutes Used</span>
-                      <span className="font-medium text-slate-700/80">{Math.round(calcMinutes(selectedUser))} / {selectedUser.minutesLimit || 500}</span>
+                <div className="border-t border-slate-100 pt-4">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-3">Usage & Billing</p>
+                  <div className="rounded-xl bg-slate-50/70 border border-slate-100 px-4 py-3 space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-600 font-bold">Minutes Used</span>
+                      <span className={`font-extrabold ${
+                        (calcMinutes(selectedUser) / (selectedUser.minutesLimit || 500)) * 100 > 80 ? 'text-rose-600' : 'text-slate-800'
+                      }`}>
+                        {Math.round(calcMinutes(selectedUser))}
+                        <span className="text-slate-400 font-semibold"> / {selectedUser.minutesLimit || 500} mins</span>
+                      </span>
                     </div>
-                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div
+                    <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min((calcMinutes(selectedUser) / (selectedUser.minutesLimit || 500)) * 100, 100)}%` }}
+                        transition={{ delay: 0.2, duration: 0.75, ease: 'easeOut' }}
                         className={`h-full rounded-full ${
-                          (calcMinutes(selectedUser) / (selectedUser.minutesLimit || 500)) * 100 > 90 ? 'bg-rose-500' :
-                          (calcMinutes(selectedUser) / (selectedUser.minutesLimit || 500)) * 100 > 70 ? 'bg-amber-500' :
-                          'bg-emerald-500'
+                          (calcMinutes(selectedUser) / (selectedUser.minutesLimit || 500)) * 100 > 80
+                            ? 'bg-gradient-to-r from-rose-500 to-amber-500'
+                            : 'bg-gradient-to-r from-[#2563eb] to-[#10B981]'
                         }`}
-                        style={{ width: `${Math.min((calcMinutes(selectedUser) / (selectedUser.minutesLimit || 500)) * 100, 100)}%` }}
                       />
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                        {((calcMinutes(selectedUser) / (selectedUser.minutesLimit || 500)) * 100).toFixed(0)}% consumed
+                      </span>
+                      {(calcMinutes(selectedUser) / (selectedUser.minutesLimit || 500)) * 100 > 80 && (
+                        <span className="text-[9px] font-bold text-rose-500 uppercase tracking-widest">⚠ quota critical</span>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* Call Activity */}
                 <div>
-                  <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400/70 mb-3">Call Activity</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <div className="rounded-xl bg-emerald-50/40 border border-emerald-100/30 px-4 py-3">
-                      <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400/70 mb-1">Total Calls</p>
-                      <p className="text-lg font-semibold text-slate-800">{(selectedUser as any).callCount || 0}</p>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-3">Call Activity</p>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="rounded-xl bg-slate-50/60 border border-slate-100 px-3.5 py-2.5">
+                      <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Total Calls</span>
+                      <p className="text-xl font-extrabold text-[#2563eb]">{(selectedUser as any).callCount || 0}</p>
                     </div>
-                    <div className="rounded-xl bg-emerald-50/40 border border-emerald-100/30 px-4 py-3">
-                      <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400/70 mb-1">Period</p>
-                      <p className="text-sm font-medium text-slate-700/80 capitalize">{timeRange === 'all' ? 'All time' : timeRange}</p>
+                    <div className="rounded-xl bg-slate-50/60 border border-slate-100 px-3.5 py-2.5">
+                      <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Period</span>
+                      <p className="text-sm font-bold text-slate-700 capitalize">{timeRange === 'all' ? 'All time' : timeRange}</p>
                     </div>
                   </div>
                   {(selectedUser as any).lastCallAt && (
-                    <div className="mt-2.5 rounded-xl bg-emerald-50/40 border border-emerald-100/30 px-4 py-3 space-y-1.5">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-slate-500/70">Last Call Start</span>
-                        <span className="text-slate-700/80">{new Date((selectedUser as any).lastCallAt).toLocaleString()}</span>
+                    <div className="mt-2.5 rounded-xl bg-slate-50/60 border border-slate-100 px-3.5 py-3 space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Last Call Start</span>
+                        <span className="text-[10px] font-semibold text-slate-600">{new Date((selectedUser as any).lastCallAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
                       </div>
                       {(selectedUser as any).lastCallEnded && (
-                        <div className="flex justify-between text-xs">
-                          <span className="text-slate-500/70">Last Call End</span>
-                          <span className="text-slate-700/80">{new Date((selectedUser as any).lastCallEnded).toLocaleString()}</span>
+                        <div className="flex justify-between">
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Last Call End</span>
+                          <span className="text-[10px] font-semibold text-slate-600">{new Date((selectedUser as any).lastCallEnded).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
                         </div>
                       )}
                       {(selectedUser as any).lastCallAt && (selectedUser as any).lastCallEnded && (
-                        <div className="flex justify-between text-xs">
-                          <span className="text-slate-500/70">Duration</span>
-                          <span className="text-emerald-600 font-medium">
+                        <div className="flex justify-between">
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Duration</span>
+                          <span className="text-[10px] font-bold text-[#10B981]">
                             {Math.round((new Date((selectedUser as any).lastCallEnded).getTime() - new Date((selectedUser as any).lastCallAt).getTime()) / 60000)} min
                           </span>
                         </div>
@@ -823,53 +914,53 @@ export function AdminUsers() {
                     </div>
                   )}
                   {!(selectedUser as any).lastCallAt && (
-                    <p className="text-xs text-slate-400/70 mt-2">No calls in this period</p>
+                    <p className="text-[10px] font-semibold text-slate-400 mt-2">No calls recorded in this period</p>
                   )}
                 </div>
 
                 {/* Plan Selector */}
                 <div>
-                  <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400/70 mb-3">Plan</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-3">Assign Plan</p>
+                  <div className="grid grid-cols-2 gap-2">
                     {[
-                      { id: 'pilot', label: 'Pilot', calls: '30', price: '₹4,999' },
-                      { id: 'foundation', label: 'Foundation', calls: '120', price: '₹14,999' },
-                      { id: 'scale', label: 'Scale', calls: '400', price: '₹29,999' },
-                      { id: 'dominate', label: 'Dominate', calls: '1,200', price: '₹74,999' },
-                    ].map((plan) => (
-                      <button
-                        key={plan.id}
-                        onClick={() => handlePlanChange(selectedUser.id, plan.id)}
-                        className={`px-3 py-2.5 rounded-xl text-xs font-medium border transition-all ${
-                          selectedUser.plan === plan.id
-                            ? plan.id === 'dominate' ? 'bg-blue-50 text-blue-600 border-blue-200/50'
-                            : plan.id === 'scale' ? 'bg-emerald-50 text-emerald-600 border-emerald-200/50'
-                            : plan.id === 'foundation' ? 'bg-cyan-50 text-cyan-600 border-cyan-200/50'
-                            : 'bg-slate-50 text-slate-600 border-slate-200/50'
-                            : 'bg-white/50 text-slate-500/70 border-emerald-100/30 hover:text-slate-700 hover:bg-white/80'
-                        }`}
-                      >
-                        {plan.label}
-                        <span className="block text-[10px] opacity-70 mt-0.5">{plan.calls} calls · {plan.price}</span>
-                      </button>
-                    ))}
+                      { id: 'pilot',      label: 'Pilot',      calls: '30',   price: '₹4,999'  },
+                      { id: 'foundation', label: 'Foundation', calls: '120',  price: '₹14,999' },
+                      { id: 'scale',      label: 'Scale',      calls: '400',  price: '₹29,999' },
+                      { id: 'dominate',   label: 'Dominate',   calls: '1,200',price: '₹74,999' },
+                    ].map((plan) => {
+                      const isActive = selectedUser.plan === plan.id;
+                      return (
+                        <button
+                          key={plan.id}
+                          onClick={() => handlePlanChange(selectedUser.id, plan.id)}
+                          className={`px-3 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left ${
+                            isActive
+                              ? 'bg-[#2563eb] text-white border-[#2563eb] shadow-sm'
+                              : 'bg-white text-slate-500 border-slate-200 hover:border-blue-300 hover:text-slate-700'
+                          }`}
+                        >
+                          {plan.label}
+                          <span className={`block text-[10px] mt-0.5 ${ isActive ? 'text-blue-100' : 'text-slate-400' }`}>{plan.calls} calls · {plan.price}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-3 pt-2">
+                <div className="flex gap-2.5 pt-1">
                   <button
                     onClick={() => { setDetailOpen(false); openEdit(selectedUser); }}
-                    className="flex-1 py-2.5 bg-white/50 hover:bg-emerald-50 border border-emerald-100/30 rounded-xl text-sm text-slate-600/70 hover:text-slate-800 transition-all"
+                    className="flex-1 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 transition-all cursor-pointer"
                   >
                     Edit User
                   </button>
                   <button
                     onClick={() => { setDetailOpen(false); handleToggleBlock(selectedUser.id, selectedUser.isActive); }}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
                       selectedUser.isActive
-                        ? 'bg-amber-50 text-amber-600 border border-amber-200/50 hover:bg-amber-100'
-                        : 'bg-emerald-50 text-emerald-600 border border-emerald-200/50 hover:bg-emerald-100'
+                        ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
+                        : 'bg-blue-50 text-[#2563eb] border-blue-200 hover:bg-blue-100'
                     }`}
                   >
                     {selectedUser.isActive ? 'Block User' : 'Unblock User'}
@@ -889,12 +980,12 @@ export function AdminUsers() {
         size="sm"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setDeleteTarget(null)} className="text-slate-600 hover:text-slate-800">Cancel</Button>
-            <Button variant="danger" onClick={confirmDelete} className="bg-rose-500 hover:bg-rose-600 text-white">Delete</Button>
+            <Button variant="ghost" onClick={() => setDeleteTarget(null)} className="text-[var(--text-secondary)] hover:text-[var(--text)]">Cancel</Button>
+            <Button variant="danger" onClick={confirmDelete} className="bg-[rgba(239,68,68,0.12)]0 hover:bg-rose-600 text-white">Delete</Button>
           </>
         }
       >
-        <p className="text-slate-600/70 text-sm leading-relaxed">
+        <p className="text-[var(--text-secondary)]/70 text-sm leading-relaxed">
           Are you sure you want to delete this user? This action cannot be undone.
         </p>
       </Modal>

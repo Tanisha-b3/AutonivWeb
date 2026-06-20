@@ -18,6 +18,7 @@ const Careers             = lazy(() => import('./pages/public/Careers').then(m =
 const Blog                = lazy(() => import('./pages/public/Blog').then(m => ({ default: m.Blog })));
 const Press               = lazy(() => import('./pages/public/Press').then(m => ({ default: m.Press })));
 const MyAgents            = lazy(() => import('./pages/user/MyAgents').then(m => ({ default: m.MyAgents })));
+const CreateAgent         = lazy(() => import('./pages/user/CreateAgent').then(m => ({ default: m.CreateAgent })));
 const MyCalls             = lazy(() => import('./pages/user/MyCalls').then(m => ({ default: m.MyCalls })));
 const MyLeads             = lazy(() => import('./pages/user/MyLeads').then(m => ({ default: m.MyLeads })));
 const UserBilling         = lazy(() => import('./pages/user/UserBilling').then(m => ({ default: m.UserBilling })));
@@ -26,6 +27,7 @@ const MyAppointments      = lazy(() => import('./pages/user/MyAppointments').the
 const MyChat              = lazy(() => import('./pages/user/MyChat').then(m => ({ default: m.MyChat })));
 const AdminDashboard      = lazy(() => import('./pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 const AdminUsers          = lazy(() => import('./pages/admin/AdminUsers').then(m => ({ default: m.AdminUsers })));
+const CreateUser          = lazy(() => import('./pages/admin/CreateUser').then(m => ({ default: m.CreateUser })));
 const AdminAgents         = lazy(() => import('./pages/admin/AdminAgents').then(m => ({ default: m.AdminAgents })));
 const AdminCalls          = lazy(() => import('./pages/admin/AdminCalls').then(m => ({ default: m.AdminCalls })));
 const AdminBilling        = lazy(() => import('./pages/admin/AdminBilling').then(m => ({ default: m.AdminBilling })));
@@ -131,6 +133,7 @@ function AppRoutes() {
 
         <Route path="/dashboard"              element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
         <Route path="/dashboard/agents"       element={<ProtectedRoute><MyAgents /></ProtectedRoute>} />
+        <Route path="/dashboard/agents/new"   element={<ProtectedRoute><CreateAgent /></ProtectedRoute>} />
         <Route path="/dashboard/calls"        element={<ProtectedRoute><MyCalls /></ProtectedRoute>} />
         <Route path="/dashboard/leads"        element={<ProtectedRoute><MyLeads /></ProtectedRoute>} />
         <Route path="/dashboard/appointments" element={<ProtectedRoute><MyAppointments /></ProtectedRoute>} />
@@ -140,6 +143,7 @@ function AppRoutes() {
 
         <Route path="/admin"                    element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
         <Route path="/admin/users"              element={<ProtectedRoute adminOnly><AdminUsers /></ProtectedRoute>} />
+        <Route path="/admin/users/new"          element={<ProtectedRoute adminOnly><CreateUser /></ProtectedRoute>} />
         <Route path="/admin/agents"             element={<ProtectedRoute adminOnly><AdminAgents /></ProtectedRoute>} />
         <Route path="/admin/calls"              element={<ProtectedRoute adminOnly><AdminCalls /></ProtectedRoute>} />
         <Route path="/admin/leads"              element={<ProtectedRoute adminOnly><AdminLeads /></ProtectedRoute>} />

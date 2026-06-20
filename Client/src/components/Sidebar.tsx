@@ -174,7 +174,7 @@ const Tooltip: React.FC<{ label: string; visible: boolean }> = ({ label, visible
                    before:content-[''] before:absolute before:right-full before:top-1/2
                    before:-translate-y-1/2 before:border-4 before:border-transparent
                    before:border-r-[#0a1a2e]"
-        style={{ border: '1px solid rgba(16,185,129,0.2)' }}
+        style={{ border: '1px solid rgba(37,99,235,0.2)' }}
       >
         {label}
       </motion.div>
@@ -209,9 +209,9 @@ const NavLinkItem: React.FC<{
         style={
           isActive
             ? {
-                background: 'rgba(16,185,129,0.10)',
+                background: 'linear-gradient(135deg, rgba(37,99,235,0.15), rgba(16,185,129,0.10))',
                 border: '1px solid rgba(16,185,129,0.30)',
-                color: '#10b981',
+                color: '#10B981',
                 boxShadow: '0 0 24px rgba(16,185,129,0.10)',
               }
             : { background: 'transparent', boxShadow: 'none' }
@@ -222,7 +222,7 @@ const NavLinkItem: React.FC<{
             layoutId="activeIndicator"
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
             className="absolute left-0 w-1 h-8 rounded-r-full"
-            style={{ background: 'linear-gradient(180deg, #10b981, #059669)' }}
+            style={{ background: 'linear-gradient(180deg, #2563EB, #10B981)' }}
           />
         )}
         
@@ -248,7 +248,7 @@ const NavLinkItem: React.FC<{
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full"
-            style={{ backgroundColor: '#10b981', borderColor: 'var(--s1)', borderWidth: '1.5px' }}
+            style={{ backgroundColor: 'var(--primary)', borderColor: 'var(--s1)', borderWidth: '1.5px' }}
           />
         )}
 
@@ -372,20 +372,20 @@ const UserSection: React.FC<{
         className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${isCollapsed ? 'justify-center' : ''}`}
         onClick={() => !isCollapsed && setOpen(!open)}
         style={{
-          backgroundColor: 'rgba(16,185,129,0.06)',
+          backgroundColor: 'rgba(37,99,235,0.06)',
         }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(16,185,129,0.12)'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(16,185,129,0.06)'}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(37,99,235,0.12)'}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(37,99,235,0.06)'}
       >
         <div className="relative flex-shrink-0">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm"
                style={{
-                 background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                 boxShadow: '0 8px 16px rgba(16,185,129,0.25)'
+                 background: 'var(--gg)',
+                 boxShadow: '0 4px 14px rgba(16,185,129,0.25)'
                }}>
             {initials}
           </div>
-          <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full animate-pulse"
+          <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[var(--primary-soft)]0 rounded-full animate-pulse"
                style={{ borderColor: 'var(--s1)', borderWidth: '2px' }} />
         </div>
 
@@ -425,13 +425,13 @@ const UserSection: React.FC<{
             className="rounded-xl overflow-hidden shadow-xl"
             style={{
               backgroundColor: '#0a1a2e',
-              border: '1px solid rgba(16,185,129,0.18)'
+              border: '1px solid rgba(37,99,235,0.18)'
             }}
           >
             <button
               onClick={() => { setOpen(false); setShowProfile(true); }}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-white/70 hover:text-white"
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(16,185,129,0.06)')}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(37,99,235,0.06)')}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
             >
               {Icons.settings}
@@ -484,7 +484,7 @@ const UserSection: React.FC<{
                   type="text"
                   value={profileForm.name}
                   onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg text-white text-sm focus:outline-none transition-colors bg-[#0a1a2e] border border-white/10 focus:border-emerald-500"
+                  className="w-full px-3 py-2 rounded-lg text-white text-sm focus:outline-none transition-colors bg-[#0a1a2e] border border-white/10 focus:border-[var(--primary)]"
                 />
               </div>
               <div>
@@ -493,7 +493,7 @@ const UserSection: React.FC<{
                   type="email"
                   value={profileForm.email}
                   onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg text-white text-sm focus:outline-none transition-colors bg-[#0a1a2e] border border-white/10 focus:border-emerald-500"
+                  className="w-full px-3 py-2 rounded-lg text-white text-sm focus:outline-none transition-colors bg-[#0a1a2e] border border-white/10 focus:border-[var(--primary)]"
                 />
               </div>
               <div>
@@ -502,7 +502,7 @@ const UserSection: React.FC<{
                   type="tel"
                   value={profileForm.phoneNumber}
                   onChange={(e) => setProfileForm({ ...profileForm, phoneNumber: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg text-white text-sm focus:outline-none transition-colors bg-[#0a1a2e] border border-white/10 focus:border-emerald-500"
+                  className="w-full px-3 py-2 rounded-lg text-white text-sm focus:outline-none transition-colors bg-[#0a1a2e] border border-white/10 focus:border-[var(--primary)]"
                 />
               </div>
             </div>
@@ -510,7 +510,7 @@ const UserSection: React.FC<{
             <div className="mt-4 pt-4 border-t border-white/10">
               <button
                 onClick={() => setShowPasswordChange(true)}
-                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-white/70 hover:text-white hover:bg-[var(--surface)] transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
@@ -530,7 +530,7 @@ const UserSection: React.FC<{
                 onClick={handleProfileSave}
                 disabled={saving}
                 className="px-4 py-2 text-sm text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
+                style={{ background: 'var(--gg)', boxShadow: '0 4px 14px rgba(16,185,129,0.25)' }}
               >
                 {saving && (
                   <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -551,7 +551,7 @@ const UserSection: React.FC<{
                 </div>
               )}
               {passwordSuccess && (
-                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400 text-sm">
+                <div className="p-3 bg-[var(--primary-soft)]/10 border border-[var(--border)] rounded-lg text-[var(--primary)] text-sm">
                   {passwordSuccess}
                 </div>
               )}
@@ -562,7 +562,7 @@ const UserSection: React.FC<{
                   type="password"
                   value={passwordForm.currentPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg text-white text-sm focus:outline-none transition-colors bg-[#0a1a2e] border border-white/10 focus:border-emerald-500"
+                  className="w-full px-3 py-2 rounded-lg text-white text-sm focus:outline-none transition-colors bg-[#0a1a2e] border border-white/10 focus:border-[var(--primary)]"
                 />
               </div>
               <div>
@@ -571,7 +571,7 @@ const UserSection: React.FC<{
                   type="password"
                   value={passwordForm.newPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg text-white text-sm focus:outline-none transition-colors bg-[#0a1a2e] border border-white/10 focus:border-emerald-500"
+                  className="w-full px-3 py-2 rounded-lg text-white text-sm focus:outline-none transition-colors bg-[#0a1a2e] border border-white/10 focus:border-[var(--primary)]"
                 />
                 {passwordForm.newPassword.length > 0 && (
                   <div className="mt-2 space-y-0.5">
@@ -583,10 +583,10 @@ const UserSection: React.FC<{
                       { label: 'Special character', met: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(passwordForm.newPassword) },
                     ].map((check, i) => (
                       <div key={i} className="flex items-center gap-1.5 text-xs">
-                        <span className={check.met ? 'text-emerald-400' : 'text-white/40'}>
+                        <span className={check.met ? 'text-[var(--primary)]' : 'text-white/40'}>
                           {check.met ? '✓' : '○'}
                         </span>
-                        <span className={check.met ? 'text-emerald-400' : 'text-white/40'}>
+                        <span className={check.met ? 'text-[var(--primary)]' : 'text-white/40'}>
                           {check.label}
                         </span>
                       </div>
@@ -600,7 +600,7 @@ const UserSection: React.FC<{
                   type="password"
                   value={passwordForm.confirmPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg text-white text-sm focus:outline-none transition-colors bg-[#0a1a2e] border border-white/10 focus:border-emerald-500"
+                  className="w-full px-3 py-2 rounded-lg text-white text-sm focus:outline-none transition-colors bg-[#0a1a2e] border border-white/10 focus:border-[var(--primary)]"
                 />
                 {passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword && (
                   <p className="text-xs text-red-400 mt-1">Passwords do not match</p>
@@ -619,7 +619,7 @@ const UserSection: React.FC<{
                 onClick={handlePasswordChange}
                 disabled={changingPassword || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword || passwordForm.newPassword !== passwordForm.confirmPassword}
                 className="px-4 py-2 text-sm text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
+                style={{ background: 'var(--gg)', boxShadow: '0 4px 14px rgba(16,185,129,0.25)' }}
               >
                 {changingPassword && (
                   <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -774,7 +774,7 @@ export function Sidebar() {
               onClick={() => setMobileOpen(false)}
               aria-label="Close menu"
               className="absolute top-4 right-4 p-1.5 text-white/60 
-                         hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+                         hover:text-white rounded-lg hover:bg-[var(--surface)] transition-colors"
             >
               {Icons.close}
             </button>

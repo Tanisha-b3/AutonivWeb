@@ -30,8 +30,8 @@ const variants = {
   info: {
     icon: 'text-[var(--cyan)]500',
     bg: 'bg-[var(--cyan)]/10',
-    border: 'border-cyan-500/20',
-    button: 'bg-[var(--cyan)] hover:bg-cyan-600 text-white',
+    border: 'border-[var(--border)]',
+    button: 'bg-[var(--cyan)] hover-bg-[var(--primary)] text-white',
   },
 };
 

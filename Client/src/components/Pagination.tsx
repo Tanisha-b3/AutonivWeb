@@ -51,35 +51,35 @@ export function Pagination({ pagination, onPageChange }: PaginationProps) {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex items-center justify-between px-5 py-3 border-t border-white/5"
+      className="flex items-center justify-between px-6 py-4.5 border-t border-[var(--slate-border)] bg-slate-50/10"
     >
-      <p className="text-xs text-white/50">
-        Showing {from}–{to} of {total.toLocaleString()}
+      <p className="text-xs text-[var(--text-muted)] font-semibold">
+        Showing <span className="text-[var(--text-secondary)] font-bold">{from}</span>–<span className="text-[var(--text-secondary)] font-bold">{to}</span> of <span className="text-[var(--text-secondary)] font-bold">{total.toLocaleString()}</span>
       </p>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={!hasPrev}
-          className="p-1.5 rounded-lg text-white/40 hover:text-white/60 hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="p-2 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-slate-100 border border-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center justify-center bg-white shadow-sm"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
         </button>
 
         {getPages().map((p, i) =>
           p === '...' ? (
-            <span key={`dots-${i}`} className="text-xs text-white/30 px-1 select-none">
+            <span key={`dots-${i}`} className="text-slate-400 px-1.5 font-bold select-none">
               …
             </span>
           ) : (
             <button
               key={p}
               onClick={() => onPageChange(p)}
-              className={`min-w-[1.75rem] h-7 rounded-lg text-xs font-medium transition-all ${
+              className={`w-8 h-8 rounded-xl text-xs font-bold transition-all flex items-center justify-center border active:scale-95 ${
                 p === page
-                  ? 'bg-[#0077ff] text-white shadow-sm shadow-[#0077ff]/20'
-                  : 'text-white/50 hover:text-white/70 hover:bg-white/5'
+                  ? 'bg-[var(--primary-blue)] border-[var(--primary-blue)] text-white shadow-md shadow-blue-500/20'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-slate-50 border-slate-100 bg-white'
               }`}
             >
               {p}
@@ -90,10 +90,10 @@ export function Pagination({ pagination, onPageChange }: PaginationProps) {
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={!hasNext}
-          className="p-1.5 rounded-lg text-white/40 hover:text-white/60 hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="p-2 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-slate-50 border border-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center justify-center bg-white shadow-sm"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
           </svg>
         </button>
       </div>

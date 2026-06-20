@@ -39,7 +39,7 @@ interface Agent {
 function formatResponse(text: string) {
   return text.split(/(\*\*.*?\*\*)/).map((part, i) =>
     part.startsWith('**') && part.endsWith('**')
-      ? <strong key={i} className="text-white font-semibold">{part.slice(2, -2)}</strong>
+      ? <strong key={i} className="text-[var(--text)] font-bold">{part.slice(2, -2)}</strong>
       : <span key={i}>{part}</span>
   );
 }
@@ -80,10 +80,10 @@ const AGENT_TYPES = [
 const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Hindi', 'Arabic', 'Portuguese', 'Japanese', 'Chinese'];
 
 const TYPE_STYLES: Record<string, { border: string; bg: string }> = {
-  success: { border: '#10b981', bg: 'rgba(16,185,129,0.07)' },
-  error:   { border: '#f43f5e', bg: 'rgba(244,63,94,0.07)' },
-  info:    { border: '#0077ff', bg: 'rgba(0,119,255,0.07)' },
-  default: { border: 'rgba(0,119,255,0.25)', bg: 'rgba(255,255,255,0.03)' },
+  success: { border: '#10b981', bg: 'rgba(16,185,129,0.05)' },
+  error:   { border: '#f43f5e', bg: 'rgba(244,63,94,0.05)' },
+  info:    { border: 'var(--primary-blue)', bg: 'rgba(37,99,235,0.05)' },
+  default: { border: 'var(--slate-border)', bg: 'rgba(241,245,249,0.7)' },
 };
 
 export function ChatBotWidget() {
@@ -476,40 +476,42 @@ export function ChatBotWidget() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 16, scale: 0.97 }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed bottom-[72px] sm:bottom-[86px] left-4 right-4 sm:left-auto sm:right-6 z-50 flex flex-col overflow-hidden rounded-2xl"
+              className="fixed bottom-[72px] sm:bottom-[86px] left-4 right-4 sm:left-auto sm:right-6 z-50 flex flex-col overflow-hidden rounded-2xl animate-[fadeInUp_0.3s_cubic-bezier(.16,1,.3,1)]"
               style={{
                 width: 'auto',
                 maxWidth: 'min(420px, calc(100vw - 32px))',
                 height: 'min(580px, calc(100vh - 100px))',
-                background: '#080f1e',
-                border: '1px solid rgba(255,255,255,0.08)',
-                boxShadow: '0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,119,255,0.08)',
+                background: 'rgba(255, 255, 255, 0.90)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid var(--slate-border)',
+                boxShadow: '0 24px 64px rgba(37,99,235,0.12), 0 0 0 1px rgba(37,99,235,0.02)',
               }}
             >
               {/* Header */}
               <div
                 className="flex items-center justify-between px-4 py-3.5 flex-shrink-0"
-                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}
+                style={{ borderBottom: '1px solid var(--slate-border)', background: 'rgba(241,245,249,0.3)' }}
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-[11px] font-bold tracking-tight shrink-0"
+                    className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-[11px] font-bold tracking-tight shrink-0 shadow-sm"
                     style={{ background: 'linear-gradient(135deg, #0077ff, #00c8b4)' }}
                   >
                     AI
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-white leading-tight">Agent Assistant</h3>
+                    <h3 className="text-sm font-semibold text-[var(--text)] leading-tight">Agent Assistant</h3>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      <p className="text-[10px] text-slate-500 hidden sm:block">Online · Manage agents via chat</p>
-                      <p className="text-[10px] text-slate-500 sm:hidden">Online</p>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse" />
+                      <p className="text-[10px] text-[var(--text-secondary)] hidden sm:block">Online · Manage agents via chat</p>
+                      <p className="text-[10px] text-[var(--text-secondary)] sm:hidden">Online</p>
                     </div>
                   </div>
                 </div>
                 <button
                   onClick={() => setOpen(false)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-white/6 transition-all"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-slate-100/85 transition-all"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
@@ -518,7 +520,7 @@ export function ChatBotWidget() {
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 space-y-2.5" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.08) transparent' }}>
+              <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 space-y-2.5" style={{ scrollbarWidth: 'thin', scrollbarColor: 'var(--slate-border) transparent' }}>
                 <AnimatePresence initial={false}>
                   {messages.map((msg) => {
                     const typeStyle = msg.type ? (TYPE_STYLES[msg.type] ?? TYPE_STYLES.default) : TYPE_STYLES.default;
@@ -532,15 +534,15 @@ export function ChatBotWidget() {
                       >
                         {msg.role === 'user' ? (
                           <div
-                            className="max-w-[85%] px-3.5 py-2 rounded-2xl rounded-br-sm text-sm text-white leading-relaxed"
-                            style={{ background: 'linear-gradient(135deg, #0077ff, #00a8e8)' }}
+                            className="max-w-[85%] px-3.5 py-2 rounded-2xl rounded-br-sm text-sm text-white leading-relaxed font-medium shadow-sm shadow-blue-500/10"
+                            style={{ background: 'linear-gradient(135deg, var(--primary-blue), #00a8e8)' }}
                           >
                             {msg.text}
                           </div>
                         ) : (
                           <>
                             <div
-                              className="max-w-[90%] px-3.5 py-2.5 rounded-2xl rounded-bl-sm text-sm text-slate-300 leading-relaxed whitespace-pre-wrap border-l-2"
+                              className="max-w-[90%] px-3.5 py-2.5 rounded-2xl rounded-bl-sm text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap border-l-2 shadow-sm"
                               style={{
                                 borderLeftColor: typeStyle.border,
                                 background: typeStyle.bg,
@@ -555,11 +557,11 @@ export function ChatBotWidget() {
                                   <button
                                     key={action.label}
                                     onClick={() => handleActionClick(action.action, msg.agentId)}
-                                    className="px-2.5 py-1 text-[10px] font-medium rounded-lg border transition-all active:scale-[0.98]"
+                                    className="px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-all active:scale-[0.98] cursor-pointer"
                                     style={{
-                                      color: '#38bdf8',
-                                      background: 'rgba(0,119,255,0.08)',
-                                      borderColor: 'rgba(0,119,255,0.2)',
+                                      color: 'var(--primary-blue)',
+                                      background: 'var(--primary-blue-soft)',
+                                      borderColor: 'rgba(37,99,235,0.15)',
                                     }}
                                   >
                                     {action.label}
@@ -583,28 +585,27 @@ export function ChatBotWidget() {
                       exit={{ opacity: 0, y: 8 }}
                       className="space-y-1.5 mt-2"
                     >
-                      <p className="text-[10px] text-white/50 mb-1">Select an agent to manage:</p>
+                      <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider mb-1">Select an agent to manage:</p>
                       {agents.map((agent) => (
                         <button
                           key={agent.id}
                           onClick={() => selectAgent(agent)}
-                          className="w-full text-left p-2.5 rounded-lg border transition-all active:scale-[0.98]"
+                          className="w-full text-left p-2.5 rounded-xl border transition-all bg-white hover:bg-slate-50/50 cursor-pointer active:scale-[0.98]"
                           style={{
-                            background: 'rgba(0,119,255,0.04)',
-                            borderColor: 'rgba(0,119,255,0.15)',
+                            borderColor: 'var(--slate-border)',
                           }}
                         >
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-xs font-medium text-white">{agent.name}</p>
-                              <p className="text-[10px] text-white/50 mt-0.5">
+                              <p className="text-xs font-bold text-[var(--text)]">{agent.name}</p>
+                              <p className="text-[10px] text-[var(--text-secondary)] mt-0.5 capitalize">
                                 {agent.type} • {agent.language}
                               </p>
                             </div>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                            <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-md ${
                               agent.isActive 
-                                ? 'bg-emerald-500/20 text-emerald-400' 
-                                : 'bg-slate-500/20 text-slate-400'
+                                ? 'bg-[var(--primary-soft)] text-[#10b981]' 
+                                : 'bg-slate-100 text-slate-500'
                             }`}>
                               {agent.isActive ? 'Active' : 'Inactive'}
                             </span>
@@ -613,7 +614,7 @@ export function ChatBotWidget() {
                       ))}
                       <button
                         onClick={() => setShowAgentList(false)}
-                        className="w-full text-center p-2 text-[10px] text-white/50 hover:text-white/70 transition-colors"
+                        className="w-full text-center p-2 text-[10px] text-[var(--text-secondary)]/70 hover:text-[var(--text)] font-semibold transition-colors cursor-pointer"
                       >
                         Cancel
                       </button>
@@ -625,11 +626,11 @@ export function ChatBotWidget() {
                 {loadingAgents && (
                   <div className="flex justify-center py-2">
                     <div className="flex items-center gap-2">
-                      <svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin w-3 h-3 text-[var(--primary-blue)]" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                       </svg>
-                      <span className="text-[10px] text-white/50">Loading agents...</span>
+                      <span className="text-[10px] text-[var(--text-muted)] font-medium">Loading agents...</span>
                     </div>
                   </div>
                 )}
@@ -642,13 +643,13 @@ export function ChatBotWidget() {
                       className="flex justify-start"
                     >
                       <div
-                        className="px-4 py-3 rounded-2xl rounded-bl-sm border-l-2 flex items-center gap-1.5"
-                        style={{ borderLeftColor: 'rgba(0,119,255,0.3)', background: 'rgba(255,255,255,0.03)' }}
+                        className="px-4 py-3 rounded-2xl rounded-bl-sm border-l-2 flex items-center gap-1.5 shadow-sm"
+                        style={{ borderLeftColor: 'var(--primary-blue)', background: 'rgba(37,99,235,0.04)' }}
                       >
                         {[0, 150, 300].map((delay, i) => (
                           <span
                             key={i}
-                            className="w-1.5 h-1.5 rounded-full bg-[#0077ff] animate-bounce"
+                            className="w-1.5 h-1.5 rounded-full bg-[var(--primary-blue)] animate-bounce"
                             style={{ animationDelay: `${delay}ms` }}
                           />
                         ))}
@@ -669,11 +670,11 @@ export function ChatBotWidget() {
                         <button
                           key={s.label}
                           onClick={() => handleSuggestionClick(s)}
-                          className="px-2.5 py-1.5 sm:py-1 text-[11px] font-semibold rounded-lg border transition-all active:scale-[0.98]"
+                          className="px-2.5 py-1.5 sm:py-1 text-[11px] font-bold rounded-lg border transition-all active:scale-[0.98] cursor-pointer"
                           style={{
-                            color: '#38bdf8',
-                            background: 'rgba(0,119,255,0.08)',
-                            borderColor: 'rgba(0,119,255,0.2)',
+                            color: 'var(--primary-blue)',
+                            background: 'var(--primary-blue-soft)',
+                            borderColor: 'rgba(37,99,235,0.15)',
                           }}
                         >
                           {s.label}
@@ -692,11 +693,11 @@ export function ChatBotWidget() {
                       exit={{ opacity: 0, y: 8, height: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="rounded-xl border p-3 space-y-2.5"
-                        style={{ background: 'rgba(0,119,255,0.04)', borderColor: 'rgba(0,119,255,0.15)' }}>
+                      <div className="rounded-xl border p-3.5 space-y-3 bg-slate-50/70"
+                        style={{ borderColor: 'var(--slate-border)' }}>
                         <div className="flex items-center justify-between">
-                          <h4 className="text-[11px] font-bold text-white">Create New Agent</h4>
-                          <button onClick={() => setShowAgentForm(false)} className="text-white/40 hover:text-white/70 transition-colors">
+                          <h4 className="text-[11px] font-bold text-[var(--text)]">Create New Agent</h4>
+                          <button onClick={() => setShowAgentForm(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer transition-colors">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
@@ -704,30 +705,29 @@ export function ChatBotWidget() {
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-medium text-white/50 mb-1 block">Agent Name *</label>
+                          <label className="text-[10px] font-semibold text-[var(--text-secondary)] mb-1 block">Agent Name *</label>
                           <input
                             type="text"
                             value={agentForm.name}
                             onChange={(e) => setAgentForm((f) => ({ ...f, name: e.target.value }))}
                             placeholder="e.g. Front Desk"
-                            className="w-full px-3 py-1.5 text-[11px] text-white rounded-lg outline-none"
-                            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                            className="w-full px-3 py-1.5 text-[11px] text-[var(--text)] bg-white rounded-lg outline-none border border-slate-200 focus:border-[var(--primary-blue)]/50 focus:ring-1 focus:ring-[var(--primary-blue)]/10 transition-all"
                             autoFocus
                           />
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-medium text-white/50 mb-1 block">Type</label>
+                          <label className="text-[10px] font-semibold text-[var(--text-secondary)] mb-1 block">Type</label>
                           <div className="flex gap-1.5">
                             {AGENT_TYPES.map((t) => (
                               <button
                                 key={t.value}
                                 type="button"
                                 onClick={() => setAgentForm((f) => ({ ...f, type: t.value }))}
-                                className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium border transition-all text-center active:scale-[0.98] ${
+                                className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-bold border transition-all text-center active:scale-[0.98] cursor-pointer ${
                                   agentForm.type === t.value
-                                    ? 'bg-[#0077ff]/15 border-[#0077ff]/40 text-[#0077ff]'
-                                    : 'bg-white/3 border-white/8 text-white/50 hover:text-white/70'
+                                    ? 'bg-[var(--primary-blue-soft)] border-[var(--primary-blue)]/40 text-[var(--primary-blue)]'
+                                    : 'bg-white border-slate-200 text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-slate-50'
                                 }`}
                               >
                                 {t.label}
@@ -737,7 +737,7 @@ export function ChatBotWidget() {
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-medium text-white/50 mb-1 block">Language</label>
+                          <label className="text-[10px] font-semibold text-[var(--text-secondary)] mb-1 block">Language</label>
                           <Dropdown
                             value={agentForm.language}
                             options={LANGUAGES.map((l) => ({ value: l, label: l }))}
@@ -746,29 +746,28 @@ export function ChatBotWidget() {
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-medium text-white/50 mb-1 block">Instructions (optional)</label>
+                          <label className="text-[10px] font-semibold text-[var(--text-secondary)] mb-1 block">Instructions (optional)</label>
                           <textarea
                             value={agentForm.prompt}
                             onChange={(e) => setAgentForm((f) => ({ ...f, prompt: e.target.value }))}
                             placeholder="What should this agent do?"
                             rows={2}
-                            className="w-full px-3 py-1.5 text-[11px] text-white rounded-lg outline-none resize-none"
-                            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                            className="w-full px-3 py-1.5 text-[11px] text-[var(--text)] bg-white rounded-lg outline-none border border-slate-200 focus:border-[var(--primary-blue)]/50 focus:ring-1 focus:ring-[var(--primary-blue)]/10 transition-all resize-none"
                           />
                         </div>
 
                         <div className="flex gap-2 pt-0.5">
                           <button
                             onClick={() => setShowAgentForm(false)}
-                            className="flex-1 px-3 py-1.5 text-[10px] font-medium rounded-lg border border-white/10 text-white/50 hover:text-white/70 hover:bg-white/5 transition-all active:scale-[0.98]"
+                            className="flex-1 px-3 py-1.5 text-[10px] font-bold rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-all active:scale-[0.98] cursor-pointer"
                           >
                             Cancel
                           </button>
                           <button
                             onClick={createAgentFromForm}
                             disabled={!agentForm.name.trim() || creating}
-                            className="flex-1 px-3 py-1.5 text-[10px] font-semibold rounded-lg text-white transition-all disabled:opacity-40 active:scale-[0.98]"
-                            style={{ background: 'linear-gradient(135deg, #0077ff, #00c8b4)' }}
+                            className="flex-1 px-3 py-1.5 text-[10px] font-bold rounded-lg text-white transition-all disabled:opacity-40 active:scale-[0.98] cursor-pointer shadow-sm"
+                            style={{ background: 'linear-gradient(135deg, var(--primary-blue), #00c8b4)' }}
                           >
                             {creating ? 'Creating...' : 'Create Agent'}
                           </button>
@@ -784,8 +783,8 @@ export function ChatBotWidget() {
               {/* Input */}
               <form
                 onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
-                className="flex-shrink-0 p-3 flex items-center gap-2"
-                style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.015)' }}
+                className="flex-shrink-0 p-3 flex items-center gap-2 bg-slate-50/20"
+                style={{ borderTop: '1px solid var(--slate-border)' }}
               >
                 <input
                   ref={inputRef}
@@ -795,19 +794,17 @@ export function ChatBotWidget() {
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input); } }}
                   placeholder="Type a command or ask about agents..."
                   disabled={loading}
-                  className="flex-1 px-3.5 py-2 text-sm text-white rounded-xl outline-none transition-all disabled:opacity-50"
+                  className="flex-1 px-3.5 py-2 text-sm rounded-xl outline-none transition-all disabled:opacity-50 bg-white/95 border border-[var(--slate-border)] text-[var(--text)] focus:border-[var(--primary-blue)]/50 focus:ring-1 focus:ring-[var(--primary-blue)]/10"
                   style={{
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    caretColor: '#0077ff',
+                    caretColor: 'var(--primary-blue)',
                   }}
                 />
                 <motion.button
                   type="submit"
                   disabled={loading || !input.trim()}
                   whileTap={{ scale: 0.94 }}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 disabled:opacity-35 transition-opacity active:scale-[0.96]"
-                  style={{ background: 'linear-gradient(135deg, #0077ff, #00c8b4)' }}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 disabled:opacity-35 transition-opacity active:scale-[0.96] cursor-pointer shadow-sm"
+                  style={{ background: 'linear-gradient(135deg, var(--primary-blue), #00c8b4)' }}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 12h14M12 5l7 7-7 7" />

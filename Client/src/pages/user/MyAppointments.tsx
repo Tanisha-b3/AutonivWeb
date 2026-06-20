@@ -8,17 +8,17 @@ import type { Appointment } from '../../types';
 
 const statusConfig: Record<string, { label: string; dot: string; pill: string; text: string }> = {
   pending:   { label: 'Pending',   dot: 'bg-amber-400',   pill: 'bg-amber-500/10 border-amber-500/20',   text: 'text-amber-400'   },
-  confirmed: { label: 'Confirmed', dot: 'bg-cyan-400', pill: 'bg-cyan-500/10 border-cyan-500/20', text: 'text-cyan-400' },
-  completed: { label: 'Completed', dot: 'bg-emerald-400',  pill: 'bg-emerald-500/10 border-emerald-500/20',  text: 'text-emerald-400'  },
+  confirmed: { label: 'Confirmed', dot: 'bg-[var(--primary)]', pill: 'bg-[var(--primary)]/10 border-[var(--border)]', text: 'text-[var(--primary)]' },
+  completed: { label: 'Completed', dot: 'bg-[var(--primary)]',  pill: 'bg-[var(--primary)]/10 border-[var(--border)]',  text: 'text-[var(--primary)]'  },
   cancelled: { label: 'Cancelled', dot: 'bg-rose-400',    pill: 'bg-rose-500/10 border-rose-500/20',    text: 'text-rose-400'    },
 };
 
 const avatarColors = [
-  'from-cyan-500 to-cyan-600',
-  'from-cyan-500 to-cyan-700',
-  'from-cyan-500 to-cyan-600',
-  'from-cyan-500 to-cyan-700',
-  'from-cyan-500 to-cyan-600',
+  'from-[var(--primary)] to-[var(--primary)]',
+  'from-[var(--primary)] to-[var(--primary)]',
+  'from-[var(--primary)] to-[var(--primary)]',
+  'from-[var(--primary)] to-[var(--primary)]',
+  'from-[var(--primary)] to-[var(--primary)]',
 ];
 
 function getAvatarColor(name: string) {
@@ -102,7 +102,7 @@ export function MyAppointments() {
         <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5 pt-1">
           <div className="min-w-0">
             <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[var(--slate-light)] mb-1">Scheduling</p>
-            <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-[var(--text)] leading-none">Appointments</h1>
+            <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-slate-800 leading-none">My Appointments</h1>
             <p className="mt-1.5 text-xs sm:text-sm text-[var(--slate-light)]">Manage bookings made through your AI agents</p>
           </div>
           {loading && (
@@ -230,7 +230,7 @@ export function MyAppointments() {
                         <td className="px-5 py-4 whitespace-nowrap">
                           {appt.agentName ? (
                             <span className="inline-flex items-center gap-2 text-xs text-[var(--slate-light)]">
-                              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0"/>
+                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] flex-shrink-0"/>
                               {appt.agentName}
                             </span>
                           ) : <span className="text-[var(--slate-gray)] text-xs">—</span>}

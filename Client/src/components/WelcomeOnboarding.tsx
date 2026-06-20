@@ -107,7 +107,7 @@ export default function WelcomeOnboarding({ onComplete }: { onComplete: () => vo
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -40 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="bg-white rounded-2xl border shadow-xl p-6 sm:p-8"
+            className="bg-[var(--surface)] rounded-2xl border shadow-xl p-6 sm:p-8"
             style={{ borderColor: 'rgba(6,182,212,0.15)' }}
           >
             {/* Step counter */}

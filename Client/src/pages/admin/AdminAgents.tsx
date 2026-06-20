@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useState, useRef, memo, useCallback } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../../hooks/useStore';
 import { fetchAllAgents, toggleAgent, assignPhone, unlinkPhone, deleteAgent, updateAgent } from '../../store/slices/agentsSlice';
 import { Modal } from '../../components/Modal';
@@ -18,27 +18,65 @@ interface PhoneNumber {
   status: string;
 }
 
-const stagger = {
-  container: { animate: { transition: { staggerChildren: 0.04 } } },
-};
+const spring = { type: 'spring', stiffness: 380, damping: 30 } as const;
 const fadeUp = {
-  initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as const } },
+  hidden: { opacity: 0, y: 16 },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as const } },
+};
+const staggerContainer = {
+  hidden: {},
+  show:   { transition: { staggerChildren: 0.06 } },
 };
 
-const avatarColors = [
-  'from-emerald-400 to-emerald-600',
-  'from-emerald-500 to-emerald-700',
-  'from-blue-400 to-blue-600',
-  'from-blue-500 to-blue-700',
-  'from-cyan-400 to-cyan-600',
-  'from-cyan-500 to-cyan-700',
+const avatarPalette = [
+  '#2563eb', '#10B981', '#00A3FF', '#14B8A6', '#8b5cf6', '#f59e0b',
 ];
 
 function getAvatarColor(name: string) {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return avatarColors[Math.abs(hash) % avatarColors.length];
+  return avatarPalette[Math.abs(hash) % avatarPalette.length];
+}
+
+// ─── Animated Counter ─────────────────────────────────────────────────
+const AnimatedCounter = memo(({ value, className = '' }: { value: number; className?: string }) => {
+  const [display, setDisplay] = useState(0);
+  const prefersReduced = useReducedMotion();
+  useEffect(() => {
+    if (prefersReduced) { setDisplay(value); return; }
+    let frame = 0;
+    const total = 35;
+    const tick = () => {
+      frame++;
+      const eased = 1 - Math.pow(1 - frame / total, 3);
+      setDisplay(Math.round(eased * value));
+      if (frame < total) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [value, prefersReduced]);
+  return <span className={className}>{display.toLocaleString()}</span>;
+});
+
+// ─── Tooltip ──────────────────────────────────────────────────────────────────
+function Tip({ text, children }: { text: string; children: React.ReactNode }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative inline-flex" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
+      {children}
+      <AnimatePresence>
+        {show && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.15 }}
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap pointer-events-none z-50 shadow-md border bg-white border-slate-200/60 text-slate-500"
+          >
+            {text}
+            <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-200" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 const PROVIDER_OPTIONS = [
@@ -92,26 +130,26 @@ function ProviderDropdown({ value, onChange }: { value: string; onChange: (v: st
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full px-4 py-3 bg-white/50 border border-emerald-100/30 rounded-xl text-left flex items-center justify-between gap-3 hover:border-emerald-300/50 transition-colors focus:outline-none focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/20"
+        className="w-full px-4 py-3 bg-[var(--surface)]/50 border border-[var(--border)]/30 rounded-xl text-left flex items-center justify-between gap-3 hover-border-[var(--primary)]/50 transition-colors focus:outline-none focus-border-[var(--primary)]/50 focus:ring-2 focus:ring-[var(--primary)]/20"
       >
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-200/50 flex items-center justify-center text-emerald-500 flex-shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-[var(--primary-soft)] border border-[var(--border)]/50 flex items-center justify-center text-[var(--primary)] flex-shrink-0">
             {selected.icon}
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-700">{selected.label}</p>
-            <p className="text-xs text-slate-400">{selected.description}</p>
+            <p className="text-sm font-medium text-[var(--text-secondary)]">{selected.label}</p>
+            <p className="text-xs text-[var(--muted)]">{selected.description}</p>
           </div>
         </div>
-        <svg className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className={`w-4 h-4 text-[var(--muted)] flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
         </svg>
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-2 w-full bg-white border border-emerald-100/30 rounded-xl shadow-2xl shadow-emerald-900/10 overflow-hidden">
+        <div className="absolute z-50 mt-2 w-full bg-[var(--surface)] border border-[var(--border)]/30 rounded-xl shadow-2xl shadow-[var(--primary)]/10 overflow-hidden">
           <div className="py-1">
-            <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400/60">Direct Integration</p>
+            <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/60">Direct Integration</p>
             {PROVIDER_OPTIONS.filter(p => p.category === 'direct').map((provider) => (
               <button
                 key={provider.value}
@@ -119,31 +157,31 @@ function ProviderDropdown({ value, onChange }: { value: string; onChange: (v: st
                 onClick={() => { onChange(provider.value); setOpen(false); }}
                 className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors ${
                   provider.value === value
-                    ? 'bg-emerald-50'
-                    : 'hover:bg-slate-50'
+                    ? 'bg-[var(--primary-soft)]'
+                    : 'hover:bg-[var(--surface)]'
                 }`}
               >
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
                   provider.value === value
-                    ? 'bg-emerald-100 border border-emerald-200 text-emerald-600'
-                    : 'bg-slate-50 border border-slate-200 text-slate-400'
+                    ? 'bg-[var(--primary-soft)] border border-[var(--border)] text-[var(--primary)]'
+                    : 'bg-[var(--surface)] border border-slate-200 text-[var(--muted)]'
                 }`}>
                   {provider.icon}
                 </div>
                 <div className="flex-1">
-                  <p className={`text-sm font-medium ${provider.value === value ? 'text-emerald-600' : 'text-slate-700'}`}>
+                  <p className={`text-sm font-medium ${provider.value === value ? 'text-[var(--primary)]' : 'text-[var(--text-secondary)]'}`}>
                     {provider.label}
                   </p>
-                  <p className="text-xs text-slate-400">{provider.description}</p>
+                  <p className="text-xs text-[var(--muted)]">{provider.description}</p>
                 </div>
                 {provider.value === value && (
-                  <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-[var(--primary)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                   </svg>
                 )}
               </button>
             ))}
-            <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400/60 mt-1">SIP Trunk (BYO)</p>
+            <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/60 mt-1">SIP Trunk (BYO)</p>
             {PROVIDER_OPTIONS.filter(p => p.category === 'sip').map((provider) => (
               <button
                 key={provider.value}
@@ -151,25 +189,25 @@ function ProviderDropdown({ value, onChange }: { value: string; onChange: (v: st
                 onClick={() => { onChange(provider.value); setOpen(false); }}
                 className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors ${
                   provider.value === value
-                    ? 'bg-emerald-50'
-                    : 'hover:bg-slate-50'
+                    ? 'bg-[var(--primary-soft)]'
+                    : 'hover:bg-[var(--surface)]'
                 }`}
               >
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
                   provider.value === value
-                    ? 'bg-emerald-100 border border-emerald-200 text-emerald-600'
-                    : 'bg-slate-50 border border-slate-200 text-slate-400'
+                    ? 'bg-[var(--primary-soft)] border border-[var(--border)] text-[var(--primary)]'
+                    : 'bg-[var(--surface)] border border-slate-200 text-[var(--muted)]'
                 }`}>
                   {provider.icon}
                 </div>
                 <div className="flex-1">
-                  <p className={`text-sm font-medium ${provider.value === value ? 'text-emerald-600' : 'text-slate-700'}`}>
+                  <p className={`text-sm font-medium ${provider.value === value ? 'text-[var(--primary)]' : 'text-[var(--text-secondary)]'}`}>
                     {provider.label}
                   </p>
-                  <p className="text-xs text-slate-400">{provider.description}</p>
+                  <p className="text-xs text-[var(--muted)]">{provider.description}</p>
                 </div>
                 {provider.value === value && (
-                  <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-[var(--primary)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                   </svg>
                 )}
@@ -182,10 +220,10 @@ function ProviderDropdown({ value, onChange }: { value: string; onChange: (v: st
   );
 }
 
-const typeConfig: Record<string, { label: string; accent: string }> = {
-  receptionist: { label: 'Receptionist',     accent: 'from-emerald-400 to-emerald-600' },
-  appointment:  { label: 'Appointment',      accent: 'from-blue-400 to-blue-600' },
-  faq:          { label: 'FAQ',              accent: 'from-cyan-400 to-cyan-600' },
+const typeConfig: Record<string, { label: string; color: string; bg: string }> = {
+  receptionist: { label: 'Receptionist', color: '#2563eb', bg: 'linear-gradient(135deg,#2563eb,#3b82f6)' },
+  appointment:  { label: 'Appointment',  color: '#00A3FF', bg: 'linear-gradient(135deg,#00A3FF,#0ea5e9)' },
+  faq:          { label: 'FAQ',          color: '#14B8A6', bg: 'linear-gradient(135deg,#14B8A6,#10b981)' },
 };
 
 function PhoneDropdown({ phoneNumbers, selectedId, onSelect }: {
@@ -210,33 +248,33 @@ function PhoneDropdown({ phoneNumbers, selectedId, onSelect }: {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full px-4 py-3 bg-white/50 border border-emerald-100/30 rounded-xl text-left flex items-center justify-between gap-3 hover:border-emerald-300/50 transition-colors focus:outline-none focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/20"
+        className="w-full px-4 py-3 bg-[var(--surface)]/50 border border-[var(--border)]/30 rounded-xl text-left flex items-center justify-between gap-3 hover-border-[var(--primary)]/50 transition-colors focus:outline-none focus-border-[var(--primary)]/50 focus:ring-2 focus:ring-[var(--primary)]/20"
       >
         {selected ? (
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-200/50 flex items-center justify-center flex-shrink-0">
-              <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-9 h-9 rounded-lg bg-[var(--primary-soft)] border border-[var(--border)]/50 flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 text-[var(--primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
               </svg>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-slate-700 truncate">{selected.number}</p>
-              <p className="text-xs text-slate-400 truncate">{selected.provider}</p>
+              <p className="text-sm font-medium text-[var(--text-secondary)] truncate">{selected.number}</p>
+              <p className="text-xs text-[var(--muted)] truncate">{selected.provider}</p>
             </div>
             {selected.assistantId && (
-              <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full flex-shrink-0 border border-amber-200/50">In Use</span>
+              <span className="text-[10px] font-medium text-[var(--warning)] bg-[rgba(245,158,11,0.12)] px-2 py-0.5 rounded-full flex-shrink-0 border border-amber-200/50">In Use</span>
             )}
           </div>
         ) : (
-          <span className="text-sm text-slate-400/50">Select a phone number...</span>
+          <span className="text-sm text-[var(--muted)]/50">Select a phone number...</span>
         )}
-        <svg className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className={`w-4 h-4 text-[var(--muted)] flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
         </svg>
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-2 w-full bg-white border border-emerald-100/30 rounded-xl shadow-2xl shadow-emerald-900/10 overflow-hidden">
+        <div className="absolute z-50 mt-2 w-full bg-[var(--surface)] border border-[var(--border)]/30 rounded-xl shadow-2xl shadow-[var(--primary)]/10 overflow-hidden">
           <div className="max-h-56 overflow-y-auto py-1 custom-scrollbar">
             {phoneNumbers.map((pn) => (
               <button
@@ -245,32 +283,32 @@ function PhoneDropdown({ phoneNumbers, selectedId, onSelect }: {
                 onClick={() => { onSelect(pn.id); setOpen(false); }}
                 className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors ${
                   pn.id === selectedId
-                    ? 'bg-emerald-50'
-                    : 'hover:bg-slate-50'
+                    ? 'bg-[var(--primary-soft)]'
+                    : 'hover:bg-[var(--surface)]'
                 }`}
               >
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
                   pn.id === selectedId
-                    ? 'bg-emerald-100 border border-emerald-200'
-                    : 'bg-slate-50 border border-slate-200'
+                    ? 'bg-[var(--primary-soft)] border border-[var(--border)]'
+                    : 'bg-[var(--surface)] border border-slate-200'
                 }`}>
-                  <svg className={`w-4 h-4 ${pn.id === selectedId ? 'text-emerald-600' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-4 h-4 ${pn.id === selectedId ? 'text-[var(--primary)]' : 'text-[var(--muted)]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium truncate ${pn.id === selectedId ? 'text-emerald-600' : 'text-slate-700'}`}>
+                  <p className={`text-sm font-medium truncate ${pn.id === selectedId ? 'text-[var(--primary)]' : 'text-[var(--text-secondary)]'}`}>
                     {pn.number}
                   </p>
-                  <p className="text-xs text-slate-400 truncate">
+                  <p className="text-xs text-[var(--muted)] truncate">
                     {pn.provider} • {pn.id.slice(0, 8)}...
                   </p>
                 </div>
                 {pn.assistantId && (
-                  <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full flex-shrink-0 border border-amber-200/50">In Use</span>
+                  <span className="text-[10px] font-medium text-[var(--warning)] bg-[rgba(245,158,11,0.12)] px-2 py-0.5 rounded-full flex-shrink-0 border border-amber-200/50">In Use</span>
                 )}
                 {pn.id === selectedId && (
-                  <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-[var(--primary)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                   </svg>
                 )}
@@ -307,24 +345,24 @@ function TransportDropdown({ value, onChange }: { value: string; onChange: (v: s
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full px-4 py-2.5 text-sm bg-white/50 border border-emerald-100/30 rounded-xl text-slate-700 flex items-center justify-between gap-2 focus:outline-none focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/20 transition-all cursor-pointer"
+        className="w-full px-4 py-2.5 text-sm bg-[var(--surface)]/50 border border-[var(--border)]/30 rounded-xl text-[var(--text-secondary)] flex items-center justify-between gap-2 focus:outline-none focus-border-[var(--primary)]/50 focus:ring-2 focus:ring-[var(--primary)]/20 transition-all cursor-pointer"
       >
         <div className="flex items-center gap-2.5">
           <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
-            selected.value === 'tls' ? 'bg-emerald-400' : selected.value === 'tcp' ? 'bg-amber-400' : 'bg-slate-300'
+            selected.value === 'tls' ? 'bg-[var(--primary)]' : selected.value === 'tcp' ? 'bg-amber-400' : 'bg-[var(--surface)]'
           }`} />
           <div className="text-left">
             <span className="font-medium">{selected.label}</span>
-            <span className="text-slate-400 ml-1.5 text-xs">— {selected.desc}</span>
+            <span className="text-[var(--muted)] ml-1.5 text-xs">— {selected.desc}</span>
           </div>
         </div>
-        <svg className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className={`w-3.5 h-3.5 text-[var(--muted)] shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
         </svg>
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1.5 w-full bg-white border border-emerald-100/30 rounded-xl shadow-2xl shadow-emerald-900/10 overflow-hidden">
+        <div className="absolute z-50 mt-1.5 w-full bg-[var(--surface)] border border-[var(--border)]/30 rounded-xl shadow-2xl shadow-[var(--primary)]/10 overflow-hidden">
           <div className="max-h-48 overflow-y-auto py-1 custom-scrollbar">
             {TRANSPORT_OPTIONS.map((opt) => (
               <button
@@ -333,19 +371,19 @@ function TransportDropdown({ value, onChange }: { value: string; onChange: (v: s
                 onClick={() => { onChange(opt.value); setOpen(false); }}
                 className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2.5 ${
                   opt.value === value
-                    ? 'bg-emerald-50 text-emerald-600 font-medium'
-                    : 'text-slate-500/70 hover:bg-slate-50 hover:text-slate-700'
+                    ? 'bg-[var(--primary-soft)] text-[var(--primary)] font-medium'
+                    : 'text-[var(--muted)]/70 hover:bg-[var(--surface)] hover:text-[var(--text-secondary)]'
                 }`}
               >
                 <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                  opt.value === 'tls' ? 'bg-emerald-400' : opt.value === 'tcp' ? 'bg-amber-400' : 'bg-slate-300'
+                  opt.value === 'tls' ? 'bg-[var(--primary)]' : opt.value === 'tcp' ? 'bg-amber-400' : 'bg-[var(--surface)]'
                 }`} />
                 <div>
                   <span className="font-medium">{opt.label}</span>
-                  <span className="text-slate-400 ml-1.5 text-xs">— {opt.desc}</span>
+                  <span className="text-[var(--muted)] ml-1.5 text-xs">— {opt.desc}</span>
                 </div>
                 {opt.value === value && (
-                  <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 text-[var(--primary)] flex-shrink-0 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                   </svg>
                 )}
@@ -361,7 +399,6 @@ function TransportDropdown({ value, onChange }: { value: string; onChange: (v: s
 export function AdminAgents() {
   const dispatch = useAppDispatch();
   const agents = useAppSelector((state) => state.agents.items);
-  const loading = useAppSelector((state) => state.agents.loading);
   const pagination = useAppSelector((state) => state.agents.pagination);
 
   const [phoneModal, setPhoneModal] = useState(false);
@@ -387,6 +424,15 @@ export function AdminAgents() {
     sipGateway: '', sipUsername: '', sipPassword: '', sipTransport: 'udp',
   });
   const [importing, setImporting] = useState(false);
+
+  const [retrying, setRetrying] = useState(false);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+
+  const handleRefresh = useCallback(async () => {
+    setRetrying(true);
+    await dispatch(fetchAllAgents({ page, limit: 20 }));
+    setTimeout(() => setRetrying(false), 850);
+  }, [dispatch, page]);
 
   const fetchPhoneNumbers = async () => {
     setPhoneLoading(true);
@@ -545,61 +591,110 @@ export function AdminAgents() {
 
   return (
     <div className="h-full overflow-y-auto overflow-x-hidden pb-10 pr-1">
-      <motion.div variants={stagger.container} initial="initial" animate="animate" className="space-y-8">
+      <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-6">
 
         {/* ── Header ── */}
-        <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5 pt-1">
+        <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5 pt-1">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-slate-400/70 mb-1">Agents</p>
-            <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-slate-800 leading-none">All Agents</h1>
-            <p className="mt-1.5 text-xs sm:text-sm text-slate-400/70">Monitor and manage all platform agents</p>
-          </div>
-          {loading && (
-            <div className="flex items-center gap-2 text-slate-400/70">
-              <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-              </svg>
-              <span className="text-xs">Loading…</span>
+            <div className="flex items-center gap-2.5 mb-1.5">
+              <span className="text-[9px] font-extrabold tracking-[0.22em] text-[#10B981] uppercase">
+                ◈ AGENT FACTORY
+              </span>
+              <span className="px-2 py-0.5 text-[9px] font-bold uppercase rounded-md border bg-blue-50 text-[#2563eb] border-blue-200/50">
+                Admin
+              </span>
             </div>
-          )}
-          <div className="self-start flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-50 border border-emerald-200/50 rounded-xl">
-            <span className="text-[11px] sm:text-sm text-emerald-600 font-medium whitespace-nowrap">{stats.active} active</span>
-            <span className="text-emerald-300">|</span>
-            <span className="text-[11px] sm:text-sm text-emerald-600 font-medium whitespace-nowrap">{agents.length} total</span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight leading-none">All Agents</h1>
+            <p className="mt-1.5 text-xs text-slate-500 font-medium">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <Tip text="Refresh agent list">
+              <button
+                onClick={handleRefresh}
+                disabled={retrying}
+                className="w-9 h-9 rounded-xl flex items-center justify-center border transition-all disabled:opacity-50 bg-white hover:bg-slate-50 border-slate-200 text-slate-500 cursor-pointer"
+              >
+                <svg className={`w-4 h-4 ${retrying ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
+              </button>
+            </Tip>
+
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border bg-white" style={{ borderColor: '#e2e8f0' }}>
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-xs font-bold text-slate-600">{stats.active} active</span>
+              <span className="text-slate-300">|</span>
+              <span className="text-xs font-semibold text-slate-400">{agents.length} total</span>
+            </div>
           </div>
         </motion.div>
 
-        {/* ── Stats ── */}
-        <motion.div variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        {/* ── Stats Cards ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'Total Agents', value: stats.total,   accent: 'bg-white/50',   val: 'text-slate-800' },
-            { label: 'Active',       value: stats.active,  accent: 'bg-emerald-50', val: 'text-emerald-600' },
-            { label: 'Inactive',     value: stats.inactive, accent: 'bg-amber-50',  val: 'text-amber-600' },
-            { label: 'Phone Linked', value: stats.linked,  accent: 'bg-blue-50',    val: 'text-blue-600' },
-          ].map((s) => (
-            <div key={s.label} className={`${s.accent} rounded-2xl p-3 sm:p-4 border border-emerald-100/30 card-hover shadow-sm`}>
-              <p className="text-[10px] sm:text-[11px] font-medium text-slate-500/70 uppercase tracking-widest mb-1.5 sm:mb-2">{s.label}</p>
-              <p className={`text-2xl sm:text-3xl font-semibold ${s.val} leading-none`}>{s.value}</p>
-            </div>
-          ))}
-        </motion.div>
+            { label: 'Total Agents', value: stats.total,    accentColor: '37,99,235',  colorHex: '#2563EB', delta: 'Platform agents' },
+            { label: 'Active',       value: stats.active,   accentColor: '16,185,129', colorHex: '#10B981', delta: 'Currently live', trend: 'up' as const },
+            { label: 'Inactive',     value: stats.inactive, accentColor: '245,158,11', colorHex: '#f59e0b', delta: 'Paused or muted' },
+            { label: 'Phone Linked', value: stats.linked,   accentColor: '0,163,255',  colorHex: '#00A3FF', delta: 'Numbers assigned' },
+          ].map((s) => {
+            const isHov = hoveredCard === s.label;
+            return (
+              <motion.div
+                key={s.label}
+                variants={fadeUp}
+                whileHover={{ y: -4, scale: 1.01 }}
+                transition={spring}
+                onMouseEnter={() => setHoveredCard(s.label)}
+                onMouseLeave={() => setHoveredCard(null)}
+                className="rounded-2xl p-5 border relative overflow-hidden transition-all duration-300 bg-white/70 shadow-sm backdrop-blur-md cursor-default"
+                style={{
+                  borderColor: isHov ? `rgba(${s.accentColor},0.3)` : '#e2e8f0',
+                  boxShadow: isHov ? `0 12px 36px rgba(${s.accentColor},0.08)` : '0 1px 3px rgba(37,99,235,0.01)',
+                }}
+              >
+                <motion.div
+                  className="absolute top-0 right-0 w-32 h-32 rounded-full pointer-events-none"
+                  animate={{ opacity: isHov ? 1 : 0, scale: isHov ? 1 : 0.8 }}
+                  transition={{ duration: 0.35 }}
+                  style={{ background: `radial-gradient(circle, rgba(${s.accentColor},0.08) 0%, transparent 70%)` }}
+                />
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 mb-3 relative z-10">{s.label}</p>
+                <div className="flex items-baseline gap-2 relative z-10">
+                  <p className="text-2xl sm:text-[28px] font-extrabold text-slate-800 tracking-tight leading-none">
+                    <AnimatedCounter value={s.value} />
+                  </p>
+                  {s.trend && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md text-green-600 bg-green-50">
+                      ↑ {s.delta}
+                    </span>
+                  )}
+                </div>
+                {!s.trend && (
+                  <p className="text-[10px] font-bold mt-1 text-slate-400 uppercase tracking-wider relative z-10">{s.delta}</p>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
 
         {/* ── Search & Filter ── */}
         <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1 max-w-xs sm:ml-3">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="relative flex-1 max-w-sm">
+            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
             </svg>
             <input
               type="text"
-              placeholder="Search agents..."
+              placeholder="Search by agent name or owner…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 text-sm bg-white/80 border border-emerald-100/30 rounded-xl text-slate-700 placeholder-slate-400/60 focus:outline-none focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/20 transition-all shadow-sm"
+              className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white/80 border border-slate-200 text-slate-700 placeholder-slate-400 shadow-sm focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all"
             />
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5">
             {[
               { value: '', label: 'All' },
               { value: 'active', label: 'Active' },
@@ -608,10 +703,10 @@ export function AdminAgents() {
               <button
                 key={f.value}
                 onClick={() => setStatusFilter(f.value)}
-                className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                   statusFilter === f.value
-                    ? 'btn-cta bg-emerald-500 text-white shadow-md shadow-emerald-500/25'
-                    : 'text-slate-500/70 hover:text-slate-700 bg-white/50 hover:bg-white/80 border border-emerald-100/20'
+                    ? 'bg-[#2563eb] text-white border-[#2563eb] shadow-sm'
+                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700'
                 }`}
               >
                 {f.label}
@@ -622,123 +717,127 @@ export function AdminAgents() {
 
         {/* ── Agent Cards ── */}
         {filteredAgents.length === 0 ? (
-          <motion.div variants={fadeUp} className="rounded-2xl border border-emerald-100/30 overflow-hidden bg-white/80 shadow-sm">
+          <motion.div variants={fadeUp} className="rounded-2xl border border-slate-200 bg-white/70 shadow-sm backdrop-blur-md">
             <div className="flex flex-col items-center justify-center py-24 text-center px-8">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-50/50 border border-emerald-100/30 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-emerald-400/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-[#2563eb]/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
               </div>
-              <p className="text-sm font-medium text-slate-600/70 mb-1">No agents found</p>
-              <p className="text-xs text-slate-400/70 max-w-xs">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">No agents found</p>
+              <p className="text-[11px] text-slate-300 max-w-xs">
                 {searchTerm || statusFilter ? 'Try adjusting your search or filter.' : 'Platform agents will appear here once created.'}
               </p>
             </div>
           </motion.div>
         ) : (
-          <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6">
+          <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredAgents.map((agent, i) => {
               const tc = typeConfig[agent.type] ?? typeConfig.receptionist;
-              const ac = getAvatarColor(agent.userName || agent.name);
+              const ownerColor = getAvatarColor(agent.userName || agent.name);
+              const isActive = agent.isActive !== false;
               return (
                 <motion.div
                   key={agent.id}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04 }}
-                  className="group bg-white border border-emerald-100/30 rounded-2xl overflow-hidden hover:border-emerald-300/50 hover:shadow-lg hover:shadow-emerald-500/5 transition-all"
+                  whileHover={{ y: -3 }}
+                  className="group bg-white/80 border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-slate-300 transition-all backdrop-blur-md flex flex-col"
                 >
-                  <div className={`h-20 bg-gradient-to-br ${tc.accent} relative`}>
-                    <div className="absolute inset-0 bg-black/10"/>
-                    <div className="relative p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
-                          </svg>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="text-lg font-semibold text-white truncate">{agent.name}</h3>
-                          <p className="text-sm text-white/80 truncate">{tc.label}</p>
-                        </div>
-                      </div>
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border backdrop-blur-sm ${
-                        agent.isActive
-                          ? 'bg-emerald-500/20 border-emerald-400/30 text-emerald-100'
-                          : 'bg-rose-500/20 border-rose-400/30 text-rose-100'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${agent.isActive ? 'bg-emerald-400' : 'bg-rose-400'}`}/>
-                        {agent.isActive ? 'Active' : 'Inactive'}
-                      </span>
+                  {/* Card top gradient strip */}
+                  <div className="h-1 w-full" style={{ background: isActive ? tc.bg : '#e2e8f0' }} />
+
+                  {/* Card header */}
+                  <div className="p-4 flex items-center gap-3">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm"
+                      style={{ background: tc.bg }}
+                    >
+                      {agent.name.charAt(0).toUpperCase()}
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xs font-bold text-slate-800 truncate">{agent.name}</h3>
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">{tc.label}</p>
+                    </div>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${
+                        isActive
+                          ? 'border-green-200 text-green-600 bg-green-50'
+                          : 'border-slate-200 text-slate-400 bg-slate-50'
+                      }`}
+                    >
+                      <span className={`w-1 h-1 rounded-full ${isActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+                      {isActive ? 'Active' : 'Muted'}
+                    </span>
                   </div>
 
-                  <div className="p-5 space-y-4">
-                    {agent.userName && (
-                      <div className="flex items-center gap-2">
-                        <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${ac} flex items-center justify-center text-white text-xs font-bold shadow-sm`}>
-                          {agent.userName.charAt(0).toUpperCase()}
-                        </div>
-                        <span className="text-sm text-slate-600/70 truncate">{agent.userName}</span>
+                  {/* Owner row */}
+                  {agent.userName && (
+                    <div className="px-4 pb-3 flex items-center gap-2">
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
+                        style={{ background: ownerColor }}
+                      >
+                        {agent.userName.charAt(0).toUpperCase()}
                       </div>
+                      <span className="text-[10px] font-semibold text-slate-400 truncate">{agent.userName}</span>
+                    </div>
+                  )}
+
+                  {/* Phone + call count row */}
+                  <div className="px-4 pb-3 flex items-center justify-between border-t border-slate-50 pt-2.5">
+                    <div className={`flex items-center gap-1.5 text-[10px] font-semibold ${
+                      agent.phoneNumberId ? 'text-[#2563eb]' : 'text-slate-400'
+                    }`}>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                      </svg>
+                      {agent.phoneNumber || (agent.phoneNumberId ? 'Linked' : 'Not linked')}
+                    </div>
+                    <span className="text-[10px] font-semibold text-slate-400 font-mono">
+                      {(agent.callCount || 0).toLocaleString()} calls
+                    </span>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="px-4 pb-4 flex flex-wrap gap-1.5 mt-auto">
+                    <button
+                      onClick={() => openEdit(agent)}
+                      className="flex-1 px-2.5 py-1.5 text-[10px] font-bold rounded-lg bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100 hover:text-slate-700 transition-all cursor-pointer min-h-[30px]"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => openAssignPhone(agent)}
+                      className="flex-1 px-2.5 py-1.5 text-[10px] font-bold rounded-lg bg-blue-50 text-[#2563eb] border border-blue-200 hover:bg-blue-100 transition-all cursor-pointer min-h-[30px]"
+                    >
+                      {agent.phoneNumberId ? 'Change Phone' : 'Assign Phone'}
+                    </button>
+                    {agent.phoneNumberId && (
+                      <button
+                        onClick={() => handleUnlinkPhone(agent)}
+                        className="px-2.5 py-1.5 text-[10px] font-bold rounded-lg bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 transition-all cursor-pointer min-h-[30px]"
+                      >
+                        Unlink
+                      </button>
                     )}
-
-                    <div className="flex items-center justify-between pt-2 border-t border-emerald-100/20">
-                      <div className="flex items-center gap-3">
-                        {agent.phoneNumberId ? (
-                          <div className="flex items-center gap-1.5 text-sm text-emerald-600">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                            </svg>
-                            <span>{agent.phoneNumber || 'Linked'}</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1.5 text-sm text-slate-400">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                            </svg>
-                            <span>Not linked</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={() => openEdit(agent)}
-                        className="flex-1 px-3 py-2.5 text-xs font-medium text-slate-600/70 bg-white hover:bg-slate-50 border border-emerald-100/30 rounded-lg transition-colors hover:text-slate-800 min-h-[36px]"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => openAssignPhone(agent)}
-                        className="flex-1 px-3 py-2.5 text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/50 rounded-lg transition-colors min-h-[36px]"
-                      >
-                        {agent.phoneNumberId ? 'Change Phone' : 'Assign Phone'}
-                      </button>
-                      {agent.phoneNumberId && (
-                        <button
-                          onClick={() => handleUnlinkPhone(agent)}
-                          className="px-3 py-2.5 text-xs font-medium text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-200/50 rounded-lg transition-colors min-h-[36px]"
-                        >
-                          Unlink
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleToggle(agent.id, !agent.isActive)}
-                        className={`px-3 py-2 text-xs font-medium border border-emerald-100/30 rounded-lg bg-white hover:bg-slate-50 transition-colors ${
-                          agent.isActive ? 'text-amber-600' : 'text-emerald-600'
-                        }`}
-                      >
-                        {agent.isActive ? 'Disable' : 'Enable'}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(agent.id)}
-                        className="px-3 py-2 text-xs font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200/50 rounded-lg transition-colors"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => handleToggle(agent.id, !agent.isActive)}
+                      className={`px-2.5 py-1.5 text-[10px] font-bold rounded-lg border transition-all cursor-pointer min-h-[30px] ${
+                        isActive
+                          ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
+                          : 'bg-green-50 text-green-600 border-green-200 hover:bg-green-100'
+                      }`}
+                    >
+                      {isActive ? 'Disable' : 'Enable'}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(agent.id)}
+                      className="px-2.5 py-1.5 text-[10px] font-bold rounded-lg bg-rose-50 text-rose-500 border border-rose-200 hover:bg-rose-100 transition-all cursor-pointer min-h-[30px]"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </motion.div>
               );
@@ -755,39 +854,39 @@ export function AdminAgents() {
         title={`Assign Phone Number to ${selectedAgent?.name || ''}`}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setPhoneModal(false)} className="text-slate-600 hover:text-slate-800">Cancel</Button>
+            <Button variant="ghost" onClick={() => setPhoneModal(false)} className="text-[var(--text-secondary)] hover:text-[var(--text)]">Cancel</Button>
             {phoneMode === 'import' ? (
-              <Button onClick={handleImportNumber} disabled={importing || !importForm.number.trim()} className="btn-cta bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/25">
+              <Button onClick={handleImportNumber} disabled={importing || !importForm.number.trim()} style={{ background: 'var(--gg)' }} className="text-white">
                 {importing ? 'Importing...' : 'Import & Assign'}
               </Button>
             ) : (
-              <Button onClick={handleAssignPhone} disabled={!phoneNumberId} className="btn-cta bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/25">Assign</Button>
+              <Button onClick={handleAssignPhone} disabled={!phoneNumberId} style={{ background: 'var(--gg)' }} className="text-white">Assign</Button>
             )}
           </>
         }
       >
         <div className="space-y-4">
           {/* Mode Toggle */}
-          <div className="flex gap-2 p-1 bg-slate-50 rounded-xl border border-emerald-100/30">
+          <div className="flex gap-2 p-1 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
             <button
               type="button"
               onClick={() => setPhoneMode('select')}
-              className={`flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-colors ${
-                phoneMode === 'select'
-                  ? 'bg-emerald-500 text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
-              }`}
+              className="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-colors"
+              style={{
+                background: phoneMode === 'select' ? 'var(--gg)' : 'transparent',
+                color: phoneMode === 'select' ? 'white' : 'var(--muted)',
+              }}
             >
               Select Existing
             </button>
             <button
               type="button"
               onClick={() => setPhoneMode('import')}
-              className={`flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-colors ${
-                phoneMode === 'import'
-                  ? 'bg-emerald-500 text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
-              }`}
+              className="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-colors"
+              style={{
+                background: phoneMode === 'import' ? 'var(--gg)' : 'transparent',
+                color: phoneMode === 'import' ? 'white' : 'var(--muted)',
+              }}
             >
               Import from Twilio/Vonage
             </button>
@@ -797,26 +896,26 @@ export function AdminAgents() {
             <>
               {phoneLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <svg className="animate-spin w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin w-5 h-5 text-[var(--muted)]" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                   </svg>
-                  <span className="ml-2 text-sm text-slate-400">Loading phone numbers...</span>
+                  <span className="ml-2 text-sm text-[var(--muted)]">Loading phone numbers...</span>
                 </div>
               ) : phoneNumbers.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-sm text-slate-400/70">No phone numbers found in Vapi.</p>
+                  <p className="text-sm text-[var(--muted)]/70">No phone numbers found in Vapi.</p>
                   <button
                     type="button"
                     onClick={() => setPhoneMode('import')}
-                    className="mt-2 text-sm text-emerald-500 hover:text-emerald-600 font-medium"
+                    className="mt-2 text-sm text-[var(--primary)] hover:text-[var(--primary)] font-medium"
                   >
                     Import one from Twilio/Vonage
                   </button>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400/70">Select Phone Number</label>
+                  <label className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/70">Select Phone Number</label>
                   <PhoneDropdown
                     phoneNumbers={phoneNumbers}
                     selectedId={phoneNumberId}
@@ -827,12 +926,12 @@ export function AdminAgents() {
             </>
           ) : (
             <>
-              <div className="p-4 bg-emerald-50 border border-emerald-200/50 rounded-xl">
-                <p className="text-sm text-emerald-600 font-medium">Import Existing Number</p>
-                <p className="text-xs text-slate-500/70 mt-1">Connect your Twilio or Vonage phone number to Vapi.</p>
+              <div className="p-4 bg-[var(--primary-soft)] border border-[var(--border)]/50 rounded-xl">
+                <p className="text-sm text-[var(--primary)] font-medium">Import Existing Number</p>
+                <p className="text-xs text-[var(--muted)]/70 mt-1">Connect your Twilio or Vonage phone number to Vapi.</p>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400/70">Provider</label>
+                <label className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/70">Provider</label>
                 <ProviderDropdown
                   value={importForm.provider}
                   onChange={(v) => setImportForm(prev => ({ ...prev, provider: v }))}
@@ -844,19 +943,19 @@ export function AdminAgents() {
                 onChange={(e) => setImportForm(prev => ({ ...prev, number: e.target.value }))}
                 placeholder="+1 (555) 123-4567"
                 required
-                className="bg-white/80 border-emerald-100/30 focus:border-emerald-400/50"
+                className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
               />
-              <p className="text-[11px] text-slate-400 -mt-2">Must be in E.164 format (e.g. +14155552671)</p>
+              <p className="text-[11px] text-[var(--muted)] -mt-2">Must be in E.164 format (e.g. +14155552671)</p>
 
               {importForm.provider === 'twilio' && (
-                <div className="space-y-3 p-3 bg-slate-50 rounded-xl border border-emerald-100/30">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400/70">Twilio Credentials</p>
+                <div className="space-y-3 p-3 bg-[var(--surface)] rounded-xl border border-[var(--border)]/30">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/70">Twilio Credentials</p>
                   <Input
                     label="Account SID"
                     value={importForm.twilioAccountSid}
                     onChange={(e) => setImportForm(prev => ({ ...prev, twilioAccountSid: e.target.value }))}
                     placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                    className="bg-white/80 border-emerald-100/30 focus:border-emerald-400/50"
+                    className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
                   />
                   <Input
                     label="Auth Token"
@@ -864,20 +963,20 @@ export function AdminAgents() {
                     onChange={(e) => setImportForm(prev => ({ ...prev, twilioAuthToken: e.target.value }))}
                     placeholder="Your Twilio auth token"
                     type="password"
-                    className="bg-white/80 border-emerald-100/30 focus:border-emerald-400/50"
+                    className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
                   />
                 </div>
               )}
 
               {importForm.provider === 'vonage' && (
-                <div className="space-y-3 p-3 bg-slate-50 rounded-xl border border-emerald-100/30">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400/70">Vonage Credentials</p>
+                <div className="space-y-3 p-3 bg-[var(--surface)] rounded-xl border border-[var(--border)]/30">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/70">Vonage Credentials</p>
                   <Input
                     label="API Key"
                     value={importForm.vonageApiKey}
                     onChange={(e) => setImportForm(prev => ({ ...prev, vonageApiKey: e.target.value }))}
                     placeholder="Your Vonage API key"
-                    className="bg-white/80 border-emerald-100/30 focus:border-emerald-400/50"
+                    className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
                   />
                   <Input
                     label="API Secret"
@@ -885,34 +984,34 @@ export function AdminAgents() {
                     onChange={(e) => setImportForm(prev => ({ ...prev, vonageApiSecret: e.target.value }))}
                     placeholder="Your Vonage API secret"
                     type="password"
-                    className="bg-white/80 border-emerald-100/30 focus:border-emerald-400/50"
+                    className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
                   />
                 </div>
               )}
 
               {importForm.provider === 'telnyx' && (
-                <div className="space-y-3 p-3 bg-slate-50 rounded-xl border border-emerald-100/30">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400/70">Telnyx Credentials</p>
+                <div className="space-y-3 p-3 bg-[var(--surface)] rounded-xl border border-[var(--border)]/30">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/70">Telnyx Credentials</p>
                   <Input
                     label="API Key"
                     value={importForm.telnyxApiKey}
                     onChange={(e) => setImportForm(prev => ({ ...prev, telnyxApiKey: e.target.value }))}
                     placeholder="Your Telnyx API key"
                     type="password"
-                    className="bg-white/80 border-emerald-100/30 focus:border-emerald-400/50"
+                    className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
                   />
                 </div>
               )}
 
               {(importForm.provider === 'plivo' || importForm.provider === 'zadarma' || importForm.provider === 'custom-sip') && (
-                <div className="space-y-3 p-3 bg-slate-50 rounded-xl border border-emerald-100/30">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400/70">SIP Trunk Credentials</p>
+                <div className="space-y-3 p-3 bg-[var(--surface)] rounded-xl border border-[var(--border)]/30">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/70">SIP Trunk Credentials</p>
                   <Input
                     label="SIP Gateway / Domain"
                     value={importForm.sipGateway}
                     onChange={(e) => setImportForm(prev => ({ ...prev, sipGateway: e.target.value }))}
                     placeholder={importForm.provider === 'plivo' ? 'sip.plivo.com' : importForm.provider === 'zadarma' ? 'sip.zadarma.com' : 'sip.example.com'}
-                    className="bg-white/80 border-emerald-100/30 focus:border-emerald-400/50"
+                    className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
                   />
                   <div className="grid grid-cols-2 gap-3">
                     <Input
@@ -920,7 +1019,7 @@ export function AdminAgents() {
                       value={importForm.sipUsername}
                       onChange={(e) => setImportForm(prev => ({ ...prev, sipUsername: e.target.value }))}
                       placeholder="SIP username"
-                      className="bg-white/80 border-emerald-100/30 focus:border-emerald-400/50"
+                      className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
                     />
                     <Input
                       label="Password (optional)"
@@ -928,11 +1027,11 @@ export function AdminAgents() {
                       onChange={(e) => setImportForm(prev => ({ ...prev, sipPassword: e.target.value }))}
                       placeholder="SIP password"
                       type="password"
-                      className="bg-white/80 border-emerald-100/30 focus:border-emerald-400/50"
+                      className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
                     />
                   </div>
                   <div className="relative">
-                    <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400/70 mb-1.5 block">Transport</label>
+                    <label className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/70 mb-1.5 block">Transport</label>
                     <TransportDropdown
                       value={importForm.sipTransport}
                       onChange={(v) => setImportForm(prev => ({ ...prev, sipTransport: v }))}

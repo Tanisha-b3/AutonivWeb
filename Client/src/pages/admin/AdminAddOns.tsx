@@ -1,50 +1,98 @@
 // AdminAddOns.tsx
-import { useEffect, useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useMemo, useState, memo } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../../hooks/useStore';
 import { fetchAddOnCatalog, fetchAllAddOns, processAddOn, createCatalogEntry } from '../../store/slices/addOnsSlice';
 import { Modal } from '../../components/Modal';
+import { DataTable } from '../../components/DataTable';
+import type { Column } from '../../components/DataTable';
 import { Pagination } from '../../components/Pagination';
 import { Dropdown } from '../../components/Dropdown';
 
-// ── Animation presets ──────────────────────────────────────────────────────
-const fadeUp = {
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as const } },
-};
-const stagger = { animate: { transition: { staggerChildren: 0.05 } } };
+// ── Define AddOnRequest type locally if not exported ──
+interface AddOnRequest {
+  id: string;
+  addOnId: string;
+  userId: string;
+  userName?: string;
+  userEmail?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  notes?: string;
+  createdAt: string;
+  updatedAt?: string;
+  addOn?: {
+    id: string;
+    title: string;
+    icon?: string;
+    price?: string;
+    category?: string;
+    description?: string;
+  };
+}
 
-// ── Constants ──────────────────────────────────────────────────────────────
+// ── Animation presets ──────────────────────────────────────────────────────
+const spring = { type: 'spring', stiffness: 380, damping: 30 } as const;
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] as const } },
+};
+const staggerContainer = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.06 } },
+};
+
+const avatarPalette = [
+  '#2563eb', '#10B981', '#00A3FF', '#14B8A6', '#8b5cf6', '#f59e0b',
+];
+
+function getAvatarColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return avatarPalette[Math.abs(hash) % avatarPalette.length];
+}
+
+// ─── Animated Counter ──────────────────────────────────────────────────────
+const AnimatedCounter = memo(({ value, className = '' }: { value: number; className?: string }) => {
+  const [display, setDisplay] = useState(0);
+  const prefersReduced = useReducedMotion();
+  useEffect(() => {
+    if (prefersReduced) { setDisplay(value); return; }
+    let frame = 0;
+    const total = 35;
+    const tick = () => {
+      frame++;
+      const eased = 1 - Math.pow(1 - frame / total, 3);
+      setDisplay(Math.round(eased * value));
+      if (frame < total) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [value, prefersReduced]);
+  return <span className={className}>{display.toLocaleString()}</span>;
+});
+
+const statusConfig: Record<string, { label: string; pillBg: string; pillBorder: string; text: string; dot: string }> = {
+  pending: { label: 'Pending', pillBg: 'rgba(245,158,11,0.08)', pillBorder: 'rgba(245,158,11,0.20)', text: '#f59e0b', dot: '#f59e0b' },
+  approved: { label: 'Approved', pillBg: 'rgba(16,185,129,0.08)', pillBorder: 'rgba(16,185,129,0.20)', text: '#10B981', dot: '#10B981' },
+  rejected: { label: 'Rejected', pillBg: 'rgba(239,68,68,0.08)', pillBorder: 'rgba(239,68,68,0.20)', text: '#ef4444', dot: '#ef4444' },
+};
+
+const fallbackStatus = {
+  label: 'Unknown',
+  pillBg: 'rgba(100,100,100,0.08)',
+  pillBorder: 'rgba(100,100,100,0.20)',
+  text: '#666666',
+  dot: '#666666',
+};
+
 const FILTERS = [
-  { value: 'pending',  label: 'Pending'  },
+  { value: 'pending', label: 'Pending' },
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
-] as const;
-
-const STATUS_STYLE: Record<string, { text: string; bg: string; dot: string; glow: string }> = {
-  pending:  { 
-    text: 'text-amber-600', 
-    bg: 'bg-amber-50 border-amber-200/50',   
-    dot: 'bg-amber-400',   
-    glow: 'rgba(245,158,11,0.18)' 
-  },
-  approved: { 
-    text: 'text-emerald-600',  
-    bg: 'bg-emerald-50 border-emerald-200/50',     
-    dot: 'bg-emerald-400',    
-    glow: 'rgba(16,185,129,0.18)'  
-  },
-  rejected: { 
-    text: 'text-rose-600',  
-    bg: 'bg-rose-50 border-rose-200/50',     
-    dot: 'bg-rose-400',    
-    glow: 'rgba(244,63,94,0.18)'  
-  },
-};
+];
 
 const CATEGORY_STYLE: Record<string, string> = {
-  recurring:  'text-emerald-600 bg-emerald-50 border-emerald-200/50',
-  'one-time': 'text-blue-600 bg-blue-50 border-blue-200/50',
+  recurring: 'bg-[rgba(16,185,129,0.08)] border-[rgba(16,185,129,0.20)] text-[#10B981]',
+  'one-time': 'bg-[rgba(37,99,235,0.08)] border-[rgba(37,99,235,0.20)] text-[#2563eb]',
 };
 
 // ── Sub-components ─────────────────────────────────────────────────────────
@@ -52,14 +100,14 @@ function SparkBar({ values, color }: { values: number[]; color: string }) {
   const max = Math.max(...values, 1);
   return (
     <div className="flex items-end gap-[3px] h-7">
-      {values.map((v, i) => (
+      {values.map((v, idx) => (
         <div
-          key={i}
+          key={idx}
           className="flex-1 rounded-[2px] transition-all"
           style={{
             height: `${Math.max(10, (v / max) * 100)}%`,
             background: color,
-            opacity: 0.25 + (i / values.length) * 0.75,
+            opacity: 0.25 + (idx / values.length) * 0.75,
           }}
         />
       ))}
@@ -67,73 +115,30 @@ function SparkBar({ values, color }: { values: number[]; color: string }) {
   );
 }
 
-function StatCard({ label, value, sub, accent, glow }: {
-  label: string; value: number; sub: string; accent: string; glow: string;
-}) {
-  return (
-    <div
-      className="rounded-2xl border border-emerald-100/30 p-4 sm:p-5 hover:border-emerald-300/50 transition-all bg-white shadow-sm"
-    >
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500/70">{label}</p>
-        <div className="w-1.5 h-1.5 rounded-full" style={{ background: accent, boxShadow: `0 0 10px ${glow}` }} />
-      </div>
-      <p className="text-3xl sm:text-4xl font-bold text-slate-800 leading-none tabular-nums">{value}</p>
-      <p className="text-[11px] text-slate-500/70 mt-2">{sub}</p>
-    </div>
-  );
-}
-
-function EmptyRequests({ filter, search, onClear }: { filter: string; search: string; onClear: () => void }) {
-  return (
-    <div className="rounded-2xl border border-emerald-100/30 bg-white shadow-sm">
-      <div className="flex flex-col items-center justify-center py-16 text-center px-8">
-        <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-emerald-50 border border-emerald-200/50"
-        >
-          <svg className="w-6 h-6 text-emerald-400/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-          </svg>
-        </div>
-        <p className="text-sm font-semibold text-slate-600/70 mb-1">No {filter} requests</p>
-        <p className="text-xs text-slate-400/70 max-w-xs">
-          {search ? 'Try adjusting your search terms.' : 'All add-on requests for this status have been handled.'}
-        </p>
-        {search && (
-          <button onClick={onClear} className="mt-3 text-xs text-emerald-600 hover:text-emerald-700 font-medium">
-            Clear search
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ── Main component ─────────────────────────────────────────────────────────
 export function AdminAddOns() {
-  const dispatch   = useAppDispatch();
-  const requests   = useAppSelector((s) => s.addOns.all);
-  const catalog    = useAppSelector((s) => s.addOns.catalog);
-  const loading    = useAppSelector((s) => s.addOns.loading);
+  const dispatch = useAppDispatch();
+  const requests = useAppSelector((s) => s.addOns.all) as AddOnRequest[];
+  const catalog = useAppSelector((s) => s.addOns.catalog);
+  const loading = useAppSelector((s) => s.addOns.loading);
   const pagination = useAppSelector((s) => s.addOns.pagination);
 
-  const [filter,     setFilter]     = useState<string>('pending');
-  const [search,     setSearch]     = useState('');
+  const [filter, setFilter] = useState<string>('pending');
+  const [search, setSearch] = useState('');
   const [processing, setProcessing] = useState<string | null>(null);
-  const [page,       setPage]       = useState(1);
+  const [page, setPage] = useState(1);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
   const [confirm, setConfirm] = useState<{
     id: string; status: 'approved' | 'rejected'; addOnTitle: string; userName: string;
   } | null>(null);
 
-  const [selectedCatalog, setSelectedCatalog] = useState<string | null>(null);
-  const [showNewAddOn,    setShowNewAddOn]    = useState(false);
+  const [showNewAddOn, setShowNewAddOn] = useState(false);
   const [newAddOn, setNewAddOn] = useState({
     id: '', icon: '', title: '', price: '', category: 'recurring', description: '',
   });
   const [savingCatalog, setSavingCatalog] = useState(false);
-  const [catalogError,  setCatalogError]  = useState('');
+  const [catalogError, setCatalogError] = useState('');
 
   // ── Data fetching ──────────────────────────────────────────────────────
   useEffect(() => { dispatch(fetchAddOnCatalog()); }, [dispatch]);
@@ -144,14 +149,14 @@ export function AdminAddOns() {
 
   // ── Derived state ──────────────────────────────────────────────────────
   const stats = useMemo(() => ({
-    total:    requests.length,
-    pending:  requests.filter((r) => r.status === 'pending').length,
-    active:   requests.filter((r) => r.status === 'approved').length,
+    total: requests.length,
+    pending: requests.filter((r) => r.status === 'pending').length,
+    active: requests.filter((r) => r.status === 'approved').length,
     rejected: requests.filter((r) => r.status === 'rejected').length,
   }), [requests]);
 
   const filterCounts = useMemo(() => ({
-    pending:  requests.filter((r) => r.status === 'pending').length,
+    pending: requests.filter((r) => r.status === 'pending').length,
     approved: requests.filter((r) => r.status === 'approved').length,
     rejected: requests.filter((r) => r.status === 'rejected').length,
   }), [requests]);
@@ -160,14 +165,14 @@ export function AdminAddOns() {
     const all = requests.filter((r) => r.addOnId === c.id);
     return {
       ...c,
-      active:   all.filter((r) => r.status === 'approved').length,
-      pending:  all.filter((r) => r.status === 'pending').length,
+      active: all.filter((r) => r.status === 'approved').length,
+      pending: all.filter((r) => r.status === 'pending').length,
       rejected: all.filter((r) => r.status === 'rejected').length,
-      total:    all.length,
-      trend: Array.from({ length: 12 }, (_, i) =>
+      total: all.length,
+      trend: Array.from({ length: 12 }, (_, idx) =>
         all.filter((r) => {
           const d = new Date(r.createdAt);
-          return d.getMonth() === (new Date().getMonth() - 11 + i + 12) % 12;
+          return d.getMonth() === (new Date().getMonth() - 11 + idx + 12) % 12;
         }).length
       ),
     };
@@ -179,9 +184,9 @@ export function AdminAddOns() {
       const q = search.toLowerCase();
       list = list.filter((r) =>
         (r.addOn?.title || '').toLowerCase().includes(q) ||
-        (r.userName    || '').toLowerCase().includes(q) ||
-        (r.userEmail   || '').toLowerCase().includes(q) ||
-        (r.notes       || '').toLowerCase().includes(q)
+        (r.userName || '').toLowerCase().includes(q) ||
+        (r.userEmail || '').toLowerCase().includes(q) ||
+        (r.notes || '').toLowerCase().includes(q)
       );
     }
     return list;
@@ -205,7 +210,7 @@ export function AdminAddOns() {
       setCatalogError('ID, title, and price are required');
       return;
     }
-    const emojis = ['📦','🚀','⚡','🎯','🔧','💡','🔔','📊','🧪','💬','🌐','🔁','🏷️','🛠️','📈','🎨','🔒','📋','🤝','🏆'];
+    const emojis = ['📦', '🚀', '⚡', '🎯', '🔧', '💡', '🔔', '📊', '🧪', '💬', '🌐', '🔁', '🏷️', '🛠️', '📈', '🎨', '🔒', '📋', '🤝', '🏆'];
     const icon = emojis[Math.floor(Math.random() * emojis.length)];
     setSavingCatalog(true);
     setCatalogError('');
@@ -226,189 +231,417 @@ export function AdminAddOns() {
     setShowNewAddOn(true);
   };
 
+  // ── Columns for DataTable ──
+  const columns: Column<AddOnRequest>[] = [
+    {
+      key: 'addOn',
+      header: 'Add-On',
+      sortable: true,
+      render: (req) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center text-lg flex-shrink-0 shadow-sm bg-slate-50 border border-slate-200">
+            {req.addOn?.icon || '📦'}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-bold text-slate-700 group-hover:text-slate-900 transition-colors truncate">
+              {req.addOn?.title || req.addOnId}
+            </div>
+            {req.addOn?.price && (
+              <div className="text-[10px] text-[#10B981] font-semibold">{req.addOn.price}</div>
+            )}
+          </div>
+        </div>
+      ),
+      card: {
+        label: 'Add-On',
+        render: (req) => (
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-xl flex items-center justify-center text-base flex-shrink-0 bg-slate-50 border border-slate-200">
+              {req.addOn?.icon || '📦'}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-bold text-slate-700 truncate">{req.addOn?.title || req.addOnId}</div>
+              {req.addOn?.price && (
+                <div className="text-[10px] text-[#10B981] font-semibold">{req.addOn.price}</div>
+              )}
+            </div>
+          </div>
+        ),
+      },
+    },
+    {
+      key: 'userName',
+      header: 'User',
+      sortable: true,
+      render: (req) => {
+        const name = req.userName || req.userEmail || 'Unknown';
+        return (
+          <div className="flex items-center gap-3">
+            <div
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-bold text-xs flex-shrink-0 shadow-sm"
+              style={{ background: getAvatarColor(name) }}
+            >
+              {name.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-bold text-slate-700 group-hover:text-slate-900 transition-colors truncate">
+                {req.userName || '—'}
+              </div>
+              {req.userEmail && (
+                <div className="text-[10px] text-slate-400 truncate">{req.userEmail}</div>
+              )}
+            </div>
+          </div>
+        );
+      },
+      card: {
+        label: 'User',
+        render: (req) => (
+          <div className="flex items-center gap-2">
+            <div
+              className="w-7 h-7 rounded-xl flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0 shadow-sm"
+              style={{ background: getAvatarColor(req.userName || req.userEmail || 'U') }}
+            >
+              {(req.userName || 'U').charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-bold text-slate-700 truncate">{req.userName || '—'}</div>
+              {req.userEmail && (
+                <div className="text-[10px] text-slate-400 truncate">{req.userEmail}</div>
+              )}
+            </div>
+          </div>
+        ),
+      },
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      sortable: true,
+      render: (req) => {
+        const sc = statusConfig[req.status] ?? fallbackStatus;
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${req.status === 'pending' ? 'bg-[rgba(245,158,11,0.08)] border-[rgba(245,158,11,0.20)] text-[#f59e0b]' :
+              req.status === 'approved' ? 'bg-[rgba(16,185,129,0.08)] border-[rgba(16,185,129,0.20)] text-[#10B981]' :
+              'bg-[rgba(239,68,68,0.08)] border-[rgba(239,68,68,0.20)] text-[#ef4444]'
+            }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${req.status === 'pending' ? 'bg-[#f59e0b]' :
+                req.status === 'approved' ? 'bg-[#10B981]' :
+                'bg-[#ef4444]'
+              }`} />
+            {sc.label}
+          </span>
+        );
+      },
+      card: {
+        label: 'Status',
+        render: (req) => {
+          const sc = statusConfig[req.status] ?? fallbackStatus;
+          return (
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${req.status === 'pending' ? 'bg-[rgba(245,158,11,0.08)] border-[rgba(245,158,11,0.20)] text-[#f59e0b]' :
+                req.status === 'approved' ? 'bg-[rgba(16,185,129,0.08)] border-[rgba(16,185,129,0.20)] text-[#10B981]' :
+                'bg-[rgba(239,68,68,0.08)] border-[rgba(239,68,68,0.20)] text-[#ef4444]'
+              }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${req.status === 'pending' ? 'bg-[#f59e0b]' :
+                  req.status === 'approved' ? 'bg-[#10B981]' :
+                  'bg-[#ef4444]'
+                }`} />
+              {sc.label}
+            </span>
+          );
+        },
+      },
+    },
+    {
+      key: 'notes',
+      header: 'Notes',
+      sortable: false,
+      render: (req) => (
+        <span className="text-xs text-slate-500 truncate max-w-[150px] block">
+          {req.notes || '—'}
+        </span>
+      ),
+      card: {
+        label: 'Notes',
+        render: (req) => (
+          <span className="text-sm text-slate-600">{req.notes || '—'}</span>
+        ),
+      },
+    },
+    {
+      key: 'createdAt',
+      header: 'Submitted',
+      sortable: true,
+      render: (req) => {
+        const date = req.createdAt ? new Date(req.createdAt) : null;
+        return (
+          <div>
+            <div className="text-xs font-bold text-slate-700 tabular-nums">
+              {date ? date.toLocaleDateString() : '—'}
+            </div>
+            <div className="text-[10px] text-slate-400 tabular-nums">
+              {date ? date.toLocaleTimeString() : ''}
+            </div>
+          </div>
+        );
+      },
+      card: {
+        label: 'Submitted',
+        render: (req) => (
+          <span className="text-sm font-semibold text-slate-700 tabular-nums">
+            {req.createdAt ? new Date(req.createdAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}
+          </span>
+        ),
+      },
+    },
+    {
+      key: 'actions',
+      header: '',
+      className: 'text-right',
+      render: (req) => {
+        if (req.status !== 'pending') return null;
+        return (
+          <div className="flex items-center justify-end gap-2">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setConfirm({
+                  id: req.id, status: 'rejected',
+                  addOnTitle: req.addOn?.title || req.addOnId,
+                  userName: req.userName || 'this user',
+                });
+              }}
+              disabled={processing === req.id}
+              className="px-3 py-1.5 bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
+            >
+              Reject
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setConfirm({
+                  id: req.id, status: 'approved',
+                  addOnTitle: req.addOn?.title || req.addOnId,
+                  userName: req.userName || 'this user',
+                });
+              }}
+              disabled={processing === req.id}
+              className="px-4 py-1.5 text-white rounded-lg text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
+              style={{ background: 'var(--gg)' }}
+            >
+              {processing === req.id ? (
+                <svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+              Approve
+            </motion.button>
+          </div>
+        );
+      },
+    },
+  ];
+
   // ── Render ─────────────────────────────────────────────────────────────
   return (
     <div className="h-full overflow-y-auto overflow-x-hidden pb-10 pr-1">
-      <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-8">
+      <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-6">
 
         {/* ── Header ── */}
-        <motion.div
-          variants={fadeUp}
-          className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-5 pt-1"
-        >
+        <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5 pt-1">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-emerald-600 mb-2">
-              ◈ ADD-ONS
-            </p>
-            <h1 className="text-2xl sm:text-3xl font-semibold text-slate-800 leading-none tracking-tight">
-              Add-On Marketplace
-            </h1>
-            <p className="mt-2 text-xs sm:text-sm text-slate-400/70">
-              Curate the catalog, review customer requests, and approve activations.
+            <div className="flex items-center gap-2.5 mb-1.5">
+              <span className="text-[9px] font-extrabold tracking-[0.22em] text-[#10B981] uppercase">
+                ◈ ADD-ONS
+              </span>
+              <span className="px-2 py-0.5 text-[9px] font-bold uppercase rounded-md border bg-blue-50 text-[#2563eb] border-blue-200/50">
+                Marketplace
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight leading-none">Add-On Marketplace</h1>
+            <p className="mt-1.5 text-xs text-slate-500 font-medium">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
             </p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             {/* Search */}
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400/50 pointer-events-none"
-                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <div className="relative flex-1 sm:flex-initial">
+              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
               </svg>
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search user, add-on, notes…"
-                className="pl-9 pr-4 py-2 text-xs bg-white/80 border border-emerald-100/30 rounded-xl text-slate-700
-                  placeholder-slate-400/60 focus:outline-none focus:border-emerald-400/50 focus:ring-2
-                  focus:ring-emerald-400/20 transition-all w-full sm:w-64 shadow-sm"
+                className="w-full sm:w-56 pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white/80 border border-slate-200 text-slate-700 placeholder-slate-400 shadow-sm focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all"
               />
-              {search && (
-                <button
-                  onClick={() => setSearch('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400/50 hover:text-slate-600/70 transition-colors"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
             </div>
 
             {/* New Add-On CTA */}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
               onClick={openNewAddOn}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 transition-all hover:shadow-lg hover:shadow-emerald-500/25 active:scale-[0.98]"
-              style={{ background: 'linear-gradient(135deg, #10b981, #2563eb, #06b6d4)' }}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all text-white shadow-sm hover:shadow-md"
+              style={{ background: 'var(--gg, linear-gradient(135deg,#2563eb 0%,#10b981 100%))' }}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
               New Add-On
-            </button>
+            </motion.button>
           </div>
         </motion.div>
 
-        {/* ── Stats ── */}
-        <motion.div variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatCard label="Catalog"  value={catalog.length} sub="Available items"   accent="#10b981" glow="rgba(16,185,129,0.20)" />
-          <StatCard label="Active"   value={stats.active}   sub="Customers using"   accent="#2563eb" glow="rgba(37,99,235,0.20)" />
-          <StatCard label="Pending"  value={stats.pending}  sub="Awaiting review"   accent="#f59e0b" glow="rgba(245,158,11,0.20)" />
-          <StatCard label="Rejected" value={stats.rejected} sub="Declined"          accent="#ef4444" glow="rgba(239,68,68,0.20)" />
-        </motion.div>
+        {/* ── Stats Cards ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: 'Catalog', value: catalog.length, accentColor: '16,185,129', colorHex: '#10B981', delta: 'Available items' },
+            { label: 'Active', value: stats.active, accentColor: '37,99,235', colorHex: '#2563EB', delta: 'Customers using' },
+            { label: 'Pending', value: stats.pending, accentColor: '245,158,11', colorHex: '#f59e0b', delta: 'Awaiting review', trend: 'up' as const },
+            { label: 'Rejected', value: stats.rejected, accentColor: '239,68,68', colorHex: '#ef4444', delta: 'Declined' },
+          ].map((s) => {
+            const isHov = hoveredCard === s.label;
+            return (
+              <motion.div
+                key={s.label}
+                variants={fadeUp}
+                whileHover={{ y: -4, scale: 1.01 }}
+                transition={spring}
+                onMouseEnter={() => setHoveredCard(s.label)}
+                onMouseLeave={() => setHoveredCard(null)}
+                className="rounded-2xl p-5 border relative overflow-hidden transition-all duration-300 bg-white/70 shadow-sm backdrop-blur-md cursor-default"
+                style={{
+                  borderColor: isHov ? `rgba(${s.accentColor},0.3)` : '#e2e8f0',
+                  boxShadow: isHov ? `0 12px 36px rgba(${s.accentColor},0.08)` : '0 1px 3px rgba(37,99,235,0.01)',
+                }}
+              >
+                <motion.div
+                  className="absolute top-0 right-0 w-32 h-32 rounded-full pointer-events-none"
+                  animate={{ opacity: isHov ? 1 : 0, scale: isHov ? 1 : 0.8 }}
+                  transition={{ duration: 0.35 }}
+                  style={{ background: `radial-gradient(circle, rgba(${s.accentColor},0.08) 0%, transparent 70%)` }}
+                />
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 mb-3 relative z-10">{s.label}</p>
+                <div className="flex items-baseline gap-2 relative z-10">
+                  <p className="text-2xl sm:text-[28px] font-extrabold text-slate-800 tracking-tight leading-none">
+                    <AnimatedCounter value={s.value} />
+                  </p>
+                  {s.trend && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md text-green-600 bg-green-50">
+                      ↑ {s.delta}
+                    </span>
+                  )}
+                </div>
+                {!s.trend && (
+                  <p className="text-[10px] font-bold mt-1 text-slate-400 uppercase tracking-wider relative z-10">{s.delta}</p>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
 
-        {/* ── Catalog ── */}
+        {/* ── Catalog Grid ── */}
         <motion.div variants={fadeUp}>
           <div className="flex items-end justify-between mb-5">
             <div>
-              <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-emerald-600 mb-1">Catalog</p>
-              <h2 className="text-lg font-bold text-slate-800">All add-on offerings</h2>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#2563eb] mb-1">Catalog</p>
+              <h2 className="text-lg font-extrabold text-slate-800">All add-on offerings</h2>
             </div>
-            <p className="text-xs text-slate-500/70 self-end pb-0.5">
+            <p className="text-xs text-slate-400 self-end pb-0.5">
               {catalogWithStats.filter((c) => c.total > 0).length} of {catalog.length} in use
             </p>
           </div>
 
           {catalog.length === 0 ? (
-            <div className="rounded-2xl border border-emerald-100/30 bg-white shadow-sm p-12 text-center">
-              <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-50 flex items-center justify-center mb-3 text-2xl">📦</div>
-              <p className="text-sm font-medium text-slate-600/70">No add-ons in catalog</p>
-              <p className="text-xs text-slate-400/70 mt-1 mb-4">Create your first add-on to get started.</p>
+            <div className="rounded-2xl border border-slate-200 bg-white/70 p-12 text-center shadow-sm">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mb-4 text-3xl">
+                📦
+              </div>
+              <p className="text-sm font-bold text-slate-700">No add-ons in catalog</p>
+              <p className="text-xs text-slate-400 mt-1 mb-4">Create your first add-on to get started.</p>
               <button
                 onClick={openNewAddOn}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all hover:shadow-lg hover:shadow-emerald-500/25"
-                style={{ background: 'linear-gradient(135deg, #10b981, #2563eb, #06b6d4)' }}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm hover:shadow-md"
+                style={{ background: 'var(--gg)' }}
               >
                 Create Add-On
               </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {catalogWithStats.map((addon, i) => {
+              {catalogWithStats.map((addon) => {
                 const total = addon.active + addon.pending + addon.rejected;
-                const activePct   = total > 0 ? (addon.active   / total) * 100 : 0;
-                const pendingPct  = total > 0 ? (addon.pending  / total) * 100 : 0;
+                const activePct = total > 0 ? (addon.active / total) * 100 : 0;
+                const pendingPct = total > 0 ? (addon.pending / total) * 100 : 0;
                 const rejectedPct = total > 0 ? (addon.rejected / total) * 100 : 0;
-                const isSelected  = selectedCatalog === addon.id;
 
                 return (
                   <motion.div
                     key={addon.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.04 }}
-                    onClick={() => setSelectedCatalog(isSelected ? null : addon.id)}
-                    className="relative rounded-2xl border p-5 cursor-pointer transition-all group overflow-hidden bg-white shadow-sm"
-                    style={{
-                      borderColor: isSelected ? 'rgba(16,185,129,0.45)' : 'rgba(16,185,129,0.15)',
-                      boxShadow:   isSelected ? '0 0 32px rgba(16,185,129,0.10)' : 'none',
-                    }}
+                    variants={fadeUp}
+                    whileHover={{ y: -4, scale: 1.02 }}
+                    transition={spring}
+                    className="rounded-2xl p-5 border transition-all duration-300 bg-white/70 shadow-sm hover:shadow-md"
+                    style={{ borderColor: '#e2e8f0' }}
                   >
-                    {/* Hover glow */}
-                    <div
-                      className="absolute -top-10 -right-10 w-36 h-36 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                      style={{ background: 'radial-gradient(circle,rgba(16,185,129,0.08) 0%,transparent 70%)' }}
-                    />
-
-                    <div className="relative">
-                      {/* Icon + category */}
-                      <div className="flex items-start justify-between mb-3">
-                        <div
-                          className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 bg-emerald-50 border border-emerald-200/50"
-                        >
-                          {addon.icon}
-                        </div>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider border ${CATEGORY_STYLE[addon.category] || 'text-slate-500/70 bg-slate-50 border-slate-200/50'}`}>
-                          {addon.category}
-                        </span>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 bg-slate-50 border border-slate-200">
+                        {addon.icon || '📦'}
                       </div>
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${CATEGORY_STYLE[addon.category] || 'bg-slate-50 border-slate-200 text-slate-500'}`}>
+                        {addon.category}
+                      </span>
+                    </div>
 
-                      {/* Title & desc */}
-                      <h3 className="text-sm font-bold text-slate-800 mb-1 line-clamp-1">{addon.title}</h3>
-                      <p className="text-[11px] text-slate-500/70 line-clamp-2 mb-3 leading-relaxed">{addon.description}</p>
+                    <h3 className="text-sm font-extrabold text-slate-800 mb-1 line-clamp-1">{addon.title}</h3>
+                    <p className="text-xs text-slate-500 line-clamp-2 mb-3 leading-relaxed">{addon.description}</p>
+                    <p className="text-base font-extrabold text-[#10B981] mb-4">{addon.price}</p>
 
-                      {/* Price */}
-                      <p className="text-base font-bold text-emerald-600 mb-4">{addon.price}</p>
-
-                      {/* Usage bar */}
-                      {total > 0 ? (
-                        <div className="mb-3">
-                          <div className="flex items-center justify-between mb-1.5">
-                            <p className="text-[9px] uppercase tracking-wider text-slate-400/70">{total} requests</p>
-                          </div>
-                          <div className="h-1 rounded-full overflow-hidden flex bg-slate-100">
-                            <div className="h-full transition-all" style={{ width: `${activePct}%`,   background: 'linear-gradient(90deg,#10b981,#2563eb)' }} />
-                            <div className="h-full transition-all" style={{ width: `${pendingPct}%`,  background: '#f59e0b' }} />
-                            <div className="h-full transition-all" style={{ width: `${rejectedPct}%`, background: '#ef4444' }} />
-                          </div>
+                    {total > 0 ? (
+                      <div className="mb-3">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">{total} requests</p>
                         </div>
-                      ) : (
-                        <div className="mb-3 h-1 rounded-full bg-slate-100" />
-                      )}
-
-                      {/* Stat counters */}
-                      <div className="grid grid-cols-3 gap-1 py-3 border-t border-emerald-100/20">
-                        {[
-                          { val: addon.active,   label: 'Active',   color: 'text-emerald-600' },
-                          { val: addon.pending,  label: 'Pending',  color: 'text-amber-600' },
-                          { val: addon.rejected, label: 'Rejected', color: 'text-rose-600'  },
-                        ].map(({ val, label, color }) => (
-                          <div key={label} className="text-center">
-                            <p className={`text-base font-bold tabular-nums ${color}`}>{val}</p>
-                            <p className="text-[9px] uppercase tracking-wider text-slate-400/70 mt-0.5">{label}</p>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Sparkline */}
-                      <div className="mt-3 pt-3 border-t border-emerald-100/20">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-[9px] uppercase tracking-wider text-slate-400/70">12-month trend</p>
-                          <p className="text-[9px] text-slate-400/50">{addon.trend.reduce((a, b) => a + b, 0)} total</p>
+                        <div className="h-1.5 rounded-full overflow-hidden flex bg-slate-100">
+                          <div className="h-full transition-all rounded-full" style={{ width: `${activePct}%`, background: 'linear-gradient(90deg,#10b981,#2563eb)' }} />
+                          <div className="h-full transition-all rounded-full" style={{ width: `${pendingPct}%`, background: '#f59e0b' }} />
+                          <div className="h-full transition-all rounded-full" style={{ width: `${rejectedPct}%`, background: '#ef4444' }} />
                         </div>
-                        <SparkBar values={addon.trend} color="#10b981" />
                       </div>
+                    ) : (
+                      <div className="mb-3 h-1.5 rounded-full bg-slate-100" />
+                    )}
+
+                    <div className="grid grid-cols-3 gap-1 py-3 border-t border-slate-200/50">
+                      {[
+                        { val: addon.active, label: 'Active', color: 'text-[#10B981]' },
+                        { val: addon.pending, label: 'Pending', color: 'text-[#f59e0b]' },
+                        { val: addon.rejected, label: 'Rejected', color: 'text-[#ef4444]' },
+                      ].map(({ val, label, color }) => (
+                        <div key={label} className="text-center">
+                          <p className={`text-base font-extrabold tabular-nums ${color}`}>{val}</p>
+                          <p className="text-[10px] uppercase tracking-wider text-slate-400 mt-0.5 font-bold">{label}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-slate-200/50">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">12-month trend</p>
+                        <p className="text-[10px] text-slate-400">{addon.trend.reduce((a, b) => a + b, 0)} total</p>
+                      </div>
+                      <SparkBar values={addon.trend} color="#10b981" />
                     </div>
                   </motion.div>
                 );
@@ -419,46 +652,32 @@ export function AdminAddOns() {
 
         {/* ── Requests ── */}
         <motion.div variants={fadeUp}>
-          {/* Section header + filter tabs */}
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-5">
             <div>
-              <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-emerald-600 mb-1">Requests</p>
-              <h2 className="text-lg font-bold text-slate-800">
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#2563eb] mb-1">Requests</p>
+              <h2 className="text-lg font-extrabold text-slate-800">
                 {filter ? filter.charAt(0).toUpperCase() + filter.slice(1) : 'All'} requests
                 {filtered.length > 0 && (
-                  <span className="ml-2 text-sm font-normal text-slate-400/70">({filtered.length})</span>
+                  <span className="ml-2 text-sm font-normal text-slate-400">({filtered.length})</span>
                 )}
               </h2>
             </div>
 
-            <div
-              className="flex flex-wrap items-center gap-1 p-1 rounded-xl border border-emerald-100/30 bg-white/80"
-            >
+            <div className="flex gap-1 p-1 rounded-xl bg-white/80 border border-slate-200 shadow-sm">
               {FILTERS.map((f) => {
                 const isActive = filter === f.value;
-                const count    = filterCounts[f.value as keyof typeof filterCounts];
-                const accent   = STATUS_STYLE[f.value];
+                const count = filterCounts[f.value as keyof typeof filterCounts];
                 return (
                   <button
                     key={f.value}
                     onClick={() => setFilter(f.value)}
-                    className={`relative px-3.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
-                      isActive ? 'text-slate-700' : 'text-slate-500/70 hover:text-slate-700/80'
-                    }`}
+                    className={`relative px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${isActive ? 'bg-[#2563eb] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                      }`}
                   >
-                    {isActive && (
-                      <motion.div
-                        layoutId="addonFilterBg"
-                        className="absolute inset-0 rounded-lg bg-emerald-50 border border-emerald-200/50"
-                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                      />
-                    )}
-                    <span className="relative flex items-center gap-1.5">
-                      <span className={`w-1.5 h-1.5 rounded-full ${isActive ? accent.dot : 'bg-slate-300'}`} />
-                      {f.label}
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full tabular-nums ${isActive ? 'bg-white/80 text-slate-600' : 'bg-white/50 text-slate-400'}`}>
-                        {count}
-                      </span>
+                    {f.label}
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full tabular-nums ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                      }`}>
+                      {count}
                     </span>
                   </button>
                 );
@@ -466,157 +685,46 @@ export function AdminAddOns() {
             </div>
           </div>
 
-          {/* Request list */}
-          {loading && filtered.length === 0 ? (
-            <div className="flex items-center justify-center h-48 rounded-2xl border border-emerald-100/30 bg-white shadow-sm">
-              <div className="flex items-center gap-3 text-slate-500">
-                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                <span className="text-sm">Loading requests…</span>
-              </div>
-            </div>
-          ) : filtered.length === 0 ? (
-            <EmptyRequests filter={filter} search={search} onClear={() => setSearch('')} />
-          ) : (
-            <div className="space-y-2">
-              <AnimatePresence mode="popLayout">
-                {filtered.map((req, i) => {
-                  const accent   = STATUS_STYLE[req.status] ?? STATUS_STYLE.pending;
-                  const initials = (req.userName || req.userEmail || '?')
-                    .split(/[\s@.]/).filter(Boolean)
-                    .map((p) => p[0]).join('').slice(0, 2).toUpperCase();
-
-                  return (
-                    <motion.div
-                      key={req.id}
-                      layout
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: 16, transition: { duration: 0.2 } }}
-                      transition={{ delay: i * 0.025 }}
-                      className="rounded-2xl border p-4 sm:p-5 transition-colors hover:border-emerald-300/50 bg-white shadow-sm"
-                      style={{
-                        borderColor: 'rgba(16,185,129,0.15)',
-                      }}
-                    >
-                      <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-
-                        {/* Left: avatar + info */}
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                          {/* Avatar */}
-                          <div
-                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-xs font-bold"
-                            style={{ background: 'linear-gradient(135deg, #10b981, #2563eb, #06b6d4)', boxShadow: '0 4px 12px rgba(16,185,129,0.18)' }}
-                          >
-                            {initials}
-                          </div>
-
-                          {/* Details */}
-                          <div className="flex-1 min-w-0">
-                            {/* Add-on title row */}
-                            <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                              {req.addOn?.icon && <span className="text-base leading-none">{req.addOn.icon}</span>}
-                              <span className="font-semibold text-sm text-emerald-600">
-                                {req.addOn?.title || req.addOnId}
-                              </span>
-                              {req.addOn?.price && (
-                                <span className="text-[10px] font-semibold text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-200/50 bg-emerald-50">
-                                  {req.addOn.price}
-                                </span>
-                              )}
-                            </div>
-
-                            {/* User info */}
-                            {req.userName && (
-                              <p className="text-xs text-slate-500/70">
-                                <span className="text-slate-700/80 font-medium">{req.userName}</span>
-                                {req.userEmail && <span className="text-slate-400/70"> · {req.userEmail}</span>}
-                              </p>
-                            )}
-
-                            {/* Notes */}
-                            {req.notes && (
-                              <p className="text-xs text-slate-600/70 mt-2 italic border-l-2 border-emerald-200/50 pl-2.5">
-                                "{req.notes}"
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Right: date + actions */}
-                        <div className="flex items-center gap-3 flex-shrink-0 lg:self-center">
-                          {/* Submitted date */}
-                          <div className="text-right hidden sm:block">
-                            <p className="text-[10px] text-slate-400/70 uppercase tracking-wider mb-0.5">Submitted</p>
-                            <p className="text-xs text-slate-500/70">
-                              {new Date(req.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                            </p>
-                            <p className="text-[10px] text-slate-400/70">
-                              {new Date(req.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          </div>
-
-                          {/* Actions */}
-                          {req.status === 'pending' ? (
-                            <div className="flex gap-2">
-                              <motion.button
-                                whileTap={{ scale: 0.96 }}
-                                onClick={() => setConfirm({
-                                  id: req.id, status: 'rejected',
-                                  addOnTitle: req.addOn?.title || req.addOnId,
-                                  userName:   req.userName || 'this user',
-                                })}
-                                disabled={processing === req.id}
-                                className="px-3 py-2 bg-white hover:bg-rose-50 border border-rose-200/50 text-rose-600 rounded-xl text-xs font-medium transition-all disabled:opacity-40"
-                              >
-                                Reject
-                              </motion.button>
-                              <motion.button
-                                whileTap={{ scale: 0.96 }}
-                                onClick={() => setConfirm({
-                                  id: req.id, status: 'approved',
-                                  addOnTitle: req.addOn?.title || req.addOnId,
-                                  userName:   req.userName || 'this user',
-                                })}
-                                disabled={processing === req.id}
-                                className="px-4 py-2 text-white rounded-xl text-xs font-semibold transition-all disabled:opacity-40 flex items-center gap-1.5 hover:shadow-lg hover:shadow-emerald-500/25"
-                                style={{ background: 'linear-gradient(135deg, #10b981, #2563eb, #06b6d4)' }}
-                              >
-                                {processing === req.id ? (
-                                  <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                  </svg>
-                                ) : (
-                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                                  </svg>
-                                )}
-                                Approve
-                              </motion.button>
-                            </div>
-                          ) : (
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium border ${accent.bg}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${accent.dot}`}
-                                style={{ boxShadow: `0 0 6px ${accent.glow}` }} />
-                              <span className={accent.text}>
-                                {req.status.charAt(0).toUpperCase() + req.status.slice(1)}
-                              </span>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            </div>
-          )}
+          {/* Request List as DataTable */}
+          <DataTable
+            columns={columns}
+            data={filtered}
+            loading={loading}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            keyExtractor={(r) => r.id}
+            cardTitle={(r) => r.addOn?.title || r.addOnId}
+            pageSize={filtered.length || 20}
+            cardBadge={(r) => {
+              const sc = statusConfig[r.status] ?? fallbackStatus;
+              return (
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${r.status === 'pending' ? 'bg-[rgba(245,158,11,0.08)] border-[rgba(245,158,11,0.20)] text-[#f59e0b]' :
+                    r.status === 'approved' ? 'bg-[rgba(16,185,129,0.08)] border-[rgba(16,185,129,0.20)] text-[#10B981]' :
+                    'bg-[rgba(239,68,68,0.08)] border-[rgba(239,68,68,0.20)] text-[#ef4444]'
+                  }`}>
+                  <span className={`w-1 h-1 rounded-full ${r.status === 'pending' ? 'bg-[#f59e0b]' :
+                      r.status === 'approved' ? 'bg-[#10B981]' :
+                      'bg-[#ef4444]'
+                    }`} />
+                  {sc.label}
+                </span>
+              );
+            }}
+            emptyState={{
+              icon: (
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-slate-50 border border-slate-200">
+                  <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
+              ),
+              title: search ? 'No matching requests' : `No ${filter} requests`,
+              description: search ? 'Try adjusting your search terms.' : 'All add-on requests for this status have been handled.',
+            }}
+            defaultSort={{ key: 'createdAt', direction: 'desc' }}
+          />
+          <Pagination pagination={pagination} onPageChange={setPage} />
         </motion.div>
-
-        <Pagination pagination={pagination} onPageChange={setPage} />
       </motion.div>
 
       {/* ── Confirm modal ── */}
@@ -628,19 +736,19 @@ export function AdminAddOns() {
       >
         {confirm && (
           <div className="space-y-4">
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-emerald-50/50 border border-emerald-200/50">
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200">
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-semibold flex-shrink-0"
-                style={{ background: confirm.status === 'approved' ? 'linear-gradient(135deg, #10b981, #2563eb, #06b6d4)' : 'linear-gradient(135deg,#f87171,#ef4444)' }}
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-sm"
+                style={{ background: confirm.status === 'approved' ? 'var(--gg)' : 'linear-gradient(135deg,#f87171,#ef4444)' }}
               >
                 {confirm.status === 'approved' ? '✓' : '✕'}
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-800">{confirm.addOnTitle}</p>
-                <p className="text-xs text-slate-500/70 mt-0.5">Requested by {confirm.userName}</p>
+                <p className="text-sm font-extrabold text-slate-800">{confirm.addOnTitle}</p>
+                <p className="text-xs text-slate-500 mt-0.5">Requested by {confirm.userName}</p>
               </div>
             </div>
-            <p className="text-sm text-slate-600/70 leading-relaxed">
+            <p className="text-sm text-slate-600 leading-relaxed">
               {confirm.status === 'approved'
                 ? 'This will activate the add-on for the customer immediately. They will be notified.'
                 : 'This will decline the request. The customer can submit a new request later if needed.'}
@@ -648,17 +756,17 @@ export function AdminAddOns() {
             <div className="flex justify-end gap-2 pt-1">
               <button
                 onClick={() => setConfirm(null)}
-                className="px-4 py-2 text-sm rounded-lg text-slate-500/70 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                className="px-4 py-2 text-sm rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleProcess(confirm.id, confirm.status)}
                 disabled={!!processing}
-                className="px-4 py-2 text-sm text-white rounded-lg font-semibold transition-all disabled:opacity-50 hover:shadow-lg"
+                className="px-4 py-2 text-sm text-white rounded-lg font-bold transition-all disabled:opacity-50 shadow-sm hover:shadow-md"
                 style={{
                   background: confirm.status === 'approved'
-                    ? 'linear-gradient(135deg, #10b981, #2563eb, #06b6d4)'
+                    ? 'var(--gg)'
                     : 'linear-gradient(135deg,#f87171,#ef4444)',
                 }}
               >
@@ -678,10 +786,9 @@ export function AdminAddOns() {
       >
         <div className="space-y-4">
           {catalogError && (
-            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200/50 text-rose-600 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs flex items-center gap-2">
               <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               {catalogError}
             </div>
@@ -689,45 +796,42 @@ export function AdminAddOns() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-500/70 mb-1.5">ID (slug) *</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">ID (slug) *</label>
               <input
                 value={newAddOn.id}
                 onChange={(e) => setNewAddOn({ ...newAddOn, id: e.target.value })}
                 placeholder="e.g. performance-report"
-                className="w-full px-3 py-2.5 rounded-xl text-slate-700 text-sm bg-white/80 border border-emerald-100/30
-                  focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/20 focus:outline-none transition-all placeholder-slate-400/60 shadow-sm"
+                className="w-full px-4 py-2.5 rounded-xl text-slate-700 text-sm bg-white/80 border border-slate-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all placeholder-slate-400 shadow-sm"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500/70 mb-1.5">Title *</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Title *</label>
               <input
                 value={newAddOn.title}
                 onChange={(e) => setNewAddOn({ ...newAddOn, title: e.target.value })}
                 placeholder="Monthly Performance Report"
-                className="w-full px-3 py-2.5 rounded-xl text-slate-700 text-sm bg-white/80 border border-emerald-100/30
-                  focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/20 focus:outline-none transition-all placeholder-slate-400/60 shadow-sm"
+                className="w-full px-4 py-2.5 rounded-xl text-slate-700 text-sm bg-white/80 border border-slate-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all placeholder-slate-400 shadow-sm"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-500/70 mb-1.5">Price *</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Price *</label>
               <input
                 value={newAddOn.price}
                 onChange={(e) => setNewAddOn({ ...newAddOn, price: e.target.value })}
                 placeholder="₹4,999 / month"
-                className="w-full px-3 py-2.5 rounded-xl text-slate-700 text-sm bg-white/80 border border-emerald-100/30
-                  focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/20 focus:outline-none transition-all placeholder-slate-400/60 shadow-sm"
+                className="w-full px-4 py-2.5 rounded-xl text-slate-700 text-sm bg-white/80 border border-slate-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all placeholder-slate-400 shadow-sm"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500/70 mb-1.5">Category</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Category</label>
               <Dropdown
                 value={newAddOn.category}
                 options={[
                   { value: 'recurring', label: 'Recurring' },
-                  { value: 'one-time',  label: 'One-Time'  },
+                  { value: 'one-time', label: 'One-Time' },
                 ]}
                 onChange={(val) => setNewAddOn({ ...newAddOn, category: val })}
               />
@@ -735,33 +839,31 @@ export function AdminAddOns() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-500/70 mb-1.5">Description</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Description</label>
             <textarea
               value={newAddOn.description}
               onChange={(e) => setNewAddOn({ ...newAddOn, description: e.target.value })}
               rows={3}
               placeholder="What does this add-on include?"
-              className="w-full px-3 py-2.5 rounded-xl text-slate-700 text-sm bg-white/80 border border-emerald-100/30
-                focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/20 focus:outline-none transition-all
-                resize-none placeholder-slate-400/60 shadow-sm"
+              className="w-full px-4 py-2.5 rounded-xl text-slate-700 text-sm bg-white/80 border border-slate-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all resize-none placeholder-slate-400 shadow-sm"
             />
           </div>
 
-          <p className="text-[10px] text-slate-400/70">* Required fields. An icon will be assigned automatically.</p>
+          <p className="text-[10px] text-slate-400">* Required fields. An icon will be assigned automatically.</p>
         </div>
 
         <div className="flex justify-end gap-2 mt-6">
           <button
             onClick={() => setShowNewAddOn(false)}
-            className="px-4 py-2 text-sm rounded-lg text-slate-500/70 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+            className="px-4 py-2 text-sm rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors font-medium"
           >
             Cancel
           </button>
           <button
             onClick={handleCreateCatalog}
             disabled={savingCatalog}
-            className="px-5 py-2 text-sm text-white rounded-lg font-semibold transition-all disabled:opacity-50 hover:shadow-lg hover:shadow-emerald-500/25"
-            style={{ background: 'linear-gradient(135deg, #10b981, #2563eb, #06b6d4)' }}
+            className="px-5 py-2 text-sm text-white rounded-lg font-bold transition-all disabled:opacity-50 shadow-sm hover:shadow-md"
+            style={{ background: 'var(--gg)' }}
           >
             {savingCatalog ? 'Creating…' : 'Create Add-On'}
           </button>

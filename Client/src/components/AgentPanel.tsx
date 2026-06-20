@@ -47,7 +47,7 @@ function TextInput({ value, onChange, placeholder }: { value: string; onChange: 
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-4 py-2.5 text-sm bg-white/4 border border-white/8 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/20 transition-all"
+      className="w-full px-4 py-2.5 text-sm bg-[var(--surface)] border border-white/8 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-[var(--border)] focus:ring-1 focus:ring-[var(--primary)]/20 transition-all"
     />
   );
 }
@@ -74,7 +74,7 @@ function SelectInput({ value, onChange, options }: {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full px-4 py-2.5 text-sm bg-white/4 border border-white/8 rounded-xl text-white flex items-center justify-between gap-2 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/20 transition-all cursor-pointer"
+        className="w-full px-4 py-2.5 text-sm bg-[var(--surface)] border border-white/8 rounded-xl text-white flex items-center justify-between gap-2 focus:outline-none focus:border-[var(--border)] focus:ring-1 focus:ring-[var(--primary)]/20 transition-all cursor-pointer"
       >
         <span className="truncate">{selected?.label}</span>
         <svg className={`w-3.5 h-3.5 text-white/50 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,8 +92,8 @@ function SelectInput({ value, onChange, options }: {
                 onClick={() => { onChange(opt.value); setOpen(false); }}
                 className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
                   opt.value === value
-                    ? 'bg-cyan-500/10 text-cyan-400 font-medium'
-                    : 'text-white/50 hover:bg-white/5 hover:text-white'
+                    ? 'bg-[var(--primary-soft)]/10 text-[var(--primary)] font-medium'
+                    : 'text-white/50 hover:bg-[var(--surface)] hover:text-white'
                 }`}
               >
                 {opt.label}
@@ -115,7 +115,7 @@ function TextareaInput({ value, onChange, placeholder, rows = 5 }: {
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      className="w-full px-4 py-3 text-sm bg-white/4 border border-white/8 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/20 transition-all resize-none"
+      className="w-full px-4 py-3 text-sm bg-[var(--surface)] border border-white/8 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-[var(--border)] focus:ring-1 focus:ring-[var(--primary)]/20 transition-all resize-none"
     />
   );
 }
@@ -173,7 +173,7 @@ export function AgentPanel({
               </div>
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-white/50 hover:text-white/70 hover:bg-white/5 transition-colors"
+                className="p-1.5 rounded-lg text-white/50 hover:text-white/70 hover:bg-[var(--surface)] transition-colors"
                 aria-label="Close"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,11 +186,11 @@ export function AgentPanel({
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
 
               {/* Hint */}
-              <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-cyan-500/8 border border-cyan-500/15">
-                <svg className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[var(--primary-soft)]/8 border border-[var(--border)]">
+                <svg className="w-3.5 h-3.5 text-[var(--primary)] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <p className="text-xs text-cyan-400/80 leading-relaxed">
+                <p className="text-xs text-[var(--primary)]/80 leading-relaxed">
                   Configure your agent's identity, voice, and behavior. You can update these settings at any time.
                 </p>
               </div>
@@ -216,11 +216,11 @@ export function AgentPanel({
                       onClick={() => setFormData({ ...formData, type: t.value })}
                       className={`flex flex-col items-center gap-2 py-3.5 px-2 rounded-xl border text-xs font-medium transition-all ${
                         formData.type === t.value
-                          ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
-                          : 'bg-white/3 border-white/6 text-white/50 hover:text-white/70 hover:bg-white/5'
+                          ? 'bg-[var(--primary-soft)]/10 border-[var(--border)] text-[var(--primary)]'
+                          : 'bg-[var(--surface)] border-white/6 text-white/50 hover:text-white/70 hover:bg-[var(--surface)]'
                       }`}
                     >
-                      <span className={formData.type === t.value ? 'text-cyan-400' : 'text-white/40'}>{t.icon}</span>
+                      <span className={formData.type === t.value ? 'text-[var(--primary)]' : 'text-white/40'}>{t.icon}</span>
                       {t.label}
                     </button>
                   ))}
@@ -293,7 +293,7 @@ export function AgentPanel({
                 type="button"
                 onClick={onClose}
                 disabled={submitting}
-                className="px-4 py-2.5 rounded-xl text-sm font-medium text-white/50 bg-white/4 hover:bg-white/8 hover:text-white/70 border border-white/6 transition-colors"
+                className="px-4 py-2.5 rounded-xl text-sm font-medium text-white/50 bg-[var(--surface)] hover:bg-[var(--surface)] hover:text-white/70 border border-white/6 transition-colors"
               >
                 Cancel
               </button>
@@ -346,7 +346,7 @@ export function DeleteModal({ open, onClose, onConfirm }: { open: boolean; onClo
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2.5 rounded-xl text-sm font-medium text-white/50 bg-white/4 hover:bg-white/8 hover:text-white/70 border border-white/6 transition-colors"
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium text-white/50 bg-[var(--surface)] hover:bg-[var(--surface)] hover:text-white/70 border border-white/6 transition-colors"
                 >
                   Cancel
                 </button>

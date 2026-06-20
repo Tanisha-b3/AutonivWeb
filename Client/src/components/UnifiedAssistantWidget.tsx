@@ -15,11 +15,14 @@ function getVapi(): any | null {
 }
 
 const T = {
-  cyan: '#0077ff',
-  cyanDim: 'rgba(0,119,255,0.12)',
-  slate: '#94a3b8',
+  green: 'var(--primary)',
+  greenDim: 'var(--primary-soft)',
+  greenDark: 'var(--primary-dark)',
+  greenLight: '#00A3FF',
+  slate: 'var(--text-muted)',
   surface: 'rgba(255,255,255,0.04)',
-  border: 'rgba(0,119,255,0.10)',
+  border: 'var(--border)',
+  borderHover: 'rgba(37,99,235,0.35)',
 };
 
 interface Message {
@@ -74,11 +77,11 @@ function isOffTopicQuestion(input: string): boolean {
 
 function getReprompt(step: LeadStep): string {
   switch (step) {
-    case 'ask_name':    return "Now, back to your details — **what's your name?**";
-    case 'ask_phone':   return "Back to your details — **what's your phone number?**";
-    case 'ask_email':   return "Back to your details — **what's your email address?**";
+    case 'ask_name': return "Now, back to your details — **what's your name?**";
+    case 'ask_phone': return "Back to your details — **what's your phone number?**";
+    case 'ask_email': return "Back to your details — **what's your email address?**";
     case 'ask_purpose': return "Almost there — **what are you looking for?**\n\n- Book a demo\n- Pricing inquiry\n- General question\n- Other";
-    default:            return '';
+    default: return '';
   }
 }
 
@@ -88,7 +91,7 @@ function getReprompt(step: LeadStep): string {
 function renderInline(text: string): React.ReactNode[] {
   return text.split(/(\*\*[^*]+\*\*)/).map((part, i) =>
     part.startsWith('**') && part.endsWith('**')
-      ? <strong key={i} style={{ color: T.cyan, fontWeight: 600 }}>{part.slice(2, -2)}</strong>
+      ? <strong key={i} style={{ color: T.green, fontWeight: 600 }}>{part.slice(2, -2)}</strong>
       : <span key={i}>{part}</span>
   );
 }
@@ -120,7 +123,7 @@ function renderMarkdown(text: string): React.ReactNode {
             <thead>
               <tr>
                 {rows[0].split('|').filter((_, ci) => ci > 0 && ci < rows[0].split('|').length - 1).map((cell, ci) => (
-                  <th key={ci} style={{ padding: '5px 8px', textAlign: 'left', color: T.cyan, borderBottom: '1px solid rgba(0,119,255,0.2)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  <th key={ci} style={{ padding: '5px 8px', textAlign: 'left', color: T.green, borderBottom: '1px solid rgba(16,185,129,0.2)', fontWeight: 600, whiteSpace: 'nowrap' }}>
                     {cell.trim()}
                   </th>
                 ))}
@@ -153,7 +156,7 @@ function renderMarkdown(text: string): React.ReactNode {
         <ul key={`ul-${i}`} style={{ margin: '4px 0', paddingLeft: 0, listStyle: 'none' }}>
           {bulletItems.map((item, bi) => (
             <li key={bi} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 3, color: 'rgba(226,232,240,0.85)', fontSize: 11, lineHeight: 1.5 }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.cyan, flexShrink: 0, marginTop: 5, opacity: 0.7 }} />
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.green, flexShrink: 0, marginTop: 5, opacity: 0.7 }} />
               <span>{renderInline(item)}</span>
             </li>
           ))}
@@ -172,7 +175,7 @@ function renderMarkdown(text: string): React.ReactNode {
         <ol key={`ol-${i}`} style={{ margin: '4px 0', paddingLeft: 0, listStyle: 'none' }}>
           {numItems.map((item, ni) => (
             <li key={ni} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, marginBottom: 4, fontSize: 11, lineHeight: 1.5, color: 'rgba(226,232,240,0.85)' }}>
-              <span style={{ minWidth: 18, height: 18, borderRadius: 4, background: 'rgba(0,119,255,0.18)', color: T.cyan, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+              <span style={{ minWidth: 18, height: 18, borderRadius: 4, background: 'rgba(16,185,129,0.18)', color: T.green, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
                 {ni + 1}
               </span>
               <span>{renderInline(item)}</span>
@@ -268,7 +271,7 @@ function generateResponse(input: string): { text: string; triggerLead?: boolean 
 }
 
 /* ─── Waveform ───────────────────────────────────────────── */
-function Waveform({ active, color = '#0077ff' }: { active: boolean; color?: string }) {
+function Waveform({ active, color = 'var(--primary)' }: { active: boolean; color?: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 2, height: 26, justifyContent: 'center' }}>
       {Array.from({ length: 18 }).map((_, i) => (
@@ -294,7 +297,7 @@ function VoiceOrb({ speaking }: { speaking: 'user' | 'agent' | 'idle' }) {
   const isAgent = speaking === 'agent';
   const isUser = speaking === 'user';
   const isActive = speaking !== 'idle';
-  const coreColor = isAgent ? '#0077ff' : isUser ? '#0099ff' : '#1e3a5f';
+  const coreColor = isAgent ? 'var(--primary)' : isUser ? 'var(--secondary)' : 'var(--cyan-dark)';
 
   return (
     <div style={{ position: 'relative', width: 120, height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -302,7 +305,7 @@ function VoiceOrb({ speaking }: { speaking: 'user' | 'agent' | 'idle' }) {
       {isActive && [0, 1, 2].map(i => (
         <div key={i} style={{
           position: 'absolute', inset: 0, borderRadius: '50%',
-          border: '1.5px solid rgba(0,119,255,0.12)',
+          border: '1.5px solid rgba(0,163,255,0.12)',
           animation: `ringPulse 2.2s ease-out ${i * 0.7}s infinite`,
           pointerEvents: 'none',
         }} />
@@ -311,14 +314,14 @@ function VoiceOrb({ speaking }: { speaking: 'user' | 'agent' | 'idle' }) {
       {/* Outer glow */}
       <div style={{
         position: 'absolute', width: 90, height: 90, borderRadius: '50%',
-        background: isActive ? 'rgba(0,119,255,0.14)' : 'rgba(0,119,255,0.04)',
+        background: isActive ? 'rgba(0,163,255,0.14)' : 'rgba(0,163,255,0.04)',
         filter: 'blur(24px)', transition: 'background .6s ease',
       }} />
 
       {/* Border ring */}
       <div style={{
         position: 'absolute', inset: 0, borderRadius: '50%',
-        border: '1px solid rgba(0,119,255,0.08)',
+        border: '1px solid rgba(0,163,255,0.08)',
       }} />
 
       {/* Core sphere */}
@@ -327,16 +330,16 @@ function VoiceOrb({ speaking }: { speaking: 'user' | 'agent' | 'idle' }) {
         background: speaking === 'idle'
           ? 'radial-gradient(circle at 35% 35%, #0d1f36, #050d1a)'
           : isAgent
-            ? 'radial-gradient(circle at 30% 30%, #0077ff 0%, #005fe6 40%, #003fa3 100%)'
-            : 'radial-gradient(circle at 30% 30%, #0099ff 0%, #0066dd 55%, #003fa3 100%)',
+            ? 'radial-gradient(circle at 30% 30%, var(--primary) 0%, var(--primary-dark) 40%, var(--cyan-dark) 100%)'
+            : 'radial-gradient(circle at 30% 30%, var(--secondary) 0%, var(--primary) 55%, var(--primary-dark) 100%)',
         border: `1.5px solid ${coreColor}30`,
         boxShadow: isActive
           ? `0 0 0 3px ${coreColor}10, 0 0 35px ${coreColor}25, inset 0 1.5px 0 rgba(255,255,255,.15)`
-          : '0 0 20px rgba(0,119,255,.08), inset 0 1px 0 rgba(255,255,255,.04)',
+          : '0 0 20px rgba(0,163,255,.08), inset 0 1px 0 rgba(255,255,255,.04)',
         transition: 'all .5s cubic-bezier(.16,1,.3,1)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive ? '#fff' : '#1e3a5f'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'stroke .4s ease' }}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive ? '#fff' : 'var(--primary-dark)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'stroke .4s ease' }}>
           <rect x="9" y="2" width="6" height="12" rx="3" />
           <path d="M5 10a7 7 0 0014 0" />
           <line x1="12" y1="19" x2="12" y2="22" />
@@ -353,7 +356,7 @@ function ConnectingDots() {
     <div style={{ display: 'flex', alignItems: 'center', gap: 5, height: 16, justifyContent: 'center' }}>
       {[0, 1, 2].map(i => (
         <div key={i} style={{
-          width: 5, height: 5, borderRadius: '50%', background: '#0099ff',
+          width: 5, height: 5, borderRadius: '50%', background: 'var(--primary)',
           animation: 'connectBounce 1.2s ease-in-out infinite',
           animationDelay: `${i * 0.2}s`,
         }} />
@@ -638,11 +641,11 @@ export default function UnifiedAssistantWidget() {
 
   /* ── Input placeholder by current step ── */
   const inputPlaceholder =
-    leadStep === 'ask_name'    ? 'Enter your name...' :
-    leadStep === 'ask_phone'   ? 'Enter your phone number...' :
-    leadStep === 'ask_email'   ? 'Enter your email...' :
-    leadStep === 'ask_purpose' ? 'What are you looking for...' :
-    'Ask about Autoniv, agents, pricing...';
+    leadStep === 'ask_name' ? 'Enter your name...' :
+      leadStep === 'ask_phone' ? 'Enter your phone number...' :
+        leadStep === 'ask_email' ? 'Enter your email...' :
+          leadStep === 'ask_purpose' ? 'What are you looking for...' :
+            'Ask about Autoniv, agents, pricing...';
 
   const isCallActive = callMode === 'active' || callMode === 'connecting';
 
@@ -665,15 +668,15 @@ export default function UnifiedAssistantWidget() {
           >
             {/* Header */}
             <div className="flex items-center gap-3 px-4 py-3 border-b shrink-0" style={{ borderColor: T.border }}>
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(0,119,255,0.15)' }}>
-                <svg className="w-3.5 h-3.5" fill="none" stroke={T.cyan} viewBox="0 0 24 24">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(16,185,129,0.15)' }}>
+                <svg className="w-3.5 h-3.5" fill="none" stroke={T.green} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
               </div>
               <div className="flex-1">
                 <p className="text-xs font-semibold text-white">AI Companion</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className={`w-1.5 h-1.5 rounded-full ${isCallActive ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400 animate-pulse'}`} />
+                  <span className={`w-1.5 h-1.5 rounded-full ${isCallActive ? 'bg-amber-400 animate-pulse' : 'bg-[var(--primary)] animate-pulse'}`} />
                   <span className="text-[10px]" style={{ color: T.slate }}>
                     {isCallActive ? 'live call active' : 'online'}
                   </span>
@@ -681,7 +684,7 @@ export default function UnifiedAssistantWidget() {
               </div>
               {tab === 'chat' && (
                 <button onClick={clearChat}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-white/8"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-[var(--surface)]"
                   style={{ color: T.slate }} title="Clear chat">
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -689,7 +692,7 @@ export default function UnifiedAssistantWidget() {
                 </button>
               )}
               <button onClick={() => setIsOpen(false)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-white/8"
+                className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-[var(--surface)]"
                 style={{ color: T.slate }}>
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -703,7 +706,7 @@ export default function UnifiedAssistantWidget() {
                 onClick={() => setTab('chat')}
                 className="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5"
                 style={tab === 'chat'
-                  ? { background: 'rgba(0,119,255,0.12)', border: '1px solid rgba(0,119,255,0.2)', color: '#fff' }
+                  ? { background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.2)', color: '#fff' }
                   : { border: '1px solid transparent', color: T.slate }
                 }
               >
@@ -716,7 +719,7 @@ export default function UnifiedAssistantWidget() {
                 onClick={() => setTab('call')}
                 className="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 relative"
                 style={tab === 'call'
-                  ? { background: 'rgba(0,119,255,0.12)', border: '1px solid rgba(0,119,255,0.2)', color: '#fff' }
+                  ? { background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.2)', color: '#fff' }
                   : { border: '1px solid transparent', color: T.slate }
                 }
               >
@@ -725,7 +728,7 @@ export default function UnifiedAssistantWidget() {
                 </svg>
                 Voice Call
                 {isCallActive && (
-                  <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-[var(--primary)] animate-ping" />
                 )}
               </button>
             </div>
@@ -739,13 +742,13 @@ export default function UnifiedAssistantWidget() {
                     {['Features', 'Pricing', 'Book a Demo', 'Contact'].map(chip => (
                       <button key={chip} onClick={() => {
                         setInput(
-                          chip === 'Features'    ? 'What features does Autoniv offer?' :
-                          chip === 'Pricing'     ? 'Show me pricing plans' :
-                          chip === 'Book a Demo' ? 'I want to book a demo' :
-                          'Contact sales'
+                          chip === 'Features' ? 'What features does Autoniv offer?' :
+                            chip === 'Pricing' ? 'Show me pricing plans' :
+                              chip === 'Book a Demo' ? 'I want to book a demo' :
+                                'Contact sales'
                         );
                       }}
-                        className="px-2 py-0.5 text-[10px] font-medium rounded-full border transition-all hover:border-cyan-500/40"
+                        className="px-2 py-0.5 text-[10px] font-medium rounded-full border transition-all hover:border-green-500/40"
                         style={{ background: T.surface, borderColor: T.border, color: T.slate }}>
                         {chip}
                       </button>
@@ -760,13 +763,13 @@ export default function UnifiedAssistantWidget() {
                         onClick={() => setTab('call')}
                         className="w-full py-2 px-3 mb-2 rounded-xl flex items-center justify-between text-[11px] font-medium transition-all"
                         style={{
-                          background: 'rgba(0,119,255,0.08)',
-                          border: '1px solid rgba(0,119,255,0.18)',
-                          color: '#0077ff',
+                          background: 'rgba(16,185,129,0.08)',
+                          border: '1px solid rgba(16,185,129,0.18)',
+                          color: '#10b981',
                         }}
                       >
                         <div className="flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] animate-pulse" />
                           <span>Voice call is active ({formatTime(callSeconds)})</span>
                         </div>
                         <span className="font-semibold text-[10px]">Return to Call →</span>
@@ -776,8 +779,8 @@ export default function UnifiedAssistantWidget() {
                     {messages.map((msg) => (
                       <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                         {msg.role === 'assistant' && (
-                          <div className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center mt-0.5" style={{ background: 'rgba(0,119,255,0.15)' }}>
-                            <svg className="w-3 h-3" fill="none" stroke={T.cyan} viewBox="0 0 24 24">
+                          <div className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center mt-0.5" style={{ background: 'rgba(16,185,129,0.15)' }}>
+                            <svg className="w-3 h-3" fill="none" stroke={T.green} viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                             </svg>
                           </div>
@@ -786,7 +789,7 @@ export default function UnifiedAssistantWidget() {
                           <div
                             className="px-3 py-2 rounded-xl text-xs"
                             style={msg.role === 'user'
-                              ? { background: 'rgba(0,119,255,0.15)', border: '1px solid rgba(0,119,255,0.25)', color: '#e2e8f0', fontSize: 11.5, lineHeight: 1.6 }
+                              ? { background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.25)', color: '#e2e8f0', fontSize: 11.5, lineHeight: 1.6 }
                               : { background: T.surface, border: `1px solid ${T.border}`, color: 'rgba(226,232,240,0.88)' }
                             }
                           >
@@ -815,14 +818,14 @@ export default function UnifiedAssistantWidget() {
 
                     {isTyping && (
                       <div className="flex gap-2">
-                        <div className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: 'rgba(0,119,255,0.15)' }}>
-                          <svg className="w-3 h-3" fill="none" stroke={T.cyan} viewBox="0 0 24 24">
+                        <div className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.15)' }}>
+                          <svg className="w-3 h-3" fill="none" stroke={T.green} viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                           </svg>
                         </div>
                         <div className="px-3 py-2.5 rounded-xl border flex items-center gap-1" style={{ background: T.surface, borderColor: T.border }}>
                           {[0, 0.15, 0.3].map((delay, i) => (
-                            <motion.span key={i} className="w-1 h-1 rounded-full bg-slate-500"
+                            <motion.span key={i} className="w-1 h-1 rounded-full bg-[var(--surface)]0"
                               animate={{ y: [0, -4, 0] }} transition={{ duration: 0.7, repeat: Infinity, delay }} />
                           ))}
                         </div>
@@ -836,8 +839,8 @@ export default function UnifiedAssistantWidget() {
                     {leadStep === 'submitting' ? (
                       <div className="text-center text-xs py-2" style={{ color: T.slate }}>
                         <svg className="animate-spin w-4 h-4 mx-auto mb-1 text-white" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
                         Submitting your details...
                       </div>
@@ -851,15 +854,15 @@ export default function UnifiedAssistantWidget() {
                           disabled={isTyping}
                           className="flex-1 rounded-xl px-3 py-2 text-xs text-white outline-none transition-all disabled:opacity-40"
                           style={{ background: T.surface, border: `1px solid ${T.border}` }}
-                          onFocus={e => (e.target.style.borderColor = 'rgba(0,119,255,0.4)')}
+                          onFocus={e => (e.target.style.borderColor = 'rgba(16,185,129,0.4)')}
                           onBlur={e => (e.target.style.borderColor = T.border)}
                         />
                         <button
                           onClick={sendMessage}
                           disabled={!input.trim() || isTyping}
                           className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-40"
-                          style={{ background: T.cyanDim, border: `1px solid rgba(0,119,255,0.3)` }}>
-                          <svg className="w-3.5 h-3.5" fill="none" stroke={T.cyan} viewBox="0 0 24 24">
+                          style={{ background: T.greenDim, border: `1px solid rgba(16,185,129,0.3)` }}>
+                          <svg className="w-3.5 h-3.5" fill="none" stroke={T.green} viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                           </svg>
                         </button>
@@ -874,18 +877,18 @@ export default function UnifiedAssistantWidget() {
                   <div style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6,
                     padding: '5px 12px', borderRadius: 99,
-                    background: callMode === 'active' ? 'rgba(0,119,255,0.06)' : callMode === 'connecting' ? 'rgba(255,228,132,0.06)' : 'rgba(0,119,255,0.04)',
-                    border: `1px solid ${callMode === 'active' ? 'rgba(0,119,255,0.15)' : callMode === 'connecting' ? 'rgba(255,228,132,0.15)' : 'rgba(0,119,255,0.10)'}`,
+                    background: callMode === 'active' ? 'rgba(16,185,129,0.06)' : callMode === 'connecting' ? 'rgba(255,228,132,0.06)' : 'rgba(16,185,129,0.04)',
+                    border: `1px solid ${callMode === 'active' ? 'rgba(16,185,129,0.15)' : callMode === 'connecting' ? 'rgba(255,228,132,0.15)' : 'rgba(16,185,129,0.10)'}`,
                     transition: 'all .3s',
                   }}>
                     <span style={{
                       width: 5, height: 5, borderRadius: '50%',
-                      background: callMode === 'active' ? '#0077ff' : callMode === 'connecting' ? '#ffe484' : '#0077ff',
+                      background: callMode === 'active' ? '#10b981' : callMode === 'connecting' ? '#ffe484' : '#10b981',
                       animation: callMode !== 'idle' ? 'livePulse 2s ease infinite' : 'none',
                     }} />
                     <span style={{
                       fontSize: 10, fontFamily: "'JetBrains Mono', monospace",
-                      color: callMode === 'active' ? '#0077ff' : callMode === 'connecting' ? '#ffe484' : '#6b9ec8',
+                      color: callMode === 'active' ? '#10b981' : callMode === 'connecting' ? '#ffe484' : '#6b9ec8',
                       letterSpacing: '0.04em', textTransform: 'uppercase', fontWeight: 500,
                     }}>
                       {callMode === 'idle' && 'Ready to call'}
@@ -915,9 +918,9 @@ export default function UnifiedAssistantWidget() {
                       <div className="mt-1" style={{
                         display: 'inline-flex', alignItems: 'center',
                         padding: '2px 8px', borderRadius: 99,
-                        background: 'rgba(0,119,255,0.08)', border: '1px solid rgba(0,119,255,0.18)'
+                        background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.18)'
                       }}>
-                        <span style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: '#0077ff', fontWeight: 600 }}>
+                        <span style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: '#10b981', fontWeight: 600 }}>
                           {formatTime(callSeconds)}
                         </span>
                       </div>
@@ -930,7 +933,7 @@ export default function UnifiedAssistantWidget() {
                   {/* Waveform / Connection indicators */}
                   <div className="w-full shrink-0 flex flex-col items-center gap-2">
                     {(callMode === 'active' || callMode === 'connecting') && (
-                      <Waveform active={speaking !== 'idle'} color="#0077ff" />
+                      <Waveform active={speaking !== 'idle'} color="#10b981" />
                     )}
                     {callMode === 'connecting' && <ConnectingDots />}
                   </div>
@@ -948,10 +951,10 @@ export default function UnifiedAssistantWidget() {
                           ].map((stat, i) => (
                             <div key={i} style={{
                               flex: 1, textAlign: 'center', padding: '6px 4px', borderRadius: 10,
-                              background: 'rgba(0,119,255,0.04)', border: '1px solid rgba(0,119,255,0.10)',
+                              background: 'rgba(16,185,129,0.04)', border: '1px solid rgba(16,185,129,0.10)',
                             }}>
                               <div style={{ fontSize: 14, marginBottom: 2 }}>{stat.icon}</div>
-                              <div style={{ fontSize: 11, fontWeight: 700, color: '#0077ff' }}>{stat.value}</div>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: '#10b981' }}>{stat.value}</div>
                               <div style={{ fontSize: 8, color: '#6b9ec8', fontFamily: "'JetBrains Mono', monospace", marginTop: 1 }}>{stat.label}</div>
                             </div>
                           ))}
@@ -960,14 +963,14 @@ export default function UnifiedAssistantWidget() {
                           onClick={() => window.location.href = '/register'}
                           style={{
                             width: '100%', padding: '10px 16px', borderRadius: 10, cursor: 'pointer',
-                            border: '1px solid rgba(0,119,255,0.25)',
-                            background: 'rgba(0,119,255,0.06)',
-                            color: '#0099ff', fontSize: 12, fontWeight: 600,
+                            border: '1px solid rgba(16,185,129,0.25)',
+                            background: 'rgba(16,185,129,0.06)',
+                            color: '#10b981', fontSize: 12, fontWeight: 600,
                             transition: 'all .2s',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
                           }}
-                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,119,255,0.12)'; e.currentTarget.style.borderColor = 'rgba(0,119,255,0.40)'; }}
-                          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,119,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(0,119,255,0.25)'; }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.12)'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.40)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.06)'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.25)'; }}
                         >
                           Create Your Own Agent
                           <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -985,21 +988,21 @@ export default function UnifiedAssistantWidget() {
                           style={{
                             width: '100%', padding: '11px 20px', borderRadius: 12,
                             border: 'none', cursor: 'pointer',
-                            background: 'linear-gradient(135deg, #0077ff, #005fe6, #003fa3)',
+                            background: 'linear-gradient(135deg, #10b981, #059669, #047857)',
                             backgroundSize: '200% 200%',
                             animation: 'borderFlow 4s ease infinite',
                             color: '#fff', fontSize: 13, fontWeight: 700,
-                            boxShadow: '0 0 0 1px rgba(255,255,255,.08) inset, 0 4px 0 rgba(0,20,50,.5), 0 0 30px rgba(0,119,255,.2)',
+                            boxShadow: '0 0 0 1px rgba(255,255,255,.08) inset, 0 4px 0 rgba(0,20,50,.5), 0 0 30px rgba(16,185,129,.2)',
                             transition: 'all .2s cubic-bezier(.16,1,.3,1)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                           }}
                           onMouseEnter={e => {
                             e.currentTarget.style.transform = 'translateY(-1.5px)';
-                            e.currentTarget.style.boxShadow = '0 0 0 1px rgba(255,255,255,.10) inset, 0 6px 0 rgba(0,20,50,.4), 0 0 40px rgba(0,119,255,.35)';
+                            e.currentTarget.style.boxShadow = '0 0 0 1px rgba(255,255,255,.10) inset, 0 6px 0 rgba(0,20,50,.4), 0 0 40px rgba(16,185,129,.35)';
                           }}
                           onMouseLeave={e => {
                             e.currentTarget.style.transform = 'none';
-                            e.currentTarget.style.boxShadow = '0 0 0 1px rgba(255,255,255,.08) inset, 0 4px 0 rgba(0,20,50,.5), 0 0 30px rgba(0,119,255,.2)';
+                            e.currentTarget.style.boxShadow = '0 0 0 1px rgba(255,255,255,.08) inset, 0 4px 0 rgba(0,20,50,.5), 0 0 30px rgba(16,185,129,.2)';
                           }}
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -1054,25 +1057,25 @@ export default function UnifiedAssistantWidget() {
         onClick={() => setIsOpen(!isOpen)}
         className="relative w-11 h-11 rounded-full flex items-center justify-center shadow-lg"
         style={{
-          background: T.cyanDim,
-          border: `1px solid rgba(0,119,255,0.4)`,
-          boxShadow: `0 0 28px rgba(0,119,255,0.25)`,
+          background: T.greenDim,
+          border: `1px solid rgba(16,185,129,0.4)`,
+          boxShadow: `0 0 28px rgba(16,185,129,0.25)`,
         }}
       >
         <AnimatePresence mode="wait">
           {isOpen ? (
             <motion.svg key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}
-              className="w-5 h-5" fill="none" stroke={T.cyan} viewBox="0 0 24 24">
+              className="w-5 h-5" fill="none" stroke={T.green} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </motion.svg>
           ) : (
             <motion.svg key="chat" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-              className="w-5 h-5" fill="none" stroke={T.cyan} viewBox="0 0 24 24">
+              className="w-5 h-5" fill="none" stroke={T.green} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </motion.svg>
           )}
         </AnimatePresence>
-        {!isOpen && <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#060a12]" />}
+        {!isOpen && <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[var(--primary)] border-2 border-[#060a12]" />}
       </motion.button>
 
       {/* Local keyframe styles self-contained inside the widget */}
@@ -1087,9 +1090,9 @@ export default function UnifiedAssistantWidget() {
           to { transform: scaleY(1); opacity: 1; }
         }
         @keyframes livePulse {
-          0% { box-shadow: 0 0 0 0 rgba(0,119,255,0.3); }
-          70% { box-shadow: 0 0 0 9px rgba(0,119,255,0); }
-          100% { box-shadow: 0 0 0 0 rgba(0,119,255,0); }
+          0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.3); }
+          70% { box-shadow: 0 0 0 9px rgba(16,185,129,0); }
+          100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
         }
         @keyframes ringPulse {
           0% { transform: scale(1); opacity: 0.7; }

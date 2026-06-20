@@ -37,7 +37,7 @@ export function EmptyStateGuide({ title, description, steps }: EmptyStateGuidePr
           >
             {title}
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5 leading-snug">{description}</p>
+          <p className="text-xs text-[var(--muted)] mt-0.5 leading-snug">{description}</p>
         </div>
       </div>
 
@@ -46,7 +46,7 @@ export function EmptyStateGuide({ title, description, steps }: EmptyStateGuidePr
         {steps.map((step, i) => (
           <div
             key={i}
-            className="group relative rounded-xl p-3.5 border transition-all duration-200 hover:border-cyan-500/25"
+            className="group relative rounded-xl p-3.5 border transition-all duration-200 hover:border-[var(--border)]"
             style={{ background: 'rgba(255,255,255,0.025)', borderColor: 'rgba(255,255,255,0.06)' }}
           >
             {/* Step number + icon row */}
@@ -66,7 +66,7 @@ export function EmptyStateGuide({ title, description, steps }: EmptyStateGuidePr
             </div>
 
             <h4 className="text-xs font-semibold text-white mb-1 leading-tight">{step.label}</h4>
-            <p className="text-[11px] text-slate-500 leading-relaxed mb-3">{step.description}</p>
+            <p className="text-[11px] text-[var(--muted)] leading-relaxed mb-3">{step.description}</p>
 
             <Link
               to={step.to}

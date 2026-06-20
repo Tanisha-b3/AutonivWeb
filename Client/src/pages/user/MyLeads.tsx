@@ -7,26 +7,26 @@ import { Pagination } from '../../components/Pagination';
 import type { Lead } from '../../types';
 
 const statusConfig: Record<string, { label: string; dot: string; pill: string; text: string }> = {
-  new:       { label: 'New',       dot: 'bg-cyan-400',  pill: 'bg-cyan-500/10 border-cyan-500/20', text: 'text-cyan-400' },
-  contacted: { label: 'Contacted', dot: 'bg-amber-400',   pill: 'bg-amber-500/10 border-amber-500/20',  text: 'text-amber-400'  },
-  converted: { label: 'Converted', dot: 'bg-emerald-400', pill: 'bg-emerald-500/10 border-emerald-500/20', text: 'text-emerald-400' },
-  lost:      { label: 'Lost',      dot: 'bg-rose-400',    pill: 'bg-rose-500/10 border-rose-500/20',   text: 'text-rose-400'   },
+  new: { label: 'New', dot: 'bg-[var(--primary)]', pill: 'bg-[var(--primary)]/10 border-[var(--border)]', text: 'text-[var(--primary)]' },
+  contacted: { label: 'Contacted', dot: 'bg-amber-400', pill: 'bg-amber-500/10 border-amber-500/20', text: 'text-amber-400' },
+  converted: { label: 'Converted', dot: 'bg-[var(--primary)]', pill: 'bg-[var(--primary)]/10 border-[var(--border)]', text: 'text-[var(--primary)]' },
+  lost: { label: 'Lost', dot: 'bg-rose-400', pill: 'bg-rose-500/10 border-rose-500/20', text: 'text-rose-400' },
 };
 
 const FILTERS = [
-  { value: '',          label: 'All' },
-  { value: 'new',       label: 'New' },
+  { value: '', label: 'All' },
+  { value: 'new', label: 'New' },
   { value: 'contacted', label: 'Contacted' },
   { value: 'converted', label: 'Converted' },
-  { value: 'lost',      label: 'Lost' },
+  { value: 'lost', label: 'Lost' },
 ];
 
 const avatarColors = [
-  'from-cyan-500 to-cyan-600',
-  'from-cyan-500 to-cyan-700',
-  'from-cyan-500 to-cyan-600',
-  'from-cyan-500 to-cyan-700',
-  'from-cyan-500 to-cyan-600',
+  'from-[var(--primary)] to-[var(--primary)]',
+  'from-[var(--primary)] to-[var(--primary)]',
+  'from-[var(--primary)] to-[var(--primary)]',
+  'from-[var(--primary)] to-[var(--primary)]',
+  'from-[var(--primary)] to-[var(--primary)]',
 ];
 
 function getAvatarColor(name: string) {
@@ -42,17 +42,17 @@ const fadeUp = {
 
 export function MyLeads() {
   const dispatch = useAppDispatch();
-  const leads    = useAppSelector((s) => s.leads.myLeads) ?? [];
-  const loading  = useAppSelector((s) => s.leads.loading);
+  const leads = useAppSelector((s) => s.leads.myLeads) ?? [];
+  const loading = useAppSelector((s) => s.leads.loading);
   const pagination = useAppSelector((s) => s.leads.myPagination);
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [editNotes, setEditNotes]       = useState('');
-  const [editStatus, setEditStatus]     = useState('');
-  const [saving, setSaving]             = useState(false);
-  const [filter, setFilter]             = useState('');
-  const [search, setSearch]             = useState('');
-  const [page, setPage]                 = useState(1);
+  const [editNotes, setEditNotes] = useState('');
+  const [editStatus, setEditStatus] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [filter, setFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
 
   useEffect(() => { dispatch(fetchMyLeads({ page, limit: 20 })); }, [dispatch, page]);
   useEffect(() => { setPage(1); }, [filter, search]);
@@ -60,8 +60,8 @@ export function MyLeads() {
   const handleExport = async () => {
     try {
       const blob = await dispatch(exportLeads()).unwrap();
-      const url  = window.URL.createObjectURL(new Blob([blob]));
-      const a    = document.createElement('a');
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const a = document.createElement('a');
       a.href = url;
       a.download = `leads-${new Date().toISOString().split('T')[0]}.csv`;
       a.click();
@@ -79,7 +79,7 @@ export function MyLeads() {
     setSaving(true);
     try {
       await dispatch(updateLead({
-        id:   selectedLead.id,
+        id: selectedLead.id,
         data: { notes: editNotes, status: editStatus as Lead['status'] },
       })).unwrap();
       setSelectedLead((p) => p ? { ...p, notes: editNotes, status: editStatus as Lead['status'] } : null);
@@ -91,7 +91,7 @@ export function MyLeads() {
     .filter((l) => !filter || l.status === filter)
     .filter((l) =>
       !search ||
-      (l.name  || '').toLowerCase().includes(search.toLowerCase()) ||
+      (l.name || '').toLowerCase().includes(search.toLowerCase()) ||
       (l.email || '').toLowerCase().includes(search.toLowerCase()) ||
       (l.phone || '').includes(search)
     );
@@ -104,14 +104,14 @@ export function MyLeads() {
         <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5 pt-1">
           <div className="min-w-0">
             <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[var(--slate-light)] mb-1">CRM</p>
-            <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-[var(--text)] leading-none">Leads</h1>
+            <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-slate-800 leading-none">My Leads</h1>
             <p className="mt-1.5 text-xs sm:text-sm text-[var(--slate-light)]">Manage contacts captured from your AI calls</p>
           </div>
           {loading && (
             <div className="flex items-center gap-2 text-[var(--slate-light)]">
               <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
               <span className="text-xs">Loading…</span>
             </div>
@@ -121,7 +121,7 @@ export function MyLeads() {
             className="group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-[var(--text)] border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)] transition-all"
           >
             <svg className="w-3.5 h-3.5 transition-transform group-hover:translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
             Export CSV
           </button>
@@ -142,11 +142,10 @@ export function MyLeads() {
               <button
                 key={f.value}
                 onClick={() => setFilter(f.value)}
-                className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all ${
-                  filter === f.value
+                className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all ${filter === f.value
                     ? 'btn-cta'
                     : 'text-[var(--slate-light)] hover:text-[var(--text)] bg-[var(--surface)] hover:bg-[var(--surface-hover)]'
-                }`}
+                  }`}
               >
                 {f.label}
               </button>
@@ -163,7 +162,7 @@ export function MyLeads() {
             <div className="flex flex-col items-center justify-center py-24 text-center px-8">
               <div className="w-14 h-14 rounded-2xl bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-[var(--slate-gray)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
               <p className="text-sm font-medium text-[var(--slate-light)] mb-1">No leads found</p>
@@ -242,7 +241,7 @@ export function MyLeads() {
                         {/* Status */}
                         <td className="px-5 py-3.5">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${sc.pill} ${sc.text}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`}/>
+                            <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
                             {sc.label}
                           </span>
                         </td>
@@ -310,7 +309,7 @@ export function MyLeads() {
                   aria-label="Close"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
@@ -321,10 +320,10 @@ export function MyLeads() {
                 {/* Info grid */}
                 <div className="grid grid-cols-2 gap-2.5">
                   {[
-                    { label: 'Phone',  value: selectedLead.phone },
-                    { label: 'Email',  value: selectedLead.email },
+                    { label: 'Phone', value: selectedLead.phone },
+                    { label: 'Email', value: selectedLead.email },
                     { label: 'Purpose', value: selectedLead.purpose },
-                    { label: 'Agent',  value: selectedLead.agentName },
+                    { label: 'Agent', value: selectedLead.agentName },
                   ].filter((f) => f.value).map((field) => (
                     <div key={field.label} className="rounded-xl bg-[var(--surface)] border border-white/5 px-4 py-3">
                       <p className="text-[10px] font-medium uppercase tracking-widest text-[var(--slate-light)] mb-1">{field.label}</p>
@@ -336,7 +335,7 @@ export function MyLeads() {
                 </div>
 
                 {/* Divider */}
-                <div className="border-t border-white/5"/>
+                <div className="border-t border-white/5" />
 
                 {/* Status */}
                 <div>
@@ -346,11 +345,10 @@ export function MyLeads() {
                       <button
                         key={key}
                         onClick={() => setEditStatus(key)}
-                        className={`py-2.5 rounded-xl text-xs font-medium border transition-all ${
-                          editStatus === key
+                        className={`py-2.5 rounded-xl text-xs font-medium border transition-all ${editStatus === key
                             ? `${cfg.pill} ${cfg.text} border-current/30 shadow-sm`
                             : 'bg-[var(--surface)] text-[var(--slate-light)] border-white/5 hover:text-[var(--text)] hover:bg-[var(--surface-hover)]'
-                        }`}
+                          }`}
                       >
                         {cfg.label}
                       </button>
@@ -366,7 +364,7 @@ export function MyLeads() {
                     onChange={(e) => setEditNotes(e.target.value)}
                     placeholder="Add notes about this lead…"
                     rows={4}
-                    className="w-full px-4 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-xl text-sm text-[var(--text)] placeholder-white/30 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/20 transition-all resize-none"
+                    className="w-full px-4 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-xl text-sm text-[var(--text)] placeholder-white/30 focus:outline-none focus:border-[var(--border)] focus:ring-1 focus:ring-[var(--primary)]/20 transition-all resize-none"
                   />
                 </div>
 
@@ -380,8 +378,8 @@ export function MyLeads() {
                     {saving ? (
                       <>
                         <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
                         Saving…
                       </>

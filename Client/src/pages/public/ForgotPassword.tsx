@@ -109,7 +109,7 @@ export function ForgotPassword() {
           )}
 
           {success && (
-            <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-sm flex items-center gap-3">
+            <div className="p-4 bg-[var(--primary)]/10 border border-[var(--border)] rounded-xl text-[var(--primary)] text-sm flex items-center gap-3">
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
               {success}
             </div>
@@ -160,10 +160,10 @@ export function ForgotPassword() {
                   <div className="mt-2 space-y-1">
                     {passwordChecks.map((check, i) => (
                       <div key={i} className="flex items-center gap-2 text-xs">
-                        <span className={check.met ? 'text-emerald-400' : 'text-[var(--slate-gray)]'}>
+                        <span className={check.met ? 'text-[var(--primary)]' : 'text-[var(--slate-gray)]'}>
                           {check.met ? '✓' : '○'}
                         </span>
-                        <span className={check.met ? 'text-emerald-400' : 'text-[var(--slate-gray)]'}>
+                        <span className={check.met ? 'text-[var(--primary)]' : 'text-[var(--slate-gray)]'}>
                           {check.label}
                         </span>
                       </div>

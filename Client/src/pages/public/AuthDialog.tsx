@@ -59,8 +59,8 @@ function getPasswordStrength(password: string): { score: number; label: string; 
   if (/[^A-Za-z0-9]/.test(password)) score++;
   if (score <= 1) return { score, label: 'Weak',   color: 'bg-rose-500' };
   if (score <= 2) return { score, label: 'Fair',   color: 'bg-amber-500' };
-  if (score <= 3) return { score, label: 'Good',   color: 'bg-emerald-500' };
-  return           { score, label: 'Strong', color: 'bg-emerald-600' };
+  if (score <= 3) return { score, label: 'Good',   color: 'bg-[var(--primary)]' };
+  return           { score, label: 'Strong', color: 'bg-[var(--primary)]' };
 }
 
 function parseError(err: unknown, fallback: string): string {
@@ -310,10 +310,10 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
                       { label: 'Special character',        met: /[^A-Za-z0-9]/.test(resetPassword) },
                     ].map((check, i) => (
                       <div key={i} className="flex items-center gap-1.5 text-xs">
-                        <span className={check.met ? 'text-emerald-400' : 'text-slate-500'}>
+                        <span className={check.met ? 'text-[var(--primary)]' : 'text-[var(--muted)]'}>
                           {check.met ? '✓' : '○'}
                         </span>
-                        <span className={check.met ? 'text-emerald-400' : 'text-slate-500'}>
+                        <span className={check.met ? 'text-[var(--primary)]' : 'text-[var(--muted)]'}>
                           {check.label}
                         </span>
                       </div>
@@ -442,7 +442,7 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
                         <div
                           key={i}
                           className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                            i < strength.score ? strength.color : 'bg-slate-700'
+                            i < strength.score ? strength.color : 'bg-[var(--surface)]'
                           }`}
                         />
                       ))}
@@ -500,7 +500,7 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
             disabled={loading}
             className="w-full py-3.5 rounded-xl font-semibold text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
             style={{
-              background: 'linear-gradient(135deg, #10b981, #2563eb, #06b6d4)',
+              background: 'var(--gg)',
               backgroundSize: '200% 200%',
               boxShadow: '0 4px 20px rgba(16,185,129,0.25)',
             }}
@@ -586,12 +586,12 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
 function inputCls(hasError: boolean) {
   return [
     'w-full px-4 py-3.5 rounded-xl',
-    'text-white placeholder-slate-500',
-    'focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-transparent',
+    'text-white placeholder-[var(--muted)]',
+    'focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-transparent',
     'transition-all duration-200',
-    hasError 
-      ? 'border-rose-500/50 bg-rose-500/5' 
-      : 'border-slate-700/50 bg-slate-800/30',
+    hasError
+      ? 'border-rose-500/50 bg-rose-500/5'
+      : 'border-slate-700/50 bg-black',
     'border'
   ].join(' ');
 }

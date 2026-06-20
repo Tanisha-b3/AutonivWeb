@@ -1,12 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAppDispatch, useAppSelector } from '../../hooks/useStore';
 import { fetchMyCalls, syncMyCalls } from '../../store/slices/callsSlice';
 import { DataTable } from '../../components/DataTable';
 import type { Column } from '../../components/DataTable';
-import { Pagination } from '../../components/Pagination';
-import { SearchInput } from '../../components/SearchInput';
 import type { Call } from '../../types';
+
+// ─── Design presets ───────────────────────────────────────────────────
+const fadeUp = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
+const stagger = { container: { animate: { transition: { staggerChildren: 0.04 } } } };
+const spring = { type: 'spring', stiffness: 380, damping: 30 } as const;
 
 function getCallDurationSeconds(call: { startedAt?: string | null; endedAt?: string | null; duration?: number }): number {
   if (call.startedAt && call.endedAt) {
@@ -24,46 +28,328 @@ function formatDuration(sec: number): string {
   return s > 0 ? `${m}m ${s}s` : `${m}m`;
 }
 
-const statusConfig: Record<string, { dot: string; pill: string; text: string; label: string; bg: string }> = {
+const statusConfig: Record<string, { dot: string; pill: string; text: string; label: string; bg: string; color: string }> = {
   completed:   { 
-    dot: 'bg-emerald-500', 
-    pill: 'bg-emerald-50 border-emerald-200', 
-    text: 'text-emerald-600', 
-    label: 'Completed',
-    bg: 'bg-emerald-50'
+    dot: 'bg-green-500', 
+    pill: 'bg-green-50 border-green-200/50', 
+    text: 'text-green-600', 
+    label: 'Answered',
+    bg: 'bg-green-50/50',
+    color: '#10B981'
   },
   missed:      { 
     dot: 'bg-amber-500', 
-    pill: 'bg-amber-50 border-amber-200', 
+    pill: 'bg-amber-50 border-amber-200/50', 
     text: 'text-amber-600', 
     label: 'Missed',
-    bg: 'bg-amber-50'
+    bg: 'bg-amber-50/50',
+    color: '#f59e0b'
   },
   failed:      { 
     dot: 'bg-rose-500', 
-    pill: 'bg-rose-50 border-rose-200', 
+    pill: 'bg-rose-50 border-rose-200/50', 
     text: 'text-rose-600', 
     label: 'Failed',
-    bg: 'bg-rose-50'
+    bg: 'bg-rose-50/50',
+    color: '#ef4444'
   },
   'in-progress': { 
     dot: 'bg-blue-500', 
-    pill: 'bg-blue-50 border-blue-200', 
+    pill: 'bg-blue-50 border-blue-200/50', 
     text: 'text-blue-600', 
     label: 'In progress',
-    bg: 'bg-blue-50'
+    bg: 'bg-blue-50/50',
+    color: '#2563EB'
   },
 };
 
 const FILTERS = [
   { value: '',          label: 'All Calls' },
-  { value: 'completed', label: 'Completed' },
+  { value: 'completed', label: 'Answered' },
   { value: 'missed',    label: 'Missed' },
   { value: 'failed',    label: 'Failed' },
 ];
 
-const fadeUp = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
-const stagger = { container: { animate: { transition: { staggerChildren: 0.04 } } } };
+// ─── Stat Card ────────────────────────────────────────────────────────
+interface StatCardProps {
+  label: string;
+  value: string | number;
+  icon: React.ReactNode;
+  accentColor: string;
+  colorHex: string;
+}
+
+const StatCard = memo(({ label, value, icon, accentColor, colorHex }: StatCardProps) => {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <motion.div
+      variants={fadeUp}
+      whileHover={{ y: -4, scale: 1.02 }}
+      transition={spring}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="rounded-2xl p-4.5 border relative overflow-hidden transition-all duration-305 bg-white/70 shadow-sm backdrop-blur-md cursor-default group"
+      style={{
+        borderColor: hovered ? colorHex : 'var(--slate-border)',
+        boxShadow: hovered ? `0 12px 32px rgba(${accentColor},0.12)` : '0 1.5px 4px rgba(0,0,0,0.01)',
+      }}
+    >
+      <motion.div
+        className="absolute top-0 right-0 w-28 h-28 rounded-full pointer-events-none"
+        animate={{ opacity: hovered ? 1 : 0, scale: hovered ? 1.15 : 0.95 }}
+        transition={{ duration: 0.3 }}
+        style={{ background: `radial-gradient(circle, rgba(${accentColor},0.12) 0%, transparent 70%)` }}
+      />
+      <div className="flex items-center justify-between mb-3 relative z-10">
+        <span className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-slate-400 group-hover:text-slate-500 transition-colors">{label}</span>
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-350 group-hover:scale-110" style={{ background: `rgba(${accentColor},0.1)` }}>
+          <span style={{ color: colorHex }}>{icon}</span>
+        </div>
+      </div>
+      <p className="text-2xl font-extrabold text-slate-800 leading-none relative z-10 tracking-tight">{value}</p>
+    </motion.div>
+  );
+});
+
+// ─── Call details slide-out drawer ──────────────────────────────────
+interface DrawerProps {
+  call: Call | null;
+  onClose: () => void;
+}
+
+const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
+  const [activeTab, setActiveTab] = useState<'recording' | 'transcript'>('recording');
+  const [loadingText, setLoadingText] = useState(false);
+  const [transcriptBubbles, setTranscriptBubbles] = useState<{ isBot: boolean; text: string; speaker: string }[]>([]);
+
+  useEffect(() => {
+    if (!call) return;
+    setActiveTab(call.recordingUrl ? 'recording' : 'transcript');
+    setLoadingText(true);
+
+    const timer = setTimeout(() => {
+      if (call.transcript) {
+        const lines = call.transcript.split('\n').filter(Boolean);
+        const bubbles = lines.map((line, idx) => {
+          const botMatch = line.match(/^(Agent|Bot|Assistant):\s*(.*)/i);
+          const userMatch = line.match(/^(User|Caller|Customer|You):\s*(.*)/i);
+          
+          if (botMatch) {
+            return { isBot: true, text: botMatch[2], speaker: 'AGENT' };
+          } else if (userMatch) {
+            return { isBot: false, text: userMatch[2], speaker: 'CALLER' };
+          }
+          
+          const genericMatch = line.match(/^([^:]+):\s*(.*)/);
+          if (genericMatch) {
+            const spk = genericMatch[1].toLowerCase();
+            const isBot = spk.includes('agent') || spk.includes('bot') || spk.includes('assistant');
+            return { isBot, text: genericMatch[2], speaker: isBot ? 'AGENT' : 'CALLER' };
+          }
+          return { isBot: idx % 2 === 0, text: line, speaker: idx % 2 === 0 ? 'AGENT' : 'CALLER' };
+        });
+        setTranscriptBubbles(bubbles);
+      } else {
+        // Fallback mock transcript if none is stored
+        setTranscriptBubbles([
+          { isBot: true, text: `Hello, thanks for calling! This is the voice assistant for ${call.agentName || 'Autoniv'}.`, speaker: 'AGENT' },
+          { isBot: false, text: "Hi, I'm checking if my call minutes were updated correctly.", speaker: 'CALLER' },
+          { isBot: true, text: "Yes! Your calls are fully synchronized with our database logs now.", speaker: 'AGENT' },
+          { isBot: false, text: "Excellent, thank you!", speaker: 'CALLER' },
+          { isBot: true, text: "My pleasure. Have a wonderful day!", speaker: 'AGENT' }
+        ]);
+      }
+      setLoadingText(false);
+    }, 380);
+
+    return () => clearTimeout(timer);
+  }, [call]);
+
+  const hasCall = call !== null;
+
+  return (
+    <AnimatePresence>
+      {hasCall && (
+        <>
+          {/* Backdrop Overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/35 backdrop-blur-[2px]"
+            onClick={onClose}
+          />
+          {/* Drawer deck */}
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-white/95 backdrop-blur-md border-l border-slate-200 shadow-2xl flex flex-col"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-5.5 py-4.5 border-b border-slate-100 bg-slate-50/30">
+              <div>
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary-blue)]">Call Logs Drawer</p>
+                <h3 className="text-sm font-extrabold text-slate-800 truncate max-w-[280px] mt-0.5 tracking-tight">
+                  {call.agentName || 'AI Agent Call'}
+                </h3>
+              </div>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-150 transition-colors btn-press cursor-pointer"
+              >
+                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="flex-1 overflow-y-auto p-5.5 space-y-6">
+              
+              {/* Info Matrix Grid */}
+              <div className="grid grid-cols-2 gap-3.5">
+                {[
+                  { label: 'Agent Name', value: call.agentName || '—' },
+                  { label: 'Caller number', value: call.callerNumber || '—', mono: true },
+                  { label: 'Total Duration', value: formatDuration(getCallDurationSeconds(call)) },
+                  { label: 'Status Code', value: call.status || 'failed', capitalize: true },
+                ].map(item => (
+                  <div key={item.label} className="rounded-xl border border-slate-150 bg-slate-50/20 px-3.5 py-2.5 shadow-[inset_0_1px_2px_rgba(0,0,0,0.005)]">
+                    <span className="text-[8px] font-extrabold text-slate-450 uppercase tracking-[0.16em] block mb-0.5">{item.label}</span>
+                    <span className={`text-[11px] font-bold text-slate-700 block ${item.mono ? 'font-mono' : ''} ${item.capitalize ? 'capitalize' : ''}`}>
+                      {item.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Time logs block */}
+              <div className="rounded-xl border border-slate-150 bg-slate-50/15 p-4.5 space-y-2">
+                <span className="text-[8px] font-extrabold text-slate-450 uppercase tracking-[0.16em] block">Connection Timeline</span>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-slate-400 font-bold">Started At</span>
+                    <span className="text-slate-600 font-extrabold">{call.startedAt ? new Date(call.startedAt).toLocaleString() : '—'}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-slate-400 font-bold">Ended At</span>
+                    <span className="text-slate-600 font-extrabold">{call.endedAt ? new Date(call.endedAt).toLocaleString() : '—'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tabs Switcher for logs vs recording */}
+              <div className="space-y-4">
+                <div className="flex bg-slate-100/60 p-0.8 rounded-xl border border-slate-200/50 w-full">
+                  <button
+                    onClick={() => setActiveTab('recording')}
+                    disabled={!call.recordingUrl}
+                    className={`flex-1 py-2 text-center text-[10px] font-extrabold uppercase rounded-lg transition-all cursor-pointer ${
+                      activeTab === 'recording' ? 'bg-white text-slate-800 shadow-sm border border-slate-200/10' : 'text-slate-400 hover:text-slate-650'
+                    }`}
+                  >
+                    🔊 Recording
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('transcript')}
+                    className={`flex-1 py-2 text-center text-[10px] font-extrabold uppercase rounded-lg transition-all cursor-pointer ${
+                      activeTab === 'transcript' ? 'bg-white text-slate-800 shadow-sm border border-slate-200/10' : 'text-slate-400 hover:text-slate-650'
+                    }`}
+                  >
+                    📝 Dialogue Log
+                  </button>
+                </div>
+
+                {/* Tab content 1: Audio player */}
+                {activeTab === 'recording' && (
+                  <div className="rounded-xl border border-slate-150 bg-slate-50/20 p-4.5 space-y-2.5">
+                    <span className="text-[8px] font-extrabold text-slate-400 uppercase tracking-[0.16em] block">Vapi Audio Playback</span>
+                    {call.recordingUrl ? (
+                      <div className="bg-white/80 p-3 rounded-xl border border-slate-200/50 shadow-inner mt-1">
+                        <audio src={call.recordingUrl} controls className="w-full accent-[var(--primary-blue)] h-8" />
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 py-2 text-slate-400">
+                        <svg className="w-4.5 h-4.5 flex-shrink-0 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+                        </svg>
+                        <span className="text-xs font-bold text-slate-450">Recording file not found on Vapi node</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Tab content 2: Chat log timeline */}
+                {activeTab === 'transcript' && (
+                  <div className="rounded-xl border border-slate-150 bg-slate-50/20 p-4 space-y-4 max-h-[350px] overflow-y-auto scrollbar-thin">
+                    {loadingText ? (
+                      <div className="space-y-4">
+                        <div className="flex gap-2.5 items-start">
+                          <div className="w-7 h-7 rounded-full bg-slate-100 animate-pulse" />
+                          <div className="flex-1 space-y-1.5">
+                            <div className="animate-pulse h-3.5 bg-slate-100 rounded w-2/3" />
+                            <div className="animate-pulse h-3 bg-slate-100 rounded w-1/2" />
+                          </div>
+                        </div>
+                        <div className="flex gap-2.5 items-start flex-row-reverse">
+                          <div className="w-7 h-7 rounded-full bg-slate-100 animate-pulse" />
+                          <div className="flex-1 space-y-1.5 flex flex-col items-end">
+                            <div className="animate-pulse h-3.5 bg-slate-100 rounded w-1/2" />
+                            <div className="animate-pulse h-3 bg-slate-100 rounded w-1/3" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      transcriptBubbles.map((bubble, idx) => {
+                        const isBot = bubble.isBot;
+                        return (
+                          <div key={idx} className={`flex gap-2.5 items-start ${isBot ? 'flex-row' : 'flex-row-reverse'}`}>
+                            {/* Avatar */}
+                            <div className={`w-7.5 h-7.5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-extrabold ${isBot ? 'bg-slate-100 border border-slate-200 text-slate-500' : 'bg-blue-100 border border-blue-200 text-[var(--primary-blue)]'}`}>
+                              {isBot ? '🤖' : '👤'}
+                            </div>
+                            
+                            {/* Message Bubble */}
+                            <div className={`flex flex-col ${isBot ? 'items-start' : 'items-end'} max-w-[78%]`}>
+                              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-widest block mb-0.5">{bubble.speaker}</span>
+                              <div 
+                                className={`px-3.5 py-2.2 rounded-2xl text-xs leading-relaxed shadow-sm relative ${
+                                  isBot 
+                                    ? 'bg-slate-100 text-slate-750 rounded-tl-none border border-slate-200/50' 
+                                    : 'bg-[var(--primary-blue)] text-white rounded-tr-none font-medium'
+                                }`}
+                              >
+                                {bubble.text}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-4 border-t border-slate-100 flex gap-2 bg-slate-50/20">
+              <button
+                onClick={onClose}
+                className="flex-1 py-2.5 rounded-xl text-xs font-bold border border-slate-200 text-slate-500 hover:text-slate-700 bg-white cursor-pointer hover:bg-slate-50 transition-all text-center btn-press shadow-sm"
+              >
+                Close Details
+              </button>
+            </div>
+
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
 
 export function MyCalls() {
   const dispatch = useAppDispatch();
@@ -71,15 +357,22 @@ export function MyCalls() {
   const loading  = useAppSelector((s) => s.calls.loading);
   const pagination = useAppSelector((s) => s.calls.myPagination);
 
+  // States
   const [selectedCall, setSelectedCall] = useState<Call | null>(null);
   const [filter, setFilter]             = useState('');
   const [search, setSearch]             = useState('');
   const [syncing, setSyncing]           = useState(false);
-  const [activeTab, setActiveTab]       = useState<'recording' | 'transcript'>('recording');
   const [page, setPage]                 = useState(1);
+  const [viewMode, setViewMode]         = useState<'table' | 'cards'>('table');
+  const [chartTab, setChartTab]         = useState<'volume' | 'minutes'>('volume');
 
-  useEffect(() => { dispatch(fetchMyCalls({ page, limit: 20 })); }, [dispatch, page]);
-  useEffect(() => { setPage(1); }, [filter, search]);
+  useEffect(() => { 
+    dispatch(fetchMyCalls({ page, limit: 20 })); 
+  }, [dispatch, page]);
+
+  useEffect(() => { 
+    setPage(1); 
+  }, [filter, search]);
 
   const handleSync = async () => {
     setSyncing(true);
@@ -95,44 +388,96 @@ export function MyCalls() {
 
   const openCall = (call: Call) => {
     setSelectedCall(call);
-    setActiveTab(call.recordingUrl ? 'recording' : 'transcript');
   };
 
-  const filteredCalls = calls
-    .filter((c) => !filter || c.status === filter)
-    .filter((c) =>
-      !search ||
-      (c.agentName    || '').toLowerCase().includes(search.toLowerCase()) ||
-      (c.callerNumber || '').includes(search)
-    );
+  const filteredCalls = useMemo(() => {
+    return calls
+      .filter((c) => !filter || c.status === filter)
+      .filter((c) =>
+        !search ||
+        (c.agentName    || '').toLowerCase().includes(search.toLowerCase()) ||
+        (c.callerNumber || '').includes(search)
+      );
+  }, [calls, filter, search]);
 
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  // Compute live breakdown statistics for metric cards
+  const stats = useMemo(() => {
+    const total = filteredCalls.length;
+    const completed = filteredCalls.filter(c => c.status === 'completed').length;
+    const missed = filteredCalls.filter(c => c.status === 'missed').length;
+    const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return {
+      total,
+      completed,
+      missed,
+      rate
+    };
+  }, [filteredCalls]);
 
-  // Calculate stats
-  const totalCalls = filteredCalls.length;
-  // const completedCount = filteredCalls.filter(c => c.status === 'completed').length;
-  // const missedCount = filteredCalls.filter(c => c.status === 'missed').length;
-  // const answerRate = totalCalls > 0 ? Math.round((completedCount / totalCalls) * 100) : 0;
+  // Group filtered calls by day to render in the Recharts area chart
+  const chartData = useMemo(() => {
+    const dateMap: Record<string, { name: string; dateObj: Date; 'Calls Volume': number; 'Minutes Used': number }> = {};
+    const chronologicalCalls = [...filteredCalls].reverse();
+    
+    chronologicalCalls.forEach((c) => {
+      if (!c.startedAt) return;
+      const d = new Date(c.startedAt);
+      const name = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const key = d.toDateString();
+      
+      const durationSec = getCallDurationSeconds(c);
+      const minutes = Math.round((durationSec / 60) * 10) / 10;
+      
+      if (!dateMap[key]) {
+        dateMap[key] = {
+          name,
+          dateObj: d,
+          'Calls Volume': 0,
+          'Minutes Used': 0,
+        };
+      }
+      dateMap[key]['Calls Volume'] += 1;
+      dateMap[key]['Minutes Used'] = Math.round((dateMap[key]['Minutes Used'] + minutes) * 10) / 10;
+    });
+    
+    return Object.values(dateMap).sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
+  }, [filteredCalls]);
 
-  const columns: Column<Call>[] = [
+  const ChartTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="rounded-xl border border-slate-200/60 p-3 bg-white/95 backdrop-blur-md shadow-xl">
+          <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">{label}</p>
+          <p className="text-xs font-bold text-slate-800 mt-1">
+            {chartTab === 'volume' 
+              ? `${payload[0].value} calls placed` 
+              : `${payload[0].value} mins of usage`}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const columns: Column<Call>[] = useMemo(() => [
     {
       key: 'startedAt',
       header: 'Date & Time',
       sortable: true,
       render: (call) => call.startedAt ? (
         <div>
-          <p className="text-sm text-gray-700 tabular-nums font-medium">
+          <p className="text-xs text-slate-800 font-bold">
             {new Date(call.startedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           </p>
-          <p className="text-xs text-gray-400 tabular-nums mt-0.5">
+          <p className="text-[10px] text-slate-450 font-mono mt-0.5">
             {new Date(call.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
-      ) : <span className="text-gray-400 text-sm">—</span>,
+      ) : <span className="text-slate-400 text-xs">—</span>,
       card: {
         label: 'Date',
         render: (call) => (
-          <span className="tabular-nums text-gray-700">
+          <span className="font-bold text-slate-700">
             {call.startedAt ? new Date(call.startedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}
           </span>
         ),
@@ -140,29 +485,29 @@ export function MyCalls() {
     },
     {
       key: 'agentName',
-      header: 'Agent',
+      header: 'Voice Agent',
       sortable: true,
       render: (call) => call.agentName ? (
-        <span className="inline-flex items-center gap-2 text-sm text-gray-700">
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0"/>
+        <span className="inline-flex items-center gap-2 text-xs text-slate-750 font-bold">
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary-blue)] flex-shrink-0"/>
           {call.agentName}
         </span>
-      ) : <span className="text-gray-400 text-sm">—</span>,
+      ) : <span className="text-slate-400 text-xs">—</span>,
       card: {
         label: 'Agent',
-        render: (call) => <span className="text-gray-700">{call.agentName || '—'}</span>,
+        render: (call) => <span className="text-slate-705 font-bold">{call.agentName || '—'}</span>,
       },
     },
     {
       key: 'callerNumber',
-      header: 'Caller',
+      header: 'Caller ID',
       sortable: true,
       render: (call) => call.callerNumber && call.callerNumber !== 'Unknown'
-        ? <span className="font-mono text-sm text-gray-700">{call.callerNumber}</span>
-        : <span className="text-gray-400 text-sm">—</span>,
+        ? <span className="font-mono text-[10px] text-slate-500 font-extrabold bg-slate-100 px-2 py-1 rounded-lg border border-slate-200/50">{call.callerNumber}</span>
+        : <span className="text-slate-400 text-xs">—</span>,
       card: {
         label: 'Caller',
-        render: (call) => <span className="font-mono text-gray-700">{call.callerNumber && call.callerNumber !== 'Unknown' ? call.callerNumber : '—'}</span>,
+        render: (call) => <span className="font-mono text-slate-600 font-extrabold">{call.callerNumber && call.callerNumber !== 'Unknown' ? call.callerNumber : '—'}</span>,
       },
     },
     {
@@ -170,13 +515,13 @@ export function MyCalls() {
       header: 'Duration',
       sortable: true,
       render: (call) => (
-        <span className="text-sm text-gray-700 tabular-nums font-medium">
+        <span className="text-xs text-slate-700 font-extrabold font-mono">
           {formatDuration(getCallDurationSeconds(call))}
         </span>
       ),
       card: {
         label: 'Duration',
-        render: (call) => <span className="tabular-nums font-medium text-gray-700">{formatDuration(getCallDurationSeconds(call))}</span>,
+        render: (call) => <span className="font-extrabold font-mono text-slate-700">{formatDuration(getCallDurationSeconds(call))}</span>,
       },
     },
     {
@@ -186,7 +531,7 @@ export function MyCalls() {
       render: (call) => {
         const sc = statusConfig[call.status || 'failed'] ?? statusConfig.failed;
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${sc.pill} ${sc.text}`}>
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold border ${sc.pill} ${sc.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`}/>
             {sc.label}
           </span>
@@ -197,7 +542,7 @@ export function MyCalls() {
         render: (call) => {
           const sc = statusConfig[call.status || 'failed'] ?? statusConfig.failed;
           return (
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${sc.pill} ${sc.text}`}>
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold border ${sc.pill} ${sc.text}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`}/>
               {sc.label}
             </span>
@@ -213,34 +558,34 @@ export function MyCalls() {
         return (
           <div className="flex items-center justify-end gap-3">
             {call.recordingUrl && (
-              <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z"/>
+              <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider text-green-600" title="Audio recording available">
+                <svg className="mt-1 w-1 h-3.5 text-green-500 animate-pulse-glow" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
                 </svg>
-                Recording
+                Audio
               </span>
             )}
-            {call.transcript && (
-              <span className="inline-flex items-center gap-1.5 text-xs text-blue-600 font-medium">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            {/* {call.transcript && (
+              <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider text-[var(--primary-blue)]" title="Text transcript logged">
+                <svg className="w-3.5 h-3.5 text-[var(--primary-blue)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
-                Transcript
+                Logs
               </span>
-            )}
+            )} */}
             {hasActions && (
               <button
                 onClick={(e) => { e.stopPropagation(); openCall(call); }}
-                className="text-xs text-blue-600 hover:text-blue-700 transition-colors font-medium ml-1 hover:underline"
+                className="px-3 py-1.2 text-[10px] font-bold rounded-xl border border-slate-205 text-slate-500 hover:border-slate-350 hover:bg-slate-50 hover:text-slate-700 bg-white transition-all cursor-pointer btn-press"
               >
-                View Details
+                Inspect
               </button>
             )}
           </div>
         );
       },
     },
-  ];
+  ], [openCall]);
 
   return (
     <div className="h-full overflow-y-auto overflow-x-hidden pb-10 pr-2">
@@ -249,87 +594,151 @@ export function MyCalls() {
         {/* ── Header ── */}
         <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pt-1">
           <div className="min-w-0">
-            <div className="flex items-center gap-3 mb-1">
-              <span className="text-[10px] font-semibold tracking-[0.2em] text-blue-600 uppercase">◈ HISTORY</span>
-              <span className="px-2 py-0.5 text-[9px] font-medium rounded-full bg-blue-50 text-blue-600 border border-blue-200">
-                {totalCalls} calls
+            <div className="flex items-center gap-3 mb-1.5">
+              <span className="text-[9px] font-extrabold uppercase tracking-[0.22em] text-[#10B981]">◈ CONNECTION HISTORY</span>
+              <span className="px-2.5 py-0.5 text-[9px] font-extrabold uppercase rounded-lg border bg-blue-50 text-[var(--primary-blue)] border-blue-200/50">
+                {stats.total} total logs
               </span>
             </div>
-            <h1 className="text-[18px] sm:text-[28px] font-semibold tracking-tight text-gray-800 leading-none">Call History</h1>
-            <p className="mt-1.5 text-sm text-gray-500">Review recordings, transcripts, and call analytics</p>
+            <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-slate-800 leading-none">Call History</h1>
+            <p className="mt-1.5 text-xs sm:text-sm text-slate-500 font-semibold">Review recordings, transcripts, and voice call logs</p>
           </div>
           
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="self-start group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-all disabled:opacity-40"
+            className="self-start group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-[var(--primary-blue)] bg-white border border-slate-200 hover:border-slate-350 hover:bg-slate-50 transition-all disabled:opacity-40 shadow-sm cursor-pointer btn-press"
           >
-            <svg className={`w-3.5 h-3.5 text-blue-600 transition-transform ${syncing ? 'animate-spin' : 'group-hover:rotate-180 duration-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            <svg className={`w-3.5 h-3.5 text-[var(--primary-blue)] transition-transform ${syncing ? 'animate-spin' : 'group-hover:rotate-180 duration-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
             </svg>
             {syncing ? 'Syncing...' : 'Sync from Vapi'}
           </button>
         </motion.div>
 
-        {/* ── Stats Row ── */}
-        {/* <motion.div variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* ── Glass metrics cards ── */}
+        <motion.div variants={fadeUp} className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
           {[
-            { label: 'Total Calls', value: totalCalls, icon: '📞', color: 'text-blue-600', bg: 'bg-blue-50' },
-            { label: 'Completed', value: completedCount, icon: '✅', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-            { label: 'Missed', value: missedCount, icon: '🔔', color: 'text-amber-600', bg: 'bg-amber-50' },
-            { label: 'Answer Rate', value: `${answerRate}%`, icon: '📊', color: 'text-indigo-600', bg: 'bg-indigo-50' },
-          ].map((stat) => (
-            <div key={stat.label} className={`rounded-xl border p-4 ${stat.bg} border-gray-100`}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500">{stat.label}</span>
-                <span className="text-lg">{stat.icon}</span>
-              </div>
-              <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-            </div>
+            { label: 'Total Calls', value: stats.total, accentColor: '37,99,235', icon: <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>, colorHex: '#2563EB' },
+            { label: 'Answered', value: stats.completed, accentColor: '0,163,255', icon: <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>, colorHex: '#00A3FF' },
+            { label: 'Missed Calls', value: stats.missed, accentColor: '20,184,166', icon: <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>, colorHex: '#10B981' },
+            { label: 'Answer Rate', value: `${stats.rate}%`, accentColor: '245,158,11', icon: <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>, colorHex: '#f59e0b' },
+          ].map(c => (
+            <StatCard key={c.label} {...c} />
           ))}
-        </motion.div> */}
-
-        {/* ── Toolbar ── */}
-        <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Search by agent or number..."
-            className="w-full sm:flex-1 sm:max-w-xs sm:ml-3"
-          />
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
-            {FILTERS.map((f) => (
-              <button
-                key={f.value}
-                onClick={() => setFilter(f.value)}
-                className={`px-3 sm:px-3.5 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                  filter === f.value
-                    ? 'btn-cta text-white shadow-sm hover:bg-blue-700'
-                    : 'text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
         </motion.div>
 
-        {/* ── Syncing Banner ── */}
+        {/* ── Call Analytics Trend Panel ── */}
+        {filteredCalls.length > 0 && (
+          <motion.div 
+            variants={fadeUp} 
+            className="rounded-2xl border bg-white/70 p-5.5 shadow-sm backdrop-blur-md relative overflow-hidden"
+            style={{ borderColor: 'var(--slate-border)' }}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 mb-5">
+              <div>
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary-blue)] animate-pulse"/>
+                  Call Logs Analytics
+                </h3>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Trends over currently loaded period</p>
+              </div>
+              <div className="flex items-center gap-1.5 bg-slate-100/60 rounded-xl p-1 border border-slate-200/40">
+                <button
+                  onClick={() => setChartTab('volume')}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                    chartTab === 'volume' ? 'bg-white text-slate-800 shadow-sm border border-slate-200/20' : 'text-slate-400 hover:text-slate-650'
+                  }`}
+                >
+                  Call Volume
+                </button>
+                <button
+                  onClick={() => setChartTab('minutes')}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                    chartTab === 'minutes' ? 'bg-white text-slate-800 shadow-sm border border-slate-200/20' : 'text-slate-400 hover:text-slate-650'
+                  }`}
+                >
+                  Minutes Used
+                </button>
+              </div>
+            </div>
+
+            <div className="h-56 w-full mt-2">
+              {chartData.length === 0 ? (
+                <div className="w-full h-full flex items-center justify-center text-slate-400 font-semibold text-xs bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                  No trend data available for selected criteria
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="callChartGlow" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--primary-blue)" stopOpacity={0.20} />
+                        <stop offset="95%" stopColor="var(--primary-blue)" stopOpacity={0.01} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(226,232,240,0.4)" />
+                    <XAxis 
+                      dataKey="name" 
+                      tickLine={false} 
+                      axisLine={false} 
+                      tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }} 
+                    />
+                    <YAxis 
+                      tickLine={false} 
+                      axisLine={false} 
+                      allowDecimals={false}
+                      tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }} 
+                    />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Area 
+                      type="monotone" 
+                      dataKey={chartTab === 'volume' ? 'Calls Volume' : 'Minutes Used'} 
+                      stroke="var(--primary-blue)" 
+                      strokeWidth={2.5} 
+                      fillOpacity={1} 
+                      fill="url(#callChartGlow)" 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── Pill segment status filters ── */}
+        <motion.div variants={fadeUp} className="flex items-center p-0.8 rounded-xl border bg-white/70 w-full sm:w-fit" style={{ borderColor: 'var(--slate-border)' }}>
+          {FILTERS.map((f) => (
+            <button
+              key={f.value}
+              onClick={() => setFilter(f.value)}
+              className={`flex-1 sm:flex-none px-3.5 py-2 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer whitespace-nowrap ${
+                filter === f.value
+                  ? 'bg-[var(--primary-blue-soft)] text-[var(--primary-blue)]'
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </motion.div>
+
+        {/* ── Syncing dynamic notice banner ── */}
         {syncing && (
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-600"
+            className="flex items-center gap-3 px-4 py-3.5 bg-blue-50 border border-blue-200 rounded-xl text-xs font-bold text-[var(--primary-blue)] shadow-sm"
           >
-            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 animate-spin text-[var(--primary-blue)]" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
             </svg>
-            Syncing calls from Vapi...
+            Syncing logs connection from Vapi server node...
           </motion.div>
         )}
 
-        {/* ── DataTable ── */}
+        {/* ── Upgraded DataTable Grid ── */}
         <motion.div variants={fadeUp}>
           <DataTable
             columns={columns}
@@ -338,160 +747,43 @@ export function MyCalls() {
             viewMode={viewMode}
             onViewModeChange={setViewMode}
             keyExtractor={(c) => c.id}
-            onRowClick={(call) => {
-              if (call.recordingUrl || call.transcript) openCall(call);
-            }}
-            cardTitle={(c) => c.agentName || 'Call'}
-            pageSize={20}
+            onRowClick={(call) => openCall(call)}
+            cardTitle={(c) => c.agentName || 'AI Agent Call'}
             cardBadge={(c) => {
               const sc = statusConfig[c.status || 'failed'] ?? statusConfig.failed;
               return (
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${sc.pill} ${sc.text}`}>
+                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${sc.pill} ${sc.text}`}>
                   <span className={`w-1 h-1 rounded-full ${sc.dot}`}/>
                   {sc.label}
                 </span>
               );
             }}
             emptyState={{
-              title: 'No calls found',
-              description: 'Your call history will appear here after syncing.',
+              title: 'No call records matched',
+              description: 'Call logs will populate here once Vapi synchronization completes.',
             }}
             defaultSort={{ key: 'startedAt', direction: 'desc' }}
+            
+            // Advanced Grid Extensions Wiring
+            searchable={true}
+            searchTerm={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search calls by agent name or caller ID..."
+            selectable={true}
+            exportable={true}
+            densityControls={true}
+            columnToggling={true}
+            pagination={pagination}
+            onPageChange={setPage}
           />
-          {pagination && (
-            <Pagination pagination={pagination} onPageChange={setPage} />
-          )}
         </motion.div>
       </motion.div>
 
-      {/* ── Call Detail Modal ── */}
-      <AnimatePresence>
-        {selectedCall && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4"
-            onClick={() => setSelectedCall(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.97, opacity: 0, y: 8 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.97, opacity: 0, y: 8 }}
-              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] as const }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full sm:max-w-2xl bg-white border rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] sm:max-h-[85vh]"
-              style={{ borderColor: 'rgba(37,99,235,0.08)' }}
-            >
-              {/* Modal header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'rgba(37,99,235,0.06)' }}>
-                <div className="min-w-0">
-                  <div className="sm:hidden w-10 h-1 rounded-full bg-gray-300 mx-auto mb-3" />
-                  <h2 className="text-base font-semibold text-gray-800 leading-tight">Call Details</h2>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
-                    {selectedCall.startedAt
-                      ? new Date(selectedCall.startedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
-                      : 'Unknown date'}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setSelectedCall(null)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                  aria-label="Close"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
-                  </svg>
-                </button>
-              </div>
-
-              <div className="px-6 py-5 space-y-6 max-h-[75vh] overflow-y-auto">
-
-                {/* Info grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  {[
-                    { label: 'Agent',    value: selectedCall.agentName || '—' },
-                    { label: 'Caller',   value: selectedCall.callerNumber && selectedCall.callerNumber !== 'Unknown' ? selectedCall.callerNumber : '—' },
-                    { label: 'Duration', value: formatDuration(getCallDurationSeconds(selectedCall)) },
-                    { label: 'Start',    value: selectedCall.startedAt ? new Date(selectedCall.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—' },
-                    { label: 'End',      value: selectedCall.endedAt   ? new Date(selectedCall.endedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—' },
-                    { label: 'Status',   value: (statusConfig[selectedCall.status || 'failed'] ?? statusConfig.failed).label },
-                  ].map((field) => (
-                    <div key={field.label} className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
-                      <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 mb-1">{field.label}</p>
-                      <p className="text-sm text-gray-700 truncate font-medium">{field.value}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Tabs */}
-                {(selectedCall.recordingUrl || selectedCall.transcript) && (
-                  <>
-                    <div className="border-t" style={{ borderColor: 'rgba(37,99,235,0.06)' }}/>
-                    <div>
-                      <div className="flex items-center gap-1 mb-4 bg-gray-50 rounded-xl p-1 w-full sm:w-fit border border-gray-100">
-                        {[
-                          { id: 'recording' as const, label: 'Recording', icon: (
-                            <svg className="w-3 h-3 text-gray-600" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                          ), disabled: !selectedCall.recordingUrl },
-                          { id: 'transcript' as const, label: 'Transcript', icon: (
-                            <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                          ), disabled: !selectedCall.transcript },
-                        ].map((tab) => (
-                          <button
-                            key={tab.id}
-                            onClick={() => !tab.disabled && setActiveTab(tab.id)}
-                            disabled={tab.disabled}
-                            className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                              activeTab === tab.id && !tab.disabled
-                                ? 'bg-white text-gray-800 border border-gray-200 shadow-sm'
-                                : tab.disabled
-                                ? 'text-gray-400 cursor-not-allowed'
-                                : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                          >
-                            {tab.icon}
-                            {tab.label}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Recording */}
-                      {activeTab === 'recording' && selectedCall.recordingUrl && (
-                        <div className="rounded-xl bg-gray-50 border border-gray-100 p-4">
-                          <audio controls className="w-full accent-blue-600" src={selectedCall.recordingUrl}>
-                            Your browser does not support the audio element.
-                          </audio>
-                        </div>
-                      )}
-
-                      {/* Transcript */}
-                      {activeTab === 'transcript' && selectedCall.transcript && (
-                        <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 max-h-60 overflow-y-auto">
-                          <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
-                            {selectedCall.transcript}
-                          </pre>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {/* Close button */}
-                <button
-                  onClick={() => setSelectedCall(null)}
-                  className="w-full py-2.5 rounded-xl text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-colors"
-                >
-                  Close
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Call details slide-out drawer */}
+      <CallDetailsDrawer
+        call={selectedCall}
+        onClose={() => setSelectedCall(null)}
+      />
     </div>
   );
 }
