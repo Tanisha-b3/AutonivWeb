@@ -551,15 +551,20 @@ function CallMeDialog({
   const [countryCode, setCountryCode] = useState('+91');
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const countryDropdownRef = useRef<HTMLDivElement>(null);
+  const [countrySearch, setCountrySearch] = useState('');
 
   useEffect(() => {
-    if (open) { setCalleeName(''); setPhone(''); setError(''); setCopied(false); setCountryCode('+91'); setShowCountryDropdown(false); }
+    if (open) {
+      setCalleeName(''); setPhone(''); setError(''); setCopied(false);
+      setCountryCode('+91'); setShowCountryDropdown(false); setCountrySearch('');
+    }
   }, [open]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (countryDropdownRef.current && !countryDropdownRef.current.contains(e.target as Node)) {
         setShowCountryDropdown(false);
+        setCountrySearch('');
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -568,22 +573,36 @@ function CallMeDialog({
 
   const selectedCountry = COUNTRY_CODES.find(c => c.code === countryCode) || COUNTRY_CODES[3];
 
+  const filteredCountries = countrySearch.trim()
+    ? COUNTRY_CODES.filter(c =>
+        c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+        c.code.includes(countrySearch)
+      )
+    : COUNTRY_CODES;
+
+  const cleanedDigits = phone.replace(/\D/g, '');
+  const isValidLength = cleanedDigits.length >= 7 && cleanedDigits.length <= 12;
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/[^\d\s]/g, '');
+    setPhone(raw);
+    if (error) setError('');
+  };
+
   const handleCall = () => {
-    const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length < 7) {
+    if (cleanedDigits.length < 7) {
       setError('Enter a valid phone number');
       return;
     }
     setError('');
-    onCall(`${countryCode}${cleaned}`);
+    onCall(`${countryCode}${cleanedDigits}`);
   };
 
   const copyCurl = () => {
-    const cleaned = phone.replace(/\D/g, '');
     const curl = `curl -X POST ${window.location.origin}/api/calls/outbound \\
   -H "Authorization: Bearer <YOUR_TOKEN>" \\
   -H "Content-Type: application/json" \\
-  -d '{"agentId":"${agent?.id || '<AGENT_ID>'}","phoneNumber":"${countryCode}${cleaned}"}'`;
+  -d '{"agentId":"${agent?.id || '<AGENT_ID>'}","phoneNumber":"${countryCode}${cleanedDigits}"}'`;
     navigator.clipboard.writeText(curl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -610,28 +629,36 @@ function CallMeDialog({
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
             <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-2xl pointer-events-auto">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-slate-55">
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-slate-50/60">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center">
                     <svg className="w-5 h-5 text-[var(--primary-blue)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                   </div>
-                  <h3 className="text-sm font-extrabold text-slate-800">Simulator Outbound Call</h3>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-slate-800 leading-none">Simulator Outbound Call</h3>
+                    <p className="text-[10px] font-semibold text-slate-400 mt-1">Test your agent with a live call</p>
+                  </div>
                 </div>
-                <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-655 hover:bg-slate-100 transition-colors cursor-pointer">
+                <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
 
-              <div className="p-5 space-y-4.5 bg-white">
+              <div className="p-5 space-y-4 bg-white">
+                {/* Agent chip */}
                 <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-150">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Agent:</span>
-                  <span className="text-xs font-bold text-slate-700">{agent?.name || '—'}</span>
+                  <span className="text-xs font-bold text-slate-700 truncate">{agent?.name || '—'}</span>
                 </div>
 
+                {/* Callee name */}
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Callee Name</label>
                   <input
@@ -639,59 +666,138 @@ function CallMeDialog({
                     value={calleeName}
                     onChange={(e) => setCalleeName(e.target.value)}
                     placeholder="e.g. John Smith"
-                    className="w-full px-3.5 py-2.8 text-xs bg-slate-500/5 border border-slate-200 rounded-2xl text-slate-750 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all font-semibold"
+                    className="w-full px-3.5 py-3 text-xs bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all font-semibold"
                   />
                 </div>
 
+                {/* Phone — country + number merged into a single control */}
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Callee Phone Number</label>
-                  <div className="flex gap-2">
-                    <div className="relative" ref={countryDropdownRef}>
+
+                  <div
+                    className={`flex items-stretch rounded-2xl border w-full transition-all bg-slate-50 ${
+                      error
+                        ? 'border-rose-300 ring-4 ring-rose-100'
+                        : 'border-slate-200 focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-500/10 focus-within:bg-white'
+                    }`}
+                  >
+                    {/* Country selector — relative anchor for the dropdown */}
+                    <div className="relative flex-shrink-0" ref={countryDropdownRef}>
                       <button
                         type="button"
                         onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                        className="flex items-center gap-1.5 px-3 py-2.8 text-xs bg-white border border-slate-200 rounded-2xl text-slate-700 hover:bg-slate-50 transition-colors min-w-[90px] cursor-pointer font-semibold"
+                        className="h-full flex items-center gap-1.5 pl-3.5 pr-2.5 py-3 text-xs rounded-l-2xl text-slate-700 hover:bg-slate-100/70 transition-colors min-w-[88px] cursor-pointer font-semibold border-r border-slate-200"
                       >
                         <span className="text-sm">{selectedCountry.flag}</span>
-                        <span className="text-[11px] text-slate-500 font-mono font-bold">{countryCode}</span>
-                        <svg className="w-3 h-3 text-slate-400 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span className="text-[11px] text-slate-600 font-mono font-bold">{countryCode}</span>
+                        <svg className={`w-3 h-3 text-slate-400 ml-auto transition-transform duration-150 ${showCountryDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
-                      {showCountryDropdown && (
-                        <div className="absolute top-full left-0 mt-1.5 w-64 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl z-[60] scrollbar-thin">
-                          {COUNTRY_CODES.map((c, i) => (
-                            <button
-                              key={`${c.code}-${c.country}-${i}`}
-                              type="button"
-                              onClick={() => { setCountryCode(c.code); setShowCountryDropdown(false); }}
-                              className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left text-xs hover:bg-slate-50 transition-colors cursor-pointer ${countryCode === c.code && selectedCountry.country === c.country ? 'bg-blue-50/50 text-[var(--primary-blue)] font-bold' : 'text-slate-600 font-semibold'
-                                }`}
-                            >
-                              <span className="text-sm">{c.flag}</span>
-                              <span className="flex-1 text-left truncate">{c.name}</span>
-                              <span className="text-slate-400 font-mono text-[10px] font-bold">{c.code}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
+
+                      <AnimatePresence>
+                        {showCountryDropdown && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                            transition={{ duration: 0.12 }}
+                            className="absolute top-full left-0 mt-1.5 w-72 bg-white border border-slate-200 rounded-2xl shadow-xl z-[60] overflow-hidden"
+                          >
+                            <div className="p-2 border-b border-slate-100">
+                              <input
+                                autoFocus
+                                type="text"
+                                value={countrySearch}
+                                onChange={(e) => setCountrySearch(e.target.value)}
+                                placeholder="Search country or code..."
+                                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-400 transition-colors font-medium"
+                              />
+                            </div>
+                            <div className="max-h-48 overflow-y-auto py-1 scrollbar-thin">
+                              {filteredCountries.length === 0 ? (
+                                <p className="px-3.5 py-3 text-xs text-slate-400 font-medium text-center">No matches</p>
+                              ) : (
+                                filteredCountries.map((c, i) => (
+                                  <button
+                                    key={`${c.code}-${c.country}-${i}`}
+                                    type="button"
+                                    onClick={() => { setCountryCode(c.code); setShowCountryDropdown(false); setCountrySearch(''); }}
+                                    className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left text-xs hover:bg-slate-50 transition-colors cursor-pointer ${
+                                      countryCode === c.code && selectedCountry.country === c.country
+                                        ? 'bg-blue-50/60 text-[var(--primary-blue)] font-bold'
+                                        : 'text-slate-600 font-semibold'
+                                    }`}
+                                  >
+                                    <span className="text-sm">{c.flag}</span>
+                                    <span className="flex-1 text-left truncate">{c.name}</span>
+                                    <span className="text-slate-400 font-mono text-[10px] font-bold">{c.code}</span>
+                                    {countryCode === c.code && selectedCountry.country === c.country && (
+                                      <svg className="w-3.5 h-3.5 text-[var(--primary-blue)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                      </svg>
+                                    )}
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
 
+                    {/* Phone digits */}
                     <input
                       type="tel"
+                      inputMode="tel"
                       value={phone}
-                      onChange={(e) => { setPhone(e.target.value); setError(''); }}
-                      placeholder="e.g. 74890 10144"
+                      onChange={handlePhoneChange}
+                      placeholder="XXXXXXXXXX"
                       autoFocus
-                      className="flex-1 min-w-0 px-3.5 py-2.8 text-xs bg-slate-500/5 border border-slate-200 rounded-2xl text-slate-700 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all font-mono font-bold"
+                      className="flex-1 min-w-0 px-3.5 py-3 text-xs bg-transparent text-slate-700 focus:outline-none transition-all font-mono font-bold rounded-r-2xl"
                       onKeyDown={(e) => { if (e.key === 'Enter') handleCall(); }}
                     />
+
+                    {phone.trim() && (
+                      <div className="flex items-center pr-3.5 flex-shrink-0">
+                        {isValidLength ? (
+                          <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <span className="text-[9px] font-mono font-bold text-slate-300">{cleanedDigits.length}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  {error && <p className="text-xs text-rose-500 mt-1.5 font-bold">{error}</p>}
+
+                  <div className="flex items-center justify-between mt-1.5 px-0.5">
+                    <AnimatePresence mode="wait">
+                      {error ? (
+                        <motion.p
+                          key="error"
+                          initial={{ opacity: 0, y: -2 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          className="text-[11px] text-rose-500 font-bold flex items-center gap-1"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0 3.75h.007v.008H12v-.008zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {error}
+                        </motion.p>
+                      ) : (
+                        <p className="text-[11px] text-slate-400 font-medium">
+                          Will dial as <span className="font-mono font-bold text-slate-500">{countryCode}{cleanedDigits || '…'}</span>
+                        </p>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
               </div>
 
-              <div className="px-5 pb-5 pt-1.5 space-y-2 bg-slate-55 flex flex-col gap-2">
+              {/* Footer actions */}
+              <div className="px-5 pb-5 pt-1.5 space-y-2 bg-slate-50/60 flex flex-col gap-2">
                 <button
                   type="button"
                   onClick={handleCall}

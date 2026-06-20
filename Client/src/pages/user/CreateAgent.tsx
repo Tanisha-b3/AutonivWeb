@@ -7,6 +7,7 @@ import { VoicePreviewButton } from '../../components/VoicePreviewButton';
 import { AgentCard } from '../../components/AgentCard';
 import { VOICE_OPTIONS } from '../../config/voices';
 import type { Agent } from '../../types';
+import { createPortal } from 'react-dom';
 
 const LANGUAGE_OPTIONS = [
   { value: 'en', label: '🇺🇸 English' },
@@ -76,22 +77,61 @@ function SelectInput({ value, onChange, options }: {
   options: { value: string; label: string }[];
 }) {
   const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, openUpward: false });
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const selected = options.find((o) => o.value === value) || options[0];
 
+  // Close on outside click (checks both trigger and portal panel)
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (
+        ref.current && !ref.current.contains(target) &&
+        panelRef.current && !panelRef.current.contains(target)
+      ) {
+        setOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  // Reposition on scroll/resize while open
+  useEffect(() => {
+    if (!open) return;
+    const updatePosition = () => {
+      if (!triggerRef.current) return;
+      const rect = triggerRef.current.getBoundingClientRect();
+      const MAX_DROPDOWN_HEIGHT = 230;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUpward = spaceBelow < MAX_DROPDOWN_HEIGHT;
+
+      setCoords({
+        top: openUpward ? rect.top - 6 : rect.bottom + 6,
+        left: rect.left,
+        width: rect.width,
+        openUpward,
+      });
+    };
+    updatePosition();
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [open]);
+
+  const handleToggle = () => setOpen((prev) => !prev);
+
   return (
     <div className="relative" ref={ref}>
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={handleToggle}
         className="w-full px-4 py-3 text-sm flex items-center justify-between gap-2 focus:outline-none transition-all cursor-pointer font-semibold rounded-2xl"
         style={{
           background: 'var(--s1)',
@@ -105,42 +145,55 @@ function SelectInput({ value, onChange, options }: {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -6, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.97 }}
-            transition={{ duration: 0.14 }}
-            className="absolute z-50 mt-1.5 w-full rounded-2xl shadow-2xl overflow-hidden animate-scale-in"
-            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
-          >
-            <div className="max-h-52 overflow-y-auto py-1.5 custom-scrollbar">
-              {options.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => { onChange(opt.value); setOpen(false); }}
-                  className="w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer font-medium"
-                  style={{
-                    color: opt.value === value ? 'var(--primary-blue)' : 'var(--text-secondary)',
-                    background: opt.value === value ? 'var(--primary-blue-soft)' : 'transparent',
-                    fontWeight: opt.value === value ? 700 : 500,
-                  }}
-                  onMouseEnter={e => {
-                    if (opt.value !== value) (e.currentTarget as HTMLElement).style.background = 'var(--s1)';
-                  }}
-                  onMouseLeave={e => {
-                    if (opt.value !== value) (e.currentTarget as HTMLElement).style.background = 'transparent';
-                  }}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              ref={panelRef}
+              initial={{ opacity: 0, y: coords.openUpward ? 6 : -6, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: coords.openUpward ? 6 : -6, scale: 0.97 }}
+              transition={{ duration: 0.14 }}
+              className="fixed z-[9999] rounded-2xl shadow-2xl overflow-hidden"
+              style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+                top: coords.openUpward ? undefined : coords.top,
+                bottom: coords.openUpward ? window.innerHeight - coords.top : undefined,
+                left: coords.left,
+                width: coords.width,
+              }}
+            >
+              <div className="max-h-52 overflow-y-auto py-1.5 custom-scrollbar">
+                {options.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => { onChange(opt.value); setOpen(false); }}
+                    className="w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer font-medium"
+                    style={{
+                      color: opt.value === value ? 'var(--primary-blue)' : 'var(--text-secondary)',
+                      background: opt.value === value ? 'var(--primary-blue-soft)' : 'transparent',
+                      fontWeight: opt.value === value ? 700 : 500,
+                    }}
+                    onMouseEnter={e => {
+                      if (opt.value !== value) (e.currentTarget as HTMLElement).style.background = 'var(--s1)';
+                    }}
+                    onMouseLeave={e => {
+                      if (opt.value !== value) (e.currentTarget as HTMLElement).style.background = 'transparent';
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }
@@ -454,7 +507,7 @@ export function CreateAgent() {
 
             {/* Section 3 — Behavioral Prompt */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="rounded-[24px] p-6" style={sectionStyle}>
+              className="rounded-[24px] p-6 " style={sectionStyle}>
               <div className="flex items-center gap-3 mb-5">
                 <div className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-sm font-black shadow-md"
                   style={{ background: 'var(--gg)' }}>
