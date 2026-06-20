@@ -1453,12 +1453,14 @@ export function Landing() {
           .integrations-grid .glass-card{padding:10px !important;}
           .integrations-grid .glass-card span:first-child{font-size:18px !important;}
           .integrations-grid .glass-card span:last-child{font-size:9px !important;}
-          .hero-cta-row{display:flex !important;flex-wrap:nowrap !important;gap:8px !important;width:100% !important;}
-          .hero-cta-row > *{flex:1 1 0 !important;min-width:0 !important;max-width:none !important;display:flex !important;align-items:center !important;justify-content:center !important;min-height:42px !important;font-size:11.5px !important;padding:8px 8px !important;gap:5px !important;white-space:nowrap !important;overflow:hidden !important;border-radius:999px !important;}
-          .hero-cta-row > * svg.w-4{width:12px !important;height:12px !important;flex-shrink:0 !important;}
-          .hero-cta-row > * .w-6{width:20px !important;height:20px !important;flex-shrink:0 !important;}
-          .hero-cta-row > * .w-2\\.5{width:7px !important;height:7px !important;}
+          
         }
+
+        @media(max-width:640px){
+          .hero-cta-row{display:flex !important;flex-direction:column !important;gap:12px !important;width:100% !important;}
+          .hero-cta-row .hero-btn-row{display:flex !important;flex-direction:row !important;flex-wrap:nowrap !important;gap:8px !important;width:100% !important;}
+          .hero-cta-row .hero-btn-row > button{flex:1 1 0 !important;min-width:0 !important;display:flex !important;align-items:center !important;justify-content:center !important;min-height:42px !important;font-size:11.5px !important;padding:8px 8px !important;gap:5px !important;white-space:nowrap !important;overflow:hidden !important;border-radius:999px !important;}
+          .hero-cta-row .hero-btn-row > button svg.w-4{width:12px !important;height:12px !important;flex-shrink:0 !important;}
       `}</style>
 
       {/* ══════════════════════════════════════════════
@@ -1661,10 +1663,10 @@ export function Landing() {
                       }}
                     >
                       Your Business Never Stops. <br />
-                      <span
+                     <span
                         style={{
                           background:
-                            "linear-gradient(135deg,#2563EB,#10B981,#34D399)",
+                            "linear-gradient(135deg,#2563EB 0%,#2563EB 35%,#10B981 75%,#34D399 100%)",
                           WebkitBackgroundClip: "text",
                           WebkitTextFillColor: "transparent",
                           backgroundClip: "text",
@@ -1682,87 +1684,87 @@ export function Landing() {
                   </p>
 
                   {/* Buttons - Mobile Optimized */}
-                  <div className="mt-4 hero-cta-row animate-fade-up delay-400 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full">
-                    <button
-                      onClick={() => openAuth("register")}
-                      className="font-bold flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-white btn-responsive-lg"
-                      style={{
-                        background: "var(--gg)",
-                        boxShadow: "0 4px 14px rgba(16,185,129,0.25)",
-                      }}
-                    >
-                      Get Started Free
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => openAuth("register")}
-                      className="font-bold flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-white btn-responsive-lg"
-                      style={{
-                        background: "var(--gg)",
-                        boxShadow: "0 4px 14px rgba(16,185,129,0.25)",
-                      }}
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
-                      Watch Demo
-                    </button>
-                    <div className="flex items-center gap-3">
-                      <div className="flex -space-x-2">
-                        {[
-                          { init: "SC", bg: "#2563EB" },
-                          { init: "MJ", bg: "#10B981" },
-                          { init: "ER", bg: "#059669" },
-                          { init: "AK", bg: "#030B2E" },
-                        ].map((av, i) => (
-                          <div
-                            key={i}
-                            className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-[9px] font-bold text-white shadow-sm"
-                            style={{ background: av.bg, zIndex: 5 - i }}
-                          >
-                            {av.init}
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <div className="flex gap-0.5">
-                          {[...Array(5)].map((_, k) => (
-                            <svg
-                              key={k}
-                              className="w-4 h-4"
-                              style={{ fill: "#f59e0b" }}
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                            </svg>
-                          ))}
-                        </div>
-                        <p className="text-xs text-[#475569] m-0">
-                          Trusted by{" "}
-                          <span className="font-semibold text-[var(--text)]">
-                            100+
-                          </span>{" "}
-                          businesses
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <div className="mt-4 hero-cta-row flex flex-col gap-4 w-full" style={{ opacity: 1, overflow: "visible" }}>
+
+  {/* Row 1: Buttons */}
+  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full" style={{ overflow: "visible" }}>
+   <button
+      onClick={() => openAuth("register")}
+      className="font-bold flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-white"
+      style={{
+        background: "var(--gg)",
+        boxShadow: "0 4px 14px rgba(16,185,129,0.25)",
+        minHeight: "48px",
+        fontSize: "15px",
+      }}
+    >
+      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M13 2L3 14h6l-1 8 10-12h-6l1-8z" />
+      </svg>
+      Book a Free Demo
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+      </svg>
+    </button>
+
+    <button
+      onClick={() => openAuth("register")}
+      className="font-bold flex items-center justify-center gap-2 px-6 py-3.5 rounded-full"
+      style={{
+        background: "#ffffff",
+        color: "#0a0a0a",
+        border: "1px solid rgba(10,10,10,0.15)",
+        minHeight: "48px",
+        fontSize: "15px",
+      }}
+    >
+      <span
+        className="flex items-center justify-center rounded-full shrink-0"
+        style={{ width: "22px", height: "22px", background: "#2563EB" }}
+      >
+        <svg className="w-3 h-3" fill="white" viewBox="0 0 24 24">
+          <path d="M8 5v14l11-7z" />
+        </svg>
+      </span>
+      Watch Live Demo
+      
+    </button>
+  </div>
+
+  {/* Row 2: Avatars + rating */}
+  <div className="flex items-center gap-3 flex-wrap w-full">
+    <div className="flex -space-x-2 shrink-0">
+      {[
+        { init: "SC", bg: "#2563EB" },
+        { init: "MJ", bg: "#10B981" },
+        { init: "ER", bg: "#059669" },
+        { init: "AK", bg: "#030B2E" },
+      ].map((av, i) => (
+        <div
+          key={i}
+          className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-[9px] font-bold text-white shadow-sm"
+          style={{ background: av.bg, zIndex: 5 - i }}
+        >
+          {av.init}
+        </div>
+      ))}
+    </div>
+    <div className="flex flex-col gap-0.5 min-w-0">
+      <div className="flex gap-0.5">
+        {[...Array(5)].map((_, k) => (
+          <svg key={k} className="w-4 h-4 shrink-0" style={{ fill: "#f59e0b" }} viewBox="0 0 20 20">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+        ))}
+      </div>
+      <p className="text-xs text-[#475569] m-0">
+        Trusted by{" "}
+        <span className="font-semibold text-[var(--text)]">100+</span>{" "}
+        businesses
+      </p>
+    </div>
+  </div>
+</div>
                 </div>
 
                 <div className="mt-4 lg:col-span-5 flex justify-center items-center relative min-h-[380px] sm:min-h-[450px] lg:min-h-[580px] z-10 w-full order-2 lg:order-2 pt-4 lg:pt-0">
@@ -1933,7 +1935,7 @@ export function Landing() {
                   {/* Floating Cards - Smaller on mobile */}
 
                   {/* Card 1: Incoming Call - Top Right */}
-                  <div className="absolute top-[-2%] right-[-4%] sm:top-[10%] sm:-right-[8%] z-20 pointer-events-auto w-[100px] sm:w-[185px]">
+                  <div className="absolute top-[10%] right-[0%] sm:top-[4%] sm:-right-[8%] z-20 pointer-events-auto w-[100px] sm:w-[185px]">
                     <div className="animate-float-1 bg-[var(--surface)] backdrop-blur-md rounded-lg sm:rounded-2xl p-1.5 sm:p-3.5 shadow-[0_8px_28px_rgba(37,99,235,0.10)] border border-[rgba(37,99,235,0.2)]">
                       <div className="flex justify-between items-center">
                         <span className="text-[6px] sm:text-[10px] font-semibold text-[#2563EB] tracking-wide uppercase">
@@ -1964,7 +1966,7 @@ export function Landing() {
                   </div>
 
                   {/* Card 2: Appointment Booked - Bottom Right */}
-                  <div className="absolute bottom-[2%] right-[-4%] sm:bottom-[16%] sm:-right-[8%] z-20 pointer-events-auto w-[95px] sm:w-[180px]">
+                  <div className="absolute bottom-[2%] right-[4%] sm:bottom-[16%] sm:-right-[2%] z-20 pointer-events-auto w-[95px] sm:w-[180px]">
                     <div className="animate-float-2 bg-[var(--surface)] backdrop-blur-md rounded-lg sm:rounded-2xl p-1.5 sm:p-3.5 shadow-[0_8px_28px_rgba(37,99,235,0.10)] border border-[rgba(37,99,235,0.2)] flex items-center gap-1.5 sm:gap-3">
                       <div className="w-5 h-5 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(37,99,235,0.08)] border border-[rgba(37,99,235,0.2)] flex items-center justify-center text-xs sm:text-lg flex-shrink-0">
                         📅
@@ -1987,7 +1989,7 @@ export function Landing() {
                   </div>
 
                   {/* Card 3: AI Assistant - Top Left */}
-                  <div className="absolute top-[-2%] left-[-4%] sm:top-[4%] sm:-left-[8%] z-20 pointer-events-auto w-[100px] sm:w-[195px]">
+                  <div className="absolute top-[10%] left-[4%] sm:top-[4%] sm:-left-[4%] z-20 pointer-events-auto w-[100px] sm:w-[195px]">
                     <div className="animate-float-3 bg-[var(--surface)] backdrop-blur-md rounded-lg sm:rounded-2xl p-1.5 sm:p-3 shadow-[0_8px_28px_rgba(37,99,235,0.10)] border border-[rgba(37,99,235,0.2)]">
                       <div className="flex items-center gap-1 sm:gap-1.5">
                         <span className="text-[6px] sm:text-[9px] text-[var(--muted)]">
@@ -2014,7 +2016,7 @@ export function Landing() {
                   </div>
 
                   {/* Card 4: Leads Captured - Bottom Left */}
-                  <div className="absolute bottom-[2%] left-[-4%] sm:bottom-[8%] sm:-left-[8%] z-20 pointer-events-auto w-[100px] sm:w-[185px]">
+                  <div className="absolute bottom-[2%] left-[4%] sm:bottom-[8%] sm:-left-[4%] z-20 pointer-events-auto w-[100px] sm:w-[185px]">
                     <div className="animate-float-4 bg-[var(--surface)] backdrop-blur-md rounded-lg sm:rounded-2xl p-1.5 sm:p-3.5 shadow-[0_8px_28px_rgba(37,99,235,0.10)] border border-[rgba(37,99,235,0.2)]">
                       <div>
                         <p className="text-[5px] sm:text-[9px] font-semibold text-[var(--muted)] uppercase tracking-wider m-0">
