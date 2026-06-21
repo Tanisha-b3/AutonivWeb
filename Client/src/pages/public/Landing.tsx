@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { contactService } from "../../services/api";
+import {
+  MicrophoneIcon,
+  Squares2X2Icon,
+  SpeakerWaveIcon,
+} from "@heroicons/react/24/outline";
+import { PhoneIcon } from "@heroicons/react/24/solid";
 
 const AuthDialog = lazy(() =>
   import("./AuthDialog").then((m) => ({ default: m.AuthDialog })),
@@ -1903,29 +1909,26 @@ export function Landing() {
         <div className="w-full px-2 sm:px-4 space-y-2 sm:space-y-4">
           <div className="grid grid-cols-3 gap-y-2 sm:gap-y-3 text-center">
             {[
-              { icon: "🎙️", label: "Mute" },
-              { icon: "🔢", label: "Keypad" },
-              { icon: "🔊", label: "Speaker" },
-            ].map((item, idx) => (
-              <div key={idx} className="flex flex-col items-center">
-                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-[#141414] border border-slate-700/30 flex items-center justify-center text-[10px] sm:text-sm text-white/40">
-                  {item.icon}
+              { icon: MicrophoneIcon, label: "Mute" },
+              { icon: Squares2X2Icon, label: "Keypad" },
+              { icon: SpeakerWaveIcon, label: "Speaker" },
+            ].map((item, idx) => {
+              const IconComponent = item.icon;
+              return (
+                <div key={idx} className="flex flex-col items-center">
+                  <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-[#141414] border border-slate-700/30 flex items-center justify-center text-white/40">
+                    <IconComponent className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5" />
+                  </div>
+                  <span className="text-[7px] sm:text-[9px] text-white/30 mt-0.5 sm:mt-1">
+                    {item.label}
+                  </span>
                 </div>
-                <span className="text-[7px] sm:text-[9px] text-white/30 mt-0.5 sm:mt-1">
-                  {item.label}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div className="flex justify-center">
             <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-red-500 flex items-center justify-center shadow-lg shadow-red-500/20 cursor-pointer hover:bg-red-600 transition-colors">
-              <svg
-                className="w-4 h-4 sm:w-5 sm:h-5 text-white transform rotate-[135deg]"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A1.003 1.003 0 0 1 3.5 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18s.41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9z" />
-              </svg>
+              <PhoneIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white transform rotate-[135deg]" />
             </div>
           </div>
         </div>
@@ -2086,7 +2089,7 @@ export function Landing() {
               >
                 <p
                   className="text-center tag mb-4 sm:mb-6 m-0 text-[10px] sm:text-xs"
-                  style={{ color: "#94a3b8", letterSpacing: "0.18em" }}
+                  style={{ color: "#475569", letterSpacing: "0.18em", fontWeight: 500 }}
                 >
                   Trusted by leading companies
                 </p>
@@ -2105,7 +2108,7 @@ export function Landing() {
                         "linear-gradient(270deg, #F5F7FA, transparent)",
                     }}
                   />
-                  <div className="flex gap-8 sm:gap-16 items-center animate-marquee opacity-60">
+                  <div className="flex gap-8 sm:gap-16 items-center animate-marquee opacity-90">
                     {[...Array(2)].flatMap((_, dup) =>
                       [
                         { n: "HealthFirst", i: "🏥" },
@@ -2124,7 +2127,7 @@ export function Landing() {
                           </span>
                           <span
                             className="text-xs sm:text-sm font-semibold tracking-tight"
-                            style={{ color: "#475569" }}
+                            style={{ color: "#030B2E" }}
                           >
                             {c.n}
                           </span>
