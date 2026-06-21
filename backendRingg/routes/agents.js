@@ -9,7 +9,7 @@ import { authenticate, requireAdmin } from '../middleware/auth.js';
 import { contentFilter } from '../services/contentModeration.js';
 import { log } from '../services/logger.js';
 import { parsePage, paginatedResponse } from '../services/pagination.js';
-import { listRinggAssistants } from '../services/ringg.js';
+import { listRinggAssistants, createRinggAssistant, updateRinggWebhook } from '../services/ringg.js';
 
 const router = express.Router();
 router.use(authenticate);
@@ -159,8 +159,8 @@ router.post('/', contentFilter('name', 'prompt'), async (req, res) => {
   try {
     const { name, type, prompt, language, voiceId, ringgId } = req.body;
 
-    if (!name || !type || !ringgId) {
-      return res.status(400).json({ message: 'name, type, and ringgId are required' });
+    if (!name || !type) {
+      return res.status(400).json({ message: 'name and type are required' });
     }
     if (!VALID_TYPES.includes(type)) {
       return res.status(400).json({ message: `type must be one of: ${VALID_TYPES.join(', ')}` });
@@ -186,9 +186,32 @@ router.post('/', contentFilter('name', 'prompt'), async (req, res) => {
       }
     }
 
+    let autoRinggId = null;
+    if (!ringgId) {
+      try {
+        const ringgAgent = await createRinggAssistant({
+          name,
+          type,
+          prompt,
+          language,
+          voiceId,
+        });
+        autoRinggId = ringgAgent?.agent_id || ringgAgent?.id || ringgAgent?.assistant_id || null;
+
+        if (autoRinggId) {
+          const serverUrl = process.env.WEBHOOK_URL || process.env.SERVER_URL;
+          if (serverUrl) {
+            await updateRinggWebhook(autoRinggId, `${serverUrl}/api/webhooks/ringg`);
+          }
+        }
+      } catch (ringgErr) {
+        log.warn('ringg_create_agent_api_failed', { error: ringgErr.message, name });
+      }
+    }
+
     const agent = await Agent.create({
       userId: user._id,
-      ringgId,
+      ringgId: ringgId || autoRinggId || null,
       name,
       type,
       prompt: prompt || null,
@@ -231,7 +254,7 @@ router.put('/:id', contentFilter('name', 'prompt'), async (req, res) => {
     if (isActive !== undefined) updates.isActive = isActive;
     if (language !== undefined) updates.language = language;
     if (voiceId !== undefined)  updates.voiceId = voiceId;
-    if (ringgId !== undefined)  updates.ringgId = ringgId;
+    if (ringgId !== undefined)  updates.ringgId = ringgId || null;
 
     const updated = await Agent.findByIdAndUpdate(id, updates, { new: true }).lean();
 

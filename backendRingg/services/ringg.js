@@ -47,6 +47,20 @@ async function ringgRequest(endpoint, method = 'GET', body = null) {
 }
 
 /**
+ * Create a new agent/assistant directly in Ringg AI workspace
+ */
+export async function createRinggAssistant({ name, type, prompt, language, voiceId }) {
+  const payload = {
+    name,
+    type,
+    prompt: prompt || '',
+    language: language || 'en',
+    voice_id: voiceId || '',
+  };
+  return ringgRequest('/agent', 'POST', payload);
+}
+
+/**
  * Fetch all available agents/assistants in the Ringg workspace
  */
 export async function listRinggAssistants() {
@@ -160,6 +174,7 @@ export function extractRinggCallData(ringgCall) {
 }
 
 export default {
+  createRinggAssistant,
   listRinggAssistants,
   createRinggOutboundCall,
   getRinggCallDetails,
