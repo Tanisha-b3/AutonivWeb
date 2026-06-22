@@ -222,12 +222,12 @@ export function MyAppointments() {
         </motion.div>
 
         {/* ── Filter pills ── */}
-        <motion.div variants={fadeUp} className="flex items-center p-0.8 rounded-xl border bg-white/70 w-full sm:w-fit" style={{ borderColor: 'var(--slate-border)' }}>
+        <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl border bg-white/70 w-full sm:w-fit" style={{ borderColor: 'var(--slate-border)' }}>
           {FILTERS.map((f) => (
             <button
               key={f.value}
               onClick={() => setFilter(f.value)}
-              className={`flex-1 sm:flex-none px-3.5 py-2 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer whitespace-nowrap ${
+              className={`flex-1 sm:flex-none min-w-[60px] px-3 py-2 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer whitespace-nowrap ${
                 filter === f.value
                   ? 'btn-cta'
                   : 'text-slate-400 hover:text-slate-600'

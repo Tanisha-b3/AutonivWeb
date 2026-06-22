@@ -130,7 +130,7 @@ function CatalogCard({
 
         {/* Price + action */}
         <div className="flex items-center justify-between">
-          <span className="text-base font-bold gradient-text">{addon.price}</span>
+          <span className="text-base font-bold text-[#2563eb]">{addon.price}</span>
           {!isRequested ? (
             <button
               onClick={(e) => { e.stopPropagation(); onRequest(addon.id); }}
@@ -353,7 +353,7 @@ export function MyAddOns() {
         <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-5 pt-1">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase gradient-text">
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#2563eb]">
                 ◈ ADD-ONS
               </span>
               <span
@@ -384,7 +384,7 @@ export function MyAddOns() {
         <motion.div variants={fadeUp} id="catalog">
           <div className="flex items-end justify-between mb-5">
             <div>
-              <p className="text-[10px] font-semibold tracking-[0.25em] uppercase gradient-text mb-1">Catalog</p>
+              <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[#2563eb] mb-1">Catalog</p>
               <h2 className="text-lg font-bold" style={{ color: 'var(--text)' }}>Available add-ons</h2>
             </div>
             <p className="text-xs self-end pb-0.5" style={{ color: 'var(--text-muted)' }}>
@@ -423,7 +423,7 @@ export function MyAddOns() {
         <motion.div variants={fadeUp}>
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4 mb-5">
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold tracking-[0.25em] uppercase gradient-text mb-1">My Add-Ons</p>
+              <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[#2563eb] mb-1">My Add-Ons</p>
               <h2 className="text-lg font-bold" style={{ color: 'var(--text)' }}>
                 {filter === 'all' ? 'All' : filter.charAt(0).toUpperCase() + filter.slice(1)} subscriptions
                 {filteredMyAddOns.length > 0 && (

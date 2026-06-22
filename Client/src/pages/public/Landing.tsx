@@ -3678,7 +3678,7 @@ export function Landing() {
               {/* CTA Section */}
               <Reveal className="mt-8">
                 <div
-                  className="rounded-2xl p-8 relative overflow-hidden"
+                  className="rounded-2xl p-6 sm:p-8 relative overflow-hidden"
                   style={{
                     background:
                       "linear-gradient(135deg, rgba(16,185,129,0.04), rgba(5,150,105,0.02))",
@@ -3693,7 +3693,7 @@ export function Landing() {
                     }}
                   />
 
-                  <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="relative flex flex-col items-center text-center md:flex-row md:text-left md:justify-between gap-6">
                     <div>
                       <h3 className="text-lg font-bold text-white mb-1">
                         Need a custom integration?
@@ -3703,9 +3703,9 @@ export function Landing() {
                         everything in between.
                       </p>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                       <button
-                        className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-300"
+                        className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-300"
                         style={{
                           background: "var(--gg)",
                           boxShadow: "0 4px 16px rgba(16,185,129,0.2)",
@@ -3724,7 +3724,7 @@ export function Landing() {
                         View API Docs →
                       </button>
                       <button
-                        className="px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300"
+                        className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300"
                         style={{
                           background: "rgba(255,255,255,0.04)",
                           border: "1px solid rgba(255,255,255,0.06)",
@@ -3905,21 +3905,21 @@ export function Landing() {
                   <span className="gradient-text">Industry Leaders</span>
                 </h2>
               </Reveal>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                 {testimonials.map((t, i) => (
                   <Reveal key={i} delay={i * 0.1}>
-                    <div className="testimonial-card group relative p-7 rounded-2xl glass-card overflow-hidden h-full flex flex-col cursor-default">
+                    <div className="testimonial-card group relative p-5 sm:p-7 rounded-2xl glass-card overflow-hidden h-full flex flex-col cursor-default">
                       <span
-                        className="absolute top-2 right-5 text-[90px] leading-none font-serif select-none"
+                        className="absolute top-2 right-5 text-[70px] sm:text-[90px] leading-none font-serif select-none"
                         style={{ color: "rgba(34,197,94,.06)" }}
                       >
                         "
                       </span>
-                      <div className="flex gap-0.5 mb-5">
+                      <div className="flex gap-0.5 mb-4 sm:mb-5">
                         {[...Array(5)].map((_, k) => (
                           <svg
                             key={k}
-                            className="w-4 h-4"
+                            className="w-3.5 h-3.5 sm:w-4 sm:h-4"
                             style={{ fill: "#ffe484" }}
                             viewBox="0 0 20 20"
                           >
@@ -3928,67 +3928,38 @@ export function Landing() {
                         ))}
                       </div>
                       <p
+                        className="text-sm leading-relaxed mb-4 sm:mb-5"
                         style={{
-                          fontSize: 14,
                           color: "#475569",
-                          lineHeight: 1.7,
                           flex: 1,
-                          marginBottom: 16,
                         }}
                       >
                         "{t.quote}"
                       </p>
                       <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          paddingTop: 14,
-                          borderTop: "1px solid rgba(34,197,94,0.10)",
-                        }}
+                        className="flex items-center justify-between pt-3 sm:pt-4 border-t"
+                        style={{ borderColor: "rgba(34,197,94,0.10)" }}
                       >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                          }}
-                        >
+                        <div className="flex items-center gap-2.5 min-w-0">
                           <div
+                            className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0"
                             style={{
-                              width: 38,
-                              height: 38,
-                              borderRadius: "50%",
-                              background:
-                                "linear-gradient(135deg,#22c55e,#15803d)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: 11,
-                              fontWeight: 700,
-                              color: "#ffffff",
-                              flexShrink: 0,
+                              background: "linear-gradient(135deg,#22c55e,#15803d)",
                             }}
                           >
                             {t.initials}
                           </div>
-                          <div>
-                            <div
-                              style={{
-                                fontSize: 13,
-                                fontWeight: 700,
-                                color: "#0a0a0a",
-                              }}
-                            >
+                          <div className="min-w-0">
+                            <div className="text-[13px] font-bold text-[#0a0a0a] truncate">
                               {t.name}
                             </div>
-                            <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                            <div className="text-[11px] text-[#94a3b8] truncate">
                               {t.role}
                             </div>
                           </div>
                         </div>
                         <span
-                          className="tag px-3 py-1.5 rounded-full text-[10px]"
+                          className="tag px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] flex-shrink-0 ml-2"
                           style={{
                             color: "#15803d",
                             background: "rgba(34,197,94,.08)",

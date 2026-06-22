@@ -1354,9 +1354,9 @@ export function MyAgents() {
 
         {/* Search & Filter Bar */}
         {agents.length > 0 && (
-          <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 relative z-10">
-            {/* Search */}
-            <div className="relative flex-1 min-w-0">
+          <motion.div variants={fadeUp} className="relative z-10">
+            {/* Search — full width always */}
+            <div className="relative">
               <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} style={{ color: 'var(--text-muted)' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
@@ -1382,75 +1382,78 @@ export function MyAgents() {
               />
             </div>
 
-            {/* Type filter */}
-            <div className="relative">
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="appearance-none px-4 py-2.5 pr-8 text-xs font-semibold rounded-2xl outline-none cursor-pointer transition-all"
-                style={{
-                  background: 'var(--s1)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text)',
-                }}
-                onFocus={e => {
-                  (e.target as HTMLSelectElement).style.borderColor = 'var(--primary-blue)';
-                }}
-                onBlur={e => {
-                  (e.target as HTMLSelectElement).style.borderColor = 'var(--border)';
-                }}
-              >
-                <option value="all">All Types</option>
-                <option value="receptionist">Receptionist</option>
-                <option value="appointment">Scheduler</option>
-                <option value="faq">Q&A Support</option>
-              </select>
-              <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4} style={{ color: 'var(--text-muted)' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-
-            {/* Status filter */}
-            <div className="relative">
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="appearance-none px-4 py-2.5 pr-8 text-xs font-semibold rounded-2xl outline-none cursor-pointer transition-all"
-                style={{
-                  background: 'var(--s1)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text)',
-                }}
-                onFocus={e => {
-                  (e.target as HTMLSelectElement).style.borderColor = 'var(--primary-blue)';
-                }}
-                onBlur={e => {
-                  (e.target as HTMLSelectElement).style.borderColor = 'var(--border)';
-                }}
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-              <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4} style={{ color: 'var(--text-muted)' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-
-            {/* Clear filters */}
-            {(searchTerm || filterType !== 'all' || filterStatus !== 'all') && (
-              <button
-                type="button"
-                onClick={() => { setSearchTerm(''); setFilterType('all'); setFilterStatus('all'); }}
-                className="inline-flex items-center gap-1.5 px-3 py-2.5 text-[10px] font-bold rounded-2xl transition-all cursor-pointer whitespace-nowrap"
-                style={{ background: 'var(--s1)', border: '1px solid var(--border)', color: 'var(--primary-blue)' }}
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            {/* Filters row — wraps on mobile */}
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              {/* Type filter */}
+              <div className="relative flex-1 min-w-[130px]">
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="w-full appearance-none px-4 py-2.5 pr-8 text-xs font-semibold rounded-2xl outline-none cursor-pointer transition-all"
+                  style={{
+                    background: 'var(--s1)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text)',
+                  }}
+                  onFocus={e => {
+                    (e.target as HTMLSelectElement).style.borderColor = 'var(--primary-blue)';
+                  }}
+                  onBlur={e => {
+                    (e.target as HTMLSelectElement).style.borderColor = 'var(--border)';
+                  }}
+                >
+                  <option value="all">All Types</option>
+                  <option value="receptionist">Receptionist</option>
+                  <option value="appointment">Scheduler</option>
+                  <option value="faq">Q&A Support</option>
+                </select>
+                <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4} style={{ color: 'var(--text-muted)' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
-                Clear
-              </button>
-            )}
+              </div>
+
+              {/* Status filter */}
+              <div className="relative flex-1 min-w-[130px]">
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="w-full appearance-none px-4 py-2.5 pr-8 text-xs font-semibold rounded-2xl outline-none cursor-pointer transition-all"
+                  style={{
+                    background: 'var(--s1)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text)',
+                  }}
+                  onFocus={e => {
+                    (e.target as HTMLSelectElement).style.borderColor = 'var(--primary-blue)';
+                  }}
+                  onBlur={e => {
+                    (e.target as HTMLSelectElement).style.borderColor = 'var(--border)';
+                  }}
+                >
+                  <option value="all">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+                <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4} style={{ color: 'var(--text-muted)' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+
+              {/* Clear filters */}
+              {(searchTerm || filterType !== 'all' || filterStatus !== 'all') && (
+                <button
+                  type="button"
+                  onClick={() => { setSearchTerm(''); setFilterType('all'); setFilterStatus('all'); }}
+                  className="inline-flex items-center gap-1.5 px-3 py-2.5 text-[10px] font-bold rounded-2xl transition-all cursor-pointer whitespace-nowrap"
+                  style={{ background: 'var(--s1)', border: '1px solid var(--border)', color: 'var(--primary-blue)' }}
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Clear
+                </button>
+              )}
+            </div>
           </motion.div>
         )}
 

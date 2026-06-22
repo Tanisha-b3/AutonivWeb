@@ -23,10 +23,11 @@ const FILTERS = [
 
 const fadeUp = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
 const stagger = { container: { animate: { transition: { staggerChildren: 0.04 } } } };
+const EMPTY_LEADS: Lead[] = [];
 
 export function MyLeads() {
   const dispatch = useAppDispatch();
-  const leads = useAppSelector((s) => s.leads.myLeads) ?? [];
+  const leads = useAppSelector((s) => s.leads.myLeads) ?? EMPTY_LEADS;
   const loading = useAppSelector((s) => s.leads.loading);
   const pagination = useAppSelector((s) => s.leads.myPagination);
 
@@ -40,7 +41,16 @@ export function MyLeads() {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
   useEffect(() => { dispatch(fetchMyLeads({ page, limit: 20 })); }, [dispatch, page]);
-  useEffect(() => { setPage(1); }, [filter, search]);
+
+  const handleFilterChange = (value: string) => {
+    setFilter(value);
+    setPage(1);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
 
   const handleExport = async () => {
     try {
@@ -226,7 +236,7 @@ export function MyLeads() {
           {FILTERS.map((f) => (
             <button
               key={f.value}
-              onClick={() => setFilter(f.value)}
+              onClick={() => handleFilterChange(f.value)}
               className={`flex-1 sm:flex-none px-3.5 py-2 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer whitespace-nowrap ${
                 filter === f.value
                   ? 'btn-cta'
@@ -265,7 +275,7 @@ export function MyLeads() {
             defaultSort={{ key: 'createdAt', direction: 'desc' }}
             searchable={true}
             searchTerm={search}
-            onSearchChange={setSearch}
+            onSearchChange={handleSearchChange}
             searchPlaceholder="Search leads by name, email, or phone..."
             exportable={true}
             densityControls={false}
