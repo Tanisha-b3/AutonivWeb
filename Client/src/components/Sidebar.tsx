@@ -197,23 +197,25 @@ const NavLinkItem: React.FC<{
       <motion.div
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: index * 0.03 }}
+        whileHover={{ x: isCollapsed ? 0 : 4, scale: 1.01 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25, delay: index * 0.015 }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer
+        className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 cursor-pointer
           ${isActive
-            ? 'shadow-lg'
-            : 'text-white/60 hover:text-white'
+            ? 'shadow-lg font-semibold'
+            : 'text-white/60 hover:text-white hover:bg-white/5'
           }
           ${isCollapsed ? 'justify-center' : ''}`}
         style={
           isActive
             ? {
-                background: 'linear-gradient(135deg, rgba(37,99,235,0.15), rgba(16,185,129,0.10))',
-                border: '1px solid rgba(16,185,129,0.30)',
-                color: '#10B981',
-                boxShadow: '0 0 24px rgba(16,185,129,0.10)',
-              }
+              background: 'linear-gradient(135deg, rgba(37,99,235,0.2), rgba(16,185,129,0.15))',
+              border: '1px solid rgba(16,185,129,0.40)',
+              color: '#10B981',
+              boxShadow: '0 0 20px rgba(16,185,129,0.15)',
+            }
             : { background: 'transparent', boxShadow: 'none' }
         }
       >
@@ -225,11 +227,11 @@ const NavLinkItem: React.FC<{
             style={{ background: 'linear-gradient(180deg, #2563EB, #10B981)' }}
           />
         )}
-        
+
         <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
         </svg>
-        
+
         <AnimatePresence mode="wait">
           {!isCollapsed && (
             <motion.span
@@ -280,7 +282,7 @@ const UserSection: React.FC<{
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
-  
+
   useClickOutside(dropdownRef, () => setOpen(false));
 
   const initials = user?.name
@@ -371,25 +373,25 @@ const UserSection: React.FC<{
   return (
     <div className="p-3 border-t border-white/5 space-y-3" ref={dropdownRef}>
       {/* User Info Card */}
-      <div
-        className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${isCollapsed ? 'justify-center' : ''}`}
+      <motion.div
+        whileHover={{ scale: 1.02, backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
+        whileTap={{ scale: 0.98 }}
+        className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 border border-white/5 ${isCollapsed ? 'justify-center' : ''}`}
         onClick={() => !isCollapsed && setOpen(!open)}
         style={{
-          backgroundColor: 'rgba(37,99,235,0.06)',
+          backgroundColor: 'rgba(255, 255, 255, 0.02)',
         }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(37,99,235,0.12)'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(37,99,235,0.06)'}
       >
         <div className="relative flex-shrink-0">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm"
-               style={{
-                 background: 'var(--gg)',
-                 boxShadow: '0 4px 14px rgba(16,185,129,0.25)'
-               }}>
+            style={{
+              background: 'var(--gg)',
+              boxShadow: '0 4px 14px rgba(16,185,129,0.25)'
+            }}>
             {initials}
           </div>
           <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[var(--primary-soft)]0 rounded-full animate-pulse"
-               style={{ borderColor: 'var(--s1)', borderWidth: '2px' }} />
+            style={{ borderColor: 'var(--s1)', borderWidth: '2px' }} />
         </div>
 
         <AnimatePresence mode="wait">
@@ -415,7 +417,7 @@ const UserSection: React.FC<{
             {Icons.chevronDown}
           </motion.span>
         )}
-      </div>
+      </motion.div>
 
       {/* Dropdown Menu */}
       <AnimatePresence>
@@ -513,7 +515,7 @@ const UserSection: React.FC<{
             <div className="mt-4 pt-4 border-t border-white/10">
               <button
                 onClick={() => setShowPasswordChange(true)}
-                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-white/70 hover:text-white hover:bg-[var(--surface)] transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
@@ -537,8 +539,8 @@ const UserSection: React.FC<{
               >
                 {saving && (
                   <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
                 )}
                 {saving ? 'Saving...' : 'Save'}
@@ -686,8 +688,8 @@ const UserSection: React.FC<{
               >
                 {changingPassword && (
                   <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
                 )}
                 {changingPassword ? 'Changing...' : 'Change Password'}
@@ -743,7 +745,7 @@ export function Sidebar() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="w-12 h-10 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
-          
+
         >
           <img
             src="/image8.png"
@@ -873,7 +875,7 @@ export function Sidebar() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </motion.svg>
         </button>
-        
+
         {sidebarContent()}
       </motion.aside>
     </>

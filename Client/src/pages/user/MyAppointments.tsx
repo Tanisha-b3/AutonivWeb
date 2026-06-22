@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../../hooks/useStore';
 import { fetchMyAppointments, updateAppointment, notifyAppointmentWhatsApp } from '../../store/slices/appointmentsSlice';
-import { SearchInput } from '../../components/SearchInput';
-import { Pagination } from '../../components/Pagination';
+import { DataTable } from '../../components/DataTable';
+import type { Column } from '../../components/DataTable';
 import type { Appointment } from '../../types';
 
 const statusConfig: Record<string, { label: string; dot: string; pill: string; text: string }> = {
@@ -13,25 +13,6 @@ const statusConfig: Record<string, { label: string; dot: string; pill: string; t
   cancelled: { label: 'Cancelled', dot: 'bg-rose-400',    pill: 'bg-rose-500/10 border-rose-500/20',    text: 'text-rose-400'    },
 };
 
-const avatarColors = [
-  'from-[var(--primary)] to-[var(--primary)]',
-  'from-[var(--primary)] to-[var(--primary)]',
-  'from-[var(--primary)] to-[var(--primary)]',
-  'from-[var(--primary)] to-[var(--primary)]',
-  'from-[var(--primary)] to-[var(--primary)]',
-];
-
-function getAvatarColor(name: string) {
-  return avatarColors[(name || 'U').charCodeAt(0) % avatarColors.length];
-}
-
-function formatApptDate(dateStr?: string | null) {
-  if (!dateStr) return '—';
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return dateStr;
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
 const FILTERS = [
   { value: '',          label: 'All' },
   { value: 'pending',   label: 'Pending' },
@@ -39,6 +20,13 @@ const FILTERS = [
   { value: 'completed', label: 'Completed' },
   { value: 'cancelled', label: 'Cancelled' },
 ];
+
+function formatApptDate(dateStr?: string | null) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
 
 const fadeUp = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
 const stagger = { container: { animate: { transition: { staggerChildren: 0.04 } } } };
@@ -55,6 +43,7 @@ export function MyAppointments() {
   const [filter, setFilter]         = useState('');
   const [search, setSearch]         = useState('');
   const [page, setPage]             = useState(1);
+  const [viewMode, setViewMode]     = useState<'table' | 'cards'>('table');
 
   useEffect(() => { dispatch(fetchMyAppointments({ page, limit: 20 })); }, [dispatch, page]);
   useEffect(() => { setPage(1); }, [filter, search]);
@@ -84,15 +73,140 @@ export function MyAppointments() {
     finally { setSaving(false); }
   };
 
-  const filtered = appointments
-    .filter((a) => !filter || a.status === filter)
-    .filter((a) =>
-      !search ||
-      (a.name    || '').toLowerCase().includes(search.toLowerCase()) ||
-      (a.phone   || '').includes(search) ||
-      (a.email   || '').toLowerCase().includes(search.toLowerCase()) ||
-      (a.service || '').toLowerCase().includes(search.toLowerCase())
-    );
+  const filtered = useMemo(() => {
+    return appointments
+      .filter((a) => !filter || a.status === filter)
+      .filter((a) =>
+        !search ||
+        (a.name    || '').toLowerCase().includes(search.toLowerCase()) ||
+        (a.phone   || '').includes(search) ||
+        (a.email   || '').toLowerCase().includes(search.toLowerCase()) ||
+        (a.service || '').toLowerCase().includes(search.toLowerCase())
+      );
+  }, [appointments, filter, search]);
+
+  const columns: Column<Appointment>[] = useMemo(() => [
+    {
+      key: 'name',
+      header: 'Name',
+      sortable: true,
+      render: (appt) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--primary)] to-[var(--primary)] flex items-center justify-center text-[var(--text)] font-semibold text-xs flex-shrink-0">
+            {(appt.name || 'U').charAt(0).toUpperCase()}
+          </div>
+          <span className="font-medium text-sm text-[var(--text)]">{appt.name || '—'}</span>
+        </div>
+      ),
+      card: {
+        label: 'Name',
+        render: (appt) => (
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[var(--primary)] to-[var(--primary)] flex items-center justify-center text-[var(--text)] font-semibold text-[10px] flex-shrink-0">
+              {(appt.name || 'U').charAt(0).toUpperCase()}
+            </div>
+            <span className="font-bold text-[var(--text)]">{appt.name || '—'}</span>
+          </div>
+        ),
+      },
+    },
+    {
+      key: 'phone',
+      header: 'Contact',
+      sortable: true,
+      render: (appt) => appt.phone
+        ? <span className="font-mono text-xs text-[var(--text)]">{appt.phone}</span>
+        : <span className="text-[var(--slate-gray)] text-xs">—</span>,
+      card: {
+        label: 'Contact',
+        render: (appt) => (
+          <div className="space-y-0.5">
+            {appt.phone && <p className="font-mono text-xs text-[var(--text)]">{appt.phone}</p>}
+            {appt.email && <p className="text-xs text-[var(--slate-light)]">{appt.email}</p>}
+            {!appt.phone && !appt.email && <span className="text-[var(--slate-gray)] text-xs">—</span>}
+          </div>
+        ),
+      },
+    },
+    {
+      key: 'service',
+      header: 'Service',
+      sortable: true,
+      render: (appt) => appt.service
+        ? <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-[var(--surface-hover)] text-xs text-[var(--text)] border border-white/5">{appt.service}</span>
+        : <span className="text-[var(--slate-gray)] text-xs">—</span>,
+      card: {
+        label: 'Service',
+        render: (appt) => <span className="text-[var(--text)] font-semibold">{appt.service || '—'}</span>,
+      },
+    },
+    {
+      key: 'preferredDate',
+      header: 'Scheduled',
+      sortable: true,
+      render: (appt) => (
+        <div>
+          <p className="text-sm text-[var(--text)] tabular-nums">{formatApptDate(appt.preferredDate)}</p>
+          {appt.preferredTime && (
+            <p className="text-xs text-[var(--slate-light)] mt-0.5 tabular-nums">{appt.preferredTime}</p>
+          )}
+        </div>
+      ),
+      card: {
+        label: 'Scheduled',
+        render: (appt) => (
+          <div>
+            <span className="text-[var(--text)] font-semibold tabular-nums">{formatApptDate(appt.preferredDate)}</span>
+            {appt.preferredTime && (
+              <span className="text-[var(--slate-light)] text-xs ml-1.5 tabular-nums">{appt.preferredTime}</span>
+            )}
+          </div>
+        ),
+      },
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      sortable: true,
+      render: (appt) => {
+        const sc = statusConfig[appt.status] ?? statusConfig.pending;
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${sc.pill} ${sc.text}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`}/>
+            {sc.label}
+          </span>
+        );
+      },
+      card: {
+        label: 'Status',
+        render: (appt) => {
+          const sc = statusConfig[appt.status] ?? statusConfig.pending;
+          return (
+            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${sc.pill} ${sc.text}`}>
+              <span className={`w-1 h-1 rounded-full ${sc.dot}`}/>
+              {sc.label}
+            </span>
+          );
+        },
+      },
+    },
+    {
+      key: 'agentName',
+      header: 'Agent',
+      sortable: true,
+      className: 'whitespace-normal min-w-[100px]',
+      render: (appt) => appt.agentName ? (
+        <span className="inline-flex items-center gap-2 text-xs text-[var(--slate-light)]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] flex-shrink-0"/>
+          {appt.agentName}
+        </span>
+      ) : <span className="text-[var(--slate-gray)] text-xs">—</span>,
+      card: {
+        label: 'Agent',
+        render: (appt) => <span className="text-[var(--text)] font-semibold">{appt.agentName || '—'}</span>,
+      },
+    },
+  ], []);
 
   return (
     <div className="h-full overflow-y-auto overflow-x-hidden pb-10 pr-1">
@@ -101,153 +215,67 @@ export function MyAppointments() {
         {/* ── Header ── */}
         <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5 pt-1">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[var(--slate-light)] mb-1">Scheduling</p>
+            <p className="text-[9px] font-extrabold tracking-[0.25em] uppercase gradient-text mb-1.5">◈ Scheduling</p>
             <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-slate-800 leading-none">My Appointments</h1>
             <p className="mt-1.5 text-xs sm:text-sm text-[var(--slate-light)]">Manage bookings made through your AI agents</p>
           </div>
-          {loading && (
-            <div className="flex items-center gap-2 text-[var(--slate-light)]">
-              <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-              </svg>
-              <span className="text-xs">Loading…</span>
-            </div>
-          )}
         </motion.div>
 
-        {/* ── Toolbar ── */}
-        <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Search by name, phone, or service…"
-            className="flex-1 max-w-xs ml-1"
+        {/* ── Filter pills ── */}
+        <motion.div variants={fadeUp} className="flex items-center p-0.8 rounded-xl border bg-white/70 w-full sm:w-fit" style={{ borderColor: 'var(--slate-border)' }}>
+          {FILTERS.map((f) => (
+            <button
+              key={f.value}
+              onClick={() => setFilter(f.value)}
+              className={`flex-1 sm:flex-none px-3.5 py-2 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer whitespace-nowrap ${
+                filter === f.value
+                  ? 'btn-cta'
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </motion.div>
+
+        {/* ── DataTable ── */}
+        <motion.div variants={fadeUp}>
+          <DataTable
+            columns={columns}
+            data={filtered}
+            loading={loading}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            keyExtractor={(a) => a.id}
+            onRowClick={(appt) => openAppt(appt)}
+            cardTitle={(a) => a.name || 'Unknown'}
+            cardBadge={(a) => {
+              const sc = statusConfig[a.status] ?? statusConfig.pending;
+              return (
+                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${sc.pill} ${sc.text}`}>
+                  <span className={`w-1 h-1 rounded-full ${sc.dot}`}/>
+                  {sc.label}
+                </span>
+              );
+            }}
+            emptyState={{
+              title: 'No appointments found',
+              description: 'Appointments booked through your agents will appear here.',
+            }}
+            defaultSort={{ key: 'preferredDate', direction: 'desc' }}
+            searchable={true}
+            searchTerm={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search by name, phone, or service..."
+            densityControls={false}
+            columnToggling={true}
+            pagination={pagination}
+            onPageChange={setPage}
           />
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {FILTERS.map((f) => (
-              <button
-                key={f.value}
-                onClick={() => setFilter(f.value)}
-                className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all ${
-                  filter === f.value
-                    ? 'btn-cta'
-                    : 'text-[var(--slate-light)] hover:text-[var(--text)] bg-[var(--surface)] hover:bg-[var(--surface-hover)]'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
         </motion.div>
-
-        {/* ── Table ── */}
-        <motion.div variants={fadeUp} className="rounded-2xl border border-[var(--border)] overflow-hidden bg-[var(--s1)]">
-          {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center px-8">
-              <div className="w-14 h-14 rounded-2xl bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-[var(--slate-gray)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-              </div>
-              <p className="text-sm font-medium text-[var(--slate-light)] mb-1">No appointments found</p>
-              <p className="text-xs text-[var(--slate-light)] max-w-xs">
-                {search || filter ? 'Try adjusting your search or filter.' : 'Appointments booked through your agents will appear here.'}
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[700px]">
-                <thead>
-                  <tr className="border-b border-white/5">
-                    {['Name', 'Contact', 'Service', 'Scheduled', 'Status', 'Agent'].map((col) => (
-                      <th key={col} className="px-5 py-3.5 text-left">
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--slate-light)]">{col}</span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((appt, i) => {
-                    const sc = statusConfig[appt.status] ?? statusConfig.pending;
-                    const ac = getAvatarColor(appt.name || 'U');
-                    return (
-                      <motion.tr
-                        key={appt.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: i * 0.03 }}
-                        onClick={() => openAppt(appt)}
-                        className="group border-t border-white/[0.04] hover:bg-white/[0.03] transition-colors cursor-pointer"
-                      >
-                        {/* Name */}
-                        <td className="px-5 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${ac} flex items-center justify-center text-[var(--text)] font-semibold text-xs flex-shrink-0`}>
-                              {(appt.name || 'U').charAt(0).toUpperCase()}
-                            </div>
-                            <span className="font-medium text-sm text-[var(--text)] group-hover:text-[var(--text)] transition-colors">
-                              {appt.name || '—'}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Contact */}
-                        <td className="px-5 py-4 whitespace-nowrap">
-                          {appt.phone
-                            ? <span className="font-mono text-xs text-[var(--text)]">{appt.phone}</span>
-                            : <span className="text-[var(--slate-gray)] text-xs">—</span>
-                          }
-                        </td>
-
-                        {/* Service */}
-                        <td className="px-5 py-4 whitespace-nowrap">
-                          {appt.service
-                            ? <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-[var(--surface-hover)] text-xs text-[var(--text)] border border-white/5">{appt.service}</span>
-                            : <span className="text-[var(--slate-gray)] text-xs">—</span>
-                          }
-                        </td>
-
-                        {/* Scheduled */}
-                        <td className="px-5 py-4 whitespace-nowrap">
-                          <div>
-                            <p className="text-sm text-[var(--text)] tabular-nums">{formatApptDate(appt.preferredDate)}</p>
-                            {appt.preferredTime && (
-                              <p className="text-xs text-[var(--slate-light)] mt-0.5 tabular-nums">{appt.preferredTime}</p>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-5 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${sc.pill} ${sc.text}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`}/>
-                            {sc.label}
-                          </span>
-                        </td>
-
-                        {/* Agent */}
-                        <td className="px-5 py-4 whitespace-nowrap">
-                          {appt.agentName ? (
-                            <span className="inline-flex items-center gap-2 text-xs text-[var(--slate-light)]">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] flex-shrink-0"/>
-                              {appt.agentName}
-                            </span>
-                          ) : <span className="text-[var(--slate-gray)] text-xs">—</span>}
-                        </td>
-                      </motion.tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              <div className="px-5 py-3 border-t border-white/5">
-                <p className="text-xs text-[var(--slate-light)]">{filtered.length} appointment{filtered.length !== 1 ? 's' : ''}</p>
-              </div>
-            </div>
-          )}
-        </motion.div>
-        <Pagination pagination={pagination} onPageChange={setPage} />
       </motion.div>
+
+      {/* ── Appointment Detail Modal ── */}
       <AnimatePresence>
         {selected && (
           <motion.div
@@ -269,7 +297,7 @@ export function MyAppointments() {
               {/* Modal header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border)]">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getAvatarColor(selected.name || 'U')} flex items-center justify-center text-[var(--text)] font-semibold text-sm`}>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary)] flex items-center justify-center text-[var(--text)] font-semibold text-sm">
                     {(selected.name || 'U').charAt(0).toUpperCase()}
                   </div>
                   <div>
@@ -294,7 +322,6 @@ export function MyAppointments() {
 
               {/* Modal body */}
               <div className="px-6 py-5 space-y-6 max-h-[75vh] overflow-y-auto">
-
                 {/* Info grid */}
                 <div className="grid grid-cols-2 gap-2.5">
                   {[
@@ -314,7 +341,6 @@ export function MyAppointments() {
                   ))}
                 </div>
 
-                {/* Divider */}
                 <div className="border-t border-white/5"/>
 
                 {/* Status */}

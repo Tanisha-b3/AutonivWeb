@@ -1051,31 +1051,56 @@ export default function UnifiedAssistantWidget() {
       </AnimatePresence>
 
       {/* FAB */}
+      {!isOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: 8, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 8, scale: 0.9 }}
+          transition={{ delay: 1.2, duration: 0.4, ease: 'easeOut' }}
+          className="absolute -top-14 right-0 flex items-center gap-2 px-3 py-2 rounded-xl whitespace-nowrap shadow-lg z-50"
+          style={{
+            background: 'rgba(255,255,255,0.95)',
+            border: '1px solid rgba(37,99,235,0.15)',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          <img
+            src="https://i.pravatar.cc/80?img=47"
+            alt="Ava"
+            className="w-6 h-6 rounded-full object-cover shrink-0"
+          />
+          <span className="text-xs font-medium" style={{ color: '#1e293b' }}>
+            Hi, I am <span className="font-bold" style={{ color: '#2563EB' }}>Ava</span> 👋
+          </span>
+          <div
+            className="absolute -bottom-1.5 right-5 w-3 h-3 rotate-45"
+            style={{ background: 'rgba(255,255,255,0.95)', borderRight: '1px solid rgba(37,99,235,0.15)', borderBottom: '1px solid rgba(37,99,235,0.15)' }}
+          />
+        </motion.div>
+      )}
       <motion.button
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="relative w-11 h-11 rounded-full flex items-center justify-center shadow-lg"
+        className="relative w-14 h-14 rounded-full flex items-center justify-center shadow-lg btn-cta"
         style={{
-          background: T.greenDim,
-          border: `1px solid rgba(16,185,129,0.4)`,
-          boxShadow: `0 0 28px rgba(16,185,129,0.25)`,
+          boxShadow: '0 6px 24px rgba(16,185,129,0.35)',
         }}
       >
         <AnimatePresence mode="wait">
           {isOpen ? (
             <motion.svg key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}
-              className="w-5 h-5" fill="none" stroke={T.green} viewBox="0 0 24 24">
+              className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </motion.svg>
           ) : (
             <motion.svg key="chat" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-              className="w-5 h-5" fill="none" stroke={T.green} viewBox="0 0 24 24">
+              className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </motion.svg>
           )}
         </AnimatePresence>
-        {!isOpen && <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[var(--primary)] border-2 border-[#060a12]" />}
+        {!isOpen && <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-white border-2" style={{ borderColor: '#2563EB' }} />}
       </motion.button>
 
       {/* Local keyframe styles self-contained inside the widget */}

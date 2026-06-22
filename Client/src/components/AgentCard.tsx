@@ -8,6 +8,8 @@ interface AgentCardProps {
   onToggle?: (id: string, isActive: boolean) => void;
   onAssignPhone?: (agent: Agent) => void;
   onCallMe?: (agent: Agent) => void;
+  onWebCall?: (agent: Agent) => void;
+  onViewPrompt?: (agent: Agent) => void;
   showOwner?: boolean;
 }
 
@@ -71,7 +73,7 @@ const typeConfig: Record<string, {
   },
 };
 
-export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, showOwner }: AgentCardProps) {
+export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, onWebCall, onViewPrompt, showOwner }: AgentCardProps) {
   const config = typeConfig[agent.type] || typeConfig.receptionist;
   const voiceOpt = VOICE_OPTIONS.find(v => v.value === agent.voiceId);
   const voiceName = voiceOpt ? voiceOpt.label.split(' - ')[0] : 'Default';
@@ -152,9 +154,23 @@ export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, 
         {/* Prompt snippet */}
         <div className="mb-4 min-h-[44px]">
           {agent.prompt ? (
-            <p className="text-[11px] line-clamp-3 leading-relaxed font-medium" style={{ color: 'var(--text-secondary)' }}>
-              {agent.prompt}
-            </p>
+            <>
+              <p
+                className="text-[11px] line-clamp-3 leading-relaxed font-medium"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                {agent.prompt}
+              </p>
+              {agent.prompt.length > 120 && (
+                <button
+                  onClick={() => onViewPrompt?.(agent)}
+                  className="text-[10px] font-bold mt-1 cursor-pointer border-none bg-transparent p-0 transition-colors duration-200 hover:underline"
+                  style={{ color: 'var(--primary-blue)' }}
+                >
+                  View full prompt
+                </button>
+              )}
+            </>
           ) : (
             <p className="text-[11px] italic leading-relaxed" style={{ color: 'var(--text-muted)' }}>
               No system instructions configured yet...
@@ -225,13 +241,43 @@ export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, 
 
           {/* Action buttons */}
           <div className="flex items-center gap-1.5">
+            {onWebCall && agent.isActive && (
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => onWebCall(agent)}
+                title="Web Call"
+                className="btn-cta btn-press flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wide rounded-xl cursor-pointer border-none text-white"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Web
+              </motion.button>
+            )}
+
             {onCallMe && agent.isActive && agent.phoneNumberId && (
               <motion.button
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
                 onClick={() => onCallMe(agent)}
                 title="Test Call"
-                className="btn-cta btn-press flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wide rounded-xl cursor-pointer border-none text-white"
+                className="btn-press flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wide rounded-xl cursor-pointer border transition-all duration-200"
+                style={{
+                  background: 'rgba(16,185,129,0.06)',
+                  border: '1.5px solid rgba(16,185,129,0.3)',
+                  color: '#10B981',
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.background = '#10B981';
+                  (e.currentTarget as HTMLElement).style.color = '#fff';
+                  (e.currentTarget as HTMLElement).style.borderColor = '#10B981';
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.background = 'rgba(16,185,129,0.06)';
+                  (e.currentTarget as HTMLElement).style.color = '#10B981';
+                  (e.currentTarget as HTMLElement).style.borderColor = 'rgba(16,185,129,0.3)';
+                }}
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -278,7 +324,7 @@ export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, 
                 whileTap={{ scale: 0.94 }}
                 onClick={() => onDelete(agent.id)}
                 title="Delete Agent"
-                className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer btn-press transition-all duration-200 text-red-400 hover:text-white hover:bg-red-500 border border-red-100 hover:border-red-500"
+                className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer btn-press transition-all duration-200 text-red-400 hover:text-red-600 hover:bg-red-50 border border-red-100 hover:border-red-300"
                 style={{ background: 'var(--surface)' }}
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>

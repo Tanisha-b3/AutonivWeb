@@ -21,7 +21,11 @@ import { fetchMyAgents } from '../../store/slices/agentsSlice';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { OnboardingTour } from '../../components/OnboardingTour';
 import { EmptyStateGuide } from '../../components/EmptyStateGuide';
+import VapiModule from '@vapi-ai/web';
+import { callService } from '../../services/api';
 import type { MyStats } from '../../types';
+
+const Vapi = (typeof VapiModule === 'function' ? VapiModule : (VapiModule as any).default) as new (key: string) => any;
 
 // ─── Design tokens ────────────────────────────────────────────────────
 const T = {
@@ -304,7 +308,7 @@ const agentTypeMap: Record<string, { icon: React.ReactNode; color: string; label
   faq:          { icon: <QuestionIcon />, color: '20, 184, 166',  label: 'FAQ'           },
 };
 
-const AgentCard = memo(({ agent, index, onSimulateCall }: { agent: any; index: number; onSimulateCall: (agent: any) => void }) => {
+const AgentCard = memo(({ agent, index, onWebCall, onCallMe }: { agent: any; index: number; onWebCall?: (agent: any) => void; onCallMe?: (agent: any) => void }) => {
   const cfg = agentTypeMap[agent.type] || agentTypeMap.receptionist;
   const isActive = agent.isActive !== false;
   
@@ -341,19 +345,44 @@ const AgentCard = memo(({ agent, index, onSimulateCall }: { agent: any; index: n
         </div>
       </div>
       
-      <div className="flex items-center justify-between px-4 pb-4.5 pt-1 border-t border-slate-50">
+      <div className="flex items-center justify-between px-4 pb-4.5 pt-1 border-t border-slate-50 gap-2">
         <span className="text-[10px] font-semibold text-slate-400">
           {(agent.callCount || 0).toLocaleString()} calls
         </span>
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => onSimulateCall(agent)}
-            className="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-[var(--primary-blue-soft)] text-[var(--primary-blue)] hover:bg-[var(--primary-blue)] hover:text-white transition-all cursor-pointer"
-          >
-            Test Call
-          </button>
+          {onWebCall && isActive && (
+            <button
+              onClick={() => onWebCall(agent)}
+              className="px-2 py-1 text-[10px] font-bold rounded-lg bg-[var(--primary-blue)] text-white hover:opacity-90 transition-all cursor-pointer border-none"
+            >
+              Web
+            </button>
+          )}
+          {onCallMe && isActive && agent.phoneNumberId && (
+            <button
+              onClick={() => onCallMe(agent)}
+              className="px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer border"
+              style={{
+                background: 'rgba(16,185,129,0.06)',
+                border: '1.5px solid rgba(16,185,129,0.3)',
+                color: '#10B981',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.background = '#10B981';
+                (e.currentTarget as HTMLElement).style.color = '#fff';
+                (e.currentTarget as HTMLElement).style.borderColor = '#10B981';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.background = 'rgba(16,185,129,0.06)';
+                (e.currentTarget as HTMLElement).style.color = '#10B981';
+                (e.currentTarget as HTMLElement).style.borderColor = 'rgba(16,185,129,0.3)';
+              }}
+            >
+              Test
+            </button>
+          )}
           <Link to={`/dashboard/agents`}
-            className="px-2.5 py-1 text-[10px] font-bold rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+            className="px-2 py-1 text-[10px] font-bold rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
           >
             Configure
           </Link>
@@ -510,250 +539,512 @@ const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
   );
 };
 
-// ─── Floating Sandbox Phone Simulator Widget ───────────────────────
-interface SandboxProps {
-  agent: any | null;
+const COUNTRY_CODES = [
+  { code: '+1', country: 'US', flag: '🇺🇸', name: 'United States' },
+  { code: '+1', country: 'CA', flag: '🇨🇦', name: 'Canada' },
+  { code: '+44', country: 'GB', flag: '🇬🇧', name: 'United Kingdom' },
+  { code: '+91', country: 'IN', flag: '🇮🇳', name: 'India' },
+  { code: '+61', country: 'AU', flag: '🇦🇺', name: 'Australia' },
+  { code: '+49', country: 'DE', flag: '🇩🇪', name: 'Germany' },
+  { code: '+33', country: 'FR', flag: '🇫🇷', name: 'France' },
+  { code: '+81', country: 'JP', flag: '🇯🇵', name: 'Japan' },
+  { code: '+86', country: 'CN', flag: '🇨🇳', name: 'China' },
+  { code: '+55', country: 'BR', flag: '🇧🇷', name: 'Brazil' },
+  { code: '+52', country: 'MX', flag: '🇲🇽', name: 'Mexico' },
+  { code: '+82', country: 'KR', flag: '🇰🇷', name: 'South Korea' },
+  { code: '+39', country: 'IT', flag: '🇮🇹', name: 'Italy' },
+  { code: '+34', country: 'ES', flag: '🇪🇸', name: 'Spain' },
+  { code: '+31', country: 'NL', flag: '🇳🇱', name: 'Netherlands' },
+  { code: '+46', country: 'SE', flag: '🇸🇪', name: 'Sweden' },
+  { code: '+47', country: 'NO', flag: '🇳🇴', name: 'Norway' },
+  { code: '+41', country: 'CH', flag: '🇨🇭', name: 'Switzerland' },
+  { code: '+65', country: 'SG', flag: '🇸🇬', name: 'Singapore' },
+  { code: '+971', country: 'AE', flag: '🇦🇪', name: 'UAE' },
+  { code: '+966', country: 'SA', flag: '🇸🇦', name: 'Saudi Arabia' },
+  { code: '+27', country: 'ZA', flag: '🇿🇦', name: 'South Africa' },
+  { code: '+234', country: 'NG', flag: '🇳🇬', name: 'Nigeria' },
+  { code: '+254', country: 'KE', flag: '🇰🇪', name: 'Kenya' },
+  { code: '+64', country: 'NZ', flag: '🇳🇿', name: 'New Zealand' },
+  { code: '+63', country: 'PH', flag: '🇵🇭', name: 'Philippines' },
+  { code: '+66', country: 'TH', flag: '🇹🇭', name: 'Thailand' },
+  { code: '+60', country: 'MY', flag: '🇲🇾', name: 'Malaysia' },
+  { code: '+62', country: 'ID', flag: '🇮🇩', name: 'Indonesia' },
+  { code: '+84', country: 'VN', flag: '🇻🇳', name: 'Vietnam' },
+  { code: '+92', country: 'PK', flag: '🇵🇰', name: 'Pakistan' },
+  { code: '+880', country: 'BD', flag: '🇧🇩', name: 'Bangladesh' },
+  { code: '+94', country: 'LK', flag: '🇱🇰', name: 'Sri Lanka' },
+  { code: '+977', country: 'NP', flag: '🇳🇵', name: 'Nepal' },
+];
+
+function WebCallDialog({
+  open,
+  onClose,
+  agent,
+  mode,
+  seconds,
+  errorMsg,
+}: {
+  open: boolean;
   onClose: () => void;
-}
-
-const SandboxPhone = ({ agent, onClose }: SandboxProps) => {
-  const [callState, setCallState] = useState<'idle' | 'dialing' | 'ringing' | 'connected' | 'ended'>('idle');
-  const [timerSec, setTimerSec] = useState(0);
-  const [messages, setMessages] = useState<string[]>([]);
-  const timerRef = useRef<any>(null);
-  const intervalRef = useRef<any>(null);
-
-  const dialogue = useMemo(() => {
-    if (!agent) return [];
-    if (agent.type === 'appointment') {
-      return [
-        "🤖 **Agent**: Welcome to Scheduling Assistant! I can help you book a time.",
-        "👤 **You**: Yes, I would like to book a slot for next Monday.",
-        "🤖 **Agent**: Let me query the availability calendar... We have slots available at 10 AM, 1 PM, and 4 PM. Which works best?",
-        "👤 **You**: 1 PM works great.",
-        "🤖 **Agent**: Excellent! I've reserved Monday at 1 PM under your name. Talk to you soon!",
-      ];
-    } else if (agent.type === 'faq') {
-      return [
-        "🤖 **Agent**: Hello, I'm the trained Knowledge Q&A Assistant. Ask me anything.",
-        "👤 **You**: What are the pricing options for the scale plan?",
-        "🤖 **Agent**: The Scale plan is ₹29,999/month and includes up to 400 calls/month, advanced analytics, and CRM workflows.",
-        "👤 **You**: Awesome, that helps a lot.",
-        "🤖 **Agent**: My pleasure! Let me know if you have other questions.",
-      ];
-    } else {
-      return [
-        "🤖 **Agent**: Hello, front desk receptionist here. How may I route your call?",
-        "👤 **You**: Hi, I'm checking if the manager is in today.",
-        "🤖 **Agent**: Let me check... The manager is out on calls but will return in an hour. Can I take a message?",
-        "👤 **You**: No, I will call back later. Thanks.",
-        "🤖 **Agent**: Understood. Thank you for calling Autoniv, have a great day!",
-      ];
-    }
-  }, [agent]);
-
-  useEffect(() => {
-    if (callState === 'connected') {
-      intervalRef.current = setInterval(() => {
-        setTimerSec(s => s + 1);
-      }, 1000);
-
-      // Print dialogues index-by-index
-      let diagIdx = 0;
-      setMessages([dialogue[0]]);
-      
-      timerRef.current = setInterval(() => {
-        diagIdx++;
-        if (diagIdx < dialogue.length) {
-          setMessages(prev => [...prev, dialogue[diagIdx]]);
-        } else {
-          setCallState('ended');
-          clearInterval(timerRef.current!);
-          clearInterval(intervalRef.current!);
-        }
-      }, 3500);
-    }
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [callState, dialogue]);
-
-  const handleStart = () => {
-    setCallState('dialing');
-    setTimeout(() => {
-      setCallState('ringing');
-      setTimeout(() => {
-        setCallState('connected');
-        setTimerSec(0);
-      }, 1500);
-    }, 1200);
-  };
-
-  const handleHangUp = () => {
-    setCallState('ended');
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    if (timerRef.current) clearInterval(timerRef.current);
-  };
-
+  agent: any;
+  mode: 'idle' | 'connecting' | 'active' | 'ended' | 'error';
+  seconds: number;
+  errorMsg: string;
+}) {
   const formatTimer = (sec: number) => {
     const m = Math.floor(sec / 60);
     const s = sec % 60;
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  if (!agent) return null;
+  return (
+    <AnimatePresence>
+      {open && agent && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-md"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[120] flex items-center justify-center p-4 pointer-events-none"
+          >
+            <div className="w-full max-w-sm bg-slate-950 border border-slate-800 rounded-[32px] overflow-hidden shadow-2xl pointer-events-auto p-6 text-white flex flex-col items-center text-center relative">
+              {/* Top ambient glow */}
+              <div className="absolute -top-24 w-48 h-48 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
+
+              {/* Status Header */}
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-blue-400 mb-6">
+                {mode === 'connecting' && 'CONNECTING TO AGENT...'}
+                {mode === 'active' && 'LIVE WEB CALL'}
+                {mode === 'ended' && 'CALL TERMINATED'}
+                {mode === 'error' && 'CONNECTION ERROR'}
+              </p>
+
+              {/* Avatar Orb */}
+              <div className="relative mb-6">
+                {mode === 'active' && (
+                  <>
+                    <motion.div
+                      animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0, 0.5] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                      className="absolute inset-0 rounded-full border border-blue-500/30"
+                    />
+                    <motion.div
+                      animate={{ scale: [1, 1.8, 1], opacity: [0.3, 0, 0.3] }}
+                      transition={{ duration: 2, repeat: Infinity, delay: 0.5, ease: 'easeInOut' }}
+                      className="absolute inset-0 rounded-full border border-indigo-500/20"
+                    />
+                  </>
+                )}
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg relative z-10 border border-slate-800">
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Agent details */}
+              <h3 className="text-lg font-black tracking-tight mb-1">{agent.name}</h3>
+              <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-6">
+                {agent.type === 'faq' ? 'Q&A Support Specialist' : agent.type === 'appointment' ? 'Scheduler Assistant' : 'Receptionist Bot'}
+              </p>
+
+              {/* Visualizer Waveform / Info Area */}
+              <div className="w-full h-16 flex items-center justify-center mb-6 relative">
+                {mode === 'active' ? (
+                  <div className="flex gap-1 h-8 items-center justify-center">
+                    {Array.from({ length: 14 }).map((_, idx) => (
+                      <motion.div
+                        key={idx}
+                        className="w-[3px] bg-blue-500 rounded-full"
+                        animate={{ height: [6, Math.random() * 28 + 6, 6] }}
+                        transition={{
+                          duration: 0.5 + Math.random() * 0.5,
+                          repeat: Infinity,
+                          repeatType: 'reverse',
+                          delay: idx * 0.04
+                        }}
+                      />
+                    ))}
+                  </div>
+                ) : mode === 'connecting' ? (
+                  <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
+                    <svg className="animate-spin w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Opening Vapi audio socket...
+                  </div>
+                ) : mode === 'ended' ? (
+                  <span className="text-xs font-bold text-emerald-400">Call ended</span>
+                ) : (
+                  <span className="text-xs font-bold text-rose-500 max-w-[240px] truncate">{errorMsg || 'Failed to connect'}</span>
+                )}
+              </div>
+
+              {/* Timer */}
+              {mode === 'active' && (
+                <p className="text-2xl font-mono font-bold tracking-wider text-slate-200 mb-8 bg-slate-900/60 border border-slate-800/80 px-4 py-2 rounded-2xl">
+                  {formatTimer(seconds)}
+                </p>
+              )}
+
+              {/* Action buttons */}
+              <div className="w-full flex justify-center gap-3 pt-2">
+                {mode !== 'ended' && mode !== 'error' ? (
+                  <button
+                    onClick={onClose}
+                    className="w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-500 active:scale-95 flex items-center justify-center shadow-lg hover:shadow-rose-600/20 transition-all cursor-pointer border-none text-white"
+                    title="Hang up"
+                  >
+                    <svg className="w-6 h-6 rotate-[135deg]" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M21 15.46l-5.25-1.5c-.38-.11-.79-.02-1.09.28l-2.45 2.45c-3.13-1.63-5.71-4.22-7.34-7.34L7.3 6.9c.3-.3.39-.71.28-1.09L6.08 1H1.5C.67 1 0 1.67 0 2.5 0 12.72 8.28 21 18.5 21c.83 0 1.5-.67 1.5-1.5v-4.04z" />
+                    </svg>
+                  </button>
+                ) : (
+                  <button
+                    onClick={onClose}
+                    className="px-6 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-bold text-slate-300 transition-colors cursor-pointer border border-slate-700"
+                  >
+                    Dismiss Dialog
+                  </button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function CallMeDialog({
+  open,
+  onClose,
+  agent,
+  onCall,
+  calling,
+}: {
+  open: boolean;
+  onClose: () => void;
+  agent: any;
+  onCall: (phoneNumber: string) => void;
+  calling: boolean;
+}) {
+  const [calleeName, setCalleeName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [countryCode, setCountryCode] = useState('+91');
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const countryDropdownRef = useRef<HTMLDivElement>(null);
+  const [countrySearch, setCountrySearch] = useState('');
+
+  useEffect(() => {
+    if (open) {
+      setCalleeName(''); setPhone(''); setError(''); setCopied(false);
+      setCountryCode('+91'); setShowCountryDropdown(false); setCountrySearch('');
+    }
+  }, [open]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(e.target as Node)) {
+        setShowCountryDropdown(false);
+        setCountrySearch('');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedCountry = COUNTRY_CODES.find(c => c.code === countryCode) || COUNTRY_CODES[3];
+
+  const filteredCountries = countrySearch.trim()
+    ? COUNTRY_CODES.filter(c =>
+        c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+        c.code.includes(countrySearch)
+      )
+    : COUNTRY_CODES;
+
+  const cleanedDigits = phone.replace(/\D/g, '');
+  const isValidLength = cleanedDigits.length >= 7 && cleanedDigits.length <= 12;
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/[^\d\s]/g, '');
+    setPhone(raw);
+    if (error) setError('');
+  };
+
+  const handleCall = () => {
+    if (cleanedDigits.length < 7) {
+      setError('Enter a valid phone number');
+      return;
+    }
+    setError('');
+    onCall(`${countryCode}${cleanedDigits}`);
+  };
+
+  const copyCurl = () => {
+    const curl = `curl -X POST ${window.location.origin}/api/calls/outbound \\
+  -H "Authorization: Bearer <YOUR_TOKEN>" \\
+  -H "Content-Type: application/json" \\
+  -d '{"agentId":"${agent?.id || '<AGENT_ID>'}","phoneNumber":"${countryCode}${cleanedDigits}"}'`;
+    navigator.clipboard.writeText(curl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 120, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 120, scale: 0.9 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="fixed bottom-6 right-6 z-[60] w-[310px] h-[500px] rounded-[36px] bg-slate-900 border-4 border-slate-800 shadow-2xl overflow-hidden p-3.5 flex flex-col text-white"
-    >
-      {/* Phone Screen Notch */}
-      <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-4 rounded-full bg-slate-850 z-20 flex items-center justify-center">
-        <span className="w-1.5 h-1.5 rounded-full bg-black/40 mr-2" />
-        <span className="w-8 h-1 rounded-full bg-black/30" />
-      </div>
-
-      {/* Screen Area */}
-      <div className="flex-1 rounded-[24px] bg-slate-950 p-4 pt-6 flex flex-col justify-between overflow-hidden relative">
-        
-        {/* Connection states display */}
-        <div className="text-center pt-2 flex flex-col items-center">
-          <p className="text-[10px] font-bold text-[var(--primary-blue)] uppercase tracking-wider">AGENT PREVIEW</p>
-          <h4 className="text-sm font-extrabold truncate max-w-[180px] mt-0.5">{agent.name}</h4>
-          
-          {/* Status message */}
-          <div className="mt-2 flex items-center gap-1.5">
-            {callState === 'connected' && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping" />}
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-              {callState === 'idle' && 'READY TO DIAL'}
-              {callState === 'dialing' && 'DIALING VAPI NODE...'}
-              {callState === 'ringing' && 'AGENT RINGING...'}
-              {callState === 'connected' && `LIVE CALL • ${formatTimer(timerSec)}`}
-              {callState === 'ended' && 'CALL TERMINATED'}
-            </span>
-          </div>
-        </div>
-
-        {/* Audio Waveform Orb or Dialogue Logs */}
-        <div className="flex-1 flex flex-col justify-center items-center my-4 overflow-hidden relative">
-          
-          {/* Dialing/Ringing Animation */}
-          {(callState === 'dialing' || callState === 'ringing') && (
-            <div className="flex items-center justify-center gap-2">
-              {[0.1, 0.25, 0.4].map((delay, idx) => (
-                <span
-                  key={idx}
-                  className="w-2.5 h-2.5 rounded-full bg-[var(--primary-blue)] animate-bounce"
-                  style={{ animationDelay: `${delay}s` }}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Active Call Conversation Logs */}
-          {callState === 'connected' && (
-            <div className="w-full flex-1 overflow-y-auto space-y-2 text-[10px] pr-1 py-1 scrollbar-none scroll-smooth">
-              {messages.map((line, idx) => {
-                const isBot = line.startsWith('🤖');
-                const clean = line.replace(/^(🤖\s*\*\*Agent\*\*:\s*|👤\s*\*\*You\*\*:\s*)/, '');
-                return (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex flex-col ${isBot ? 'items-start' : 'items-end'}`}
-                  >
-                    <span className="text-[7px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">{isBot ? 'Agent' : 'You'}</span>
-                    <p className={`px-2.5 py-1.5 rounded-xl max-w-[90%] leading-relaxed ${isBot ? 'bg-slate-800 text-slate-100 rounded-bl-none' : 'bg-[var(--primary-blue)] text-white rounded-br-none font-medium'}`}>
-                      {clean}
-                    </p>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Ended Call summary */}
-          {callState === 'ended' && (
-            <div className="text-center space-y-2 px-2 animate-[fadeIn_0.3s]">
-              <svg className="w-8 h-8 text-[#10B981] mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <h5 className="text-xs font-bold text-slate-200">Simulation Complete</h5>
-              <p className="text-[9px] text-slate-500 leading-normal">
-                Call logged successfully in recent history on the dashboard.
-              </p>
-              <button
-                onClick={() => setCallState('idle')}
-                className="px-3 py-1 rounded-lg bg-slate-800 border border-slate-700 text-[10px] font-bold text-slate-300 hover:text-white cursor-pointer"
-              >
-                Call Again
-              </button>
-            </div>
-          )}
-
-          {/* Orbit level waveform */}
-          {callState === 'connected' && (
-            <div className="absolute bottom-0 left-0 right-0 h-8 flex justify-center items-center gap-0.8 bg-gradient-to-t from-slate-950 to-transparent">
-              {Array.from({ length: 12 }).map((_, idx) => (
-                <span
-                  key={idx}
-                  className="w-0.8 bg-[var(--primary-blue)] rounded-full animate-wave"
-                  style={{
-                    height: `${10 + Math.random() * 20}px`,
-                    animationDuration: `${0.4 + Math.random() * 0.6}s`,
-                    animationDelay: `${idx * 0.05}s`
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Buttons / Dialer Controls */}
-        <div className="flex justify-center items-center gap-5 pt-3 border-t border-slate-900/60 z-10">
-          {callState === 'idle' && (
-            <button
-              onClick={handleStart}
-              className="w-11 h-11 rounded-full bg-green-500 hover:bg-green-600 active:scale-95 flex items-center justify-center shadow-lg transition-all cursor-pointer"
-              title="Call agent"
-            >
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-            </button>
-          )}
-
-          {callState !== 'idle' && callState !== 'ended' && (
-            <button
-              onClick={handleHangUp}
-              className="w-11 h-11 rounded-full bg-rose-500 hover:bg-rose-600 active:scale-95 flex items-center justify-center shadow-lg transition-all cursor-pointer"
-              title="Hang up"
-            >
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-            </button>
-          )}
-
-          <button
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[110] bg-black/50 backdrop-blur-sm"
             onClick={onClose}
-            className="px-3.5 py-1.8 rounded-xl border border-slate-800 text-[10px] font-bold text-slate-400 hover:text-white transition-all cursor-pointer"
+          />
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0, y: 8 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 8 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[120] flex items-center justify-center p-4 pointer-events-none"
           >
-            Hang Up & Exit
-          </button>
-        </div>
+            <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-2xl pointer-events-auto">
 
-      </div>
-    </motion.div>
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-slate-50/60">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-[var(--primary-blue)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-slate-800 leading-none">Simulator Outbound Call</h3>
+                    <p className="text-[10px] font-semibold text-slate-400 mt-1">Test your agent with a live call</p>
+                  </div>
+                </div>
+                <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-5 space-y-4 bg-white">
+                {/* Agent chip */}
+                <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-150">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Agent:</span>
+                  <span className="text-xs font-bold text-slate-700 truncate">{agent?.name || '—'}</span>
+                </div>
+
+                {/* Callee name */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Callee Name</label>
+                  <input
+                    type="text"
+                    value={calleeName}
+                    onChange={(e) => setCalleeName(e.target.value)}
+                    placeholder="e.g. John Smith"
+                    className="w-full px-3.5 py-3 text-xs bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all font-semibold"
+                  />
+                </div>
+
+                {/* Phone — country + number merged into a single control */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Callee Phone Number</label>
+
+                  <div
+                    className={`flex items-stretch rounded-2xl border w-full transition-all bg-slate-50 ${
+                      error
+                        ? 'border-rose-300 ring-4 ring-rose-100'
+                        : 'border-slate-200 focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-500/10 focus-within:bg-white'
+                    }`}
+                  >
+                    {/* Country selector — relative anchor for the dropdown */}
+                    <div className="relative flex-shrink-0" ref={countryDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                        className="h-full flex items-center gap-1.5 pl-3.5 pr-2.5 py-3 text-xs rounded-l-2xl text-slate-700 hover:bg-slate-100/70 transition-colors min-w-[88px] cursor-pointer font-semibold border-r border-slate-200"
+                      >
+                        <span className="text-sm">{selectedCountry.flag}</span>
+                        <span className="text-[11px] text-slate-600 font-mono font-bold">{countryCode}</span>
+                        <svg className={`w-3 h-3 text-slate-400 ml-auto transition-transform duration-150 ${showCountryDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+
+                      <AnimatePresence>
+                        {showCountryDropdown && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                            transition={{ duration: 0.12 }}
+                            className="absolute top-full left-0 mt-1.5 w-72 bg-white border border-slate-200 rounded-2xl shadow-xl z-[60] overflow-hidden"
+                          >
+                            <div className="p-2 border-b border-slate-100">
+                              <input
+                                autoFocus
+                                type="text"
+                                value={countrySearch}
+                                onChange={(e) => setCountrySearch(e.target.value)}
+                                placeholder="Search country or code..."
+                                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-400 transition-colors font-medium"
+                              />
+                            </div>
+                            <div className="max-h-48 overflow-y-auto py-1 scrollbar-thin">
+                              {filteredCountries.length === 0 ? (
+                                <p className="px-3.5 py-3 text-xs text-slate-400 font-medium text-center">No matches</p>
+                              ) : (
+                                filteredCountries.map((c, i) => (
+                                  <button
+                                    key={`${c.code}-${c.country}-${i}`}
+                                    type="button"
+                                    onClick={() => { setCountryCode(c.code); setShowCountryDropdown(false); setCountrySearch(''); }}
+                                    className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left text-xs hover:bg-slate-50 transition-colors cursor-pointer ${
+                                      countryCode === c.code && selectedCountry.country === c.country
+                                        ? 'bg-blue-50/60 text-[var(--primary-blue)] font-bold'
+                                        : 'text-slate-600 font-semibold'
+                                    }`}
+                                  >
+                                    <span className="text-sm">{c.flag}</span>
+                                    <span className="flex-1 text-left truncate">{c.name}</span>
+                                    <span className="text-slate-400 font-mono text-[10px] font-bold">{c.code}</span>
+                                    {countryCode === c.code && selectedCountry.country === c.country && (
+                                      <svg className="w-3.5 h-3.5 text-[var(--primary-blue)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                      </svg>
+                                    )}
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Phone digits */}
+                    <input
+                      type="tel"
+                      inputMode="tel"
+                      value={phone}
+                      onChange={handlePhoneChange}
+                      placeholder="XXXXXXXXXX"
+                      autoFocus
+                      className="flex-1 min-w-0 px-3.5 py-3 text-xs bg-transparent text-slate-700 focus:outline-none transition-all font-mono font-bold rounded-r-2xl"
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleCall(); }}
+                    />
+
+                    {phone.trim() && (
+                      <div className="flex items-center pr-3.5 flex-shrink-0">
+                        {isValidLength ? (
+                          <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <span className="text-[9px] font-mono font-bold text-slate-300">{cleanedDigits.length}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between mt-1.5 px-0.5">
+                    {error ? (
+                      <motion.p
+                        key="error"
+                        initial={{ opacity: 0, y: -2 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="text-[11px] text-rose-500 font-bold flex items-center gap-1"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0 3.75h.007v.008H12v-.008z" />
+                        </svg>
+                        {error}
+                      </motion.p>
+                    ) : (
+                      <p className="text-[11px] text-slate-400 font-medium">
+                        Will dial as <span className="font-mono font-bold text-slate-500">{countryCode}{cleanedDigits || '…'}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer actions */}
+              <div className="px-5 pb-5 pt-1.5 space-y-2 bg-slate-50/60 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={handleCall}
+                  disabled={calling || !phone.trim()}
+                  className="btn-cta w-full py-3 rounded-2xl text-xs font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer border-none shadow-md"
+                >
+                  {calling ? (
+                    <>
+                      <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Connecting Line...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                      Simulate Call
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={copyCurl}
+                  className="w-full py-2.5 rounded-2xl text-xs font-bold text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                >
+                  {copied ? (
+                    <>
+                      <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      cURL Copied!
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                      </svg>
+                      Copy API cURL Code
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
-};
+}
 
 // ─── SVG Icons ────────────────────────────────────────────────────────
 function PhoneIcon() { return <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>; }
@@ -815,9 +1106,19 @@ export function UserDashboard() {
   // Chart active tab
   const [chartTab, setChartTab] = useState<'volume' | 'minutes'>('volume');
   
-  // Detailed Drawer and Phone simulator states
+  // Detailed Drawer and Call states
   const [detailCall, setDetailCall] = useState<any | null>(null);
-  const [simulatingAgent, setSimulatingAgent] = useState<any | null>(null);
+  const [callTarget, setCallTarget] = useState<any | null>(null);
+  const [calling, setCalling] = useState(false);
+
+  // Web Call states
+  const [webCallTarget, setWebCallTarget] = useState<any | null>(null);
+  const [webCallMode, setWebCallMode] = useState<'idle' | 'connecting' | 'active' | 'ended' | 'error'>('idle');
+  const [webCallSeconds, setWebCallSeconds] = useState(0);
+  const [webCallErrorMsg, setWebCallErrorMsg] = useState('');
+  const webCallTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const webCallMaxDurationRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const webCallVapiRef = useRef<any>(null);
 
   const { show: showOnboarding, dismiss: dismissOnboarding } = useOnboarding();
 
@@ -967,9 +1268,107 @@ export function UserDashboard() {
     return null;
   };
 
-  // Trigger test agent phone sandbox simulation
-  const handleSimulateCall = (agent: any) => {
-    setSimulatingAgent(agent);
+  const clearWebCallTimers = useCallback(() => {
+    if (webCallTimerRef.current) { clearInterval(webCallTimerRef.current); webCallTimerRef.current = null; }
+    if (webCallMaxDurationRef.current) { clearTimeout(webCallMaxDurationRef.current); webCallMaxDurationRef.current = null; }
+  }, []);
+
+  const stopWebCall = useCallback(() => {
+    if (webCallVapiRef.current) {
+      try {
+        webCallVapiRef.current.stop();
+        if (typeof webCallVapiRef.current.removeAllListeners === 'function') {
+          webCallVapiRef.current.removeAllListeners();
+        }
+      } catch { /* ignore */ }
+      webCallVapiRef.current = null;
+    }
+    clearWebCallTimers();
+    setWebCallMode('ended');
+    setTimeout(() => {
+      setWebCallMode('idle');
+      setWebCallTarget(null);
+    }, 1500);
+  }, [clearWebCallTimers]);
+
+  useEffect(() => () => { clearWebCallTimers(); }, [clearWebCallTimers]);
+
+  const handleWebCall = async (agent: any) => {
+    setWebCallTarget(agent);
+    setWebCallMode('connecting');
+    setWebCallSeconds(0);
+    setWebCallErrorMsg('');
+
+    const apiKey = import.meta.env.VITE_VAPI_API_KEY as string | undefined;
+    if (!apiKey) {
+      setWebCallMode('error');
+      setWebCallErrorMsg('Vapi API Key is missing.');
+      addToast('Vapi API Key is missing. Web Call unavailable.', 'error');
+      return;
+    }
+
+    try {
+      const vapi = new Vapi(apiKey);
+      webCallVapiRef.current = vapi;
+
+      const onSpeechStart = () => { setWebCallMode('active'); };
+      const onCallEnd = () => stopWebCall();
+      const onError = (e: any) => {
+        console.error('[UserDashboard] Web Call VAPI error:', e);
+        setWebCallMode('error');
+        setWebCallErrorMsg(e?.message || 'Call failed.');
+        addToast(e?.message || 'Web Call error.', 'error');
+      };
+
+      vapi.on('speech-start', onSpeechStart);
+      vapi.on('call-end', onCallEnd);
+      vapi.on('error', onError);
+
+      if (agent.vapiId) {
+        await vapi.start(agent.vapiId);
+      } else {
+        await vapi.start({
+          name: agent.name,
+          firstMessage: `Hi, this is ${agent.name}. How can I help you today?`,
+          model: {
+            provider: 'openai',
+            model: 'gpt-4',
+            messages: [{ role: 'system', content: agent.prompt || 'You are a helpful assistant.' }],
+          },
+          voice: {
+            provider: '11labs',
+            voiceId: agent.voiceId || '21m00Tcm4TlvDq8ikWAM',
+          },
+        });
+      }
+
+      setWebCallMode('active');
+      webCallTimerRef.current = setInterval(() => setWebCallSeconds(prev => prev + 1), 1000);
+      webCallMaxDurationRef.current = setTimeout(() => stopWebCall(), 180_000); // 3 min duration
+      addToast(`Connected with ${agent.name} via Web Call`, 'success');
+    } catch (err: any) {
+      console.error('[UserDashboard] Web call failed:', err);
+      setWebCallMode('error');
+      setWebCallErrorMsg(err?.message || 'Failed to start Web call');
+      addToast(err?.message || 'Failed to start Web call', 'error');
+      webCallVapiRef.current = null;
+    }
+  };
+
+  const handleCallMe = async (phoneNumber: string) => {
+    if (!callTarget) return;
+    setCalling(true);
+
+    try {
+      await callService.outbound(callTarget.id, phoneNumber);
+      addToast(`Test call initiated to ${phoneNumber} successfully!`, 'success');
+      setCallTarget(null);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to initiate call';
+      addToast(msg, 'error');
+    } finally {
+      setCalling(false);
+    }
   };
 
   // Loading indicator on initial fetch
@@ -1021,15 +1420,24 @@ export function UserDashboard() {
     <>
       <ToastContainer toasts={toasts} remove={removeToast} />
       
-      {/* Floating Mock Phone Sandbox simulation */}
-      <AnimatePresence>
-        {simulatingAgent && (
-          <SandboxPhone
-            agent={simulatingAgent}
-            onClose={() => setSimulatingAgent(null)}
-          />
-        )}
-      </AnimatePresence>
+      {/* Test Call Dialing Modal */}
+      <CallMeDialog
+        open={callTarget !== null}
+        onClose={() => setCallTarget(null)}
+        agent={callTarget}
+        onCall={handleCallMe}
+        calling={calling}
+      />
+
+      {/* Web Call Dialog Modal */}
+      <WebCallDialog
+        open={webCallTarget !== null}
+        onClose={stopWebCall}
+        agent={webCallTarget}
+        mode={webCallMode}
+        seconds={webCallSeconds}
+        errorMsg={webCallErrorMsg}
+      />
 
       {/* Drilldown modal drawer details */}
       <CallDetailsDrawer
@@ -1138,6 +1546,7 @@ export function UserDashboard() {
         </div>
 
         {/* ── Performance Analytics Trends Section ── */}
+        {hasCallData && (
         <motion.div
           variants={fadeUp}
           className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md"
@@ -1207,6 +1616,7 @@ export function UserDashboard() {
             </ResponsiveContainer>
           </div>
         </motion.div>
+        )}
 
         {/* ── Breakdown & Billing Row ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -1326,7 +1736,7 @@ export function UserDashboard() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {myAgents.map((agent, i) => (
-                <AgentCard key={agent.id} agent={agent} index={i} onSimulateCall={handleSimulateCall} />
+                <AgentCard key={agent.id} agent={agent} index={i} onWebCall={handleWebCall} onCallMe={(a) => setCallTarget(a)} />
               ))}
             </div>
           </motion.div>

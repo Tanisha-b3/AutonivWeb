@@ -36,25 +36,16 @@ const fadeUp = {
 const stagger = { animate: { transition: { staggerChildren: 0.05 } } };
 
 // ── Constants ──────────────────────────────────────────────────────────────
-const CATEGORY_STYLE: Record<string, string> = {
-  recurring:  'text-[var(--primary)] bg-[var(--primary-soft)] border-[var(--border)]',
-  'one-time': 'text-violet-600 bg-violet-50 border-violet-200',
+const CATEGORY_STYLE: Record<string, { color: string; bg: string; border: string }> = {
+  recurring:  { color: 'var(--primary)', bg: 'var(--primary-soft)', border: 'var(--border)' },
+  'one-time': { color: '#7C3AED', bg: 'rgba(124,58,237,0.08)', border: 'rgba(124,58,237,0.18)' },
 };
 
-const ADDON_TITLE_COLORS: Record<string, string> = {
-  'performance-report':  'text-black',
-  'ab-testing':          'text-black',
-  'whatsapp-sequences':  'text-black',
-  'regional-language':   'text-black',
-  'reactivation':        'text-black',
-  'white-label':         'text-black',
-};
-
-const STATUS_STYLE: Record<string, { text: string; bg: string; dot: string }> = {
-  pending:   { text: 'text-amber-600',  bg: 'bg-amber-50 border-amber-200',      dot: 'bg-amber-500' },
-  approved:  { text: 'text-blue-600',   bg: 'bg-blue-50 border-blue-200',        dot: 'bg-blue-500' },
-  rejected:  { text: 'text-rose-600',   bg: 'bg-rose-50 border-rose-200',        dot: 'bg-rose-500' },
-  cancelled: { text: 'text-gray-400',   bg: 'bg-gray-50 border-gray-200',        dot: 'bg-gray-300' },
+const STATUS_MAP: Record<string, { color: string; bg: string; dot: string; label: string }> = {
+  pending:   { color: '#D97706', bg: 'rgba(245,158,11,0.08)', dot: '#F59E0B', label: 'Pending' },
+  approved:  { color: '#059669', bg: 'rgba(16,185,129,0.08)', dot: '#10B981', label: 'Active' },
+  rejected:  { color: '#DC2626', bg: 'rgba(239,68,68,0.08)', dot: '#EF4444', label: 'Rejected' },
+  cancelled: { color: '#94A3B8', bg: 'rgba(148,163,184,0.08)', dot: '#CBD5E1', label: 'Cancelled' },
 };
 
 const FILTERS = [
@@ -78,6 +69,9 @@ function CatalogCard({
 }) {
   const [hover, setHover] = useState(false);
   const isRequested = !!myStatus;
+  const isPending = myStatus === 'pending';
+  const isApproved = myStatus === 'approved';
+  const catStyle = CATEGORY_STYLE[addon.category] || { color: 'var(--text-muted)', bg: 'var(--s1)', border: 'var(--border)' };
 
   return (
     <motion.div
@@ -85,11 +79,12 @@ function CatalogCard({
       animate={{ opacity: 1, y: 0 }}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      className="relative rounded-2xl border overflow-hidden transition-all cursor-pointer bg-[var(--surface)] group"
+      className="relative rounded-2xl border overflow-hidden transition-all cursor-pointer group"
       style={{
-        borderColor: hover ? T.borderHover : 'rgba(37,99,235,0.08)',
-        boxShadow: hover 
-          ? '0 8px 32px rgba(37,99,235,0.12), 0 2px 8px rgba(37,99,235,0.06)' 
+        background: 'var(--surface)',
+        borderColor: hover ? T.borderHover : 'var(--border)',
+        boxShadow: hover
+          ? '0 8px 32px rgba(37,99,235,0.12), 0 2px 8px rgba(37,99,235,0.06)'
           : '0 1px 3px rgba(0,0,0,0.04)',
         transform: hover ? 'translateY(-2px)' : 'translateY(0)',
       }}
@@ -112,44 +107,47 @@ function CatalogCard({
           </div>
           <div className="flex items-center gap-2">
             {isRequested && (
-              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-medium uppercase tracking-wider border ${STATUS_STYLE[myStatus]?.bg || ''}`}>
-                <span className={`w-1.5 h-1.5 rounded-full mr-1 ${STATUS_STYLE[myStatus]?.dot || ''}`} />
-                {myStatus}
+              <span
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider"
+                style={{ background: STATUS_MAP[myStatus]?.bg, color: STATUS_MAP[myStatus]?.color, border: `1px solid ${STATUS_MAP[myStatus]?.color}22` }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full mr-1" style={{ background: STATUS_MAP[myStatus]?.dot }} />
+                {STATUS_MAP[myStatus]?.label}
               </span>
             )}
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-medium uppercase tracking-wider border ${CATEGORY_STYLE[addon.category] || 'text-gray-500 bg-gray-50 border-gray-200'}`}>
+            <span
+              className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider"
+              style={{ color: catStyle.color, background: catStyle.bg, border: `1px solid ${catStyle.border}` }}
+            >
               {addon.category}
             </span>
           </div>
         </div>
 
         {/* Title & desc */}
-        <h3 className={`text-sm font-semibold mb-1 line-clamp-1 ${ADDON_TITLE_COLORS[addon.id] || 'text-gray-800'}`}>{addon.title}</h3>
-        <p className="text-[11px] text-gray-500 line-clamp-2 mb-3 leading-relaxed">{addon.description}</p>
+        <h3 className="text-sm font-semibold mb-1 line-clamp-1" style={{ color: 'var(--text)' }}>{addon.title}</h3>
+        <p className="text-[11px] line-clamp-2 mb-3 leading-relaxed" style={{ color: 'var(--text-muted)' }}>{addon.description}</p>
 
         {/* Price + action */}
         <div className="flex items-center justify-between">
-          <div className="flex items-baseline gap-1">
-            <span className="text-base font-bold text-[var(--gg)]">{addon.price}</span>
-           
-          </div>
+          <span className="text-base font-bold gradient-text">{addon.price}</span>
           {!isRequested ? (
             <button
               onClick={(e) => { e.stopPropagation(); onRequest(addon.id); }}
-              className="inline-flex items-center justify-center px-4 py-1.5 text-[11px] font-medium text-[var(--primary)] rounded-lg transition-all bg-[var(--primary-soft)] hover:bg-[var(--primary-soft)] border border-[var(--border)] hover-border-[var(--primary)]"
+              className="btn-cta inline-flex items-center justify-center px-4 py-1.5 text-[11px] font-semibold rounded-lg transition-all"
             >
               Request
             </button>
-          ) : myStatus === 'approved' ? (
-            <span className="px-3 py-1.5 text-[11px] font-medium rounded-lg border border-green-200 text-green-600 bg-green-50">
+          ) : isApproved ? (
+            <span className="px-3 py-1.5 text-[11px] font-semibold rounded-lg" style={{ background: 'rgba(16,185,129,0.08)', color: '#059669', border: '1px solid rgba(16,185,129,0.2)' }}>
               ✓ Active
             </span>
-          ) : myStatus === 'pending' ? (
-            <span className="px-3 py-1.5 text-[11px] font-medium rounded-lg border border-amber-200 text-amber-600 bg-amber-50">
+          ) : isPending ? (
+            <span className="px-3 py-1.5 text-[11px] font-semibold rounded-lg" style={{ background: 'rgba(245,158,11,0.08)', color: '#D97706', border: '1px solid rgba(245,158,11,0.2)' }}>
               ⌛ Pending
             </span>
           ) : (
-            <span className="px-3 py-1.5 text-[11px] font-medium rounded-lg border border-gray-200 text-gray-400 bg-gray-50">
+            <span className="px-3 py-1.5 text-[11px] font-semibold rounded-lg" style={{ background: 'var(--s1)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
               {myStatus}
             </span>
           )}
@@ -160,15 +158,15 @@ function CatalogCard({
 }
 
 function MyAddOnRow({ item, onCancel, onDownload }: { item: UserAddOn; onCancel: (id: string) => void; onDownload: (addOnId: string) => void }) {
-  const status = STATUS_STYLE[item.status] ?? STATUS_STYLE.cancelled;
+  const status = STATUS_MAP[item.status] ?? STATUS_MAP.cancelled;
   const addon = item.addOn;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border p-4 transition-all bg-[var(--surface)] hover:shadow-md"
-      style={{ borderColor: 'rgba(37,99,235,0.08)' }}
+      className="rounded-2xl border p-4 transition-all hover:shadow-md"
+      style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
     >
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         {/* Icon + Info */}
@@ -182,14 +180,14 @@ function MyAddOnRow({ item, onCancel, onDownload }: { item: UserAddOn; onCancel:
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-medium text-sm text-gray-800">{addon?.title || item.addOnId}</span>
+              <span className="font-medium text-sm" style={{ color: 'var(--text)' }}>{addon?.title || item.addOnId}</span>
               {addon?.price && (
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-blue-100 bg-blue-50 text-[var(--primary)]">
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: 'var(--primary-soft)', color: 'var(--primary)', border: '1px solid var(--border)' }}>
                   {addon.price}
                 </span>
               )}
             </div>
-            <p className="text-[10px] text-gray-400 mt-0.5">
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
               Requested {new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </p>
           </div>
@@ -197,9 +195,12 @@ function MyAddOnRow({ item, onCancel, onDownload }: { item: UserAddOn; onCancel:
 
         {/* Status + Actions */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium border ${status.bg}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
-            <span className={status.text}>{item.status.charAt(0).toUpperCase() + item.status.slice(1)}</span>
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold"
+            style={{ background: status.bg, border: `1px solid ${status.color}22` }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: status.dot }} />
+            <span style={{ color: status.color }}>{status.label}</span>
           </span>
 
           {(item.status === 'approved' && item.addOnId === 'performance-report' || item.status === 'pending') && (
@@ -207,7 +208,8 @@ function MyAddOnRow({ item, onCancel, onDownload }: { item: UserAddOn; onCancel:
               {item.status === 'approved' && item.addOnId === 'performance-report' && (
                 <button
                   onClick={() => onDownload(item.addOnId)}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] font-medium rounded-lg border border-blue-200 text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold rounded-lg transition-all"
+                  style={{ background: 'rgba(37,99,235,0.08)', color: '#2563EB', border: '1px solid rgba(37,99,235,0.18)' }}
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -218,7 +220,8 @@ function MyAddOnRow({ item, onCancel, onDownload }: { item: UserAddOn; onCancel:
               {item.status === 'pending' && (
                 <button
                   onClick={() => onCancel(item.id)}
-                  className="inline-flex items-center px-3 py-2 text-[11px] font-medium rounded-lg border border-rose-200 text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all"
+                  className="inline-flex items-center px-3 py-2 text-[11px] font-semibold rounded-lg transition-all"
+                  style={{ background: 'rgba(239,68,68,0.08)', color: '#DC2626', border: '1px solid rgba(239,68,68,0.18)' }}
                 >
                   Cancel
                 </button>
@@ -262,6 +265,7 @@ export function MyAddOns() {
 
   // ── Handlers ───────────────────────────────────────────────────────────
   const handleRequest = useCallback(async (addOnId: string) => {
+    if (myStatusMap[addOnId] === 'pending' || myStatusMap[addOnId] === 'approved') return;
     setRequesting(addOnId);
     try {
       await dispatch(requestAddOn({ addOnId, notes: undefined })).unwrap();
@@ -272,7 +276,7 @@ export function MyAddOns() {
     } finally {
       setRequesting(null);
     }
-  }, [dispatch]);
+  }, [dispatch, myStatusMap]);
 
   const handleCancel = useCallback(async (id: string) => {
     await dispatch(cancelAddOn(id));
@@ -324,6 +328,7 @@ export function MyAddOns() {
 
   const handleRequestFromModal = useCallback(async () => {
     if (!selectedAddon) return;
+    if (myStatusMap[selectedAddon.id] === 'pending' || myStatusMap[selectedAddon.id] === 'approved') return;
     setRequesting(selectedAddon.id);
     try {
       await dispatch(requestAddOn({ addOnId: selectedAddon.id, notes: notes || undefined })).unwrap();
@@ -334,7 +339,10 @@ export function MyAddOns() {
     } finally {
       setRequesting(null);
     }
-  }, [dispatch, selectedAddon, notes]);
+  }, [dispatch, selectedAddon, notes, myStatusMap]);
+
+  const selectedHasPending = selectedAddon ? myStatusMap[selectedAddon.id] === 'pending' : false;
+  const selectedHasStatus = selectedAddon ? !!myStatusMap[selectedAddon.id] : false;
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
@@ -345,23 +353,25 @@ export function MyAddOns() {
         <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-5 pt-1">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-blue-600">
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase gradient-text">
                 ◈ ADD-ONS
               </span>
-              <span className="px-2 py-0.5 text-[9px] font-medium rounded-full bg-blue-50 text-blue-600 border border-blue-200">
+              <span
+                className="px-2 py-0.5 text-[9px] font-semibold rounded-full"
+                style={{ background: 'var(--primary-soft)', color: 'var(--primary)', border: '1px solid var(--border)' }}
+              >
                 {myAddOns.length} active
               </span>
             </div>
-             <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-slate-800 leading-none">Add-0n MarketPlace</h1>
-            <p className="mt-2 text-xs sm:text-sm text-gray-500">
+            <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight leading-none" style={{ color: 'var(--text)' }}>Add-On Marketplace</h1>
+            <p className="mt-2 text-xs sm:text-sm" style={{ color: 'var(--text-secondary)' }}>
               Enhance your plan with powerful add-ons and manage your subscriptions.
             </p>
           </div>
 
-          {/* Quick add button */}
           <a
             href="#catalog"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-all flex-shrink-0"
+            className="btn-cta inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all flex-shrink-0"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -374,19 +384,25 @@ export function MyAddOns() {
         <motion.div variants={fadeUp} id="catalog">
           <div className="flex items-end justify-between mb-5">
             <div>
-              <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-blue-600 mb-1">Catalog</p>
-              <h2 className="text-lg font-bold text-gray-800">Available add-ons</h2>
+              <p className="text-[10px] font-semibold tracking-[0.25em] uppercase gradient-text mb-1">Catalog</p>
+              <h2 className="text-lg font-bold" style={{ color: 'var(--text)' }}>Available add-ons</h2>
             </div>
-            <p className="text-xs text-gray-400 self-end pb-0.5">
+            <p className="text-xs self-end pb-0.5" style={{ color: 'var(--text-muted)' }}>
               {Object.keys(myStatusMap).length} of {catalog.length} requested
             </p>
           </div>
 
           {catalog.length === 0 ? (
-            <div className="rounded-2xl border border-gray-200 bg-gray-50 py-12 sm:py-20 flex flex-col items-center justify-center text-center px-4 sm:px-8">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[var(--surface)] border border-gray-200 flex items-center justify-center mb-4 sm:mb-5 text-2xl">📦</div>
-              <p className="text-sm font-medium text-gray-600 mb-1">No add-ons available yet</p>
-              <p className="text-xs text-gray-400 max-w-xs mb-5 sm:mb-6">Check back soon for new offerings.</p>
+            <div
+              className="rounded-2xl py-12 sm:py-20 flex flex-col items-center justify-center text-center px-4 sm:px-8"
+              style={{ background: 'var(--s1)', border: '1px solid var(--border)' }}
+            >
+              <div
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-4 sm:mb-5 text-2xl"
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+              >📦</div>
+              <p className="text-sm font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>No add-ons available yet</p>
+              <p className="text-xs max-w-xs mb-5 sm:mb-6" style={{ color: 'var(--text-muted)' }}>Check back soon for new offerings.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -407,32 +423,33 @@ export function MyAddOns() {
         <motion.div variants={fadeUp}>
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4 mb-5">
             <div className="min-w-0">
-              <p className="text-[10px] font-medium tracking-[0.25em] uppercase text-blue-600 mb-1">My Add-Ons</p>
-              <h2 className="text-lg font-bold text-gray-800">
+              <p className="text-[10px] font-semibold tracking-[0.25em] uppercase gradient-text mb-1">My Add-Ons</p>
+              <h2 className="text-lg font-bold" style={{ color: 'var(--text)' }}>
                 {filter === 'all' ? 'All' : filter.charAt(0).toUpperCase() + filter.slice(1)} subscriptions
                 {filteredMyAddOns.length > 0 && (
-                  <span className="ml-2 text-sm font-normal text-gray-400">({filteredMyAddOns.length})</span>
+                  <span className="ml-2 text-sm font-normal" style={{ color: 'var(--text-muted)' }}>({filteredMyAddOns.length})</span>
                 )}
               </h2>
             </div>
 
-            <div className="flex items-center gap-1 p-1 rounded-xl bg-gray-50 border border-gray-200 overflow-x-auto min-w-0">
+            <div
+              className="flex items-center gap-1 p-1 rounded-xl overflow-x-auto min-w-0"
+              style={{ background: 'var(--s1)', border: '1px solid var(--border)' }}
+            >
               {FILTERS.map((f) => {
                 const isActive = filter === f.value;
                 return (
                   <button
                     key={f.value}
                     onClick={() => setFilter(f.value)}
-                    className={`relative px-3 sm:px-3.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                      isActive 
-                        ? 'text-blue-600' 
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
+                    className="relative px-3 sm:px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap"
+                    style={{ color: isActive ? 'var(--primary)' : 'var(--text-muted)' }}
                   >
                     {isActive && (
                       <motion.div
                         layoutId="myAddOnFilterBg"
-                        className="absolute inset-0 rounded-lg bg-[var(--surface)] border border-blue-200 shadow-sm"
+                        className="absolute inset-0 rounded-lg"
+                        style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
                         transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                       />
                     )}
@@ -444,8 +461,11 @@ export function MyAddOns() {
           </div>
 
           {loading && filteredMyAddOns.length === 0 ? (
-            <div className="flex items-center justify-center h-48 rounded-2xl border border-gray-200 bg-gray-50">
-              <div className="flex items-center gap-3 text-gray-400">
+            <div
+              className="flex items-center justify-center h-48 rounded-2xl"
+              style={{ background: 'var(--s1)', border: '1px solid var(--border)' }}
+            >
+              <div className="flex items-center gap-3" style={{ color: 'var(--text-muted)' }}>
                 <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -454,12 +474,18 @@ export function MyAddOns() {
               </div>
             </div>
           ) : filteredMyAddOns.length === 0 ? (
-            <div className="rounded-2xl border border-gray-200 bg-gray-50 py-12 sm:py-20 flex flex-col items-center justify-center text-center px-4 sm:px-8">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[var(--surface)] border border-gray-200 flex items-center justify-center mb-4 sm:mb-5 text-2xl">🧩</div>
-              <p className="text-sm font-medium text-gray-600 mb-1">
+            <div
+              className="rounded-2xl py-12 sm:py-20 flex flex-col items-center justify-center text-center px-4 sm:px-8"
+              style={{ background: 'var(--s1)', border: '1px solid var(--border)' }}
+            >
+              <div
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-4 sm:mb-5 text-2xl"
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+              >🧩</div>
+              <p className="text-sm font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>
                 {filter === 'all' ? 'No add-ons yet' : `No ${filter} add-ons`}
               </p>
-              <p className="text-xs text-gray-400 max-w-xs mb-5 sm:mb-6">
+              <p className="text-xs max-w-xs mb-5 sm:mb-6" style={{ color: 'var(--text-muted)' }}>
                 {filter === 'all'
                   ? 'Browse the catalog above to request your first add-on.'
                   : 'Try a different filter or browse the catalog.'}
@@ -467,7 +493,7 @@ export function MyAddOns() {
               {filter === 'all' && catalog.length > 0 && (
                 <a
                   href="#catalog"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-all"
+                  className="btn-cta inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -498,47 +524,70 @@ export function MyAddOns() {
         {selectedAddon && (
           <div className="space-y-4">
             {/* Info */}
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200">
+            <div className="flex items-start gap-3 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
               <div
                 className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
-                style={{ background: T.primaryDim, border: '1px solid rgba(37,99,235,0.12)' }}
+                style={{ background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.2)' }}
               >
                 {selectedAddon.icon}
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-800">{selectedAddon.title}</p>
-                <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{selectedAddon.description}</p>
+                <p className="text-sm font-bold text-white/90">{selectedAddon.title}</p>
+                <p className="text-[11px] text-white/50 mt-1 leading-relaxed">{selectedAddon.description}</p>
                 <div className="flex items-center gap-3 mt-2">
-                  <span className="text-base font-bold text-blue-600">{selectedAddon.price}</span>
-                  <span className={`text-[9px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full border ${CATEGORY_STYLE[selectedAddon.category] || 'text-gray-500 bg-gray-50 border-gray-200'}`}>
+                  <span className="text-base font-bold" style={{ color: '#60a5fa' }}>{selectedAddon.price}</span>
+                  <span className="text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: 'rgba(37,99,235,0.12)', color: '#93c5fd', border: '1px solid rgba(37,99,235,0.2)' }}>
                     {selectedAddon.category}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Status check */}
-            {myStatusMap[selectedAddon.id] && (
-              <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
-                <p className="text-xs text-gray-600">
-                  You already have a <span className={`font-medium ${STATUS_STYLE[myStatusMap[selectedAddon.id]]?.text || ''}`}>
-                    {myStatusMap[selectedAddon.id]}
-                  </span> request for this add-on.
+            {/* Status check — show warning if pending/approved */}
+            {selectedHasPending && (
+              <div className="p-3 rounded-xl flex items-center gap-2.5" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} style={{ color: '#F59E0B' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p className="text-xs font-semibold" style={{ color: '#D97706' }}>
+                  You already have a pending request for this add-on. Wait for approval or cancel the existing request before submitting a new one.
+                </p>
+              </div>
+            )}
+            {selectedHasStatus && !selectedHasPending && (
+              <div className="p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs text-white/60">
+                  You already have a{' '}
+                  <span className="font-semibold" style={{ color: STATUS_MAP[myStatusMap[selectedAddon.id]]?.color || '#94a3b8' }}>
+                    {STATUS_MAP[myStatusMap[selectedAddon.id]]?.label || myStatusMap[selectedAddon.id]}
+                  </span>{' '}
+                  request for this add-on.
                 </p>
               </div>
             )}
 
             {/* Notes */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Notes (optional)</label>
+              <label className="block text-xs font-medium text-white/50 mb-1.5">Notes (optional)</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
                 placeholder="Any special requirements or questions…"
-                className="w-full px-3 py-2.5 rounded-xl text-sm bg-gray-50 border border-gray-200
-                  focus:border-blue-400 focus:ring-1 focus:ring-blue-200 focus:outline-none transition-all
-                  resize-none placeholder-gray-400"
+                className="w-full px-3 py-2.5 rounded-xl text-sm transition-all resize-none outline-none"
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  color: '#e2e8f0',
+                }}
+                onFocus={e => {
+                  (e.target as HTMLTextAreaElement).style.borderColor = 'rgba(37,99,235,0.4)';
+                  (e.target as HTMLTextAreaElement).style.boxShadow = '0 0 0 3px rgba(37,99,235,0.1)';
+                }}
+                onBlur={e => {
+                  (e.target as HTMLTextAreaElement).style.borderColor = 'rgba(255,255,255,0.08)';
+                  (e.target as HTMLTextAreaElement).style.boxShadow = 'none';
+                }}
               />
             </div>
           </div>
@@ -547,15 +596,18 @@ export function MyAddOns() {
         <div className="flex justify-end gap-2 mt-6">
           <button
             onClick={() => { setSelectedAddon(null); setNotes(''); }}
-            className="px-4 py-2 text-sm rounded-lg text-gray-500 hover:text-gray-700 transition-colors"
+            className="px-4 py-2 text-sm rounded-lg transition-all"
+            style={{ color: 'rgba(255,255,255,0.5)' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.8)'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.5)'}
           >
             Close
           </button>
-          {selectedAddon && !myStatusMap[selectedAddon.id] && (
+          {selectedAddon && !selectedHasStatus && (
             <button
               onClick={handleRequestFromModal}
               disabled={!!requesting}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm text-white rounded-xl font-medium transition-all disabled:opacity-50 bg-blue-600 hover:bg-blue-700 shadow-sm"
+              className="btn-cta inline-flex items-center justify-center gap-2 px-5 py-2 text-sm text-white rounded-xl font-semibold transition-all disabled:opacity-50"
             >
               {requesting ? 'Requesting…' : 'Request Add-On'}
             </button>

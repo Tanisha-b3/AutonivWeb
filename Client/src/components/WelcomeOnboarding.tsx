@@ -12,7 +12,7 @@ interface OnboardingData {
 }
 
 const STEPS = [
-  { id: 'welcome', title: 'Welcome to CONVOCORE' },
+  { id: 'welcome', title: 'Welcome to Autoniv' },
   { id: 'referral', title: 'How did you find us?' },
   { id: 'role', title: 'What best describes you?' },
   { id: 'goals', title: "What's the goals you want to achieve?" },
@@ -87,13 +87,13 @@ export default function WelcomeOnboarding({ onComplete }: { onComplete: () => vo
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8" style={{ background: 'linear-gradient(135deg, #ffffff 0%, #ecfeff 50%, #f0f9ff 100%)' }}>
-      <div className="w-full max-w-lg">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8" style={{ background: 'linear-gradient(135deg, #ffffff 0%, #ecfdf5 50%, #f0fdfa 100%)' }}>
+      <div className="w-full max-w-2xl">
         {/* Progress bar */}
-        <div className="mb-6 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(6,182,212,0.12)' }}>
+        <div className="mb-6 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(16,185,129,0.12)' }}>
           <motion.div
             className="h-full rounded-full"
-            style={{ background: 'linear-gradient(90deg, #2563eb, #06b6d4)' }}
+            style={{ background: 'linear-gradient(90deg, #10b981, #06b6d4)' }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           />
@@ -107,13 +107,13 @@ export default function WelcomeOnboarding({ onComplete }: { onComplete: () => vo
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -40 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="bg-[var(--surface)] rounded-2xl border shadow-xl p-6 sm:p-8"
-            style={{ borderColor: 'rgba(6,182,212,0.15)' }}
+            className="bg-[var(--surface)] rounded-2xl border shadow-xl p-8 sm:p-10"
+            style={{ borderColor: 'rgba(16,185,129,0.15)' }}
           >
             {/* Step counter */}
             <div className="flex items-center gap-2 mb-2">
-              <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#06b6d4' }} />
-              <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#06b6d4' }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#10b981' }} />
+              <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#10b981' }}>
                 Step {step + 1} of {STEPS.length}
               </span>
             </div>
@@ -141,7 +141,7 @@ export default function WelcomeOnboarding({ onComplete }: { onComplete: () => vo
             )}
             {step === 3 && (
               <p className="text-sm mb-6" style={{ color: '#475569' }}>
-                We want to learn about your goals and what you expect from Convocore.
+                We want to learn about your goals and what you expect from Autoniv.
               </p>
             )}
             {step === 4 && (
@@ -151,16 +151,16 @@ export default function WelcomeOnboarding({ onComplete }: { onComplete: () => vo
             )}
 
             {/* Step content */}
-            <div className="min-h-[200px]">
+            <div className="min-h-[280px]">
               {/* Welcome */}
               {step === 0 && (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5" style={{ background: 'linear-gradient(135deg, #2563eb, #06b6d4)', boxShadow: '0 8px 24px rgba(37,99,235,0.25)' }}>
-                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <div className="w-24 h-24 rounded-2xl flex items-center justify-center mb-6" style={{ background: 'linear-gradient(135deg, #10b981, #06b6d4)', boxShadow: '0 8px 24px rgba(16,185,129,0.25)' }}>
+                    <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
                     </svg>
                   </div>
-                  <h2 className="text-lg font-bold" style={{ color: '#0f172a' }}>Welcome to CONVOCORE</h2>
+                   <h2 className="text-lg font-bold" style={{ color: '#0f172a' }}>Welcome to Autoniv</h2>
                   <p className="text-sm mt-1" style={{ color: '#475569' }}>Your AI-powered voice & chat agent platform</p>
                 </div>
               )}
@@ -174,9 +174,9 @@ export default function WelcomeOnboarding({ onComplete }: { onComplete: () => vo
                       onClick={() => setData({ ...data, referralSource: opt.id })}
                       className="p-4 rounded-xl border text-left transition-all"
                       style={{
-                        background: data.referralSource === opt.id ? 'rgba(6,182,212,0.08)' : '#f8fafc',
-                        borderColor: data.referralSource === opt.id ? '#06b6d4' : 'rgba(6,182,212,0.15)',
-                        boxShadow: data.referralSource === opt.id ? '0 0 0 2px rgba(6,182,212,0.2)' : 'none',
+                        background: data.referralSource === opt.id ? 'rgba(16,185,129,0.08)' : '#f8fafc',
+                        borderColor: data.referralSource === opt.id ? '#10b981' : 'rgba(16,185,129,0.15)',
+                        boxShadow: data.referralSource === opt.id ? '0 0 0 2px rgba(16,185,129,0.2)' : 'none',
                       }}
                     >
                       <span className="text-xl">{opt.icon}</span>
@@ -196,9 +196,9 @@ export default function WelcomeOnboarding({ onComplete }: { onComplete: () => vo
                       onClick={() => setData({ ...data, roleType: opt.id })}
                       className="w-full p-5 rounded-xl border text-left transition-all flex items-start gap-4"
                       style={{
-                        background: data.roleType === opt.id ? 'rgba(6,182,212,0.08)' : '#f8fafc',
-                        borderColor: data.roleType === opt.id ? '#06b6d4' : 'rgba(6,182,212,0.15)',
-                        boxShadow: data.roleType === opt.id ? '0 0 0 2px rgba(6,182,212,0.2)' : 'none',
+                        background: data.roleType === opt.id ? 'rgba(16,185,129,0.08)' : '#f8fafc',
+                        borderColor: data.roleType === opt.id ? '#10b981' : 'rgba(16,185,129,0.15)',
+                        boxShadow: data.roleType === opt.id ? '0 0 0 2px rgba(16,185,129,0.2)' : 'none',
                       }}
                     >
                       <span className="text-2xl mt-1">{opt.icon}</span>
@@ -220,12 +220,12 @@ export default function WelcomeOnboarding({ onComplete }: { onComplete: () => vo
                       onClick={() => toggleGoal(opt.id)}
                       className="w-full p-4 rounded-xl border text-left transition-all flex items-center gap-4"
                       style={{
-                        background: data.goals.includes(opt.id) ? 'rgba(6,182,212,0.08)' : '#f8fafc',
-                        borderColor: data.goals.includes(opt.id) ? '#06b6d4' : 'rgba(6,182,212,0.15)',
-                        boxShadow: data.goals.includes(opt.id) ? '0 0 0 2px rgba(6,182,212,0.2)' : 'none',
+                        background: data.goals.includes(opt.id) ? 'rgba(16,185,129,0.08)' : '#f8fafc',
+                        borderColor: data.goals.includes(opt.id) ? '#10b981' : 'rgba(16,185,129,0.15)',
+                        boxShadow: data.goals.includes(opt.id) ? '0 0 0 2px rgba(16,185,129,0.2)' : 'none',
                       }}
                     >
-                      <div className="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0" style={{ borderColor: data.goals.includes(opt.id) ? '#06b6d4' : '#cbd5e1', background: data.goals.includes(opt.id) ? '#06b6d4' : 'transparent' }}>
+                      <div className="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0" style={{ borderColor: data.goals.includes(opt.id) ? '#10b981' : '#cbd5e1', background: data.goals.includes(opt.id) ? '#10b981' : 'transparent' }}>
                         {data.goals.includes(opt.id) && (
                           <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -250,9 +250,9 @@ export default function WelcomeOnboarding({ onComplete }: { onComplete: () => vo
                       onChange={e => setData({ ...data, companyName: e.target.value })}
                       placeholder="Enter your company name"
                       className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
-                      style={{ background: '#f8fafc', border: '1px solid rgba(6,182,212,0.2)', color: '#0f172a' }}
-                      onFocus={e => e.target.style.borderColor = '#06b6d4'}
-                      onBlur={e => e.target.style.borderColor = 'rgba(6,182,212,0.2)'}
+                      style={{ background: '#f8fafc', border: '1px solid rgba(16,185,129,0.2)', color: '#0f172a' }}
+                      onFocus={e => e.target.style.borderColor = '#10b981'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(16,185,129,0.2)'}
                     />
                   </div>
                   <div>
@@ -263,9 +263,9 @@ export default function WelcomeOnboarding({ onComplete }: { onComplete: () => vo
                       onChange={e => setData({ ...data, companyWebsite: e.target.value })}
                       placeholder="https://yourcompany.com"
                       className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
-                      style={{ background: '#f8fafc', border: '1px solid rgba(6,182,212,0.2)', color: '#0f172a' }}
-                      onFocus={e => e.target.style.borderColor = '#06b6d4'}
-                      onBlur={e => e.target.style.borderColor = 'rgba(6,182,212,0.2)'}
+                      style={{ background: '#f8fafc', border: '1px solid rgba(16,185,129,0.2)', color: '#0f172a' }}
+                      onFocus={e => e.target.style.borderColor = '#10b981'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(16,185,129,0.2)'}
                     />
                   </div>
                   <div>
@@ -276,9 +276,9 @@ export default function WelcomeOnboarding({ onComplete }: { onComplete: () => vo
                       placeholder="Briefly describe your company's main business, products, or services..."
                       rows={3}
                       className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all resize-none"
-                      style={{ background: '#f8fafc', border: '1px solid rgba(6,182,212,0.2)', color: '#0f172a' }}
-                      onFocus={e => e.target.style.borderColor = '#06b6d4'}
-                      onBlur={e => e.target.style.borderColor = 'rgba(6,182,212,0.2)'}
+                      style={{ background: '#f8fafc', border: '1px solid rgba(16,185,129,0.2)', color: '#0f172a' }}
+                      onFocus={e => e.target.style.borderColor = '#10b981'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(16,185,129,0.2)'}
                     />
                   </div>
                 </div>
@@ -286,7 +286,7 @@ export default function WelcomeOnboarding({ onComplete }: { onComplete: () => vo
             </div>
 
             {/* Navigation */}
-            <div className="flex items-center justify-between mt-6 pt-4" style={{ borderTop: '1px solid rgba(6,182,212,0.1)' }}>
+            <div className="flex items-center justify-between mt-6 pt-4" style={{ borderTop: '1px solid rgba(16,185,129,0.1)' }}>
               {step > 0 ? (
                 <button
                   onClick={handleBack}
@@ -313,11 +313,11 @@ export default function WelcomeOnboarding({ onComplete }: { onComplete: () => vo
                 disabled={!canProceed()}
                 className="px-6 py-2.5 text-sm font-semibold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
-                  background: canProceed() ? 'linear-gradient(135deg, #2563eb, #06b6d4)' : '#e2e8f0',
+                  background: canProceed() ? 'linear-gradient(135deg, #10b981, #06b6d4)' : '#e2e8f0',
                   color: canProceed() ? '#ffffff' : '#94a3b8',
                   border: 'none',
                   cursor: canProceed() ? 'pointer' : 'not-allowed',
-                  boxShadow: canProceed() ? '0 4px 14px rgba(37,99,235,0.3)' : 'none',
+                  boxShadow: canProceed() ? '0 4px 14px rgba(16,185,129,0.3)' : 'none',
                 }}
               >
                 {step === STEPS.length - 1 ? 'Get Started →' : 'Continue →'}

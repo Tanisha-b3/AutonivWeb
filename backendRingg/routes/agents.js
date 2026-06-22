@@ -26,6 +26,61 @@ async function resolveAgentForUser(id, user) {
   return { agent, forbidden: true };
 }
 
+async function autoAssignRinggId(name) {
+  try {
+    const response = await listRinggAssistants();
+    const rawList = response?.assistants || response;
+    let assistants = [];
+    if (Array.isArray(rawList)) {
+      assistants = rawList;
+    } else if (rawList && typeof rawList === 'object') {
+      if (rawList.data && typeof rawList.data === 'object') {
+        if (Array.isArray(rawList.data.agents)) {
+          assistants = rawList.data.agents;
+        } else if (Array.isArray(rawList.data.assistants)) {
+          assistants = rawList.data.assistants;
+        } else if (Array.isArray(rawList.data)) {
+          assistants = rawList.data;
+        }
+      } else if (Array.isArray(rawList.agents)) {
+        assistants = rawList.agents;
+      } else if (Array.isArray(rawList.assistants)) {
+        assistants = rawList.assistants;
+      }
+    }
+
+    if (assistants.length > 0) {
+      const nameMatched = assistants.find(ast => {
+        const astName = (ast?.name || ast?.agent_name || ast?.agent_display_name || '').toLowerCase().trim();
+        return astName === name.toLowerCase().trim();
+      });
+
+      if (nameMatched) {
+        const aid = nameMatched?.agent_id || nameMatched?.id || nameMatched?.assistant_id || null;
+        log.info('ringg_auto_assign_by_name', { name, ringgId: aid });
+        return aid;
+      }
+
+      const linkedAgents = await Agent.find({ ringgId: { $ne: null } }).select('ringgId').lean();
+      const linkedIds = new Set(linkedAgents.map(a => a.ringgId));
+
+      const unassigned = assistants.find(ast => {
+        const aid = ast?.agent_id || ast?.id || ast?.assistant_id || '';
+        return aid && !linkedIds.has(aid);
+      });
+
+      if (unassigned) {
+        const aid = unassigned?.agent_id || unassigned?.id || unassigned?.assistant_id || null;
+        log.info('ringg_auto_assign_unassigned', { name, ringgId: aid });
+        return aid;
+      }
+    }
+  } catch (err) {
+    log.error('ringg_auto_assign_error', { error: err.message, name });
+  }
+  return null;
+}
+
 // GET /agents — admin: all agents with user info and call count
 router.get('/', requireAdmin, async (req, res) => {
   try {
@@ -197,15 +252,20 @@ router.post('/', contentFilter('name', 'prompt'), async (req, res) => {
           voiceId,
         });
         autoRinggId = ringgAgent?.agent_id || ringgAgent?.id || ringgAgent?.assistant_id || null;
+      } catch (ringgErr) {
+        log.warn('ringg_create_agent_api_failed_falling_back_to_auto_assign', { error: ringgErr.message, name });
+        autoRinggId = await autoAssignRinggId(name);
+      }
 
-        if (autoRinggId) {
+      if (autoRinggId) {
+        try {
           const serverUrl = process.env.WEBHOOK_URL || process.env.SERVER_URL;
           if (serverUrl) {
             await updateRinggWebhook(autoRinggId, `${serverUrl}/api/webhooks/ringg`);
           }
+        } catch (webhookErr) {
+          log.warn('ringg_webhook_update_failed_for_auto_assigned_agent', { error: webhookErr.message, autoRinggId });
         }
-      } catch (ringgErr) {
-        log.warn('ringg_create_agent_api_failed', { error: ringgErr.message, name });
       }
     }
 

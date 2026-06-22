@@ -150,7 +150,6 @@ const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
         });
         setTranscriptBubbles(bubbles);
       } else {
-        // Fallback mock transcript if none is stored
         setTranscriptBubbles([
           { isBot: true, text: `Hello, thanks for calling! This is the voice assistant for ${call.agentName || 'Autoniv'}.`, speaker: 'AGENT' },
           { isBot: false, text: "Hi, I'm checking if my call minutes were updated correctly.", speaker: 'CALLER' },
@@ -176,7 +175,7 @@ const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/35 backdrop-blur-[2px]"
+            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-[3px]"
             onClick={onClose}
           />
           {/* Drawer deck */}
@@ -184,65 +183,126 @@ const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed right-0 top-0 bottom-0 z-100 w-full max-w-md bg-white/95 backdrop-blur-md border-l border-slate-200 shadow-2xl flex flex-col"
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed right-0 top-0 bottom-0 z-100 w-full max-w-md bg-white border-l border-slate-200/80 shadow-2xl flex flex-col overflow-hidden"
           >
+            {/* Top accent line */}
+            <div className="h-1.5 w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500" />
+
             {/* Header */}
-            <div className="flex items-center justify-between px-5.5 py-4.5 border-b border-slate-100 bg-slate-50/30">
-              <div>
-                <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary-blue)]">Call Logs Drawer</p>
-                <h3 className="text-sm font-extrabold text-slate-800 truncate max-w-[280px] mt-0.5 tracking-tight">
-                  {call.agentName || 'AI Agent Call'}
-                </h3>
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/40">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-blue-100 flex items-center justify-center text-blue-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-600">Connection Details</p>
+                  <h3 className="text-sm font-extrabold text-slate-800 truncate max-w-[240px] mt-0.5 tracking-tight">
+                    {call.agentName || 'AI Voice Agent'}
+                  </h3>
+                </div>
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-150 transition-colors btn-press cursor-pointer"
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-650 hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
               >
-                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
             {/* Content Body */}
-            <div className="flex-1 overflow-y-auto p-5.5 space-y-6">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
               
               {/* Info Matrix Grid */}
               <div className="grid grid-cols-2 gap-3.5">
                 {[
-                  { label: 'Agent Name', value: call.agentName || '—' },
-                  { label: 'Caller number', value: call.callerNumber || '—', mono: true },
-                  { label: 'Total Duration', value: formatDuration(getCallDurationSeconds(call)) },
-                  { label: 'Status Code', value: call.status || 'failed', capitalize: true },
+                  { 
+                    label: 'Agent Name', 
+                    value: call.agentName || '—', 
+                    icon: (
+                      <svg className="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    )
+                  },
+                  { 
+                    label: 'Caller ID', 
+                    value: call.callerNumber || '—', 
+                    mono: true,
+                    icon: (
+                      <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                    )
+                  },
+                  { 
+                    label: 'Call Duration', 
+                    value: formatDuration(getCallDurationSeconds(call)),
+                    icon: (
+                      <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    )
+                  },
+                  { 
+                    label: 'Call Status', 
+                    value: call.status || 'failed', 
+                    capitalize: true,
+                    icon: (
+                      <svg className="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    )
+                  },
                 ].map(item => (
-                  <div key={item.label} className="rounded-xl border border-slate-150 bg-slate-50/20 px-3.5 py-2.5 shadow-[inset_0_1px_2px_rgba(0,0,0,0.005)]">
-                    <span className="text-[8px] font-extrabold text-slate-450 uppercase tracking-[0.16em] block mb-0.5">{item.label}</span>
-                    <span className={`text-[11px] font-bold text-slate-700 block ${item.mono ? 'font-mono' : ''} ${item.capitalize ? 'capitalize' : ''}`}>
+                  <div key={item.label} className="rounded-xl border border-slate-100 bg-slate-50/30 p-3 flex flex-col justify-between shadow-[0_1px_2px_rgba(0,0,0,0.01)] hover:border-slate-200/60 transition-colors">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">{item.label}</span>
+                      {item.icon}
+                    </div>
+                    <span className={`text-[11px] font-extrabold text-slate-750 block ${item.mono ? 'font-mono' : ''} ${item.capitalize ? 'capitalize' : ''}`}>
                       {item.value}
                     </span>
                   </div>
                 ))}
               </div>
 
-              {/* Time logs block */}
-              <div className="rounded-xl border border-slate-150 bg-slate-50/15 p-4.5 space-y-2">
-                <span className="text-[8px] font-extrabold text-slate-450 uppercase tracking-[0.16em] block">Connection Timeline</span>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[11px]">
-                    <span className="text-slate-400 font-bold">Started At</span>
-                    <span className="text-slate-600 font-extrabold">{call.startedAt ? new Date(call.startedAt).toLocaleString() : '—'}</span>
+              {/* Time logs block / connection timeline */}
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/15 p-4.5 space-y-3.5">
+                <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-[0.16em] block">Connection Timeline</span>
+                <div className="relative pl-5 space-y-4">
+                  {/* Timeline vertical bar */}
+                  <div className="absolute left-[7px] top-1.5 bottom-1.5 w-0.5 bg-dashed border-l border-slate-200" />
+                  
+                  <div className="relative flex items-start gap-3">
+                    <div className="absolute -left-[22px] top-1 w-3.5 h-3.5 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center shadow-sm" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider leading-none">Call Triggered</p>
+                      <p className="text-xs font-bold text-slate-700 mt-1">
+                        {call.startedAt ? new Date(call.startedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-[11px]">
-                    <span className="text-slate-400 font-bold">Ended At</span>
-                    <span className="text-slate-600 font-extrabold">{call.endedAt ? new Date(call.endedAt).toLocaleString() : '—'}</span>
+
+                  <div className="relative flex items-start gap-3">
+                    <div className="absolute -left-[22px] top-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center shadow-sm" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider leading-none">Call Finished</p>
+                      <p className="text-xs font-bold text-slate-700 mt-1">
+                        {call.endedAt ? new Date(call.endedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Tabs Switcher for logs vs recording */}
               <div className="space-y-4">
-                <div className="flex bg-slate-100/60 p-0.8 rounded-xl border border-slate-200/50 w-full">
+                <div className="flex bg-slate-100/60 p-1 rounded-xl border border-slate-200/50 w-full">
                   <button
                     onClick={() => setActiveTab('recording')}
                     disabled={!call.recordingUrl}
@@ -264,18 +324,18 @@ const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
 
                 {/* Tab content 1: Audio player */}
                 {activeTab === 'recording' && (
-                  <div className="rounded-xl border border-slate-150 bg-slate-50/20 p-4.5 space-y-2.5">
-                    <span className="text-[8px] font-extrabold text-slate-400 uppercase tracking-[0.16em] block">Vapi Audio Playback</span>
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50/20 p-4.5 space-y-3">
+                    <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-[0.16em] block">Audio Playback</span>
                     {call.recordingUrl ? (
-                      <div className="bg-white/80 p-3 rounded-xl border border-slate-200/50 shadow-inner mt-1">
-                        <audio src={call.recordingUrl} controls className="w-full accent-[var(--primary-blue)] h-8" />
+                      <div className="bg-white p-3 rounded-xl border border-slate-200/40 shadow-inner">
+                        <audio src={call.recordingUrl} controls className="w-full accent-blue-600 h-8" />
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 py-2 text-slate-400">
-                        <svg className="w-4.5 h-4.5 flex-shrink-0 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+                      <div className="flex items-center gap-2.5 py-3 px-4 bg-amber-50/40 rounded-xl border border-amber-100 text-amber-600">
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
-                        <span className="text-xs font-bold text-slate-450">Recording file not found on Vapi node</span>
+                        <span className="text-xs font-bold">Audio recording file is not available on server</span>
                       </div>
                     )}
                   </div>
@@ -283,21 +343,21 @@ const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
 
                 {/* Tab content 2: Chat log timeline */}
                 {activeTab === 'transcript' && (
-                  <div className="rounded-xl border border-slate-150 bg-slate-50/20 p-4 space-y-4 max-h-[350px] overflow-y-auto scrollbar-thin">
+                  <div className="rounded-2xl border border-slate-150 bg-slate-50/20 p-4.5 space-y-4 max-h-[350px] overflow-y-auto scrollbar-thin">
                     {loadingText ? (
-                      <div className="space-y-4">
+                      <div className="space-y-4 py-2">
                         <div className="flex gap-2.5 items-start">
-                          <div className="w-7 h-7 rounded-full bg-slate-100 animate-pulse" />
+                          <div className="w-7.5 h-7.5 rounded-full bg-slate-150 animate-pulse" />
                           <div className="flex-1 space-y-1.5">
-                            <div className="animate-pulse h-3.5 bg-slate-100 rounded w-2/3" />
-                            <div className="animate-pulse h-3 bg-slate-100 rounded w-1/2" />
+                            <div className="animate-pulse h-3.5 bg-slate-150 rounded w-2/3" />
+                            <div className="animate-pulse h-3 bg-slate-150 rounded w-1/2" />
                           </div>
                         </div>
                         <div className="flex gap-2.5 items-start flex-row-reverse">
-                          <div className="w-7 h-7 rounded-full bg-slate-100 animate-pulse" />
+                          <div className="w-7.5 h-7.5 rounded-full bg-slate-150 animate-pulse" />
                           <div className="flex-1 space-y-1.5 flex flex-col items-end">
-                            <div className="animate-pulse h-3.5 bg-slate-100 rounded w-1/2" />
-                            <div className="animate-pulse h-3 bg-slate-100 rounded w-1/3" />
+                            <div className="animate-pulse h-3.5 bg-slate-150 rounded w-1/2" />
+                            <div className="animate-pulse h-3 bg-slate-150 rounded w-1/3" />
                           </div>
                         </div>
                       </div>
@@ -305,20 +365,32 @@ const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
                       transcriptBubbles.map((bubble, idx) => {
                         const isBot = bubble.isBot;
                         return (
-                          <div key={idx} className={`flex gap-2.5 items-start ${isBot ? 'flex-row' : 'flex-row-reverse'}`}>
+                          <div key={idx} className={`flex gap-3 items-start ${isBot ? 'flex-row' : 'flex-row-reverse'}`}>
                             {/* Avatar */}
-                            <div className={`w-7.5 h-7.5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-extrabold ${isBot ? 'bg-slate-100 border border-slate-200 text-slate-500' : 'bg-blue-100 border border-blue-200 text-[var(--primary-blue)]'}`}>
-                              {isBot ? '🤖' : '👤'}
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border shadow-sm ${
+                              isBot 
+                                ? 'bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border-blue-100 text-blue-600' 
+                                : 'bg-gradient-to-br from-slate-100 to-slate-200 border-slate-200 text-slate-600'
+                            }`}>
+                              {isBot ? (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                              ) : (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                              )}
                             </div>
                             
                             {/* Message Bubble */}
                             <div className={`flex flex-col ${isBot ? 'items-start' : 'items-end'} max-w-[78%]`}>
-                              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-widest block mb-0.5">{bubble.speaker}</span>
+                              <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block mb-1">{bubble.speaker}</span>
                               <div 
-                                className={`px-3.5 py-2.2 rounded-2xl text-xs leading-relaxed shadow-sm relative ${
+                                className={`px-4 py-2.5 rounded-2xl text-xs leading-relaxed shadow-sm ${
                                   isBot 
-                                    ? 'bg-slate-100 text-slate-750 rounded-tl-none border border-slate-200/50' 
-                                    : 'bg-[var(--primary-blue)] text-white rounded-tr-none font-medium'
+                                    ? 'bg-white text-slate-700 rounded-tl-none border border-slate-200/50' 
+                                    : 'bg-blue-600 text-white rounded-tr-none font-medium'
                                 }`}
                               >
                                 {bubble.text}
@@ -335,10 +407,10 @@ const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
             </div>
 
             {/* Footer */}
-            <div className="px-5 py-4 border-t border-slate-100 flex gap-2 bg-slate-50/20">
+            <div className="px-6 py-5 border-t border-slate-100 flex gap-2.5 bg-slate-50/20">
               <button
                 onClick={onClose}
-                className="flex-1 py-2.5 rounded-xl text-xs font-bold border border-slate-200 text-slate-500 hover:text-slate-700 bg-white cursor-pointer hover:bg-slate-50 transition-all text-center btn-press shadow-sm"
+                className="flex-1 py-3 rounded-xl text-xs font-bold border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 active:scale-[0.98] transition-all bg-white shadow-sm cursor-pointer text-center"
               >
                 Close Details
               </button>
@@ -487,6 +559,7 @@ export function MyCalls() {
       key: 'agentName',
       header: 'Voice Agent',
       sortable: true,
+      className: 'whitespace-normal min-w-[120px]',
       render: (call) => call.agentName ? (
         <span className="inline-flex items-center gap-2 text-xs text-slate-750 font-bold">
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary-blue)] flex-shrink-0"/>
@@ -769,9 +842,8 @@ export function MyCalls() {
             searchTerm={search}
             onSearchChange={setSearch}
             searchPlaceholder="Search calls by agent name or caller ID..."
-            selectable={true}
             exportable={true}
-            densityControls={true}
+            densityControls={false}
             columnToggling={true}
             pagination={pagination}
             onPageChange={setPage}

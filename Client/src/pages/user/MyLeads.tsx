@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../../hooks/useStore';
 import { fetchMyLeads, exportLeads, updateLead } from '../../store/slices/leadsSlice';
-import { SearchInput } from '../../components/SearchInput';
-import { Pagination } from '../../components/Pagination';
+import { DataTable } from '../../components/DataTable';
+import type { Column } from '../../components/DataTable';
 import type { Lead } from '../../types';
 
 const statusConfig: Record<string, { label: string; dot: string; pill: string; text: string }> = {
@@ -21,24 +21,8 @@ const FILTERS = [
   { value: 'lost', label: 'Lost' },
 ];
 
-const avatarColors = [
-  'from-[var(--primary)] to-[var(--primary)]',
-  'from-[var(--primary)] to-[var(--primary)]',
-  'from-[var(--primary)] to-[var(--primary)]',
-  'from-[var(--primary)] to-[var(--primary)]',
-  'from-[var(--primary)] to-[var(--primary)]',
-];
-
-function getAvatarColor(name: string) {
-  const idx = (name || 'U').charCodeAt(0) % avatarColors.length;
-  return avatarColors[idx];
-}
-
+const fadeUp = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
 const stagger = { container: { animate: { transition: { staggerChildren: 0.04 } } } };
-const fadeUp = {
-  initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0 },
-};
 
 export function MyLeads() {
   const dispatch = useAppDispatch();
@@ -53,6 +37,7 @@ export function MyLeads() {
   const [filter, setFilter] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
   useEffect(() => { dispatch(fetchMyLeads({ page, limit: 20 })); }, [dispatch, page]);
   useEffect(() => { setPage(1); }, [filter, search]);
@@ -87,14 +72,132 @@ export function MyLeads() {
     finally { setSaving(false); }
   };
 
-  const filteredLeads = leads
-    .filter((l) => !filter || l.status === filter)
-    .filter((l) =>
-      !search ||
-      (l.name || '').toLowerCase().includes(search.toLowerCase()) ||
-      (l.email || '').toLowerCase().includes(search.toLowerCase()) ||
-      (l.phone || '').includes(search)
-    );
+  const filteredLeads = useMemo(() => {
+    return leads
+      .filter((l) => !filter || l.status === filter)
+      .filter((l) =>
+        !search ||
+        (l.name || '').toLowerCase().includes(search.toLowerCase()) ||
+        (l.email || '').toLowerCase().includes(search.toLowerCase()) ||
+        (l.phone || '').includes(search)
+      );
+  }, [leads, filter, search]);
+
+  const columns: Column<Lead>[] = useMemo(() => [
+    {
+      key: 'name',
+      header: 'Name',
+      sortable: true,
+      render: (lead) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--primary)] to-[var(--primary)] flex items-center justify-center text-[var(--text)] font-semibold text-xs flex-shrink-0">
+            {(lead.name || 'U').charAt(0).toUpperCase()}
+          </div>
+          <span className="font-medium text-sm text-[var(--text)]">{lead.name || '—'}</span>
+        </div>
+      ),
+      card: {
+        label: 'Name',
+        render: (lead) => (
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[var(--primary)] to-[var(--primary)] flex items-center justify-center text-[var(--text)] font-semibold text-[10px] flex-shrink-0">
+              {(lead.name || 'U').charAt(0).toUpperCase()}
+            </div>
+            <span className="font-bold text-[var(--text)]">{lead.name || '—'}</span>
+          </div>
+        ),
+      },
+    },
+    {
+      key: 'email',
+      header: 'Contact',
+      sortable: true,
+      render: (lead) => (
+        <div className="space-y-0.5">
+          {lead.phone && <p className="font-mono text-xs text-[var(--text)]">{lead.phone}</p>}
+          {lead.email && <p className="text-xs text-[var(--slate-light)] truncate max-w-[160px]">{lead.email}</p>}
+          {!lead.phone && !lead.email && <span className="text-[var(--slate-gray)] text-xs">—</span>}
+        </div>
+      ),
+      card: {
+        label: 'Contact',
+        render: (lead) => (
+          <div className="space-y-0.5">
+            {lead.phone && <p className="font-mono text-xs text-[var(--text)]">{lead.phone}</p>}
+            {lead.email && <p className="text-xs text-[var(--slate-light)]">{lead.email}</p>}
+            {!lead.phone && !lead.email && <span className="text-[var(--slate-gray)] text-xs">—</span>}
+          </div>
+        ),
+      },
+    },
+    {
+      key: 'purpose',
+      header: 'Purpose',
+      sortable: true,
+      render: (lead) => lead.purpose
+        ? <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-[var(--surface-hover)] text-xs text-[var(--text)] border border-white/5">{lead.purpose}</span>
+        : <span className="text-[var(--slate-gray)] text-xs">—</span>,
+      card: {
+        label: 'Purpose',
+        render: (lead) => <span className="text-[var(--text)] font-semibold">{lead.purpose || '—'}</span>,
+      },
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      sortable: true,
+      render: (lead) => {
+        const sc = statusConfig[lead.status || 'new'] ?? statusConfig.new;
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${sc.pill} ${sc.text}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
+            {sc.label}
+          </span>
+        );
+      },
+      card: {
+        label: 'Status',
+        render: (lead) => {
+          const sc = statusConfig[lead.status || 'new'] ?? statusConfig.new;
+          return (
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border ${sc.pill} ${sc.text}`}>
+              <span className={`w-1 h-1 rounded-full ${sc.dot}`} />
+              {sc.label}
+            </span>
+          );
+        },
+      },
+    },
+    {
+      key: 'agentName',
+      header: 'Agent',
+      sortable: true,
+      className: 'whitespace-normal min-w-[100px]',
+      render: (lead) => <span className="text-xs text-[var(--slate-light)]">{lead.agentName || '—'}</span>,
+      card: {
+        label: 'Agent',
+        render: (lead) => <span className="text-[var(--text)] font-semibold">{lead.agentName || '—'}</span>,
+      },
+    },
+    {
+      key: 'createdAt',
+      header: 'Date',
+      sortable: true,
+      render: (lead) => (
+        <span className="text-xs text-[var(--slate-light)] tabular-nums">
+          {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+        </span>
+      ),
+      card: {
+        label: 'Date',
+        render: (lead) => (
+          <span className="text-[var(--text)] font-semibold tabular-nums">
+            {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+          </span>
+        ),
+      },
+    },
+  ], []);
 
   return (
     <div className="h-full overflow-y-auto overflow-x-hidden pb-10 pr-1">
@@ -103,180 +206,74 @@ export function MyLeads() {
         {/* ── Header ── */}
         <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5 pt-1">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[var(--slate-light)] mb-1">CRM</p>
+            <p className="text-[9px] font-extrabold tracking-[0.25em] uppercase gradient-text mb-1.5">◈ CRM</p>
             <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-slate-800 leading-none">My Leads</h1>
             <p className="mt-1.5 text-xs sm:text-sm text-[var(--slate-light)]">Manage contacts captured from your AI calls</p>
           </div>
-          {loading && (
-            <div className="flex items-center gap-2 text-[var(--slate-light)]">
-              <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              <span className="text-xs">Loading…</span>
-            </div>
-          )}
-        <button
-  onClick={handleExport}
-  className="btn-cta w-full sm:w-auto group inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-[var(--text)] border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)] transition-all"
->
-  <svg
-    className="w-3.5 h-3.5 transition-transform group-hover:translate-y-0.5"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-    />
-  </svg>
-  Export CSV
-</button>
+          <button
+            onClick={handleExport}
+            className="btn-cta self-start group inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-[var(--text)] border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)] transition-all"
+          >
+            <svg className="w-3.5 h-3.5 transition-transform group-hover:translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Export CSV
+          </button>
         </motion.div>
 
-        {/* ── Toolbar ── */}
-        <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3">
-          {/* Search */}
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Search leads…"
-            className="flex-1 max-w-xs ml-0 sm:ml-3"
+        {/* ── Filter pills ── */}
+        <motion.div variants={fadeUp} className="flex items-center p-0.8 rounded-xl border bg-white/70 w-full sm:w-fit" style={{ borderColor: 'var(--slate-border)' }}>
+          {FILTERS.map((f) => (
+            <button
+              key={f.value}
+              onClick={() => setFilter(f.value)}
+              className={`flex-1 sm:flex-none px-3.5 py-2 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer whitespace-nowrap ${
+                filter === f.value
+                  ? 'btn-cta'
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </motion.div>
+
+        {/* ── DataTable ── */}
+        <motion.div variants={fadeUp}>
+          <DataTable
+            columns={columns}
+            data={filteredLeads}
+            loading={loading}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            keyExtractor={(l) => l.id}
+            onRowClick={(lead) => openLead(lead)}
+            cardTitle={(l) => l.name || 'Unknown Lead'}
+            cardBadge={(l) => {
+              const sc = statusConfig[l.status || 'new'] ?? statusConfig.new;
+              return (
+                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${sc.pill} ${sc.text}`}>
+                  <span className={`w-1 h-1 rounded-full ${sc.dot}`} />
+                  {sc.label}
+                </span>
+              );
+            }}
+            emptyState={{
+              title: 'No leads found',
+              description: 'Leads captured from your calls will appear here.',
+            }}
+            defaultSort={{ key: 'createdAt', direction: 'desc' }}
+            searchable={true}
+            searchTerm={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search leads by name, email, or phone..."
+            exportable={true}
+            densityControls={false}
+            columnToggling={true}
+            pagination={pagination}
+            onPageChange={setPage}
           />
-          {/* Filter pills */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {FILTERS.map((f) => (
-              <button
-                key={f.value}
-                onClick={() => setFilter(f.value)}
-                className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all ${filter === f.value
-                    ? 'btn-cta'
-                    : 'text-[var(--slate-light)] hover:text-[var(--text)] bg-[var(--surface)] hover:bg-[var(--surface-hover)]'
-                  }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
         </motion.div>
-
-        {/* ── Table ── */}
-        <motion.div
-          variants={fadeUp}
-          className="rounded-2xl border border-[var(--border)] overflow-hidden bg-[var(--s1)]"
-        >
-          {filteredLeads.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center px-8">
-              <div className="w-14 h-14 rounded-2xl bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-[var(--slate-gray)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-              <p className="text-sm font-medium text-[var(--slate-light)] mb-1">No leads found</p>
-              <p className="text-xs text-[var(--slate-light)] max-w-xs">
-                {search || filter ? 'Try adjusting your search or filter.' : 'Leads captured from your calls will appear here.'}
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[700px]">
-                <thead>
-                  <tr className="border-b border-white/5">
-                    <th className="px-5 py-3.5 text-left">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--slate-light)]">Name</span>
-                    </th>
-                    <th className="px-5 py-3.5 text-left">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--slate-light)]">Contact</span>
-                    </th>
-                    <th className="px-5 py-3.5 text-left">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--slate-light)]">Purpose</span>
-                    </th>
-                    <th className="px-5 py-3.5 text-left">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--slate-light)]">Status</span>
-                    </th>
-                    <th className="px-5 py-3.5 text-left">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--slate-light)]">Agent</span>
-                    </th>
-                    <th className="px-5 py-3.5 text-left">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--slate-light)]">Date</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredLeads.map((lead, i) => {
-                    const sc = statusConfig[lead.status || 'new'] ?? statusConfig.new;
-                    const ac = getAvatarColor(lead.name || 'U');
-                    return (
-                      <motion.tr
-                        key={lead.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: i * 0.03 }}
-                        onClick={() => openLead(lead)}
-                        className="group border-t border-white/[0.04] hover:bg-white/[0.03] transition-colors cursor-pointer"
-                      >
-                        {/* Name */}
-                        <td className="px-5 py-3.5">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${ac} flex items-center justify-center text-[var(--text)] font-semibold text-xs flex-shrink-0`}>
-                              {(lead.name || 'U').charAt(0).toUpperCase()}
-                            </div>
-                            <span className="font-medium text-sm text-[var(--text)] group-hover:text-[var(--text)] transition-colors">
-                              {lead.name || '—'}
-                            </span>
-                          </div>
-                        </td>
-                        {/* Contact */}
-                        <td className="px-5 py-3.5">
-                          <div className="space-y-0.5">
-                            {lead.phone && (
-                              <p className="font-mono text-xs text-[var(--text)]">{lead.phone}</p>
-                            )}
-                            {lead.email && (
-                              <p className="text-xs text-[var(--slate-light)] truncate max-w-[160px]">{lead.email}</p>
-                            )}
-                            {!lead.phone && !lead.email && <span className="text-[var(--slate-gray)] text-xs">—</span>}
-                          </div>
-                        </td>
-                        {/* Purpose */}
-                        <td className="px-5 py-3.5">
-                          {lead.purpose
-                            ? <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-[var(--surface-hover)] text-xs text-[var(--text)] border border-white/5">{lead.purpose}</span>
-                            : <span className="text-[var(--slate-gray)] text-xs">—</span>
-                          }
-                        </td>
-                        {/* Status */}
-                        <td className="px-5 py-3.5">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${sc.pill} ${sc.text}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
-                            {sc.label}
-                          </span>
-                        </td>
-                        {/* Agent */}
-                        <td className="px-5 py-3.5">
-                          <span className="text-xs text-[var(--slate-light)]">{lead.agentName || '—'}</span>
-                        </td>
-                        {/* Date */}
-                        <td className="px-5 py-3.5">
-                          <span className="text-xs text-[var(--slate-light)] tabular-nums">
-                            {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
-                          </span>
-                        </td>
-                      </motion.tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              <div className="px-5 py-3 border-t border-white/5 flex items-center justify-between">
-                <p className="text-xs text-[var(--slate-light)]">{filteredLeads.length} lead{filteredLeads.length !== 1 ? 's' : ''}</p>
-              </div>
-            </div>
-          )}
-        </motion.div>
-        <Pagination pagination={pagination} onPageChange={setPage} />
       </motion.div>
 
       {/* ── Lead Detail Modal ── */}
@@ -301,7 +298,7 @@ export function MyLeads() {
               {/* Modal header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border)]">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getAvatarColor(selectedLead.name || 'U')} flex items-center justify-center text-[var(--text)] font-semibold text-sm`}>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary)] flex items-center justify-center text-[var(--text)] font-semibold text-sm">
                     {(selectedLead.name || 'U').charAt(0).toUpperCase()}
                   </div>
                   <div>
@@ -326,7 +323,6 @@ export function MyLeads() {
 
               {/* Modal body */}
               <div className="px-6 py-5 space-y-6 max-h-[75vh] overflow-y-auto">
-
                 {/* Info grid */}
                 <div className="grid grid-cols-2 gap-2.5">
                   {[
@@ -344,7 +340,6 @@ export function MyLeads() {
                   ))}
                 </div>
 
-                {/* Divider */}
                 <div className="border-t border-white/5" />
 
                 {/* Status */}

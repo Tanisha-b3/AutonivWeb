@@ -547,12 +547,12 @@ function GlowRingOrb({
       <div
         style={{
           position: "absolute",
-          width: s(170),
-          height: s(170),
+          width: s(140),
+          height: s(140),
           borderRadius: "50%",
           background:
-            "radial-gradient(circle, rgba(34,211,238,0.30) 0%, rgba(34,211,238,0.08) 55%, transparent 75%)",
-          filter: `blur(${s(14)}px)`,
+            "radial-gradient(circle, rgba(34,211,238,0.18) 0%, rgba(34,211,238,0.04) 55%, transparent 75%)",
+          filter: `blur(${s(10)}px)`,
           animation: active ? "orbPulseGlow 2.6s ease-in-out infinite" : "none",
         }}
       />
@@ -560,36 +560,36 @@ function GlowRingOrb({
       <div
         style={{
           position: "absolute",
-          width: s(126),
-          height: s(126),
+          width: s(110),
+          height: s(110),
           borderRadius: "50%",
-          border: `${Math.max(2, s(5))}px solid`,
+          border: `${Math.max(2, s(4))}px solid`,
           borderColor: "#22d3ee",
-          boxShadow: `0 0 ${s(18)}px rgba(34,211,238,0.65), 0 0 ${s(36)}px rgba(59,130,246,0.35), inset 0 0 ${s(14)}px rgba(34,211,238,0.30)`,
+          boxShadow: `0 0 ${s(12)}px rgba(34,211,238,0.45), 0 0 ${s(24)}px rgba(59,130,246,0.2), inset 0 0 ${s(10)}px rgba(34,211,238,0.20)`,
         }}
       />
       {/* faint outer ring echo */}
       <div
         style={{
           position: "absolute",
-          width: s(150),
-          height: s(150),
+          width: s(130),
+          height: s(130),
           borderRadius: "50%",
-          border: "1px solid rgba(34,211,238,0.18)",
+          border: "1px solid rgba(34,211,238,0.12)",
         }}
       />
       {/* solid mic circle */}
       <div
         style={{
           position: "relative",
-          width: s(66),
-          height: s(66),
+          width: s(60),
+          height: s(60),
           borderRadius: "50%",
           background: "radial-gradient(circle at 35% 35%,#3b82f6,#1d4ed8)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          boxShadow: `0 0 ${s(22)}px rgba(37,99,235,0.55)`,
+          boxShadow: `0 0 ${s(16)}px rgba(37,99,235,0.4)`,
         }}
       >
         <svg
@@ -1199,8 +1199,8 @@ export function Landing() {
       50% { transform: scaleY(1.8); }
     }
     @keyframes orbPulseGlow {
-      0%, 100% { box-shadow: 0 0 30px rgba(34,211,238,0.5), 0 0 60px rgba(34,211,238,0.2); }
-      50% { box-shadow: 0 0 50px rgba(34,211,238,0.85), 0 0 100px rgba(34,211,238,0.4); }
+      0%, 100% { box-shadow: 0 0 18px rgba(34,211,238,0.3), 0 0 36px rgba(34,211,238,0.1); }
+      50% { box-shadow: 0 0 28px rgba(34,211,238,0.5), 0 0 56px rgba(34,211,238,0.2); }
     }
   `;
   
@@ -1449,6 +1449,7 @@ export function Landing() {
           .demo-grid{grid-template-columns:1fr !important;min-height:auto !important;}
           .demo-grid > div:first-child{border-right:none !important;border-bottom:1px solid rgba(255,255,255,0.08) !important;padding:28px 20px !important;min-height:200px;}
           .demo-grid > div:last-child{padding:16px !important;min-height:200px;}
+          .demo-status-text{font-size:9px !important;letter-spacing:0.05em !important;}
           .use-case-tabs{gap:2px !important;}
           .use-case-tabs button{padding:8px 10px !important;font-size:12px !important;}
           .integrations-grid{grid-template-columns:repeat(3,1fr) !important;}
@@ -1465,7 +1466,7 @@ export function Landing() {
         @media(max-width:640px){
           .hero-cta-row{display:flex !important;flex-direction:column !important;gap:12px !important;width:100% !important;}
           .hero-cta-row .hero-btn-row{display:flex !important;flex-direction:row !important;flex-wrap:nowrap !important;gap:8px !important;width:100% !important;}
-          .hero-cta-row .hero-btn-row > button{flex:1 1 0 !important;min-width:0 !important;display:flex !important;align-items:center !important;justify-content:center !important;min-height:42px !important;font-size:11.5px !important;padding:8px 8px !important;gap:5px !important;white-space:nowrap !important;overflow:hidden !important;border-radius:999px !important;}
+          .hero-cta-row .hero-btn-row > button{flex:1 1 0 !important;min-width:0 !important;display:flex !important;align-items:center !important;justify-content:center !important;min-height:42px !important;font-size:11.5px !important;padding:8px 8px !important;gap:5px !important;white-space:nowrap !important;overflow:hidden !important;border-radius:12px !important;}
           .hero-cta-row .hero-btn-row > button svg.w-4{width:12px !important;height:12px !important;flex-shrink:0 !important;}
       `}</style>
 
@@ -1693,10 +1694,10 @@ export function Landing() {
                   <div className="mt-4 hero-cta-row flex flex-col gap-4 w-full" style={{ opacity: 1, overflow: "visible" }}>
 
   {/* Row 1: Buttons */}
-  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full" style={{ overflow: "visible" }}>
+  <div className="hero-btn-row flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full" style={{ overflow: "visible" }}>
    <button
       onClick={() => openAuth("register")}
-      className="font-bold flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-white"
+      className="font-bold flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-white"
       style={{
         background: "var(--gg)",
         boxShadow: "0 4px 14px rgba(16,185,129,0.25)",
@@ -1715,7 +1716,7 @@ export function Landing() {
 
     <button
       onClick={() => openAuth("register")}
-      className="font-bold flex items-center justify-center gap-2 px-6 py-3.5 rounded-full"
+      className="font-bold flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl"
       style={{
         background: "#ffffff",
         color: "#0a0a0a",
@@ -1741,17 +1742,22 @@ export function Landing() {
   <div className="flex items-center gap-3 flex-wrap w-full">
     <div className="flex -space-x-2 shrink-0">
       {[
-        { init: "SC", bg: "#2563EB" },
-        { init: "MJ", bg: "#10B981" },
-        { init: "ER", bg: "#059669" },
-        { init: "AK", bg: "#030B2E" },
+        { img: "https://i.pravatar.cc/80?img=11", alt: "Sarah C." },
+        { img: "https://i.pravatar.cc/80?img=32", alt: "Michael J." },
+        { img: "https://i.pravatar.cc/80?img=47", alt: "Emma R." },
+        { img: "https://i.pravatar.cc/80?img=56", alt: "Alex K." },
       ].map((av, i) => (
         <div
           key={i}
-          className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-[9px] font-bold text-white shadow-sm"
-          style={{ background: av.bg, zIndex: 5 - i }}
+          className="w-8 h-8 rounded-full border-2 border-white shadow-sm overflow-hidden"
+          style={{ zIndex: 5 - i }}
         >
-          {av.init}
+          <img
+            src={av.img}
+            alt={av.alt}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
         </div>
       ))}
     </div>
@@ -1783,7 +1789,7 @@ export function Landing() {
       style={{
         transform: "perspective(1000px) rotateY(-18deg) rotateX(6deg) rotate(6deg)",
         transformStyle: "flat",
-        overflow: "visible",
+        overflow: "hidden",
       }}
     >
       {/* Notch */}
@@ -1826,7 +1832,7 @@ export function Landing() {
                   style={{
                     width: "2px",
                     height: `${h}px`,
-                    background: "rgba(34,211,238,0.2)",
+                    background: "rgba(34,211,238,0.12)",
                     animation: "bgWaveBounce 1.2s ease-in-out infinite",
                     animationDelay: `${i * 0.045}s`,
                     transformOrigin: "center",
@@ -1895,7 +1901,7 @@ export function Landing() {
                         : i % 3 === 1
                         ? "linear-gradient(180deg,#34d399,#059669)"
                         : "linear-gradient(180deg,#22d3ee,#0e7490)",
-                    opacity: 0.9,
+                    opacity: 0.65,
                     animation: "waveBounce 1s ease-in-out infinite",
                     animationDelay: `${i * 0.045}s`,
                   }}
@@ -2111,20 +2117,20 @@ export function Landing() {
                   <div className="flex gap-8 sm:gap-16 items-center animate-marquee opacity-90">
                     {[...Array(2)].flatMap((_, dup) =>
                       [
-                        { n: "HealthFirst", i: "🏥" },
-                        { n: "BrightHome", i: "🏠" },
-                        { n: "FastTrack", i: "⚡" },
-                        { n: "CloudBase", i: "☁️" },
-                        { n: "NovaTech", i: "🚀" },
-                        { n: "ZenithAI", i: "🧠" },
+                        { n: "HealthFirst", c: "#0EA5E9", icon: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" },
+                        { n: "BrightHome", c: "#10B981", icon: "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" },
+                        { n: "FastTrack", c: "#F59E0B", icon: "M13 2L3 14h6l-1 8 10-12h-6l1-8z" },
+                        { n: "CloudBase", c: "#6366F1", icon: "M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z" },
+                        { n: "NovaTech", c: "#EC4899", icon: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" },
+                        { n: "ZenithAI", c: "#8B5CF6", icon: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" },
                       ].map((c, i) => (
                         <div
                           key={`${dup}-${i}`}
                           className="flex items-center gap-2 sm:gap-3 whitespace-nowrap"
                         >
-                          <span className="text-base sm:text-xl grayscale">
-                            {c.i}
-                          </span>
+                          <svg className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" viewBox="0 0 24 24" fill={c.c} style={{ opacity: 0.7 }}>
+                            <path d={c.icon} />
+                          </svg>
                           <span
                             className="text-xs sm:text-sm font-semibold tracking-tight"
                             style={{ color: "#030B2E" }}
@@ -2205,11 +2211,11 @@ export function Landing() {
                   <div
                     style={{
                       background: "linear-gradient(160deg,#141414,#0a0a0a)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: 24,
-                      overflow: "hidden",
-                      boxShadow:
-                        "0 20px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          borderRadius: 24,
+                          overflow: "hidden",
+                          boxShadow:
+                            "0 20px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
                     }}
                   >
                     {/* Title bar */}
@@ -2265,6 +2271,7 @@ export function Landing() {
                           gap: 7,
                           overflow: "hidden",
                           margin: "0 8px",
+                          minWidth: 0,
                         }}
                       >
                         <div
@@ -2280,6 +2287,7 @@ export function Landing() {
                           }}
                         />
                         <span
+                          className="demo-status-text"
                           style={{
                             fontSize: 11,
                             fontFamily: "'JetBrains Mono',monospace",
@@ -2288,6 +2296,7 @@ export function Landing() {
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
+                            minWidth: 0,
                           }}
                         >
                           {demoRunning
@@ -2799,11 +2808,11 @@ export function Landing() {
                   <div
                     style={{
                       background:
-                        "linear-gradient(135deg, #161616 0%, #0a0a0a 50%, #161616 100%)",
-                      border: "1px solid rgba(255,255,255,0.08)",
+                        "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #f8fafc 100%)",
+                      border: "1px solid rgba(37,99,235,0.14)",
                       borderRadius: 24,
                       padding: "40px 36px",
-                      boxShadow: "0 20px 50px -15px rgba(0,0,0,0.5)",
+                      boxShadow: "0 20px 50px -15px rgba(37,99,235,0.10)",
                     }}
                   >
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative">
@@ -2829,8 +2838,8 @@ export function Landing() {
                           <div
                             className="rounded-2xl p-5 flex-1 flex flex-col items-center w-full transition-all duration-300"
                             style={{
-                              background: "rgba(255,255,255,0.04)",
-                              border: "1px solid rgba(255,255,255,0.08)",
+                              background: "rgba(37,99,235,0.04)",
+                              border: "1px solid rgba(37,99,235,0.12)",
                             }}
                           >
                             <div
@@ -2844,13 +2853,13 @@ export function Landing() {
                             </div>
                             <h3
                               className="text-sm font-bold mb-2"
-                              style={{ color: "#ffffff" }}
+                              style={{ color: "#0a0a0a" }}
                             >
                               {step.title}
                             </h3>
                             <p
                               className="text-[12px] leading-relaxed m-0"
-                              style={{ color: "#94a3b8" }}
+                              style={{ color: "#64748b" }}
                             >
                               {step.desc}
                             </p>

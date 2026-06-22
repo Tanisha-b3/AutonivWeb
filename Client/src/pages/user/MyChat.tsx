@@ -402,7 +402,7 @@ export function MyChat() {
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 12 }}>
          
           <div>
-            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[var(--slate-light)] mb-1">Support</p>
+            <p className="text-[9px] font-extrabold tracking-[0.25em] uppercase gradient-text mb-1.5">◈Support</p>
              <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-slate-800 leading-none">My Chat</h1>
           </div>
         </div>
