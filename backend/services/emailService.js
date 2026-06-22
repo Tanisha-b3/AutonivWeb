@@ -91,7 +91,7 @@ export async function sendOtpEmail({ to, otp, purpose }) {
     }
     return info;
   } catch (error) {
-    console.error('Failed to send OTP email via MailerSend:', error.message);
+    console.error('Failed to send OTP email via MailerSend:', error?.body?.message || error?.message || error);
     // Log code to console for local development fallback
     console.log(`\n========================================\n[DEV ONLY] OTP verification code: ${otp} for email: ${to} (purpose: ${purpose})\n========================================\n`);
   }
