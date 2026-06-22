@@ -4,6 +4,7 @@ import { getCookie, setCookie, deleteCookie } from './cookies';
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
 });
 
 // ── Proactive token refresh — refresh before expiry to avoid 401 delays ────
