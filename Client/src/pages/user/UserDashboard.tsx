@@ -465,9 +465,9 @@ const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
               {/* Metadata Grid */}
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: 'Date & Time', value: call.startedAt ? new Date(call.startedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '—' },
-                  { label: 'Duration', value: formatDur(getCallDurSec(call)) },
-                  { label: 'Caller ID', value: call.callerNumber || '—', mono: true },
+                  { label: 'Date & Time', value: call.startedAt ? new Date(call.startedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : 'No Data' },
+                   { label: 'Duration', value: formatDur(getCallDurSec(call)) },
+                   { label: 'Caller ID', value: call.callerNumber || 'No Caller ID', mono: true },
                   { label: 'Status', value: call.status || 'failed', capitalize: true },
                 ].map(item => (
                   <div key={item.label} className="rounded-xl border border-slate-100 bg-slate-50/40 px-3.5 py-2.5">
@@ -851,7 +851,7 @@ function CallMeDialog({
                 <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-150">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Agent:</span>
-                  <span className="text-xs font-bold text-slate-700 truncate">{agent?.name || '—'}</span>
+                  <span className="text-xs font-bold text-slate-700 truncate">{agent?.name || 'No Agent'}</span>
                 </div>
 
                 {/* Callee name */}
@@ -1075,7 +1075,7 @@ function getCallDurSec(call: { startedAt?: string | null; endedAt?: string | nul
   return call.duration ?? 0;
 }
 function formatDur(s: number) {
-  if (s <= 0) return '—';
+  if (s <= 0) return 'No Data';
   return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
 }
 
@@ -1795,7 +1795,7 @@ export function UserDashboard() {
                             </span>
                           </div>
                           <p className="text-[10px] text-slate-400 mt-0.5 truncate">
-                            {call.callerNumber && call.callerNumber !== 'Unknown' ? call.callerNumber : 'Vapi Caller'} · {call.startedAt ? new Date(call.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                            {call.callerNumber && call.callerNumber !== 'Unknown' ? call.callerNumber : 'Vapi Caller'} · {call.startedAt ? new Date(call.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No Data'}
                           </p>
                         </div>
                       </div>

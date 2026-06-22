@@ -22,7 +22,7 @@ const FILTERS = [
 ];
 
 function formatApptDate(dateStr?: string | null) {
-  if (!dateStr) return '—';
+  if (!dateStr) return 'No Date';
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -49,6 +49,7 @@ export function MyAppointments() {
   useEffect(() => { setPage(1); }, [filter, search]);
 
   const openAppt = (appt: Appointment) => {
+    if (appt.status === 'cancelled') return;
     setSelected(appt);
     setEditStatus(appt.status);
   };
@@ -68,7 +69,7 @@ export function MyAppointments() {
           console.error('WhatsApp notification failed:', notifyErr);
         }
       }
-      setSelected((p) => p ? { ...p, status: editStatus as Appointment['status'] } : null);
+      setSelected(null);
     } catch (err) { console.error(err); }
     finally { setSaving(false); }
   };
@@ -92,20 +93,20 @@ export function MyAppointments() {
       sortable: true,
       render: (appt) => (
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--primary)] to-[var(--primary)] flex items-center justify-center text-[var(--text)] font-semibold text-xs flex-shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-[#2563eb] flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
             {(appt.name || 'U').charAt(0).toUpperCase()}
           </div>
-          <span className="font-medium text-sm text-[var(--text)]">{appt.name || '—'}</span>
+          <span className="font-medium text-sm text-[var(--text)]">{appt.name || 'Unknown'}</span>
         </div>
       ),
       card: {
         label: 'Name',
         render: (appt) => (
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[var(--primary)] to-[var(--primary)] flex items-center justify-center text-[var(--text)] font-semibold text-[10px] flex-shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-[#2563eb] flex items-center justify-center text-white font-semibold text-[10px] flex-shrink-0">
               {(appt.name || 'U').charAt(0).toUpperCase()}
             </div>
-            <span className="font-bold text-[var(--text)]">{appt.name || '—'}</span>
+            <span className="font-bold text-[var(--text)]">{appt.name || 'Unknown'}</span>
           </div>
         ),
       },
@@ -134,10 +135,10 @@ export function MyAppointments() {
       sortable: true,
       render: (appt) => appt.service
         ? <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-[var(--surface-hover)] text-xs text-[var(--text)] border border-white/5">{appt.service}</span>
-        : <span className="text-[var(--slate-gray)] text-xs">—</span>,
+        : <span className="text-[var(--slate-gray)] text-xs">No Service</span>,
       card: {
         label: 'Service',
-        render: (appt) => <span className="text-[var(--text)] font-semibold">{appt.service || '—'}</span>,
+        render: (appt) => <span className="text-[var(--text)] font-semibold">{appt.service || 'No Service'}</span>,
       },
     },
     {
@@ -200,10 +201,10 @@ export function MyAppointments() {
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] flex-shrink-0"/>
           {appt.agentName}
         </span>
-      ) : <span className="text-[var(--slate-gray)] text-xs">—</span>,
+      ) : <span className="text-[var(--slate-gray)] text-xs">No Agent</span>,
       card: {
         label: 'Agent',
-        render: (appt) => <span className="text-[var(--text)] font-semibold">{appt.agentName || '—'}</span>,
+        render: (appt) => <span className="text-[var(--text)] font-semibold">{appt.agentName || 'No Agent'}</span>,
       },
     },
   ], []);
@@ -222,12 +223,12 @@ export function MyAppointments() {
         </motion.div>
 
         {/* ── Filter pills ── */}
-        <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl border bg-white/70 w-full sm:w-fit" style={{ borderColor: 'var(--slate-border)' }}>
+        <motion.div variants={fadeUp} className="grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:gap-2 p-1 rounded-xl border bg-white/70 w-full sm:w-fit" style={{ borderColor: 'var(--slate-border)' }}>
           {FILTERS.map((f) => (
             <button
               key={f.value}
               onClick={() => setFilter(f.value)}
-              className={`flex-1 sm:flex-none min-w-[60px] px-3 py-2 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-2 sm:px-3.5 py-2 rounded-lg text-[10px] sm:text-xs font-bold uppercase transition-all cursor-pointer whitespace-nowrap truncate ${
                 filter === f.value
                   ? 'btn-cta'
                   : 'text-slate-400 hover:text-slate-600'
@@ -297,7 +298,7 @@ export function MyAppointments() {
               {/* Modal header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border)]">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary)] flex items-center justify-center text-[var(--text)] font-semibold text-sm">
+                  <div className="w-10 h-10 rounded-xl bg-[#2563eb] flex items-center justify-center text-white font-semibold text-sm">
                     {(selected.name || 'U').charAt(0).toUpperCase()}
                   </div>
                   <div>

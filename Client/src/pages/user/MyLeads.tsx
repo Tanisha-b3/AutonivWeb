@@ -100,20 +100,20 @@ export function MyLeads() {
       sortable: true,
       render: (lead) => (
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--primary)] to-[var(--primary)] flex items-center justify-center text-[var(--text)] font-semibold text-xs flex-shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-[#2563eb] flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
             {(lead.name || 'U').charAt(0).toUpperCase()}
           </div>
-          <span className="font-medium text-sm text-[var(--text)]">{lead.name || '—'}</span>
+          <span className="font-medium text-sm text-[var(--text)]">{lead.name || 'Unknown'}</span>
         </div>
       ),
       card: {
         label: 'Name',
         render: (lead) => (
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[var(--primary)] to-[var(--primary)] flex items-center justify-center text-[var(--text)] font-semibold text-[10px] flex-shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-[#2563eb] flex items-center justify-center text-white font-semibold text-[10px] flex-shrink-0">
               {(lead.name || 'U').charAt(0).toUpperCase()}
             </div>
-            <span className="font-bold text-[var(--text)]">{lead.name || '—'}</span>
+            <span className="font-bold text-[var(--text)]">{lead.name || 'Unknown'}</span>
           </div>
         ),
       },
@@ -146,10 +146,10 @@ export function MyLeads() {
       sortable: true,
       render: (lead) => lead.purpose
         ? <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-[var(--surface-hover)] text-xs text-[var(--text)] border border-white/5">{lead.purpose}</span>
-        : <span className="text-[var(--slate-gray)] text-xs">—</span>,
+        : <span className="text-[var(--slate-gray)] text-xs">No Purpose</span>,
       card: {
         label: 'Purpose',
-        render: (lead) => <span className="text-[var(--text)] font-semibold">{lead.purpose || '—'}</span>,
+        render: (lead) => <span className="text-[var(--text)] font-semibold">{lead.purpose || 'No Purpose'}</span>,
       },
     },
     {
@@ -183,10 +183,10 @@ export function MyLeads() {
       header: 'Agent',
       sortable: true,
       className: 'whitespace-normal min-w-[100px]',
-      render: (lead) => <span className="text-xs text-[var(--slate-light)]">{lead.agentName || '—'}</span>,
+      render: (lead) => <span className="text-xs text-[var(--slate-light)]">{lead.agentName || 'No Agent'}</span>,
       card: {
         label: 'Agent',
-        render: (lead) => <span className="text-[var(--text)] font-semibold">{lead.agentName || '—'}</span>,
+        render: (lead) => <span className="text-[var(--text)] font-semibold">{lead.agentName || 'No Agent'}</span>,
       },
     },
     {
@@ -195,14 +195,14 @@ export function MyLeads() {
       sortable: true,
       render: (lead) => (
         <span className="text-xs text-[var(--slate-light)] tabular-nums">
-          {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+          {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No Data'}
         </span>
       ),
       card: {
         label: 'Date',
         render: (lead) => (
           <span className="text-[var(--text)] font-semibold tabular-nums">
-            {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+            {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No Data'}
           </span>
         ),
       },
@@ -232,12 +232,12 @@ export function MyLeads() {
         </motion.div>
 
         {/* ── Filter pills ── */}
-        <motion.div variants={fadeUp} className="flex items-center p-0.8 rounded-xl border bg-white/70 w-full sm:w-fit" style={{ borderColor: 'var(--slate-border)' }}>
+        <motion.div variants={fadeUp} className="grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:gap-2 p-1 rounded-xl border bg-white/70 w-full sm:w-fit" style={{ borderColor: 'var(--slate-border)' }}>
           {FILTERS.map((f) => (
             <button
               key={f.value}
               onClick={() => handleFilterChange(f.value)}
-              className={`flex-1 sm:flex-none px-3.5 py-2 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-2 sm:px-3.5 py-2 rounded-lg text-[10px] sm:text-xs font-bold uppercase transition-all cursor-pointer whitespace-nowrap truncate ${
                 filter === f.value
                   ? 'btn-cta'
                   : 'text-slate-400 hover:text-slate-600'
@@ -308,7 +308,7 @@ export function MyLeads() {
               {/* Modal header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border)]">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--primary)] to-[var(--primary)] flex items-center justify-center text-[var(--text)] font-semibold text-sm">
+                  <div className="w-10 h-10 rounded-xl bg-[#2563eb] flex items-center justify-center text-white font-semibold text-sm">
                     {(selectedLead.name || 'U').charAt(0).toUpperCase()}
                   </div>
                   <div>

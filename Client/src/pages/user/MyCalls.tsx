@@ -21,7 +21,7 @@ function getCallDurationSeconds(call: { startedAt?: string | null; endedAt?: str
 }
 
 function formatDuration(sec: number): string {
-  if (sec <= 0) return '—';
+  if (sec <= 0) return 'No Data';
   if (sec < 60) return `${sec}s`;
   const m = Math.floor(sec / 60);
   const s = sec % 60;
@@ -222,7 +222,7 @@ const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
                 {[
                   { 
                     label: 'Agent Name', 
-                    value: call.agentName || '—', 
+                    value: call.agentName || 'Unknown Agent', 
                     icon: (
                       <svg className="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -231,7 +231,7 @@ const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
                   },
                   { 
                     label: 'Caller ID', 
-                    value: call.callerNumber || '—', 
+                    value: call.callerNumber || 'No Caller ID', 
                     mono: true,
                     icon: (
                       <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -283,7 +283,7 @@ const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
                     <div className="flex-1 min-w-0">
                       <p className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider leading-none">Call Triggered</p>
                       <p className="text-xs font-bold text-slate-700 mt-1">
-                        {call.startedAt ? new Date(call.startedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}
+                        {call.startedAt ? new Date(call.startedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : 'No Data'}
                       </p>
                     </div>
                   </div>
@@ -293,7 +293,7 @@ const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
                     <div className="flex-1 min-w-0">
                       <p className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider leading-none">Call Finished</p>
                       <p className="text-xs font-bold text-slate-700 mt-1">
-                        {call.endedAt ? new Date(call.endedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}
+                        {call.endedAt ? new Date(call.endedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : 'No Data'}
                       </p>
                     </div>
                   </div>
@@ -550,7 +550,7 @@ export function MyCalls() {
         label: 'Date',
         render: (call) => (
           <span className="font-bold text-slate-700">
-            {call.startedAt ? new Date(call.startedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}
+            {call.startedAt ? new Date(call.startedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : 'No Data'}
           </span>
         ),
       },
@@ -565,10 +565,10 @@ export function MyCalls() {
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary-blue)] flex-shrink-0"/>
           {call.agentName}
         </span>
-      ) : <span className="text-slate-400 text-xs">—</span>,
+      ) : <span className="text-slate-400 text-xs">No Agent</span>,
       card: {
         label: 'Agent',
-        render: (call) => <span className="text-slate-705 font-bold">{call.agentName || '—'}</span>,
+        render: (call) => <span className="text-slate-705 font-bold">{call.agentName || 'No Agent'}</span>,
       },
     },
     {
@@ -577,10 +577,10 @@ export function MyCalls() {
       sortable: true,
       render: (call) => call.callerNumber && call.callerNumber !== 'Unknown'
         ? <span className="font-mono text-[10px] text-slate-500 font-extrabold bg-slate-100 px-2 py-1 rounded-lg border border-slate-200/50">{call.callerNumber}</span>
-        : <span className="text-slate-400 text-xs">—</span>,
+        : <span className="text-slate-400 text-xs">No Caller ID</span>,
       card: {
         label: 'Caller',
-        render: (call) => <span className="font-mono text-slate-600 font-extrabold">{call.callerNumber && call.callerNumber !== 'Unknown' ? call.callerNumber : '—'}</span>,
+        render: (call) => <span className="font-mono text-slate-600 font-extrabold">{call.callerNumber && call.callerNumber !== 'Unknown' ? call.callerNumber : 'No Caller ID'}</span>,
       },
     },
     {
