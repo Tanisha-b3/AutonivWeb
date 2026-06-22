@@ -40,6 +40,9 @@ const userSchema = new mongoose.Schema(
     // select: false — internal auth fields, never exposed to API consumers
     loginAttempts: { type: Number, default: 0,    select: false },
     lockUntil:     { type: Date,   default: null,  select: false },
+    otpCode:       { type: String, default: null,  select: false },
+    otpExpiresAt:  { type: Date,   default: null,  select: false },
+    otpPurpose:    { type: String, default: null,  select: false },
 
     passwordChangedAt: { type: Date,   default: null },
     lastLoginAt:       { type: Date,   default: null },

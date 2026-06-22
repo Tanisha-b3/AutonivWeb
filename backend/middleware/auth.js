@@ -1,11 +1,13 @@
 import { verifyAccessToken, authSecurityEvent } from '../services/tokenService.js';
+import { extractTokenFromCookie } from '../services/cookieService.js';
 
 function extractToken(req) {
   const authHeader = req.headers.authorization;
-  if (!authHeader || typeof authHeader !== 'string') return null;
-  const [scheme, token] = authHeader.split(' ');
-  if (scheme !== 'Bearer' || !token) return null;
-  return token.trim();
+  if (authHeader && typeof authHeader === 'string') {
+    const [scheme, token] = authHeader.split(' ');
+    if (scheme === 'Bearer' && token) return token.trim();
+  }
+  return extractTokenFromCookie(req);
 }
 
 export function authenticate(req, res, next) {

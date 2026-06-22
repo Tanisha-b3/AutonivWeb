@@ -72,8 +72,7 @@ function parseError(err: unknown, fallback: string): string {
 
 export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps) {
   const navigate = useNavigate();
-  // const dispatch = useAppDispatch();
-  const { login, register } = useAuth();
+  const { login, register, verifyOtp } = useAuth();
 
   const [name, setName]               = useState('');
   const [email, setEmail]             = useState('');
@@ -91,6 +90,11 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [success, setSuccess]         = useState('');
+
+  const [showOtp, setShowOtp]         = useState(false);
+  const [otp, setOtp]                 = useState<string[]>(Array(6).fill(''));
+  const [timer, setTimer]             = useState(30);
+  const [otpPurpose, setOtpPurpose]   = useState<'login' | 'register' | null>(null);
 
   const isLogin = mode === 'login';
 
@@ -111,7 +115,64 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
     setResetPassword('');
     setResetConfirm('');
     setSuccess('');
+    setShowOtp(false);
+    setOtp(Array(6).fill(''));
+    setTimer(30);
+    setOtpPurpose(null);
   }, [mode, isOpen]);
+
+  useEffect(() => {
+    let t: ReturnType<typeof setInterval>;
+    if ((showOtp || mode === 'reset_password') && timer > 0) {
+      t = setInterval(() => setTimer((v) => v - 1), 1000);
+    }
+    return () => clearInterval(t);
+  }, [showOtp, mode, timer]);
+
+  const handleResendOtp = async () => {
+    if (timer > 0) return;
+    setError('');
+    try {
+      await authService.resendOtp(email, mode === 'reset_password' ? 'reset_password' : otpPurpose!);
+      setTimer(30);
+      setOtp(Array(6).fill(''));
+    } catch (err: any) {
+      setError(parseError(err, 'Failed to resend code'));
+    }
+  };
+
+  const handleOtpChange = (element: HTMLInputElement, index: number) => {
+    const val = element.value.replace(/[^0-9]/g, '');
+    if (!val) return;
+    const newOtp = [...otp];
+    newOtp[index] = val.slice(-1);
+    setOtp(newOtp);
+    if (element.nextSibling && index < 5) {
+      (element.nextSibling as HTMLInputElement).focus();
+    }
+  };
+
+  const handleOtpKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === 'Backspace') {
+      const newOtp = [...otp];
+      newOtp[index] = '';
+      setOtp(newOtp);
+      if (e.currentTarget.previousSibling && index > 0) {
+        (e.currentTarget.previousSibling as HTMLInputElement).focus();
+      }
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+    if (text.length === 6) {
+      const newOtp = text.split('');
+      setOtp(newOtp);
+      const target = e.currentTarget.parentElement?.children[5] as HTMLInputElement;
+      target?.focus();
+    }
+  };
 
   const validateField = (fieldName: string, value: string): string | null => {
     switch (fieldName) {
@@ -138,6 +199,31 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
     e.preventDefault();
     setError('');
 
+    // ── OTP Verification Submission ────────────────────────────────────────
+    if (showOtp) {
+      const code = otp.join('');
+      if (code.length !== 6) {
+        setError('Please enter a 6-digit verification code');
+        return;
+      }
+      setLoading(true);
+      try {
+        await verifyOtp(email, code, otpPurpose!);
+        onClose();
+        const stored = JSON.parse(sessionStorage.getItem('user') || '{}');
+        if (otpPurpose === 'register') {
+          navigate('/onboarding', { replace: true });
+        } else {
+          navigate(stored?.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
+        }
+      } catch (err) {
+        setError(parseError(err, 'Verification failed'));
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     // ── Forgot Password ────────────────────────────────────────────────────
     if (mode === 'forgot_password') {
       if (!email || validateEmail(email)) {
@@ -158,6 +244,11 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
 
     // ── Reset Password ─────────────────────────────────────────────────────
     if (mode === 'reset_password') {
+      const code = otp.join('');
+      if (code.length !== 6) {
+        setError('Please enter the 6-digit verification code');
+        return;
+      }
       if (!resetPassword || resetPassword.length < 10) {
         setError('Password must be at least 10 characters');
         return;
@@ -168,7 +259,7 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
       }
       setLoading(true);
       try {
-        await authService.resetPassword(email, resetPassword);
+        await authService.resetPassword(email, resetPassword, code);
         setSuccess('Password reset successfully! You can now sign in.');
         setTimeout(() => onSwitch('login'), 2000);
       } catch (err) {
@@ -197,20 +288,34 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
 
     if (Object.values(errors).some(Boolean)) return;
 
-      setLoading(true);
-      try {
-        if (isLogin) {
-          await login(email, password);
-        } else {
-          await register({ name, email, password, company, phoneNumber });
+    setLoading(true);
+    try {
+      if (isLogin) {
+        const res = await login(email, password);
+        if (res && 'requiresOtp' in res && res.requiresOtp) {
+          setOtpPurpose('login');
+          setShowOtp(true);
+          setTimer(30);
+          setOtp(Array(6).fill(''));
+          return;
         }
-        onClose();
-        const stored = JSON.parse(sessionStorage.getItem('user') || '{}');
-        if (!isLogin) {
-          navigate('/onboarding', { replace: true });
-        } else {
-          navigate(stored?.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
+      } else {
+        const res = await register({ name, email, password, company, phoneNumber });
+        if (res && 'requiresOtp' in res && res.requiresOtp) {
+          setOtpPurpose('register');
+          setShowOtp(true);
+          setTimer(30);
+          setOtp(Array(6).fill(''));
+          return;
         }
+      }
+      onClose();
+      const stored = JSON.parse(sessionStorage.getItem('user') || '{}');
+      if (!isLogin) {
+        navigate('/onboarding', { replace: true });
+      } else {
+        navigate(stored?.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
+      }
     } catch (err) {
       setError(parseError(err, `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`));
     } finally {
@@ -221,26 +326,30 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
   const strength = password ? getPasswordStrength(password) : null;
 
   const getTitle = () => {
+    if (showOtp) return 'Verify your identity';
     if (mode === 'forgot_password') return 'Forgot Password';
     if (mode === 'reset_password')  return 'Reset Password';
     return isLogin ? 'Welcome back' : 'Create your account';
   };
 
   const getSubtitle = () => {
+    if (showOtp) return `Enter the 6-digit code sent to ${email}`;
     if (mode === 'forgot_password') return "Enter your email and we'll send you a reset code";
-    if (mode === 'reset_password')  return 'Enter your new password';
+    if (mode === 'reset_password')  return 'Enter the verification code and your new password';
     return isLogin ? 'Sign in to your account to continue' : 'Start your free trial today';
   };
 
   const isAuthFlow = mode === 'forgot_password' || mode === 'reset_password';
 
   const submitLabel = () => {
+    if (showOtp) return 'Verify Code';
     if (mode === 'forgot_password') return 'Send Reset Code';
     if (mode === 'reset_password')  return 'Reset Password';
     return isLogin ? 'Sign in' : 'Create account';
   };
 
   const loadingLabel = () => {
+    if (showOtp) return 'Verifying...';
     if (mode === 'forgot_password') return 'Sending...';
     if (mode === 'reset_password')  return 'Resetting...';
     return isLogin ? 'Signing in…' : 'Creating account…';
@@ -278,8 +387,50 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
             </div>
           )}
 
+          {/* ── OTP Verification (Login / Register) ────────────────── */}
+          {showOtp && (
+            <>
+              <Field label="Verification Code" error={null}>
+                <div className="flex justify-between gap-2 my-4">
+                  {otp.map((data, index) => (
+                    <input
+                      key={index}
+                      type="text"
+                      maxLength={1}
+                      value={data}
+                      onChange={(e) => handleOtpChange(e.target, index)}
+                      onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                      onPaste={handleOtpPaste}
+                      className="w-12 h-12 text-center text-xl font-bold bg-[var(--surface-light)]/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#0077ff] focus:border-transparent transition-all"
+                    />
+                  ))}
+                </div>
+              </Field>
+
+              <div className="flex items-center justify-between text-sm">
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={timer > 0}
+                  className="font-medium transition-colors disabled:opacity-50"
+                  style={{ color: '#10b981' }}
+                >
+                  {timer > 0 ? `Resend Code in ${timer}s` : 'Resend Code'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowOtp(false); setError(''); }}
+                  className="transition-colors"
+                  style={{ color: 'rgba(148,175,210,0.5)' }}
+                >
+                  Back
+                </button>
+              </div>
+            </>
+          )}
+
           {/* ── Forgot Password: Email ─────────────────────────────── */}
-          {mode === 'forgot_password' && (
+          {!showOtp && mode === 'forgot_password' && (
             <Field label="Email" error={null}>
               <input
                 type="email"
@@ -293,8 +444,37 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
           )}
 
           {/* ── Reset Password ────────────────────────────────────── */}
-          {mode === 'reset_password' && (
+          {!showOtp && mode === 'reset_password' && (
             <>
+              <Field label="Verification Code" error={null}>
+                <div className="flex justify-between gap-2 my-4">
+                  {otp.map((data, index) => (
+                    <input
+                      key={index}
+                      type="text"
+                      maxLength={1}
+                      value={data}
+                      onChange={(e) => handleOtpChange(e.target, index)}
+                      onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                      onPaste={handleOtpPaste}
+                      className="w-12 h-12 text-center text-xl font-bold bg-[var(--surface-light)]/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#0077ff] focus:border-transparent transition-all"
+                    />
+                  ))}
+                </div>
+              </Field>
+
+              <div className="flex items-center justify-between text-sm mt-1 mb-4">
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={timer > 0}
+                  className="font-medium transition-colors disabled:opacity-50"
+                  style={{ color: '#10b981' }}
+                >
+                  {timer > 0 ? `Resend Code in ${timer}s` : 'Resend Code'}
+                </button>
+              </div>
+
               <Field label="New Password" error={null}>
                 <div className="relative">
                   <input
@@ -388,7 +568,7 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
           )}
 
           {/* ── Login / Register Fields ───────────────────────────── */}
-          {!isAuthFlow && (
+          {!showOtp && !isAuthFlow && (
             <>
               {!isLogin && (
                 <Field label="Full Name" error={touched.name ? fieldErrors.name : null}>

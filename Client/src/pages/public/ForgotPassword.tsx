@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../../services/api';
 import axios from 'axios';
@@ -14,6 +14,8 @@ export function ForgotPassword() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
+  const [timer, setTimer] = useState(30);
 
   const handleEmailSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -22,11 +24,13 @@ export function ForgotPassword() {
     try {
       await authService.forgotPassword(email);
       setStep('password');
+      setTimer(30);
+      setOtp(Array(6).fill(''));
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to send reset email');
+        setError(err.response?.data?.message || 'Failed to send reset code');
       } else {
-        setError('Failed to send reset email');
+        setError('Failed to send reset code');
       }
     } finally {
       setLoading(false);
@@ -36,6 +40,11 @@ export function ForgotPassword() {
   const handlePasswordSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    const code = otp.join('');
+    if (code.length !== 6) {
+      setError('Please enter a 6-digit verification code');
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -49,7 +58,7 @@ export function ForgotPassword() {
 
     setLoading(true);
     try {
-      await authService.resetPassword(email, password);
+      await authService.resetPassword(email, password, code);
       setSuccess('Password reset successfully! Redirecting to login...');
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
@@ -62,6 +71,61 @@ export function ForgotPassword() {
       setLoading(false);
     }
   };
+
+  const handleResendOtp = async () => {
+    if (timer > 0) return;
+    setError('');
+    try {
+      await authService.resendOtp(email, 'reset_password');
+      setTimer(30);
+      setOtp(Array(6).fill(''));
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Failed to resend code');
+    }
+  };
+
+  const handleOtpChange = (element: HTMLInputElement, index: number) => {
+    const val = element.value.replace(/[^0-9]/g, '');
+    if (!val) return;
+    const newOtp = [...otp];
+    newOtp[index] = val.slice(-1);
+    setOtp(newOtp);
+    if (element.nextSibling && index < 5) {
+      (element.nextSibling as HTMLInputElement).focus();
+    }
+  };
+
+  const handleOtpKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === 'Backspace') {
+      const newOtp = [...otp];
+      newOtp[index] = '';
+      setOtp(newOtp);
+      if (e.currentTarget.previousSibling && index > 0) {
+        (e.currentTarget.previousSibling as HTMLInputElement).focus();
+      }
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+    if (text.length === 6) {
+      const newOtp = text.split('');
+      setOtp(newOtp);
+      const target = e.currentTarget.parentElement?.children[5] as HTMLInputElement;
+      target?.focus();
+    }
+  };
+
+  // Timer effect
+  const activeTimer = step === 'password';
+  useState(() => {
+    let t: ReturnType<typeof setInterval>;
+    if (activeTimer && timer > 0) {
+      t = setInterval(() => setTimer((v) => v - 1), 1000);
+    }
+    return () => clearInterval(t);
+  });
 
   const validatePassword = (pwd: string) => {
     const checks = [
@@ -97,8 +161,8 @@ export function ForgotPassword() {
             {step === 'password' && 'Reset Password'}
           </h1>
           <p className="text-[var(--slate-light)]">
-            {step === 'email' && "Enter your email and we'll send you a reset link"}
-            {step === 'password' && 'Enter your new password'}
+            {step === 'email' && "Enter your email and we'll send you a verification code"}
+            {step === 'password' && 'Enter the verification code and your new password'}
           </p>
         </div>
 
@@ -141,13 +205,31 @@ export function ForgotPassword() {
                     <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                     Sending...
                   </>
-                ) : 'Send Reset Link'}
+                ) : 'Send Verification Code'}
               </button>
             </form>
           )}
 
           {step === 'password' && (
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-[var(--slate-light)] text-center">Verification Code</label>
+                <div className="flex justify-between gap-2 my-4">
+                  {otp.map((data, index) => (
+                    <input
+                      key={index}
+                      type="text"
+                      maxLength={1}
+                      value={data}
+                      onChange={(e) => handleOtpChange(e.target, index)}
+                      onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                      onPaste={handleOtpPaste}
+                      className="w-12 h-12 text-center text-xl font-bold bg-[var(--surface-light)]/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#0077ff] focus:border-transparent transition-all"
+                    />
+                  ))}
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-[var(--slate-light)]">New Password</label>
                 <div className="relative">
@@ -229,9 +311,27 @@ export function ForgotPassword() {
                 )}
               </div>
 
+              <div className="flex items-center justify-between text-sm">
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={timer > 0}
+                  className="text-[var(--indigo)] hover:text-[#00c8b4] font-medium transition-colors disabled:opacity-50"
+                >
+                  {timer > 0 ? `Resend Code in ${timer}s` : 'Resend Code'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setStep('email'); setError(''); }}
+                  className="text-[var(--slate-gray)] hover:text-white transition-colors"
+                >
+                  Back to email submit
+                </button>
+              </div>
+
               <button
                 type="submit"
-                disabled={loading || !passwordValid || password !== confirmPassword}
+                disabled={loading || !passwordValid || password !== confirmPassword || otp.some(v => !v)}
                 className="btn-cta w-full py-3.5 text-white rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? (

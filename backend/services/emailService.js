@@ -48,3 +48,52 @@ export async function sendAppointmentEmail({ to, appointment }) {
 
   return info;
 }
+
+export async function sendOtpEmail({ to, otp, purpose }) {
+  const purposeText = purpose === 'register'
+    ? 'verify your registration'
+    : purpose === 'login'
+      ? 'sign in'
+      : 'reset your password';
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #080d17; border-radius: 12px; border: 1px solid rgba(0,119,255,0.15); color: #ffffff;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <div style="display: inline-block; width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #0077ff, #00c8b4); line-height: 48px; color: white; font-size: 20px; font-weight: bold; text-align: center;">A</div>
+      </div>
+      <h2 style="color: #ffffff; text-align: center; margin-bottom: 8px; font-size: 20px;">Verification Code</h2>
+      <p style="color: #94a3b8; text-align: center; font-size: 14px; margin-bottom: 24px; line-height: 1.5;">
+        Please use the verification code below to ${purposeText}. This code will expire in 10 minutes.
+      </p>
+      <div style="background: rgba(0,119,255,0.08); border: 1px solid rgba(0,119,255,0.25); border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: center;">
+        <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #0077ff; font-family: monospace;">${otp}</span>
+      </div>
+      <p style="color: #64748b; text-align: center; font-size: 12px; line-height: 1.5;">
+        If you didn't request this code, you can safely ignore this email.
+      </p>
+    </div>
+  `;
+
+  try {
+    const sentFrom = new Sender(fromEmail, fromName);
+    const recipients = [new Recipient(to)];
+
+    const emailParams = new EmailParams()
+      .setFrom(sentFrom)
+      .setTo(recipients)
+      .setSubject(`Autoniv — Verification Code`)
+      .setHtml(html);
+
+    const info = await mailerSend.email.send(emailParams);
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('OTP email sent successfully:', info);
+    }
+    return info;
+  } catch (error) {
+    console.error('Failed to send OTP email via MailerSend:', error.message);
+    // Log code to console for local development fallback
+    console.log(`\n========================================\n[DEV ONLY] OTP verification code: ${otp} for email: ${to} (purpose: ${purpose})\n========================================\n`);
+  }
+}
+

@@ -34,6 +34,12 @@ import {
   tokenResponse,
   authSecurityEvent,
 } from '../services/tokenService.js';
+import {
+  setTokenCookies,
+  clearTokenCookies,
+  extractRefreshFromCookie,
+} from '../services/cookieService.js';
+import { sendOtpEmail } from '../services/emailService.js';
 
 const router = express.Router();
 
@@ -165,12 +171,37 @@ router.post('/register', registerLimiter, contentFilter('name', 'company'), asyn
     const phoneErr = phoneError(phoneNumber);
     if (phoneErr) return res.status(400).json({ message: phoneErr });
 
-    const existing = await User.findOne({ email }).lean();
+    const existing = await User.findOne({ email });
     if (existing) {
-      return res.status(409).json({ message: 'Email already registered' });
+      if (existing.isVerified) {
+        return res.status(409).json({ message: 'Email already registered' });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, BCRYPT_COST);
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+      existing.name = name;
+      existing.password = hashedPassword;
+      existing.phoneNumber = phoneNumber;
+      existing.company = company;
+      existing.otpCode = otp;
+      existing.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+      existing.otpPurpose = 'register';
+      await existing.save();
+
+      await sendOtpEmail({ to: email, otp, purpose: 'register' });
+
+      log.info('user_registration_updated_otp', { userId: String(existing._id), ip: getClientIp(req) });
+
+      return res.status(200).json({
+        requiresOtp: true,
+        email,
+        message: 'Verification code sent to your email. Please verify to complete registration.',
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, BCRYPT_COST);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const user = await User.create({
       email,
       password: hashedPassword,
@@ -181,17 +212,22 @@ router.post('/register', registerLimiter, contentFilter('name', 'company'), asyn
       plan: 'pilot',
       minutesLimit: 30,
       callsLimit: 30,
-      isVerified: true,
+      isVerified: false,
+      otpCode: otp,
+      otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+      otpPurpose: 'register',
       passwordChangedAt: new Date(),
     });
 
-    const { accessToken, refreshToken } = await issueTokensForUser({ user, req });
+    await sendOtpEmail({ to: email, otp, purpose: 'register' });
 
-    log.info('user_registered', { userId: String(user._id), ip: getClientIp(req) });
+    log.info('user_registered_pending_otp', { userId: String(user._id), ip: getClientIp(req) });
 
-    return res.status(201).json(
-      tokenResponse({ user, accessToken, refreshToken }),
-    );
+    return res.status(200).json({
+      requiresOtp: true,
+      email,
+      message: 'Verification code sent to your email. Please verify to complete registration.',
+    });
   } catch (error) {
     log.error('register_error', { error: error.message, stack: error.stack, email: req.body?.email });
     return res.status(500).json({ message: 'Registration failed', detail: IS_PROD ? undefined : error.message });
@@ -241,9 +277,9 @@ router.post('/register-admin', registerLimiter, contentFilter('name', 'company')
 
     log.info('admin_registered', { userId: String(user._id), ip: getClientIp(req) });
 
-    return res.status(201).json(
-      tokenResponse({ user, accessToken, refreshToken }),
-    );
+    const response = tokenResponse({ user, accessToken, refreshToken });
+    setTokenCookies(res, accessToken, refreshToken);
+    return res.status(201).json(response);
   } catch (error) {
     log.error('register_admin_error', { error: error.message });
     return res.status(500).json({ message: 'Admin registration failed' });
@@ -288,11 +324,29 @@ router.post('/login', authLimiter, loginLimiter, async (req, res) => {
       { $set: { loginAttempts: 0, lastLoginAt: new Date(), lastLoginIp: getClientIp(req) }, $unset: { lockUntil: '' } },
     );
 
-    const { accessToken, refreshToken } = await issueTokensForUser({ user, req });
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const purpose = user.isVerified ? 'login' : 'register';
 
-    log.info('login_success', { userId: String(user._id), role: user.role, ip: getClientIp(req) });
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          otpCode: otp,
+          otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+          otpPurpose: purpose,
+        },
+      }
+    );
 
-    return res.json(tokenResponse({ user, accessToken, refreshToken }));
+    await sendOtpEmail({ to: email, otp, purpose });
+
+    log.info('login_pending_otp', { userId: String(user._id), purpose, ip: getClientIp(req) });
+
+    return res.json({
+      requiresOtp: true,
+      email,
+      message: `Verification code sent to your email. Please verify to complete ${purpose === 'register' ? 'registration' : 'sign in'}.`,
+    });
   } catch (error) {
     log.error('login_error', { error: error.message, stack: error.stack, email: req.body?.email });
     return res.status(500).json({ message: 'Login failed', detail: IS_PROD ? undefined : error.message });
@@ -350,7 +404,9 @@ router.get('/dashboard-stats', authenticate, async (req, res) => {
 
 router.post('/refresh', authLimiter, async (req, res) => {
   try {
-    const refreshToken = typeof req.body?.refreshToken === 'string' ? req.body.refreshToken.trim() : '';
+    const refreshToken = typeof req.body?.refreshToken === 'string'
+      ? req.body.refreshToken.trim()
+      : extractRefreshFromCookie(req) || '';
     if (!refreshToken) {
       return res.status(400).json({ message: 'refreshToken is required' });
     }
@@ -415,6 +471,7 @@ router.post('/refresh', authLimiter, async (req, res) => {
       { $set: { revokedAt: new Date(), revokedReason: 'rotated', replacedByHash: newTokenHash } },
     );
 
+    setTokenCookies(res, newAccessToken, newRefreshToken);
     return res.json({
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
@@ -427,7 +484,9 @@ router.post('/refresh', authLimiter, async (req, res) => {
 
 router.post('/logout', authenticate, async (req, res) => {
   try {
-    const refreshToken = typeof req.body?.refreshToken === 'string' ? req.body.refreshToken.trim() : null;
+    const refreshToken = typeof req.body?.refreshToken === 'string'
+      ? req.body.refreshToken.trim()
+      : extractRefreshFromCookie(req) || null;
     if (refreshToken) {
       const tokenHash = hashRefreshToken(refreshToken);
       await RefreshToken.updateOne(
@@ -440,6 +499,7 @@ router.post('/logout', authenticate, async (req, res) => {
         { $set: { revokedAt: new Date(), revokedReason: 'logout' } },
       );
     }
+    clearTokenCookies(res);
     log.info('logout', { userId: req.user.userId, ip: getClientIp(req) });
     return res.json({ message: 'Logged out' });
   } catch (error) {
@@ -484,14 +544,22 @@ router.post('/forgot-password', authLimiter, async (req, res) => {
       return res.status(400).json({ message: 'Valid email is required' });
     }
 
-    const user = await User.findOne({ email }).lean();
+    const user = await User.findOne({ email });
     if (!user) {
-      return res.json({ message: 'If an account exists with that email, a reset link has been sent.' });
+      return res.json({ message: 'If an account exists with that email, a reset code has been sent.' });
     }
 
-    log.info('forgot_password_request', { email, ip: getClientIp(req) });
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.otpCode = otp;
+    user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    user.otpPurpose = 'reset_password';
+    await user.save();
 
-    return res.json({ message: 'If an account exists with that email, a reset link has been sent.' });
+    await sendOtpEmail({ to: email, otp, purpose: 'reset_password' });
+
+    log.info('forgot_password_request_otp', { email, ip: getClientIp(req) });
+
+    return res.json({ message: 'If an account exists with that email, a reset code has been sent.' });
   } catch (error) {
     log.error('forgot_password_error', { error: error.message, email: req.body?.email });
     return res.status(500).json({ message: 'Failed to process request' });
@@ -504,22 +572,30 @@ router.post('/reset-password', authLimiter, async (req, res) => {
   try {
     const email = normalizeEmail(req.body?.email);
     const newPassword = typeof req.body?.password === 'string' ? req.body.password : '';
+    const otp = typeof req.body?.otp === 'string' ? req.body.otp.trim() : '';
 
-    if (!isValidEmail(email) || !newPassword) {
-      return res.status(400).json({ message: 'Email and new password are required' });
+    if (!isValidEmail(email) || !newPassword || !otp) {
+      return res.status(400).json({ message: 'Email, new password, and verification code are required' });
     }
 
     const pwdErr = passwordError(newPassword);
     if (pwdErr) return res.status(400).json({ message: pwdErr });
 
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email }).select('+password +otpCode +otpExpiresAt +otpPurpose');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.otpCode || user.otpPurpose !== 'reset_password' || user.otpExpiresAt < new Date() || user.otpCode !== otp) {
+      return res.status(400).json({ message: 'Invalid or expired verification code' });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_COST);
     user.password = hashedPassword;
     user.passwordChangedAt = new Date();
+    user.otpCode = null;
+    user.otpExpiresAt = null;
+    user.otpPurpose = null;
     await user.save();
 
     await RefreshToken.updateMany(
@@ -527,7 +603,7 @@ router.post('/reset-password', authLimiter, async (req, res) => {
       { $set: { revokedAt: new Date(), revokedReason: 'password_reset' } },
     );
 
-    log.info('password_reset', { userId: String(user._id), ip: getClientIp(req) });
+    log.info('password_reset_otp_success', { userId: String(user._id), ip: getClientIp(req) });
 
     return res.json({ message: 'Password reset successfully. Please login with your new password.' });
   } catch (error) {
@@ -573,6 +649,100 @@ router.post('/change-password', authenticate, async (req, res) => {
   } catch (error) {
     log.error('change_password_error', { error: error.message, userId: req.user.userId });
     return res.status(500).json({ message: 'Failed to change password' });
+  }
+});
+
+// ─── Verify OTP (Login & Register) ──────────────────────────────────────────
+router.post('/verify-otp', authLimiter, async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body?.email);
+    const otp = typeof req.body?.otp === 'string' ? req.body.otp.trim() : '';
+    const purpose = typeof req.body?.purpose === 'string' ? req.body.purpose.trim() : '';
+
+    if (!isValidEmail(email) || !otp || !purpose) {
+      return res.status(400).json({ message: 'Email, verification code, and purpose are required' });
+    }
+
+    if (!['register', 'login'].includes(purpose)) {
+      return res.status(400).json({ message: 'Invalid verification purpose' });
+    }
+
+    const user = await User.findOne({ email }).select('+otpCode +otpExpiresAt +otpPurpose +isVerified +role');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.otpCode || user.otpPurpose !== purpose || user.otpExpiresAt < new Date() || user.otpCode !== otp) {
+      return res.status(400).json({ message: 'Invalid or expired verification code' });
+    }
+
+    const updateFields = {
+      otpCode: null,
+      otpExpiresAt: null,
+      otpPurpose: null,
+    };
+
+    if (purpose === 'register') {
+      updateFields.isVerified = true;
+    }
+
+    await User.updateOne({ _id: user._id }, { $set: updateFields });
+
+    const { accessToken, refreshToken } = await issueTokensForUser({ user, req });
+    setTokenCookies(res, accessToken, refreshToken);
+
+    log.info(`${purpose}_otp_success`, { userId: String(user._id), ip: getClientIp(req) });
+
+    return res.json(tokenResponse({ user, accessToken, refreshToken }));
+  } catch (error) {
+    log.error('verify_otp_error', { error: error.message, email: req.body?.email });
+    return res.status(500).json({ message: 'Verification failed' });
+  }
+});
+
+// ─── Resend OTP ─────────────────────────────────────────────────────────────
+router.post('/resend-otp', authLimiter, async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body?.email);
+    const purpose = typeof req.body?.purpose === 'string' ? req.body.purpose.trim() : '';
+
+    if (!isValidEmail(email) || !purpose) {
+      return res.status(400).json({ message: 'Email and purpose are required' });
+    }
+
+    if (!['register', 'login', 'reset_password'].includes(purpose)) {
+      return res.status(400).json({ message: 'Invalid verification purpose' });
+    }
+
+    const user = await User.findOne({ email }).select('+isVerified');
+    if (!user) {
+      return res.json({ message: 'If an account exists, a new code has been sent.' });
+    }
+
+    if (purpose === 'register' && user.isVerified) {
+      return res.status(400).json({ message: 'Account is already verified' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          otpCode: otp,
+          otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+          otpPurpose: purpose,
+        },
+      }
+    );
+
+    await sendOtpEmail({ to: email, otp, purpose });
+
+    log.info('resend_otp_success', { userId: String(user._id), purpose, ip: getClientIp(req) });
+
+    return res.json({ message: 'Verification code resent successfully' });
+  } catch (error) {
+    log.error('resend_otp_error', { error: error.message, email: req.body?.email });
+    return res.status(500).json({ message: 'Failed to resend code' });
   }
 });
 

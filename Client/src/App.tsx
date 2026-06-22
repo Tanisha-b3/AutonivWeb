@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from './hooks/useStore';
-import { logout, checkAuth, login as loginAction, register as registerAction } from './store/slices/authSlice';
+import { logout, checkAuth, login as loginAction, register as registerAction, verifyOtp as verifyOtpAction } from './store/slices/authSlice';
 import { useEffect, lazy, Suspense, type ReactNode } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Breadcrumbs } from './components/Breadcrumbs';
@@ -62,12 +62,18 @@ export function useAuth() {
     return result;
   };
 
+  const verifyOtp = async (email: string, otp: string, purpose: 'register' | 'login') => {
+    const result = await dispatch(verifyOtpAction({ email, otp, purpose })).unwrap();
+    return result;
+  };
+
   return {
     user,
     loading,
     isAdmin: user?.role === 'admin',
     login,
     register,
+    verifyOtp,
     logout: () => dispatch(logout()),
   };
 }

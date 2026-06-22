@@ -3,6 +3,7 @@ import 'dotenv/config';
 import express from 'express';
 import compression from 'compression';
 import mongoose from 'mongoose';
+import cookieParser from 'cookie-parser';
 
 import { connectDb } from './db/connection.js';
 import authRoutes from './routes/auth.js';
@@ -84,6 +85,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.urlencoded({ extended: false, limit: '32kb' }));
+app.use(cookieParser());
 app.use(compression());
 
 app.use(mongoSanitizer);

@@ -141,6 +141,28 @@ export const register = createAsyncThunk(
   },
 );
 
+export const verifyOtp = createAsyncThunk(
+  'auth/verifyOtp',
+  async (
+    { email, otp, purpose }: { email: string; otp: string; purpose: 'register' | 'login' },
+    { rejectWithValue },
+  ) => {
+    try {
+      const res = await authService.verifyOtp(email, otp, purpose);
+      const accessToken: string = res.data.accessToken ?? res.data.token;
+      const { refreshToken, user } = res.data;
+
+      setCookie('accessToken', accessToken, 1);
+      if (refreshToken) setCookie('refreshToken', refreshToken, 7);
+      sessionStorage.setItem('user', JSON.stringify(user));
+
+      return { token: accessToken, refreshToken: refreshToken ?? null, user };
+    } catch (err: any) {
+      return rejectWithValue(err?.response?.data?.message ?? 'Verification failed');
+    }
+  },
+);
+
 // ── Slice ──────────────────────────────────────────────────────────────────
 
 const authSlice = createSlice({
@@ -245,6 +267,24 @@ const authSlice = createSlice({
         },
       )
       .addCase(register.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // ── verifyOtp ────────────────────────────────────────────────────────
+      .addCase(verifyOtp.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyOtp.fulfilled, (state, action) => {
+        state.loading = false;
+        state.token = action.payload.token;
+        state.refreshToken = action.payload.refreshToken;
+        state.user = action.payload.user;
+        state.initialized = true;
+        state.error = null;
+      })
+      .addCase(verifyOtp.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
