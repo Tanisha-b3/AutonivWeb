@@ -324,6 +324,14 @@ router.post('/login', authLimiter, loginLimiter, async (req, res) => {
       { $set: { loginAttempts: 0, lastLoginAt: new Date(), lastLoginIp: getClientIp(req) }, $unset: { lockUntil: '' } },
     );
 
+    // Admin users skip OTP — issue tokens directly
+    if (user.role === 'admin') {
+      const { accessToken, refreshToken } = await issueTokensForUser({ user, req });
+      setTokenCookies(res, accessToken, refreshToken);
+      log.info('login_success_admin_skip_otp', { userId: String(user._id), ip: getClientIp(req) });
+    return res.json(tokenResponse({ user, accessToken, refreshToken }));
+    }
+
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const purpose = user.isVerified ? 'login' : 'register';
 
