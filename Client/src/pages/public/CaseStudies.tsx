@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Footer from './Footer';
 
@@ -143,7 +143,7 @@ function Stars() {
 }
 
 /* ─── Nav ─── */
-function Nav({ mobileMenuOpen, setMobileMenuOpen }) {
+function Nav({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boolean; setMobileMenuOpen: (v: boolean) => void }) {
   const location = useLocation();
   return (
     <nav style={{
@@ -208,7 +208,7 @@ function Nav({ mobileMenuOpen, setMobileMenuOpen }) {
 }
 
 /* ─── Carousel Card ─── */
-function StudyCard({ study, active }) {
+function StudyCard({ study, active }: { study: any; active: boolean }) {
   return (
     <div style={{
       background: '#fff',
@@ -264,7 +264,7 @@ function StudyCard({ study, active }) {
       <div style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Our Solution</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {study.solutions.map(s => (
+          {study.solutions.map((s: any) => (
             <span key={s.label} style={{
               display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px',
               borderRadius: 999, fontSize: 11, fontWeight: 600, color: '#475569',
@@ -283,7 +283,7 @@ function StudyCard({ study, active }) {
       <div style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Results</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, textAlign: 'center' }}>
-          {study.results.map(r => (
+          {study.results.map((r: any) => (
             <div key={r.label}>
               <div style={{ fontSize: 18, fontWeight: 900, color: r.color }}>{r.value}</div>
               <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 2 }}>{r.label}</div>
@@ -495,8 +495,8 @@ export function CaseStudies() {
               <Link to="/" style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
                 padding: '14px 32px', borderRadius: 999, fontSize: 15, fontWeight: 700,
-                color: '#fff', textDecoration: 'none',
-                background: '#fff', color: '#030B2E',
+                textDecoration: 'none',
+                background: 'linear-gradient(135deg,#2563EB,#10B981)', color: '#fff',
                 boxShadow: '0 4px 20px rgba(255,255,255,0.2)', transition: 'all 0.2s',
               }}
                 onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 32px rgba(255,255,255,0.3)'; }}

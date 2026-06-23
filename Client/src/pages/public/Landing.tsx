@@ -15,7 +15,7 @@ const AuthDialog = lazy(() =>
 // const LandingCallWidget = lazy(() => import('../../components/LandingCallWidget'));
 import Footer from "./Footer";
 
-const LOGO_SRC = "/autoniv.png";
+
 
 /* ─── Data ───────────────────────────────────────────────── */
 const features = [
@@ -1172,11 +1172,6 @@ export function Landing() {
     setAuthDialog(mode);
   };
   const closeAuth = () => setAuthDialog(null);
-  const scrollTo = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
-    e.preventDefault();
-    document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
-  };
-
   useEffect(() => {
     const t = setInterval(
       () => setActiveUseCase((i) => (i + 1) % useCases.length),
