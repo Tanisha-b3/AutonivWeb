@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Modal } from '../../components/Modal';
@@ -129,11 +129,14 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
 
 
   // Load and initialize Google Identity Services script when dialog is open
+  const googleInitRef = useRef(false);
+
   useEffect(() => {
     if (!isOpen || showOtp || mode === 'forgot_password' || mode === 'reset_password') return;
 
     const initializeGoogle = () => {
-      if ((window as any).google) {
+      if ((window as any).google && !googleInitRef.current) {
+        googleInitRef.current = true;
         (window as any).google.accounts.id.initialize({
           client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '235489562479-placeholder.apps.googleusercontent.com',
           callback: async (response: any) => {
