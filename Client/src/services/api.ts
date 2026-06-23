@@ -152,6 +152,9 @@ export const authService = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
 
+  googleLogin: (credential: string) =>
+    api.post('/auth/google', { credential }),
+
   register: (data: {
     name: string;
     email: string;

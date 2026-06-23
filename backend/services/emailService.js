@@ -1,8 +1,16 @@
-import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
+import nodemailer from 'nodemailer';
 
-const mailerSend = new MailerSend({ apiKey: process.env.MAILERSEND_API_KEY });
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT || '587', 10),
+  secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
+  auth: {
+    user: process.env.SMTP_USER || 'tanishaborana05@gmail.com',
+    pass: process.env.SMTP_PASS || 'yzofrtwdzwdwbxpt',
+  },
+});
 
-const fromEmail = process.env.MAILERSEND_FROM_EMAIL || 'noreply@resend.dev';
+const fromEmail = process.env.SMTP_USER || 'tanishaborana05@gmail.com';
 const fromName = process.env.MAILERSEND_FROM_NAME || 'Autoniv';
 
 export async function sendAppointmentEmail({ to, appointment }) {
@@ -31,16 +39,14 @@ export async function sendAppointmentEmail({ to, appointment }) {
     </div>
   `;
 
-  const sentFrom = new Sender(fromEmail, fromName);
-  const recipients = [new Recipient(to)];
+  const mailOptions = {
+    from: `"${fromName}" <${fromEmail}>`,
+    to,
+    subject: 'Autoniv — Appointment Confirmed',
+    html,
+  };
 
-  const emailParams = new EmailParams()
-    .setFrom(sentFrom)
-    .setTo(recipients)
-    .setSubject('Autoniv — Appointment Confirmed')
-    .setHtml(html);
-
-  const info = await mailerSend.email.send(emailParams);
+  const info = await transporter.sendMail(mailOptions);
 
   if (process.env.NODE_ENV !== 'production') {
     console.log('Appointment email sent:', info);
@@ -75,25 +81,22 @@ export async function sendOtpEmail({ to, otp, purpose }) {
   `;
 
   try {
-    const sentFrom = new Sender(fromEmail, fromName);
-    const recipients = [new Recipient(to)];
+    const mailOptions = {
+      from: `"${fromName}" <${fromEmail}>`,
+      to,
+      subject: `Autoniv — Verification Code`,
+      html,
+    };
 
-    const emailParams = new EmailParams()
-      .setFrom(sentFrom)
-      .setTo(recipients)
-      .setSubject(`Autoniv — Verification Code`)
-      .setHtml(html);
-
-    const info = await mailerSend.email.send(emailParams);
+    const info = await transporter.sendMail(mailOptions);
 
     if (process.env.NODE_ENV !== 'production') {
       console.log('OTP email sent successfully:', info);
     }
     return info;
   } catch (error) {
-    console.error('Failed to send OTP email via MailerSend:', error?.body?.message || error?.message || error);
+    console.error('Failed to send OTP email via SMTP:', error?.message || error);
     // Log code to console for local development fallback
     console.log(`\n========================================\n[DEV ONLY] OTP verification code: ${otp} for email: ${to} (purpose: ${purpose})\n========================================\n`);
   }
 }
-

@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from './hooks/useStore';
-import { logout, checkAuth, login as loginAction, register as registerAction, verifyOtp as verifyOtpAction } from './store/slices/authSlice';
+import { logout, checkAuth, login as loginAction, register as registerAction, verifyOtp as verifyOtpAction, googleLogin as googleLoginAction } from './store/slices/authSlice';
 import { useEffect, lazy, Suspense, type ReactNode } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Breadcrumbs } from './components/Breadcrumbs';
@@ -17,6 +17,10 @@ const AboutUs = lazy(() => import('./pages/public/AboutUs').then(m => ({ default
 const Careers = lazy(() => import('./pages/public/Careers').then(m => ({ default: m.Careers })));
 const Blog = lazy(() => import('./pages/public/Blog').then(m => ({ default: m.Blog })));
 const Press = lazy(() => import('./pages/public/Press').then(m => ({ default: m.Press })));
+const Agents = lazy(() => import('./pages/public/Agents').then(m => ({ default: m.Agents })));
+const CaseStudies = lazy(() => import('./pages/public/CaseStudies').then(m => ({ default: m.CaseStudies })));
+const Pricing = lazy(() => import('./pages/public/Pricing').then(m => ({ default: m.Pricing })));
+const News = lazy(() => import('./pages/public/News').then(m => ({ default: m.News })));
 const MyAgents = lazy(() => import('./pages/user/MyAgents').then(m => ({ default: m.MyAgents })));
 const CreateAgent = lazy(() => import('./pages/user/CreateAgent').then(m => ({ default: m.CreateAgent })));
 const MyCalls = lazy(() => import('./pages/user/MyCalls').then(m => ({ default: m.MyCalls })));
@@ -67,6 +71,11 @@ export function useAuth() {
     return result;
   };
 
+  const googleLogin = async (credential: string) => {
+    const result = await dispatch(googleLoginAction(credential)).unwrap();
+    return result;
+  };
+
   return {
     user,
     loading,
@@ -74,9 +83,11 @@ export function useAuth() {
     login,
     register,
     verifyOtp,
+    googleLogin,
     logout: () => dispatch(logout()),
   };
 }
+
 
 function ProtectedRoute({ children, adminOnly = false, hideSidebar = false }: { children: ReactNode; adminOnly?: boolean; hideSidebar?: boolean }) {
   const { user, isAdmin } = useAuth();
@@ -144,6 +155,10 @@ function AppRoutes() {
         <Route path="/careers" element={<Careers />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/press" element={<Press />} />
+        <Route path="/agents" element={<Agents />} />
+        <Route path="/case-studies" element={<CaseStudies />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/news" element={<News />} />
 
         <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
         <Route path="/dashboard/agents" element={<ProtectedRoute><MyAgents /></ProtectedRoute>} />

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { contactService } from "../../services/api";
+import { PublicNavbar } from "../../components/PublicNavbar";
 import {
   MicrophoneIcon,
   Squares2X2Icon,
@@ -1068,10 +1069,87 @@ function ContactForm() {
   );
 }
 
+/* ─── USP Slider (auto-rotate every 3s) ───────────────────── */
+function USPSlider() {
+  const [current, setCurrent] = useState(0);
+  const usps = [
+    { icon: '🎙️', text: 'AI Voice Agents – Answer, Qualify & Convert Leads 24/7' },
+    { icon: '🌍', text: 'Multi-Language Support – AI That Speaks Your Customers\' Language' },
+    { icon: '⚡', text: 'Quick Setup – Live in Minutes, No Code Needed' },
+  ];
+
+  useEffect(() => {
+    const t = setInterval(() => setCurrent((i) => (i + 1) % usps.length), 3000);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div
+      className="fixed top-0 inset-x-0 z-[60] overflow-hidden"
+      style={{
+        background: 'linear-gradient(90deg,#030B2E 0%,#0a1628 50%,#030B2E 100%)',
+        borderBottom: '1px solid rgba(16,185,129,0.15)',
+        height: '36px',
+      }}
+    >
+      <div className="relative flex items-center justify-center h-full px-4 sm:px-6">
+        {usps.map((usp, i) => (
+          <span
+            key={i}
+            className="absolute inline-flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-sm font-medium transition-all duration-500 text-center whitespace-nowrap overflow-hidden text-ellipsis max-w-[90vw] sm:max-w-full"
+            style={{
+              color: 'rgba(255,255,255,0.85)',
+              opacity: i === current ? 1 : 0,
+              transform: i === current ? 'translateY(0)' : 'translateY(12px)',
+            }}
+          >
+            <span className="text-xs sm:text-sm flex-shrink-0">{usp.icon}</span>
+            <span className="truncate">{usp.text}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── FAQ Accordion Item ───────────────────────────────── */
+function FAQItem({ question, answer }: { question: string; answer: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      className="rounded-xl overflow-hidden transition-all duration-300"
+      style={{
+        background: '#ffffff',
+        border: open ? '1px solid rgba(37,99,235,0.2)' : '1px solid rgba(37,99,235,0.08)',
+        boxShadow: open ? '0 8px 30px rgba(37,99,235,0.06)' : '0 2px 10px rgba(0,0,0,0.02)',
+      }}
+    >
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-5 py-4 text-left"
+        style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+      >
+        <span className="text-sm sm:text-base font-semibold pr-4" style={{ color: '#0a0a0a' }}>{question}</span>
+        <svg
+          className="w-5 h-5 shrink-0 transition-transform duration-300"
+          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', color: '#2563EB' }}
+          fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      <div
+        className="overflow-hidden transition-all duration-300"
+        style={{ maxHeight: open ? '200px' : '0', opacity: open ? 1 : 0 }}
+      >
+        <p className="px-5 pb-4 text-sm leading-relaxed" style={{ color: '#475569' }}>{answer}</p>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Component ─────────────────────────────────────── */
 export function Landing() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authDialog, setAuthDialog] = useState<
     "login" | "register" | "forgot_password" | "reset_password" | null
   >(null);
@@ -1088,7 +1166,6 @@ export function Landing() {
   const [demoDone, setDemoDone] = useState(false);
   const demoTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const navRef = useRef<HTMLElement>(null);
 
   const openAuth = (mode: typeof authMode) => {
     setAuthMode(mode);
@@ -1100,20 +1177,6 @@ export function Landing() {
     document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(() => {
-    const f = () => setScrolled(window.scrollY > 24);
-    window.addEventListener("scroll", f, { passive: true });
-    return () => window.removeEventListener("scroll", f);
-  }, []);
-  useEffect(() => {
-    if (!mobileMenuOpen) return;
-    const c = (e: MouseEvent) => {
-      if (navRef.current && !navRef.current.contains(e.target as Node))
-        setMobileMenuOpen(false);
-    };
-    document.addEventListener("mousedown", c);
-    return () => document.removeEventListener("mousedown", c);
-  }, [mobileMenuOpen]);
   useEffect(() => {
     const t = setInterval(
       () => setActiveUseCase((i) => (i + 1) % useCases.length),
@@ -1131,6 +1194,8 @@ export function Landing() {
     },
     [],
   );
+
+  const [pricingYearly, setPricingYearly] = useState(false);
 
   // Auto-play demo when section is visible
   const demoSectionRef = useRef<HTMLDivElement>(null);
@@ -1470,162 +1535,12 @@ export function Landing() {
           .hero-cta-row .hero-btn-row > button svg.w-4{width:12px !important;height:12px !important;flex-shrink:0 !important;}
       `}</style>
 
-      {/* ══════════════════════════════════════════════
-          NAV
-      ══════════════════════════════════════════════ */}
-      <nav
-        ref={navRef}
-        className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 nav-glass${scrolled ? " scrolled" : ""}`}
-      >
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 h-[68px] flex items-center justify-between">
-          <Link to="/">
-            <img src={LOGO_SRC} alt="Autoniv" className="logo-img" />
-          </Link>
-          <div className="hidden sm:flex items-center gap-7">
-            {["#features", "#how-it-works", "#addons", "#contact"].map(
-              (href, i) => (
-                <a
-                  key={href}
-                  href={href}
-                  onClick={(e) => scrollTo(e, href)}
-                  className="text-sm font-medium transition-colors"
-                  style={{ color: "#475569" }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.color = "#0a0a0a")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.color = "#475569")
-                  }
-                >
-                  {["Features", "How It Works", "Add-Ons", "Contact"][i]}
-                </a>
-              ),
-            )}
-          </div>
-          <div className="hidden sm:flex items-center gap-3">
-            <button
-              onClick={() => openAuth("login")}
-              className="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-              style={{ color: "#475569" }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "#0a0a0a";
-                e.currentTarget.style.background = "rgba(37,99,235,.07)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "#475569";
-                e.currentTarget.style.background = "transparent";
-              }}
-            >
-              Sign In
-            </button>
-            <MagBtn
-              onClick={() => openAuth("register")}
-              className="btn-responsive font-bold text-white"
-              style={{
-                background: "var(--gg)",
-                boxShadow: "0 4px 14px rgba(16,185,129,0.25)",
-                borderRadius: 9999,
-                padding: "10px 18px",
-              }}
-            >
-              Get Started Free
-            </MagBtn>
-          </div>
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="sm:hidden p-2"
-            style={{
-              color: "#475569",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              {mobileMenuOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              )}
-            </svg>
-          </button>
-        </div>
-        {mobileMenuOpen && (
-          <div
-            className="sm:hidden px-5 py-4 space-y-1"
-            style={{
-              background: "rgba(255,255,255,.98)",
-              backdropFilter: "blur(20px)",
-              borderTop: "1px solid rgba(37,99,235,.10)",
-            }}
-          >
-            {["#features", "#how-it-works", "#addons", "#contact"].map(
-              (href, i) => (
-                <a
-                  key={href}
-                  href={href}
-                  onClick={(e) => {
-                    scrollTo(e, href);
-                    setMobileMenuOpen(false);
-                  }}
-                  className="block px-4 py-3 text-sm font-medium rounded-xl"
-                  style={{ color: "#475569" }}
-                >
-                  {["Features", "How It Works", "Add-Ons", "Contact"][i]}
-                </a>
-              ),
-            )}
-            <div className="pt-2 space-y-2">
-              <button
-                onClick={() => {
-                  openAuth("login");
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full text-left px-4 py-3 text-sm font-medium rounded-xl"
-                style={{
-                  color: "#475569",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                }}
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => {
-                  openAuth("register");
-                  setMobileMenuOpen(false);
-                }}
-                className="btn-responsive block w-full text-center font-bold text-white"
-                style={{
-                  background: "var(--gg)",
-                  boxShadow: "0 4px 14px rgba(16,185,129,0.25)",
-                  borderRadius: 12,
-                }}
-              >
-                Get Started Free
-              </button>
-            </div>
-          </div>
-        )}
-      </nav>
+      {/* ── USP Slider Bar ─────────────────────────── */}
+      <USPSlider />
 
-      <div className="page-bg" style={{ paddingTop: 84, paddingBottom: 8 }}>
+      <PublicNavbar />
+
+      <div className="page-bg" style={{ paddingTop: 120, paddingBottom: 8 }}>
         <div className="box-wrap">
           <section className="section-box tint">
             <div
@@ -3054,701 +2969,302 @@ export function Landing() {
             </div>
           </section>
 
-          {/* ══════════════════════════════════════════════
-              USE CASES + INTEGRATIONS — white box
+           {/* ══════════════════════════════════════════════
+              INDUSTRY + INTEGRATIONS — merged white box
           ══════════════════════════════════════════════ */}
-          <section className="section-box white">
-            <div className="section-pad">
-              <Reveal className="text-center mb-12 sm:mb-16 space-y-4">
-                <span
-                  className="tag px-3 sm:px-4 py-1 sm:py-1.5 rounded-full inline-block text-xs sm:text-sm"
-                  style={{ color: "#ffffff", background: "var(--gg)" }}
-                >
-                  Industry Solutions
-                </span>
-                <h2
-                  className="font-extrabold tracking-tight mt-3 sm:mt-4"
-                  style={{ fontSize: "clamp(24px,6vw,48px)", color: "#0a0a0a" }}
-                >
-                  Built for{" "}
-                  <span className="gradient-text">Every Industry</span>
-                </h2>
-              </Reveal>
+         {/* ══════════════════════════════════════════════
+    INDUSTRY + INTEGRATIONS — merged white box
+══════════════════════════════════════════════ */}
+<section className="section-box white">
+  <div className="section-pad">
+    <Reveal className="text-center mb-12 sm:mb-16 space-y-4">
+      <span className="tag px-3 sm:px-4 py-1 sm:py-1.5 rounded-full inline-block text-xs sm:text-sm" style={{ color: "#ffffff", background: "var(--gg)" }}>
+        Industry Solutions
+      </span>
+      <h2 className="font-extrabold tracking-tight mt-3 sm:mt-4" style={{ fontSize: "clamp(24px,6vw,48px)", color: "#0a0a0a" }}>
+        Built for <span className="gradient-text">Every Industry</span>
+      </h2>
+      <p className="text-sm sm:text-base max-w-2xl mx-auto" style={{ color: "#475569" }}>
+        Plug into the tools your team already uses — connects with your existing CRM, telephony, and automation tools instantly.
+      </p>
+    </Reveal>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 items-start">
-                {/* Use case tabs */}
-                <div>
-                  {/* Mobile swipe hint */}
-                  <div className="flex items-center justify-between mb-2 sm:hidden">
-                    <span className="text-[10px] text-[var(--muted)]/70 font-medium">
-                      Swipe to see more →
-                    </span>
-                  </div>
-
-                  <div
-                    className="use-case-tabs"
-                    style={{
-                      borderBottom: "1px solid rgba(34,197,94,0.10)",
-                      display: "flex",
-                      gap: 4,
-                      marginBottom: 16,
-                      overflowX: "auto",
-                      WebkitOverflowScrolling: "touch",
-                      scrollbarWidth: "none",
-                      paddingBottom: 2,
-                    }}
-                  >
-                    <style>{`
-            .use-case-tabs::-webkit-scrollbar { display: none; }
-          `}</style>
-                    {useCases.map((uc, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setActiveUseCase(i)}
-                        className={`use-case-tab px-3 sm:px-4 py-2 sm:py-2.5 text-[11px] sm:text-sm font-medium rounded-t-lg whitespace-nowrap flex-shrink-0 ${
-                          activeUseCase === i ? " active" : ""
-                        }`}
-                        style={{
-                          color: activeUseCase === i ? "#0a0a0a" : "#94a3b8",
-                          background:
-                            activeUseCase === i
-                              ? "linear-gradient(135deg, rgba(37,99,235,0.08), rgba(16,185,129,0.06))"
-                              : "transparent",
-                          border: "none",
-                          cursor: "pointer",
-                          transition: "all 0.2s",
-                          position: "relative",
-                        }}
-                      >
-                        <span className="mr-1 sm:mr-1.5">{uc.icon}</span>{" "}
-                        {uc.title}
-                        {activeUseCase === i && (
-                          <span
-                            style={{
-                              position: "absolute",
-                              bottom: -1,
-                              left: 0,
-                              right: 0,
-                              height: 2,
-                              background:
-                                "linear-gradient(90deg,#2563EB,#10B981)",
-                              borderRadius: "99px 99px 0 0",
-                            }}
-                          />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div
-                    key={activeUseCase}
-                    className="use-case-card glass-card rounded-2xl p-5 sm:p-8 animate-fade-up"
-                    style={{
-                      background: "rgba(255,255,255,0.7)",
-                      backdropFilter: "blur(16px)",
-                      border: "1px solid rgba(16,185,129,0.08)",
-                    }}
-                  >
-                    <div
-                      className="icon"
-                      style={{ fontSize: 40, marginBottom: 12 }}
-                    >
-                      {useCases[activeUseCase].icon}
-                    </div>
-                    <h3
-                      style={{
-                        fontSize: "clamp(18px,4vw,22px)",
-                        fontWeight: 700,
-                        color: "#0a0a0a",
-                        marginBottom: 8,
-                      }}
-                    >
-                      {useCases[activeUseCase].title}
-                    </h3>
-                    <p
-                      style={{
-                        color: "#475569",
-                        lineHeight: 1.65,
-                        marginBottom: 14,
-                        fontSize: "clamp(13px,2vw,15px)",
-                      }}
-                    >
-                      {useCases[activeUseCase].desc}
-                    </p>
-                    <div
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "6px 14px",
-                        borderRadius: 99,
-                        background:
-                          "linear-gradient(135deg, rgba(37,99,235,0.08), rgba(16,185,129,0.08))",
-                        border: "1px solid rgba(16,185,129,0.22)",
-                      }}
-                    >
-                      <svg
-                        className="w-3.5 h-3.5 sm:w-4 sm:h-4"
-                        style={{ color: "#10B981" }}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                        />
-                      </svg>
-                      <span
-                        style={{
-                          fontSize: "clamp(12px,2vw,14px)",
-                          fontWeight: 600,
-                          color: "#10B981",
-                        }}
-                      >
-                        {useCases[activeUseCase].stat}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        height: 2,
-                        borderRadius: 99,
-                        background: "rgba(34,197,94,0.10)",
-                        marginTop: 16,
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div
-                        key={`pb-${activeUseCase}`}
-                        className="progress-bar h-full rounded-full"
-                        style={{
-                          background: "linear-gradient(90deg,#2563EB,#10B981)",
-                          width: "100%",
-                          animation: "progressFill 0.6s ease-out forwards",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Integrations grid */}
-                <Reveal from="right">
-                  <div>
-                    <h3
-                      style={{
-                        fontSize: "clamp(16px,3vw,18px)",
-                        fontWeight: 700,
-                        color: "#0a0a0a",
-                        marginBottom: 4,
-                      }}
-                    >
-                      Plug into the tools your team already uses
-                    </h3>
-                    <p
-                      style={{
-                        fontSize: "clamp(13px,2vw,14px)",
-                        color: "#475569",
-                        marginBottom: 16,
-                        lineHeight: 1.6,
-                      }}
-                    >
-                      Connects with your existing CRM, telephony, and automation
-                      tools instantly — no developer needed.
-                    </p>
-
-                    <div className="integrations-grid grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3">
-                      {[
-                        ...integrationsRow1.slice(0, 4),
-                        ...integrationsRow2.slice(0, 4),
-                      ].map((intg, i) => (
-                        <div
-                          key={i}
-                          className="glass-card rounded-xl p-3 sm:p-4 flex flex-col items-center gap-1.5 sm:gap-2 group hover:scale-105 transition-all duration-300 cursor-default"
-                          style={{
-                            background: "rgba(255,255,255,0.7)",
-                            backdropFilter: "blur(16px)",
-                            border: "1px solid rgba(16,185,129,0.08)",
-                          }}
-                        >
-                          <span style={{ fontSize: "clamp(18px,3vw,22px)" }}>
-                            {intg.icon}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: "clamp(9px,1.5vw,11px)",
-                              color: "#10B981",
-                              fontFamily: "'JetBrains Mono',monospace",
-                              letterSpacing: "0.04em",
-                              textAlign: "center",
-                              lineHeight: 1.2,
-                            }}
-                          >
-                            {intg.name}
-                          </span>
-                        </div>
-                      ))}
-                      <div
-                        className="glass-card rounded-xl p-3 sm:p-4 flex flex-col items-center gap-1.5 sm:gap-2 cursor-default col-span-full sm:col-span-1"
-                        style={{
-                          background: "rgba(255,255,255,0.7)",
-                          backdropFilter: "blur(16px)",
-                          border: "1px dashed rgba(37,99,235,0.25)",
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: "clamp(11px,2vw,13px)",
-                            color: "#10B981",
-                            fontFamily: "'JetBrains Mono',monospace",
-                            letterSpacing: "0.06em",
-                            textAlign: "center",
-                          }}
-                        >
-                          +40 more →
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Reveal>
-              </div>
-            </div>
-
-            <style>{`
-    @keyframes progressFill {
-      from { width: 0%; }
-      to { width: 100%; }
-    }
-  `}</style>
-          </section>
-
-          {/* ══════════════════════════════════════════════
-              INTEGRATIONS MARQUEE — black box
-          ══════════════════════════════════════════════ */}
-          <section
-            id="integrations"
+    {/* Industry Cards Grid */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+      {useCases.map((uc, i) => (
+        <Reveal key={i} delay={i * 0.08}>
+          <div
+            onClick={() => setActiveUseCase(i)}
+            className="relative rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300"
             style={{
-              padding: "96px 20px",
-              background: "#090d16",
-              position: "relative",
-              overflow: "hidden",
+              background: activeUseCase === i
+                ? "linear-gradient(135deg, rgba(37,99,235,0.07), rgba(16,185,129,0.07))"
+                : "#ffffff",
+              border: activeUseCase === i
+                ? "2px solid rgba(16,185,129,0.35)"
+                : "1px solid rgba(37,99,235,0.10)",
+              boxShadow: activeUseCase === i
+                ? "0 16px 48px rgba(16,185,129,0.10)"
+                : "0 4px 16px rgba(0,0,0,0.03)",
+              transform: activeUseCase === i ? "translateY(-4px)" : "translateY(0)",
             }}
           >
-            {/* Enhanced background with multiple layers */}
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background:
-                  "radial-gradient(ellipse at 30% 20%, rgba(16,185,129,0.06), transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(5,150,105,0.04), transparent 50%)",
-                pointerEvents: "none",
-              }}
-            />
-
-            {/* Floating glow orbs */}
-            <div
-              style={{
-                position: "absolute",
-                top: "10%",
-                right: "5%",
-                width: "300px",
-                height: "300px",
-                background:
-                  "radial-gradient(circle, rgba(37,99,235,0.06), rgba(16,185,129,0.04), transparent 70%)",
-                borderRadius: "50%",
-                filter: "blur(60px)",
-                animation: "auroraPulse 20s ease-in-out infinite",
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                bottom: "20%",
-                left: "5%",
-                width: "250px",
-                height: "250px",
-                background:
-                  "radial-gradient(circle, rgba(16,185,129,0.06), rgba(37,99,235,0.04), transparent 70%)",
-                borderRadius: "50%",
-                filter: "blur(60px)",
-                animation: "auroraPulse 25s ease-in-out infinite reverse",
-              }}
-            />
-
-            <div
-              className="max-w-6xl mx-auto"
-              style={{ position: "relative", zIndex: 1 }}
-            >
-              {/* Header */}
-              <Reveal className="text-center mb-12">
-                <div
-                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, rgba(37,99,235,0.10), rgba(16,185,129,0.08))",
-                    border: "1px solid rgba(16,185,129,0.20)",
-                  }}
-                >
-                  <span
-                    className="w-1.5 h-1.5 rounded-full animate-pulse"
-                    style={{ background: "var(--gg)" }}
-                  />
-                  <span
-                    className="text-xs font-medium tracking-wider uppercase"
-                    style={{ color: "#34D399" }}
-                  >
-                    Integrations
-                  </span>
+            {activeUseCase === i && (
+              <div style={{
+                position: "absolute", top: 0, left: 0, right: 0, height: 3,
+                background: "linear-gradient(90deg,#2563EB,#10B981)",
+              }} />
+            )}
+            <div style={{ padding: "28px 24px 24px" }}>
+              {/* Icon + badge row */}
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
+                <div style={{
+                  width: 52, height: 52, borderRadius: 14,
+                  background: activeUseCase === i ? "linear-gradient(135deg, rgba(37,99,235,0.12), rgba(16,185,129,0.12))" : "rgba(37,99,235,0.06)",
+                  border: activeUseCase === i ? "1px solid rgba(16,185,129,0.25)" : "1px solid rgba(37,99,235,0.10)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 24, transition: "all 0.3s",
+                }}>
+                  {uc.icon}
                 </div>
-                <h2
-                  className="font-extrabold tracking-tight"
-                  style={{
-                    fontSize: "clamp(32px,4vw,52px)",
-                    color: "#ffffff",
-                    lineHeight: 1.1,
-                  }}
-                >
-                  Connect Your Favorite
-                  <span
-                    className="block"
-                    style={{
-                      background: "var(--gg)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }}
-                  >
-                    Tools & Platforms
-                  </span>
-                </h2>
-                <p
-                  className="mt-3"
-                  style={{
-                    color: "#94a3b8",
-                    fontSize: 15,
-                    maxWidth: 500,
-                    margin: "0 auto",
-                  }}
-                >
-                  Seamlessly integrate with 40+ apps or build custom workflows
-                  with our flexible API.
-                </p>
-              </Reveal>
-
-              {/* Main Integration Grid */}
-              <Reveal>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4 mb-8">
-                  {[...integrationsRow1, ...integrationsRow2]
-                    .slice(0, 12)
-                    .map((item, i) => (
-                      <div
-                        key={i}
-                        className="group relative rounded-2xl p-4 text-center transition-all duration-300 cursor-default"
-                        style={{
-                          background: "rgba(255,255,255,0.03)",
-                          border: "1px solid rgba(255,255,255,0.06)",
-                          transition: "all 0.3s cubic-bezier(.16,1,.3,1)",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background =
-                            "linear-gradient(135deg, rgba(37,99,235,0.06), rgba(16,185,129,0.06))";
-                          e.currentTarget.style.borderColor =
-                            "rgba(16,185,129,0.2)";
-                          e.currentTarget.style.transform = "translateY(-4px)";
-                          e.currentTarget.style.boxShadow =
-                            "0 12px 40px rgba(16,185,129,0.08)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background =
-                            "rgba(255,255,255,0.03)";
-                          e.currentTarget.style.borderColor =
-                            "rgba(255,255,255,0.06)";
-                          e.currentTarget.style.transform = "translateY(0)";
-                          e.currentTarget.style.boxShadow = "none";
-                        }}
-                      >
-                        <div className="text-3xl mb-2 group-hover:scale-110 transition-transform duration-300">
-                          {item.icon}
-                        </div>
-                        <div
-                          className="text-xs font-medium truncate"
-                          style={{ color: "#e2e8f0" }}
-                        >
-                          {item.name}
-                        </div>
-                        <div
-                          className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                          style={{
-                            background:
-                              "linear-gradient(135deg, rgba(37,99,235,0.04), rgba(16,185,129,0.04), transparent)",
-                          }}
-                        />
-                      </div>
-                    ))}
-                </div>
-              </Reveal>
-
-              {/* Scrolling Marquee Rows */}
-              <div className="space-y-4">
-                <Reveal>
-                  <div
-                    className="relative overflow-hidden rounded-2xl"
-                    style={{
-                      background: "rgba(255,255,255,0.02)",
-                      border: "1px solid rgba(255,255,255,0.04)",
-                    }}
-                  >
-                    <div
-                      className="absolute inset-y-0 left-0 w-24 z-10 pointer-events-none"
-                      style={{
-                        background:
-                          "linear-gradient(90deg, #090d16, transparent)",
-                      }}
-                    />
-                    <div
-                      className="absolute inset-y-0 right-0 w-24 z-10 pointer-events-none"
-                      style={{
-                        background:
-                          "linear-gradient(270deg, #090d16, transparent)",
-                      }}
-                    />
-
-                    <div
-                      className="flex gap-4 animate-marquee py-4"
-                      style={{ width: "max-content" }}
-                    >
-                      {[
-                        ...integrationsRow1,
-                        ...integrationsRow1,
-                        ...integrationsRow1,
-                      ].map((item, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-3 px-5 py-2 rounded-xl flex-shrink-0"
-                          style={{
-                            background: "rgba(255,255,255,0.03)",
-                            border: "1px solid rgba(255,255,255,0.04)",
-                          }}
-                        >
-                          <span className="text-xl">{item.icon}</span>
-                          <span
-                            className="text-sm font-medium"
-                            style={{ color: "#94a3b8" }}
-                          >
-                            {item.name}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </Reveal>
-
-                <Reveal from="right">
-                  <div
-                    className="relative overflow-hidden rounded-2xl"
-                    style={{
-                      background: "rgba(255,255,255,0.02)",
-                      border: "1px solid rgba(255,255,255,0.04)",
-                    }}
-                  >
-                    <div
-                      className="absolute inset-y-0 left-0 w-24 z-10 pointer-events-none"
-                      style={{
-                        background:
-                          "linear-gradient(90deg, #090d16, transparent)",
-                      }}
-                    />
-                    <div
-                      className="absolute inset-y-0 right-0 w-24 z-10 pointer-events-none"
-                      style={{
-                        background:
-                          "linear-gradient(270deg, #090d16, transparent)",
-                      }}
-                    />
-
-                    <div
-                      className="flex gap-4 py-4"
-                      style={{
-                        width: "max-content",
-                        animation: "marquee 30s linear infinite reverse",
-                      }}
-                    >
-                      {[
-                        ...integrationsRow2,
-                        ...integrationsRow2,
-                        ...integrationsRow2,
-                      ].map((item, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-3 px-5 py-2 rounded-xl flex-shrink-0"
-                          style={{
-                            background: "rgba(255,255,255,0.03)",
-                            border: "1px solid rgba(255,255,255,0.04)",
-                          }}
-                        >
-                          <span className="text-xl">{item.icon}</span>
-                          <span
-                            className="text-sm font-medium"
-                            style={{ color: "#94a3b8" }}
-                          >
-                            {item.name}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </Reveal>
+                <span style={{
+                  fontSize: 10, fontWeight: 600, padding: "4px 10px", borderRadius: 99,
+                  background: activeUseCase === i ? "rgba(16,185,129,0.10)" : "rgba(37,99,235,0.06)",
+                  color: activeUseCase === i ? "#10B981" : "#2563EB",
+                  border: activeUseCase === i ? "1px solid rgba(16,185,129,0.22)" : "1px solid rgba(37,99,235,0.14)",
+                  fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.06em",
+                  transition: "all 0.3s",
+                }}>
+                  {["Healthcare", "Real Estate", "Finance"][i]}
+                </span>
               </div>
 
-              {/* Integration Stats & CTA */}
-              <Reveal className="mt-12">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div
-                    className="rounded-2xl p-6 text-center"
-                    style={{
-                      background: "rgba(255,255,255,0.02)",
-                      border: "1px solid rgba(255,255,255,0.04)",
-                    }}
-                  >
-                    <div
-                      className="text-3xl font-bold mb-1"
-                      style={{
-                        background: "var(--gg)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                      }}
-                    >
-                      40+
-                    </div>
-                    <div className="text-xs" style={{ color: "#64748b" }}>
-                      Pre-built integrations
-                    </div>
-                  </div>
+              <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0a0a0a", marginBottom: 8 }}>{uc.title}</h3>
+              <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.65, marginBottom: 18 }}>{uc.desc}</p>
 
-                  <div
-                    className="rounded-2xl p-6 text-center"
-                    style={{
-                      background: "rgba(255,255,255,0.02)",
-                      border: "1px solid rgba(255,255,255,0.04)",
-                    }}
-                  >
-                    <div
-                      className="text-3xl font-bold mb-1"
-                      style={{
-                        background: "var(--gg)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                      }}
-                    >
-                      ∞
-                    </div>
-                    <div className="text-xs" style={{ color: "#64748b" }}>
-                      Custom API possibilities
-                    </div>
-                  </div>
-
-                  <div
-                    className="rounded-2xl p-6 text-center"
-                    style={{
-                      background: "rgba(255,255,255,0.02)",
-                      border: "1px solid rgba(255,255,255,0.04)",
-                    }}
-                  >
-                    <div
-                      className="text-3xl font-bold mb-1"
-                      style={{
-                        background: "var(--gg)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                      }}
-                    >
-                      5 min
-                    </div>
-                    <div className="text-xs" style={{ color: "#64748b" }}>
-                      Average setup time
-                    </div>
-                  </div>
-                </div>
-              </Reveal>
-
-              {/* CTA Section */}
-              <Reveal className="mt-8">
-                <div
-                  className="rounded-2xl p-6 sm:p-8 relative overflow-hidden"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, rgba(16,185,129,0.04), rgba(5,150,105,0.02))",
-                    border: "1px solid rgba(16,185,129,0.06)",
-                  }}
-                >
-                  <div
-                    className="absolute inset-0 opacity-50"
-                    style={{
-                      background:
-                        "radial-gradient(circle at 70% 30%, rgba(16,185,129,0.04), transparent 70%)",
-                    }}
-                  />
-
-                  <div className="relative flex flex-col items-center text-center md:flex-row md:text-left md:justify-between gap-6">
-                    <div>
-                      <h3 className="text-lg font-bold text-white mb-1">
-                        Need a custom integration?
-                      </h3>
-                      <p className="text-sm" style={{ color: "#94a3b8" }}>
-                        Our API supports webhooks, real-time events, and
-                        everything in between.
-                      </p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                      <button
-                        className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-300"
-                        style={{
-                          background: "var(--gg)",
-                          boxShadow: "0 4px 16px rgba(16,185,129,0.2)",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = "translateY(-2px)";
-                          e.currentTarget.style.boxShadow =
-                            "0 8px 24px rgba(16,185,129,0.3)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = "translateY(0)";
-                          e.currentTarget.style.boxShadow =
-                            "0 4px 16px rgba(16,185,129,0.2)";
-                        }}
-                      >
-                        View API Docs →
-                      </button>
-                      <button
-                        className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300"
-                        style={{
-                          background: "rgba(255,255,255,0.04)",
-                          border: "1px solid rgba(255,255,255,0.06)",
-                          color: "#94a3b8",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background =
-                            "rgba(255,255,255,0.08)";
-                          e.currentTarget.style.color = "#e2e8f0";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background =
-                            "rgba(255,255,255,0.04)";
-                          e.currentTarget.style.color = "#94a3b8";
-                        }}
-                      >
-                        Contact Support
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </Reveal>
+              {/* Stat pill */}
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                padding: "6px 14px", borderRadius: 99,
+                background: activeUseCase === i
+                  ? "linear-gradient(135deg, rgba(37,99,235,0.10), rgba(16,185,129,0.10))"
+                  : "rgba(37,99,235,0.04)",
+                border: activeUseCase === i ? "1px solid rgba(16,185,129,0.25)" : "1px solid rgba(37,99,235,0.10)",
+              }}>
+                <svg width="14" height="14" fill="none" stroke={activeUseCase === i ? "#10B981" : "#2563EB"} strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <span style={{ fontSize: 12, fontWeight: 700, color: activeUseCase === i ? "#10B981" : "#2563EB" }}>{uc.stat}</span>
+              </div>
             </div>
-          </section>
+
+            {/* Bottom progress bar — active card only */}
+            {activeUseCase === i && (
+              <div style={{ height: 2, background: "rgba(16,185,129,0.08)", overflow: "hidden" }}>
+                <div
+                  key={`pb-${activeUseCase}`}
+                  style={{
+                    height: "100%", borderRadius: 99,
+                    background: "linear-gradient(90deg,#2563EB,#10B981)",
+                    animation: "progressFill 3.5s linear forwards",
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </Reveal>
+      ))}
+    </div>
+
+    {/* Expanded detail panel for active use case */}
+    <Reveal>
+      <div
+        key={activeUseCase}
+        className="animate-fade-up rounded-2xl overflow-hidden"
+        style={{
+          background: "linear-gradient(135deg, rgba(37,99,235,0.04), rgba(16,185,129,0.03))",
+          border: "1px solid rgba(16,185,129,0.14)",
+          marginBottom: 48,
+        }}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+          {/* Left: key outcomes */}
+          <div style={{ padding: "32px 36px", borderRight: "1px solid rgba(37,99,235,0.08)" }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: "#2563EB", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "'JetBrains Mono',monospace", marginBottom: 12 }}>
+              Key outcomes
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {[
+                [
+                  { label: "No-show reduction", value: "60%" },
+                  { label: "Calls handled/day", value: "500+" },
+                  { label: "Avg handle time", value: "< 2 min" },
+                ],
+                [
+                  { label: "Lead qualification rate", value: "3×" },
+                  { label: "Response time", value: "< 5 sec" },
+                  { label: "Viewing bookings", value: "+85%" },
+                ],
+                [
+                  { label: "Cost reduction", value: "50%" },
+                  { label: "Inquiry resolution", value: "92%" },
+                  { label: "Collections rate", value: "+38%" },
+                ],
+              ][activeUseCase].map((item, j) => (
+                <div key={j} style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "10px 14px", borderRadius: 12,
+                  background: "rgba(255,255,255,0.65)",
+                  border: "1px solid rgba(37,99,235,0.08)",
+                }}>
+                  <span style={{ fontSize: 13, color: "#475569" }}>{item.label}</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: "#0a0a0a", fontFamily: "'JetBrains Mono',monospace" }}>{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: use case feature list */}
+          <div style={{ padding: "32px 36px" }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: "#10B981", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "'JetBrains Mono',monospace", marginBottom: 12 }}>
+              What Autoniv does
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[
+                [
+                  "Automated patient appointment scheduling",
+                  "Prescription refill reminders via call",
+                  "Post-visit follow-up and satisfaction surveys",
+                  "Insurance pre-auth intake collection",
+                ],
+                [
+                  "Instant lead qualification from property portals",
+                  "24/7 viewing slot booking & confirmation",
+                  "Automated follow-ups on expired listings",
+                  "Multi-language support for NRI buyers",
+                ],
+                [
+                  "Loan inquiry intake and pre-qualification",
+                  "EMI due-date reminders and payment nudges",
+                  "KYC document follow-up automation",
+                  "Account support without agent involvement",
+                ],
+              ][activeUseCase].map((feat, j) => (
+                <div key={j} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <div style={{
+                    width: 20, height: 20, borderRadius: "50%", flexShrink: 0, marginTop: 1,
+                    background: "rgba(16,185,129,0.10)", border: "1px solid rgba(16,185,129,0.22)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <svg width="10" height="10" fill="none" stroke="#10B981" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span style={{ fontSize: 13, color: "#475569", lineHeight: 1.55 }}>{feat}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop: 20, paddingTop: 18, borderTop: "1px solid rgba(37,99,235,0.08)", display: "flex", gap: 10 }}>
+              <button
+                onClick={() => openAuth("register")}
+                className="font-bold text-white flex items-center gap-2"
+                style={{
+                  padding: "9px 18px", borderRadius: 10, fontSize: 13,
+                  background: "linear-gradient(135deg,#2563EB,#10B981)",
+                  boxShadow: "0 4px 14px rgba(16,185,129,0.20)", border: "none", cursor: "pointer",
+                }}
+              >
+                Try for {useCases[activeUseCase].title}
+                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Reveal>
+
+    {/* Integrations */}
+    <div>
+      <Reveal className="text-center mb-8">
+        <h3 className="text-xl sm:text-2xl font-extrabold" style={{ color: "#0a0a0a" }}>
+          Integrations
+        </h3>
+        <p className="text-sm mt-2" style={{ color: "#475569" }}>
+          Connect Your Favorite Tools & Platforms
+        </p>
+      </Reveal>
+      <div className="space-y-3">
+        <Reveal>
+          <div className="relative overflow-hidden rounded-2xl" style={{ background: "rgba(37,99,235,0.03)", border: "1px solid rgba(37,99,235,0.08)" }}>
+            <div className="absolute inset-y-0 left-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(90deg, #ffffff, transparent)" }} />
+            <div className="absolute inset-y-0 right-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(270deg, #ffffff, transparent)" }} />
+            <div className="flex gap-4 animate-marquee py-4" style={{ width: "max-content" }}>
+              {[...integrationsRow1, ...integrationsRow1, ...integrationsRow1].map((item, i) => (
+                <div key={i} className="flex items-center gap-3 px-5 py-2 rounded-xl flex-shrink-0 transition-all duration-300 hover:scale-105"
+                  style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(37,99,235,0.08)" }}>
+                  <span className="text-xl">{item.icon}</span>
+                  <span className="text-sm font-medium" style={{ color: "#475569" }}>{item.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Reveal>
+        <Reveal from="right">
+          <div className="relative overflow-hidden rounded-2xl" style={{ background: "rgba(16,185,129,0.03)", border: "1px solid rgba(16,185,129,0.08)" }}>
+            <div className="absolute inset-y-0 left-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(90deg, #ffffff, transparent)" }} />
+            <div className="absolute inset-y-0 right-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(270deg, #ffffff, transparent)" }} />
+            <div className="flex gap-4 py-4" style={{ width: "max-content", animation: "marquee 30s linear infinite reverse" }}>
+              {[...integrationsRow2, ...integrationsRow2, ...integrationsRow2].map((item, i) => (
+                <div key={i} className="flex items-center gap-3 px-5 py-2 rounded-xl flex-shrink-0 transition-all duration-300 hover:scale-105"
+                  style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(16,185,129,0.08)" }}>
+                  <span className="text-xl">{item.icon}</span>
+                  <span className="text-sm font-medium" style={{ color: "#475569" }}>{item.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Reveal>
+      </div>
+
+      {/* Stats */}
+      <Reveal className="mt-8">
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { n: "40+", l: "Pre-built integrations" },
+            { n: "∞", l: "Custom API possibilities" },
+            { n: "5 min", l: "Average setup time" },
+          ].map((s, i) => (
+            <div key={i} className="rounded-2xl p-4 sm:p-6 text-center" style={{ background: "rgba(37,99,235,0.03)", border: "1px solid rgba(37,99,235,0.08)" }}>
+              <div className="text-2xl sm:text-3xl font-bold mb-1 gradient-text">{s.n}</div>
+              <div className="text-xs" style={{ color: "#475569" }}>{s.l}</div>
+            </div>
+          ))}
+        </div>
+      </Reveal>
+
+      {/* CTA */}
+      <Reveal className="mt-6">
+        <div className="rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4" style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.04), rgba(16,185,129,0.04))", border: "1px solid rgba(37,99,235,0.12)" }}>
+          <div>
+            <h4 className="text-base font-bold" style={{ color: "#0a0a0a" }}>Need a custom integration?</h4>
+            <p className="text-xs mt-1" style={{ color: "#475569" }}>Our API supports webhooks, real-time events, and everything in between.</p>
+          </div>
+          <div className="flex gap-3">
+            <button className="px-4 py-2 rounded-xl text-xs font-semibold text-white" style={{ background: "var(--gg)", boxShadow: "0 4px 16px rgba(16,185,129,0.2)" }}>View API Docs →</button>
+            <button className="px-4 py-2 rounded-xl text-xs font-medium" style={{ border: "1px solid rgba(37,99,235,0.2)", color: "#2563EB" }}>Contact Support</button>
+          </div>
+        </div>
+      </Reveal>
+    </div>
+  </div>
+
+  <style>{`
+    @keyframes progressFill { from { width: 0%; } to { width: 100%; } }
+  `}</style>
+</section>
 
           {/* ══════════════════════════════════════════════
               ADD-ONS — white box
@@ -4072,6 +3588,408 @@ export function Landing() {
               </Reveal>
             </div>
           </section>
+
+          {/* ══════════════════════════════════════════════
+              PRICING — Starting Prices
+          ══════════════════════════════════════════════ */}
+          {/* ══════════════════════════════════════════════
+    PRICING
+══════════════════════════════════════════════ */}
+{/* ══════════════════════════════════════════════
+    PRICING — Dark 4-plan layout with monthly/yearly toggle
+══════════════════════════════════════════════ */}
+
+{/* Add this state at the top of your Landing component alongside other useState hooks: */}
+{/* const [pricingYearly, setPricingYearly] = useState(false); */}
+
+
+
+          {/* ══════════════════════════════════════════════
+              FAQ — Accordion
+          ══════════════════════════════════════════════ */}
+          <section id="faq" className="section-box tint">
+            <div className="section-pad relative overflow-hidden">
+              <Reveal className="text-center mb-12 space-y-4">
+                <span className="tag px-4 py-1.5 rounded-full inline-block" style={{ color: "#2563EB", background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.3)" }}>
+                  FAQ
+                </span>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold" style={{ color: "#0a0a0a" }}>
+                  Frequently Asked Questions
+                </h2>
+                <p className="text-sm sm:text-base max-w-2xl mx-auto" style={{ color: "#475569" }}>
+                  Everything you need to know about Autoniv
+                </p>
+              </Reveal>
+
+              <div className="max-w-3xl mx-auto space-y-3">
+                {[
+                  { q: "What is Autoniv?", a: "Autoniv is an AI-powered voice agent platform that handles business calls 24/7 in 20+ languages. Our AI agents answer calls, qualify leads, book appointments, and integrate with your existing CRM — no human intervention needed." },
+                  { q: "How long does setup take?", a: "Most businesses are live within 48 hours. Simply describe what your agent should do, pick a voice and language, test it with our simulation tool, and deploy to your phone number or website widget in one click." },
+                  { q: "Does it work with my existing phone number?", a: "Yes. Autoniv integrates with your current phone system via SIP trunking. You can forward calls to our AI agent or use a dedicated number — your choice. No hardware changes required." },
+                  { q: "What languages are supported?", a: "We support 20+ languages including English, Hindi, Spanish, French, Arabic, Mandarin, and more. Each agent can handle multiple languages and switch mid-conversation based on the caller's preference." },
+                  { q: "How much does it cost?", a: "Plans start at ₹4,999/month for small businesses (500 minutes, 1 agent). Pro plans at ₹12,999/month include 3 agents, 1,500 minutes, CRM integrations, and premium voices. Enterprise pricing is custom." },
+                  { q: "Can I try before I buy?", a: "Yes! You can test our AI agents with a free demo. Sign up, configure your agent, and run simulated calls before going live. No credit card required for the trial." },
+                  { q: "What integrations do you support?", a: "We integrate with 50+ tools including HubSpot, Salesforce, Google Calendar, Outlook, Zapier, Make, n8n, WhatsApp, and more. Our API also allows custom integrations for enterprise needs." },
+                  { q: "Is my data secure?", a: "Absolutely. We use bank-grade encryption, SOC 2 certified infrastructure, and GDPR-compliant data handling. All call data is encrypted at rest and in transit. Enterprise plans include dedicated instances." },
+                ].map((faq, i) => (
+                  <FAQItem key={i} question={faq.q} answer={faq.a} />
+                ))}
+              </div>
+
+              <p className="text-center text-xs mt-8" style={{ color: '#94a3b8' }}>
+                Written by our content team. Need more info?{' '}
+                <a href="#contact" onClick={(e) => { e.preventDefault(); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }); }} className="font-semibold" style={{ color: '#2563EB' }}>Contact us →</a>
+              </p>
+            </div>
+          </section>
+
+          {/* ══════════════════════════════════════════════
+              BLOG
+          ══════════════════════════════════════════════ */}
+          <section id="blog" className="section-box white">
+            <div className="section-pad relative overflow-hidden">
+              <Reveal className="text-center mb-12 space-y-4">
+                <span className="tag px-4 py-1.5 rounded-full inline-block" style={{ color: "#2563EB", background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.3)" }}>
+                  Blog
+                </span>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold" style={{ color: "#0a0a0a" }}>
+                  Latest Insights
+                </h2>
+                <p className="text-sm sm:text-base max-w-2xl mx-auto" style={{ color: "#475569" }}>
+                  Tips, guides, and news from the Autoniv team
+                </p>
+              </Reveal>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                {[
+                  { tag: "Product", date: "June 18, 2026", title: "Autoniv 2.0: Real-time Voice Cloning & Calendar Sync", desc: "Introducing state-of-the-art voice cloning latency improvements and direct native integrations with Google Calendar and Outlook.", readTime: "4 min read" },
+                  { tag: "Industry", date: "June 10, 2026", title: "How AI Voice Agents Are Redefining Customer Service in 2026", desc: "Explore the state of voice conversational interfaces — latency benchmarks, accuracy improvements, and multi-lingual configurations.", readTime: "6 min read" },
+                  { tag: "Security", date: "May 28, 2026", title: "Autoniv Achieves SOC 2 Type II Security Certification", desc: "Security is at the core of our platform. Learn how we completed the SOC 2 Type II audit for enterprise-grade data protection.", readTime: "3 min read" },
+                ].map((post, i) => (
+                  <Reveal key={i} delay={i * 0.1}>
+                    <div className="rounded-2xl overflow-hidden transition-all duration-300 group cursor-pointer"
+                      style={{ background: '#ffffff', border: '1px solid rgba(37,99,235,0.08)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 12px 40px rgba(37,99,235,0.08)'; e.currentTarget.style.transform = 'translateY(-4px)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.03)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+                      <div className="h-40 w-full" style={{ background: `linear-gradient(135deg, rgba(37,99,235,${0.06 + i * 0.02}), rgba(16,185,129,${0.04 + i * 0.02}))` }} />
+                      <div className="p-5">
+                        <div className="flex items-center gap-3 mb-3">
+                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ color: '#2563EB', background: 'rgba(37,99,235,0.08)' }}>{post.tag}</span>
+                          <span className="text-xs" style={{ color: '#94a3b8' }}>{post.date}</span>
+                        </div>
+                        <h3 className="text-base font-bold mb-2 leading-snug" style={{ color: '#0a0a0a' }}>{post.title}</h3>
+                        <p className="text-xs leading-relaxed mb-3" style={{ color: '#475569' }}>{post.desc}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs" style={{ color: '#94a3b8' }}>{post.readTime}</span>
+                          <span className="text-xs font-semibold group-hover:translate-x-1 transition-transform" style={{ color: '#10B981' }}>Read →</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Reveal>
+                ))}
+              </div>
+
+              <div className="text-center mt-8">
+                <Link to="/" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all"
+                  style={{ border: '1px solid rgba(37,99,235,0.2)', color: '#2563EB', background: 'transparent' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(37,99,235,0.06)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
+                  View All Articles
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+                </Link>
+              </div>
+            </div>
+          </section>
+
+
+          <section id="pricing" className="section-box black">
+  <div className="section-pad relative overflow-hidden">
+    {/* Background glows */}
+    <div style={{ position: "absolute", top: "10%", left: "5%", width: 500, height: 500, background: "radial-gradient(circle, rgba(37,99,235,0.10), transparent 70%)", pointerEvents: "none" }} />
+    <div style={{ position: "absolute", bottom: "10%", right: "5%", width: 500, height: 500, background: "radial-gradient(circle, rgba(16,185,129,0.08), transparent 70%)", pointerEvents: "none" }} />
+    <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 800, height: 400, background: "radial-gradient(ellipse, rgba(16,185,129,0.04), transparent 70%)", pointerEvents: "none" }} />
+
+    <Reveal className="text-center mb-12 space-y-4">
+      <span className="tag px-4 py-1.5 rounded-full inline-block" style={{ color: "#ffffff", background: "var(--gg)", border: "none" }}>
+        Pricing Plans
+      </span>
+      <h2 className="font-extrabold tracking-tight mt-4" style={{ fontSize: "clamp(28px,4vw,48px)", color: "#ffffff" }}>
+        Simple, transparent pricing.{" "}
+        <span className="gradient-text">No hidden costs.</span>
+      </h2>
+      <p style={{ color: "#64748b", fontSize: 15, maxWidth: 480, margin: "0 auto" }}>
+        Choose the plan that fits your business. Upgrade or cancel anytime.
+      </p>
+
+      {/* Monthly / Yearly Toggle */}
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 0, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, padding: "4px", marginTop: 8 }}>
+        <button
+          onClick={() => setPricingYearly(false)}
+          style={{
+            padding: "8px 22px", borderRadius: 99, border: "none", cursor: "pointer",
+            fontSize: 13, fontWeight: 600, transition: "all 0.2s",
+            background: !pricingYearly ? "linear-gradient(135deg,#2563EB,#10B981)" : "transparent",
+            color: !pricingYearly ? "#fff" : "#64748b",
+          }}
+        >
+          Monthly
+        </button>
+        <button
+          onClick={() => setPricingYearly(true)}
+          style={{
+            padding: "8px 22px", borderRadius: 99, border: "none", cursor: "pointer",
+            fontSize: 13, fontWeight: 600, transition: "all 0.2s", display: "flex", alignItems: "center", gap: 8,
+            background: pricingYearly ? "linear-gradient(135deg,#2563EB,#10B981)" : "transparent",
+            color: pricingYearly ? "#fff" : "#64748b",
+          }}
+        >
+          Yearly
+          <span style={{ fontSize: 10, fontWeight: 700, background: pricingYearly ? "rgba(255,255,255,0.25)" : "linear-gradient(135deg,#2563EB,#10B981)", color: "#fff", padding: "2px 8px", borderRadius: 99 }}>
+            Save 20%
+          </span>
+        </button>
+      </div>
+    </Reveal>
+
+    {/* Cards */}
+    <div
+      className="grid gap-5 max-w-6xl mx-auto"
+      style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", alignItems: "stretch" }}
+    >
+      {[
+        {
+          name: "Starter",
+          icon: "🚀",
+          monthlyPrice: "₹4,999",
+          yearlyPrice: "₹3,999",
+          period: "/month",
+          desc: "Perfect for small businesses getting started with AI voice.",
+          features: [
+            { text: "1 AI Voice Agent", included: true },
+            { text: "500 minutes / month", included: true },
+            { text: "5 Languages", included: true },
+            { text: "10 Voices", included: true },
+            { text: "Basic Reports", included: true },
+            { text: "CRM Integration", included: false },
+            { text: "WhatsApp Integration", included: false },
+            { text: "Voice Cloning", included: false },
+          ],
+          cta: "Get Started",
+          highlight: false,
+          badge: null,
+        },
+        {
+          name: "Growth",
+          icon: "📈",
+          monthlyPrice: "₹12,999",
+          yearlyPrice: "₹10,399",
+          period: "/month",
+          desc: "For growing teams that need more power and integrations.",
+          features: [
+            { text: "3 AI Voice Agents", included: true },
+            { text: "1,500 minutes / month", included: true },
+            { text: "20+ Languages", included: true },
+            { text: "100+ Voices", included: true },
+            { text: "CRM Integration", included: true },
+            { text: "WhatsApp Integration", included: true },
+            { text: "Voice Cloning", included: false },
+            { text: "Priority Support", included: false },
+          ],
+          cta: "Get Started",
+          highlight: true,
+          badge: "Most Popular",
+        },
+        {
+          name: "Business",
+          icon: "🏢",
+          monthlyPrice: "₹24,999",
+          yearlyPrice: "₹19,999",
+          period: "/month",
+          desc: "For scaling businesses that need advanced automation.",
+          features: [
+            { text: "10 AI Voice Agents", included: true },
+            { text: "5,000 minutes / month", included: true },
+            { text: "All Languages", included: true },
+            { text: "All Voices", included: true },
+            { text: "CRM Integration", included: true },
+            { text: "WhatsApp Integration", included: true },
+            { text: "Voice Cloning", included: true },
+            { text: "Priority Support", included: false },
+          ],
+          cta: "Get Started",
+          highlight: false,
+          badge: null,
+        },
+        {
+          name: "Enterprise",
+          icon: "👑",
+          monthlyPrice: "Custom",
+          yearlyPrice: "Custom",
+          period: "",
+          desc: "For large organizations that need full control and support.",
+          features: [
+            { text: "Unlimited Agents", included: true },
+            { text: "Custom Minutes", included: true },
+            { text: "All Languages", included: true },
+            { text: "All Voices", included: true },
+            { text: "CRM Integration", included: true },
+            { text: "WhatsApp Integration", included: true },
+            { text: "Voice Cloning", included: true },
+            { text: "Priority Support", included: true },
+          ],
+          cta: "Contact Sales",
+          highlight: false,
+          badge: null,
+        },
+      ].map((plan, i) => (
+        <Reveal key={i} delay={i * 0.08}>
+          <div
+            className="relative flex flex-col h-full rounded-2xl overflow-hidden transition-all duration-300"
+            style={{
+              background: plan.highlight
+                ? "linear-gradient(160deg, rgba(37,99,235,0.14), rgba(16,185,129,0.12))"
+                : "rgba(255,255,255,0.03)",
+              border: plan.highlight
+                ? "1.5px solid rgba(16,185,129,0.45)"
+                : "1px solid rgba(255,255,255,0.07)",
+              boxShadow: plan.highlight
+                ? "0 0 48px rgba(16,185,129,0.10), inset 0 1px 0 rgba(255,255,255,0.06)"
+                : "inset 0 1px 0 rgba(255,255,255,0.03)",
+              transform: plan.highlight ? "translateY(-8px)" : "none",
+            }}
+          >
+            {/* Top accent bar */}
+            {plan.highlight && (
+              <div style={{ height: 3, background: "linear-gradient(90deg,#2563EB,#10B981)", flexShrink: 0 }} />
+            )}
+
+            {/* Badge */}
+            {plan.badge && (
+              <div style={{ position: "absolute", top: plan.highlight ? 20 : 16, right: 16 }}>
+                <span style={{
+                  fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 99,
+                  background: "linear-gradient(135deg,#2563EB,#10B981)",
+                  color: "#fff", fontFamily: "'JetBrains Mono',monospace", letterSpacing: "0.06em",
+                }}>
+                  {plan.badge}
+                </span>
+              </div>
+            )}
+
+            {/* Header */}
+            <div style={{ padding: "24px 24px 0" }}>
+              {/* Icon + Name */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 26, marginBottom: 8 }}>{plan.icon}</div>
+                <h3 style={{ fontSize: 17, fontWeight: 700, color: "#f1f5f9", margin: "0 0 5px" }}>{plan.name}</h3>
+                <p style={{ fontSize: 12, color: "#475569", lineHeight: 1.5, margin: 0 }}>{plan.desc}</p>
+              </div>
+
+              {/* Price */}
+              <div style={{
+                display: "flex", alignItems: "baseline", gap: 4,
+                padding: "14px 0",
+                borderTop: "1px solid rgba(255,255,255,0.06)",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                marginBottom: 18,
+              }}>
+                <span style={{
+                  fontSize: (pricingYearly ? plan.yearlyPrice : plan.monthlyPrice) === "Custom" ? 30 : 34,
+                  fontWeight: 800, color: "#ffffff", letterSpacing: "-0.02em",
+                  fontFamily: "'JetBrains Mono',monospace",
+                }}>
+                  {pricingYearly ? plan.yearlyPrice : plan.monthlyPrice}
+                </span>
+                {plan.period && (
+                  <span style={{ fontSize: 13, color: "#475569", fontWeight: 500 }}>{plan.period}</span>
+                )}
+              </div>
+
+              {/* Features */}
+              <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+                {plan.features.map((f, j) => (
+                  <li key={j} style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                    <div style={{
+                      width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      background: f.included ? "rgba(16,185,129,0.10)" : "rgba(75,85,99,0.10)",
+                      border: f.included ? "1px solid rgba(16,185,129,0.25)" : "1px solid rgba(75,85,99,0.18)",
+                    }}>
+                      {f.included ? (
+                        <svg width="9" height="9" fill="none" stroke="#10B981" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg width="8" height="8" fill="none" stroke="#4B5563" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M18 12H6" />
+                        </svg>
+                      )}
+                    </div>
+                    <span style={{ fontSize: 12.5, color: f.included ? "#cbd5e1" : "#374151" }}>
+                      {f.text}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* CTA — pushed to bottom */}
+            <div style={{ padding: "20px 24px 24px", marginTop: "auto" }}>
+              <button
+                onClick={() => openAuth("register")}
+                className="w-full font-bold text-sm flex items-center justify-center gap-2 transition-all duration-200"
+                style={{
+                  padding: "12px 20px",
+                  borderRadius: 12,
+                  cursor: "pointer",
+                  ...(plan.highlight
+                    ? {
+                        background: "linear-gradient(135deg,#2563EB,#10B981)",
+                        color: "#fff",
+                        border: "none",
+                        boxShadow: "0 4px 16px rgba(16,185,129,0.25)",
+                      }
+                    : {
+                        background: "transparent",
+                        color: "#10B981",
+                        border: "1px solid rgba(16,185,129,0.30)",
+                      }),
+                }}
+              >
+                {plan.cta}
+                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </Reveal>
+      ))}
+    </div>
+
+    {/* Bottom trust row */}
+    <Reveal className="mt-12">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-10">
+        {[
+          { icon: "🔒", text: "No credit card required" },
+          { icon: "⚡", text: "Live in under 48 hours" },
+          { icon: "↩️", text: "Cancel anytime" },
+          { icon: "🎧", text: "24/7 support included" },
+        ].map((item, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <span style={{ fontSize: 15 }}>{item.icon}</span>
+            <span style={{ fontSize: 12, color: "#475569", fontWeight: 500 }}>{item.text}</span>
+          </div>
+        ))}
+      </div>
+    </Reveal>
+
+    <p className="text-center text-xs mt-6" style={{ color: "#374151" }}>
+      All plans include 99.9% uptime SLA and zero setup fees.{" "}
+      <Link to="/" className="font-semibold" style={{ color: "#10B981" }}>View full pricing →</Link>
+    </p>
+  </div>
+</section>
 
           {/* ══════════════════════════════════════════════
               CONTACT — white box

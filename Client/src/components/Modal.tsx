@@ -22,7 +22,7 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+      <Dialog as="div" className="relative z-100" onClose={onClose}>
         {/* ── Backdrop ── */}
         <Transition.Child
           as={Fragment}
@@ -82,7 +82,7 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
                 </div>
 
                 {/* ── Body ── */}
-                <div className="p-5 sm:p-6 max-h-[75vh] overflow-y-auto relative z-10 custom-scrollbar">
+                <div className="p-5 sm:p-6 max-h-[85vh] overflow-y-auto relative z-10 custom-scrollbar">
                   <div style={{ color: '#cbd5e1' }}>
                     {children}
                   </div>

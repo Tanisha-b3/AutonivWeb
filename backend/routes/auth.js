@@ -353,6 +353,118 @@ router.post('/login', authLimiter, loginLimiter, async (req, res) => {
   }
 });
 
+router.post('/google', authLimiter, loginLimiter, async (req, res) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      return res.status(400).json({ message: 'Google credential is required' });
+    }
+
+    // Verify Google Token securely (supports both Access Token and ID Token)
+    let payload;
+    const isAccessToken = !credential.includes('.');
+
+    if (isAccessToken) {
+      // Verify via Google UserInfo API
+      const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: {
+          Authorization: `Bearer ${credential}`,
+        },
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        log.error('google_access_token_verification_failed', { errorText });
+        return res.status(401).json({ message: 'Invalid Google token' });
+      }
+      payload = await response.json();
+    } else {
+      // Verify via Google TokenInfo API (for ID Token)
+      const tokenInfoUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`;
+      const response = await fetch(tokenInfoUrl);
+      if (!response.ok) {
+        const errorText = await response.text();
+        log.error('google_id_token_verification_failed', { errorText });
+        return res.status(401).json({ message: 'Invalid Google credential' });
+      }
+      payload = await response.json();
+    }
+
+    const email = normalizeEmail(payload.email);
+    const name = trimString(payload.name || '');
+    const googleId = payload.sub;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email not provided in Google profile' });
+    }
+
+    // Optional: verify audience (aud) matches GOOGLE_CLIENT_ID if it is set in .env and is an ID Token
+    if (!isAccessToken) {
+      const envClientId = process.env.GOOGLE_CLIENT_ID;
+      if (envClientId && payload.aud !== envClientId) {
+        // Allow placeholder check in case of misconfigured dev env
+        if (!envClientId.includes('placeholder')) {
+          log.warn('google_audience_mismatch', { aud: payload.aud, expected: envClientId });
+          return res.status(401).json({ message: 'Google client ID mismatch' });
+        }
+      }
+    }
+
+
+    let user = await User.findOne({ email }).select('+password');
+    let isNewUser = false;
+
+    if (!user) {
+      isNewUser = true;
+      // Generate a random secure password placeholder
+      const randomPassword = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+      const hashedPassword = await bcrypt.hash(randomPassword, BCRYPT_COST);
+
+      user = await User.create({
+        email,
+        password: hashedPassword,
+        name: name || email.split('@')[0],
+        role: 'user',
+        plan: 'pilot',
+        minutesLimit: 30,
+        callsLimit: 30,
+        isVerified: true, // Google already verified this email
+        passwordChangedAt: new Date(),
+      });
+      log.info('google_user_created', { userId: String(user._id), email });
+    } else {
+      // If user exists but is not verified, mark them as verified now since Google authenticated them
+      if (!user.isVerified) {
+        user.isVerified = true;
+        await user.save();
+      }
+      log.info('google_user_login', { userId: String(user._id), email });
+    }
+
+    if (user.isActive === false) {
+      return res.status(403).json({ message: 'Account is disabled. Contact support.' });
+    }
+
+    // Update login audit info
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { lastLoginAt: new Date(), lastLoginIp: getClientIp(req) } }
+    );
+
+    // Issue tokens and respond
+    const accessToken = signAccessToken({ userId: String(user._id), role: user.role });
+    const refreshToken = await signRefreshToken(String(user._id));
+
+    const tokenResp = tokenResponse({ user, accessToken, refreshToken });
+    setTokenCookies(res, accessToken, refreshToken);
+    
+    return res.status(isNewUser ? 201 : 200).json(tokenResp);
+  } catch (error) {
+    log.error('google_auth_error', { error: error.message, stack: error.stack });
+    return res.status(500).json({ message: 'Google authentication failed', detail: IS_PROD ? undefined : error.message });
+  }
+});
+
+
 // ─── Dashboard Stats (deferred — no longer blocks login) ────────────────────
 router.get('/dashboard-stats', authenticate, async (req, res) => {
   try {

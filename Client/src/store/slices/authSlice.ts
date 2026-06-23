@@ -92,6 +92,25 @@ export const login = createAsyncThunk(
   },
 );
 
+export const googleLogin = createAsyncThunk(
+  'auth/googleLogin',
+  async (credential: string, { rejectWithValue }) => {
+    try {
+      const res = await authService.googleLogin(credential);
+      const { accessToken, refreshToken, user } = res.data;
+
+      setCookie('accessToken', accessToken, 1);
+      if (refreshToken) setCookie('refreshToken', refreshToken, 7);
+      sessionStorage.setItem('user', JSON.stringify(user));
+
+      return { token: accessToken, refreshToken: refreshToken ?? null, user };
+    } catch (err: any) {
+      return rejectWithValue(err?.response?.data?.message ?? 'Google authentication failed');
+    }
+  },
+);
+
+
 export const fetchDashboardStats = createAsyncThunk(
   'auth/fetchDashboardStats',
   async (_, { rejectWithValue }) => {
@@ -223,6 +242,24 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+      .addCase(googleLogin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(googleLogin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.token = action.payload.token!;
+        state.refreshToken = action.payload.refreshToken ?? null;
+        state.user = action.payload.user!;
+        state.initialized = true;
+        state.error = null;
+        saveToSession('user', action.payload.user!);
+      })
+      .addCase(googleLogin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
 
       // ── fetchDashboardStats ──────────────────────────────────────────────
       .addCase(fetchDashboardStats.pending, () => {
