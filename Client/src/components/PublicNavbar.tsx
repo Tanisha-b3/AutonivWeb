@@ -92,6 +92,7 @@ export function PublicNavbar() {
 
   const navItems = [
     { label: 'Features', href: '#features', isHash: true },
+    { label: 'Services', href: '#services', isHash: true },
     { label: 'How It Works', href: '#how-it-works', isHash: true },
     { label: 'Agents', href: '/agents' },
     { label: 'Case Studies', href: '/case-studies' },

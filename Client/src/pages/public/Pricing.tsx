@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Footer from './Footer';
 
-const LOGO_SRC = '/autoniv.png';
+const LOGO_SRC = '/logo-autoniv.png';
 
 const navItems = [
   { label: 'Agents', href: '/agents' },
@@ -16,26 +16,6 @@ const usps = [
   { icon: '🌍', text: 'Multi-Language Support – AI That Speaks Your Customers\' Language' },
   { icon: '⚡', text: 'Quick Setup – Live in Minutes, No Code Needed' },
 ];
-
-function USPSlider() {
-  const [current, setCurrent] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setCurrent((i) => (i + 1) % usps.length), 3000);
-    return () => clearInterval(t);
-  }, []);
-  return (
-    <div className="fixed top-0 inset-x-0 z-[60] overflow-hidden" style={{ background: 'linear-gradient(90deg,#030B2E 0%,#0a1628 50%,#030B2E 100%)', borderBottom: '1px solid rgba(16,185,129,0.15)', height: '36px' }}>
-      <div className="relative flex items-center justify-center h-full px-4 sm:px-6">
-        {usps.map((usp, i) => (
-          <span key={i} className="absolute inline-flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-sm font-medium transition-all duration-500 text-center whitespace-nowrap overflow-hidden text-ellipsis max-w-[90vw] sm:max-w-full"
-            style={{ color: 'rgba(255,255,255,0.85)', opacity: i === current ? 1 : 0, transform: i === current ? 'translateY(0)' : 'translateY(12px)' }}>
-            <span className="text-xs sm:text-sm flex-shrink-0">{usp.icon}</span><span className="truncate">{usp.text}</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 const PLANS = [
   {
@@ -53,8 +33,7 @@ const PLANS = [
     ],
     cta: 'Get Started Free',
     popular: false,
-    gradient: 'from-blue-500/5 to-blue-600/5',
-    border: 'border-slate-200',
+    color: '#2563EB',
   },
   {
     name: 'Pro',
@@ -73,8 +52,7 @@ const PLANS = [
     ],
     cta: 'Start Pro Trial',
     popular: true,
-    gradient: 'from-blue-500/10 to-emerald-500/10',
-    border: 'border-emerald-500',
+    color: '#10B981',
   },
   {
     name: 'Enterprise',
@@ -92,8 +70,7 @@ const PLANS = [
     ],
     cta: 'Contact Sales',
     popular: false,
-    gradient: 'from-blue-600/5 to-emerald-500/5',
-    border: 'border-slate-200',
+    color: '#8b5cf6',
   },
 ];
 
@@ -108,147 +85,188 @@ const COMPARISON = [
   { feature: 'Customer Support', starter: 'Email', pro: 'Priority Email/Chat', enterprise: 'Dedicated 24/7 Support' },
 ];
 
+/* ─── USP Ticker ─── */
+function USPSlider() {
+  const [current, setCurrent] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setCurrent(i => (i + 1) % usps.length), 3000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="fixed top-0 inset-x-0 z-[60] overflow-hidden" style={{ background: 'linear-gradient(90deg,#030B2E 0%,#051a3a 50%,#030B2E 100%)', borderBottom: '1px solid rgba(16,185,129,0.2)', height: 36 }}>
+      <div className="relative flex items-center justify-center h-full px-4 sm:px-6">
+        {usps.map((usp, i) => (
+          <span key={i} className="absolute inline-flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-sm font-medium transition-all duration-500 text-center whitespace-nowrap overflow-hidden text-ellipsis max-w-[90vw] sm:max-w-full"
+            style={{ color: 'rgba(255,255,255,0.85)', opacity: i === current ? 1 : 0, transform: i === current ? 'translateY(0)' : 'translateY(10px)' }}>
+            <span className="text-xs sm:text-sm flex-shrink-0">{usp.icon}</span><span className="truncate">{usp.text}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Starfield ─── */
+function Stars() {
+  const stars = Array.from({ length: 60 }, (_, i) => ({
+    id: i, x: Math.random() * 100, y: Math.random() * 100,
+    r: Math.random() * 1.5 + 0.5, op: Math.random() * 0.5 + 0.1, dur: Math.random() * 4 + 3,
+  }));
+  return (
+    <svg className="fixed inset-0 w-full h-full pointer-events-none z-0" xmlns="http://www.w3.org/2000/svg">
+      {stars.map(s => (
+        <circle key={s.id} cx={`${s.x}%`} cy={`${s.y}%`} r={s.r} fill="white" opacity={s.op}>
+          <animate attributeName="opacity" values={`${s.op};${s.op * 0.2};${s.op}`} dur={`${s.dur}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
+/* ─── Nav ─── */
+function Nav({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boolean; setMobileMenuOpen: (v: boolean) => void }) {
+  const location = useLocation();
+  return (
+    <nav className="fixed top-[36px] inset-x-0 z-50" style={{ background: 'rgba(3,11,46,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(37,99,235,0.15)' }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[68px] flex items-center justify-between">
+        <Link to="/"><img src={LOGO_SRC} alt="Autoniv" className="h-28 sm:h-30 w-auto object-contain" /></Link>
+        <div className="hidden md:flex items-center gap-6">
+          {navItems.map(item => (
+            <Link key={item.label} to={item.href} className="text-sm font-semibold transition-colors"
+              style={{ color: location.pathname === item.href ? '#10B981' : 'rgba(255,255,255,0.6)' }}
+              onMouseEnter={e => { if (location.pathname !== item.href) e.currentTarget.style.color = '#fff'; }}
+              onMouseLeave={e => { if (location.pathname !== item.href) e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
+            >{item.label}</Link>
+          ))}
+        </div>
+        <div className="hidden md:flex items-center gap-3">
+          <Link to="/" className="px-4 py-2 text-sm font-medium rounded-lg transition-colors" style={{ color: 'rgba(255,255,255,0.6)' }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(37,99,235,0.15)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; e.currentTarget.style.background = 'transparent'; }}
+          >Sign In</Link>
+          <Link to="/" className="px-5 py-2.5 text-sm font-bold text-white rounded-full transition-all" style={{ background: 'linear-gradient(135deg,#2563EB,#10B981)', boxShadow: '0 4px 20px rgba(16,185,129,0.35)' }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(16,185,129,0.5)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(16,185,129,0.35)'; }}
+          >Get Started Free</Link>
+        </div>
+        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {mobileMenuOpen
+              ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
+          </svg>
+        </button>
+      </div>
+      {mobileMenuOpen && (
+        <div className="md:hidden px-5 py-4 space-y-1" style={{ background: 'rgba(3,11,46,0.98)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(37,99,235,0.12)' }}>
+          {navItems.map(item => (
+            <Link key={item.label} to={item.href} onClick={() => setMobileMenuOpen(false)}
+              className="block px-4 py-3 text-sm font-semibold rounded-xl"
+              style={{ color: location.pathname === item.href ? '#10B981' : 'rgba(255,255,255,0.7)', background: location.pathname === item.href ? 'rgba(16,185,129,0.1)' : 'transparent' }}
+            >{item.label}</Link>
+          ))}
+          <div className="pt-2 flex flex-col gap-2">
+            <Link to="/" onClick={() => setMobileMenuOpen(false)} className="block text-center px-4 py-3 text-sm font-semibold rounded-xl" style={{ color: 'rgba(255,255,255,0.7)' }}>Sign In</Link>
+            <Link to="/" onClick={() => setMobileMenuOpen(false)} className="block text-center px-4 py-3 text-sm font-bold text-white rounded-xl" style={{ background: 'linear-gradient(135deg,#2563EB,#10B981)' }}>Get Started Free</Link>
+          </div>
+        </div>
+      )}
+    </nav>
+  );
+}
+
+/* ─── Main export ─── */
 export function Pricing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const location = useLocation();
 
   return (
-    <div className="min-h-screen" style={{ background: '#ffffff', fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
-      {/* Nav */}
-      <nav className="fixed top-[36px] inset-x-0 z-50 transition-all duration-300" style={{ background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(37,99,235,0.12)' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[68px] flex items-center justify-between">
-          <Link to="/" className="flex items-center">
-            <img src={LOGO_SRC} alt="Autoniv" className="h-30 w-auto object-contain" />
-          </Link>
-          <div className="hidden md:flex items-center gap-6">
-            {navItems.map((item) => (
-              <Link key={item.label} to={item.href} className="text-sm font-semibold transition-colors"
-                style={{ color: location.pathname === item.href ? '#2563EB' : '#475569' }}
-                onMouseEnter={(e) => { if (location.pathname !== item.href) e.currentTarget.style.color = '#0a0a0a'; }}
-                onMouseLeave={(e) => { if (location.pathname !== item.href) e.currentTarget.style.color = '#475569'; }}
-              >{item.label}</Link>
-            ))}
-          </div>
-          <div className="hidden sm:flex items-center gap-3">
-            <Link to="/" className="px-4 py-2 text-sm font-medium rounded-lg transition-colors" style={{ color: '#475569' }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = '#0a0a0a'; e.currentTarget.style.background = 'rgba(37,99,235,.07)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = '#475569'; e.currentTarget.style.background = 'transparent'; }}
-            >Sign In</Link>
-            <Link to="/" className="px-5 py-2.5 text-sm font-bold text-white rounded-full transition-all" style={{ background: 'linear-gradient(135deg,#2563EB,#10B981)', boxShadow: '0 4px 14px rgba(16,185,129,0.25)' }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(16,185,129,0.35)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(16,185,129,0.25)'; }}
-            >Get Started Free</Link>
-          </div>
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2" style={{ color: '#475569', background: 'none', border: 'none', cursor: 'pointer' }}>
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {mobileMenuOpen
-                ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
-            </svg>
-          </button>
-        </div>
-        {mobileMenuOpen && (
-          <div className="md:hidden px-5 py-4 space-y-1" style={{ background: 'rgba(255,255,255,.98)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(37,99,235,.10)' }}>
-            {navItems.map((item) => (
-              <Link key={item.label} to={item.href} onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-3 text-sm font-semibold rounded-xl"
-                style={{ color: location.pathname === item.href ? '#2563EB' : '#475569', background: location.pathname === item.href ? 'rgba(37,99,235,.07)' : 'transparent' }}
-              >{item.label}</Link>
-            ))}
-            <div className="pt-2 space-y-2">
-              <Link to="/" onClick={() => setMobileMenuOpen(false)} className="block w-full text-center px-4 py-3 text-sm font-semibold rounded-xl" style={{ color: '#475569' }}>Sign In</Link>
-              <Link to="/" onClick={() => setMobileMenuOpen(false)} className="block w-full text-center px-4 py-3 text-sm font-bold text-white rounded-xl" style={{ background: 'linear-gradient(135deg,#2563EB,#10B981)' }}>Get Started Free</Link>
-            </div>
-          </div>
-        )}
-      </nav>
+    <div className="min-h-screen relative" style={{ background: 'linear-gradient(160deg, #030B2E 0%, #051530 40%, #030f28 70%, #020a1e 100%)', fontFamily: "'Plus Jakarta Sans',sans-serif", color: '#fff' }}>
+      <Stars />
+
+      {/* Glow blobs */}
+      <div className="fixed pointer-events-none z-0" style={{ top: '-15%', left: '-10%', width: 700, height: 700, borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.15) 0%, transparent 65%)' }} />
+      <div className="fixed pointer-events-none z-0" style={{ top: '30%', right: '-15%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 65%)' }} />
 
       <USPSlider />
-      
-      {/* Content wrapper with top padding for fixed nav */}
-      <div className="flex-1 pt-[140px] pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        {/* Hero Section */}
-        <div className="text-center max-w-3xl mx-auto mb-16 animate-fade-in-up">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full tag text-xs sm:text-sm bg-blue-500/10 border border-blue-500/30 text-blue-600 mb-4">
+      <Nav mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+
+      <div className="relative z-10 pt-[140px] pb-16 sm:pb-24">
+        {/* Hero */}
+        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-20 px-4 sm:px-6">
+          <div className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-bold tracking-[0.1em] mb-4 sm:mb-5" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', color: '#34D399' }}>
             ✦ PRICING OPTIONS
-          </span>
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-[#030B2E] tracking-tight mb-6">
-            Simple, Transparent <span className="gradient-text">Pricing Plans</span>
+          </div>
+          <h1 className="text-3xl sm:text-5xl font-black leading-tight mb-4 sm:mb-6" style={{ color: '#fff' }}>
+            Simple, Transparent{' '}
+            <span style={{ background: 'linear-gradient(135deg,#2563EB,#10B981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Pricing Plans</span>
           </h1>
-          <p className="text-lg text-[#475569] leading-relaxed">
+          <p className="text-sm sm:text-lg leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
             Choose the perfect plan for your calling volume. No hidden fees. Upgrade or downgrade anytime.
           </p>
         </div>
 
-        {/* Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20 items-stretch">
-          {PLANS.map((plan, index) => (
-            <div
-              key={plan.name}
-              className={`glass-card rounded-3xl p-8 border ${plan.popular ? 'border-2 ring-4 ring-emerald-500/10' : ''} ${plan.border} bg-gradient-to-br ${plan.gradient} flex flex-col justify-between card-hover relative`}
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
+        {/* Pricing Cards */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-8 mb-16 sm:mb-24 items-stretch">
+          {PLANS.map((plan) => (
+            <div key={plan.name} className="rounded-2xl sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden transition-all duration-300" style={{
+              background: plan.popular ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.04)',
+              border: plan.popular ? '2px solid rgba(16,185,129,0.4)' : '1px solid rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(12px)',
+              boxShadow: plan.popular ? '0 0 40px rgba(16,185,129,0.15)' : 'none',
+            }}>
               {plan.popular && (
-                <span className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 px-4 py-1 rounded-full text-xs font-bold text-white bg-emerald-500 uppercase tracking-widest">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 px-4 py-1 rounded-b-xl text-[10px] sm:text-xs font-bold text-white uppercase tracking-widest" style={{ background: 'linear-gradient(135deg,#2563EB,#10B981)' }}>
                   Most Popular
-                </span>
-              )}
-              
-              <div>
-                <h3 className="text-2xl font-bold text-[#030B2E] mb-2">{plan.name}</h3>
-                <p className="text-sm text-[#475569] mb-6 min-h-[60px]">{plan.desc}</p>
-                <div className="flex items-baseline gap-1 mb-8">
-                  <span className="text-4xl sm:text-5xl font-black text-[#030B2E]">{plan.price}</span>
-                  {plan.period && <span className="text-[#475569] text-sm">/ {plan.period}</span>}
                 </div>
-                
-                <ul className="space-y-4 mb-8">
-                  {plan.features.map((feat) => (
-                    <li key={feat} className="flex items-start gap-3 text-sm text-[#475569]">
-                      <span className="text-emerald-500 font-bold mt-0.5">✓</span>
+              )}
+              <div>
+                <h3 className="text-xl sm:text-2xl font-extrabold mb-2" style={{ color: '#fff' }}>{plan.name}</h3>
+                <p className="text-xs sm:text-sm leading-relaxed mb-5 sm:mb-6 min-h-[50px] sm:min-h-[60px]" style={{ color: 'rgba(255,255,255,0.45)' }}>{plan.desc}</p>
+                <div className="flex items-baseline gap-1 mb-6 sm:mb-8">
+                  <span className="text-3xl sm:text-5xl font-black" style={{ color: '#fff' }}>{plan.price}</span>
+                  {plan.period && <span className="text-xs sm:text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>/ {plan.period}</span>}
+                </div>
+                <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+                  {plan.features.map(feat => (
+                    <li key={feat} className="flex items-start gap-2.5 text-xs sm:text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                      <span className="font-bold mt-0.5" style={{ color: plan.color }}>✓</span>
                       <span>{feat}</span>
                     </li>
                   ))}
                 </ul>
               </div>
-
-              <button
-                className={`w-full py-3 rounded-xl font-bold transition-all duration-200 border cursor-pointer ${
-                  plan.popular
-                    ? 'bg-gradient-to-r from-blue-600 to-emerald-500 text-white border-transparent hover:shadow-lg'
-                    : 'bg-white text-blue-600 border-blue-500/30 hover:bg-blue-500/5'
-                }`}
-                onClick={() => {
-                  const btn = document.querySelector('button[style*="var(--gg)"]') as HTMLButtonElement;
-                  if (btn) btn.click();
-                }}
-              >
-                {plan.cta}
-              </button>
+              <button className="w-full py-3 rounded-xl font-bold transition-all duration-200 cursor-pointer text-sm sm:text-base" style={{
+                background: plan.popular ? 'linear-gradient(135deg,#2563EB,#10B981)' : 'transparent',
+                color: plan.popular ? '#fff' : plan.color,
+                border: plan.popular ? 'none' : `1px solid ${plan.color}44`,
+              }}
+                onMouseEnter={e => { if (!plan.popular) e.currentTarget.style.background = `${plan.color}15`; }}
+                onMouseLeave={e => { if (!plan.popular) e.currentTarget.style.background = 'transparent'; }}
+              >{plan.cta}</button>
             </div>
           ))}
         </div>
 
-        {/* Detailed Comparison Table */}
-        <div className="glass-card rounded-3xl p-6 sm:p-10 border border-blue-500/10 overflow-hidden">
-          <h3 className="text-2xl font-bold text-[#030B2E] mb-8 text-center sm:text-left">Compare Plan Features</h3>
+        {/* Comparison Table */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 rounded-2xl sm:rounded-3xl p-5 sm:p-10 overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}>
+          <h3 className="text-xl sm:text-2xl font-extrabold mb-6 sm:mb-8 text-center sm:text-left" style={{ color: '#fff' }}>Compare Plan Features</h3>
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[500px]">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="py-4 font-bold text-[#030B2E] text-sm sm:text-base pr-4">Feature</th>
-                  <th className="py-4 font-bold text-[#030B2E] text-sm sm:text-base px-4">Starter</th>
-                  <th className="py-4 font-bold text-[#030B2E] text-sm sm:text-base px-4">Pro</th>
-                  <th className="py-4 font-bold text-[#030B2E] text-sm sm:text-base pl-4">Enterprise</th>
+                <tr className="border-b" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+                  <th className="py-3 sm:py-4 font-bold text-xs sm:text-base pr-4" style={{ color: '#fff' }}>Feature</th>
+                  <th className="py-3 sm:py-4 font-bold text-xs sm:text-base px-4" style={{ color: '#fff' }}>Starter</th>
+                  <th className="py-3 sm:py-4 font-bold text-xs sm:text-base px-4" style={{ color: '#10B981' }}>Pro</th>
+                  <th className="py-3 sm:py-4 font-bold text-xs sm:text-base pl-4" style={{ color: '#fff' }}>Enterprise</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {COMPARISON.map((row) => (
-                  <tr key={row.feature} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="py-4 font-medium text-[#030B2E] text-sm sm:text-base pr-4">{row.feature}</td>
-                    <td className="py-4 text-[#475569] text-sm sm:text-base px-4">{row.starter}</td>
-                    <td className="py-4 text-[#475569] text-sm sm:text-base px-4 font-medium">{row.pro}</td>
-                    <td className="py-4 text-[#475569] text-sm sm:text-base pl-4">{row.enterprise}</td>
+              <tbody>
+                {COMPARISON.map(row => (
+                  <tr key={row.feature} className="border-b transition-colors" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+                    <td className="py-3 sm:py-4 font-medium text-xs sm:text-base pr-4" style={{ color: 'rgba(255,255,255,0.8)' }}>{row.feature}</td>
+                    <td className="py-3 sm:py-4 text-xs sm:text-base px-4" style={{ color: 'rgba(255,255,255,0.45)' }}>{row.starter}</td>
+                    <td className="py-3 sm:py-4 text-xs sm:text-base px-4 font-medium" style={{ color: 'rgba(255,255,255,0.65)' }}>{row.pro}</td>
+                    <td className="py-3 sm:py-4 text-xs sm:text-base pl-4" style={{ color: 'rgba(255,255,255,0.45)' }}>{row.enterprise}</td>
                   </tr>
                 ))}
               </tbody>
