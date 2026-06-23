@@ -346,9 +346,10 @@ router.post('/login', authLimiter, loginLimiter, async (req, res) => {
       }
     );
 
-    await sendOtpEmail({ to: email, otp, purpose });
-
     log.info('login_pending_otp', { userId: String(user._id), purpose, ip: getClientIp(req) });
+
+    // Respond immediately, send email in background
+    sendOtpEmail({ to: email, otp, purpose }).catch((err) => log.error('otp_email_send_failed', { error: err.message }));
 
     return res.json({
       requiresOtp: true,
