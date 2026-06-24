@@ -61,6 +61,7 @@ export function PublicNavbar() {
   const [authDialog, setAuthDialog] = useState<'login' | 'register' | null>(null);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const navRef = useRef<HTMLElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
 
   const openAuth = (mode: 'login' | 'register') => {
@@ -78,8 +79,12 @@ export function PublicNavbar() {
   useEffect(() => {
     if (!mobileMenuOpen) return;
     const c = (e: MouseEvent) => {
-      if (navRef.current && !navRef.current.contains(e.target as Node))
-        setMobileMenuOpen(false);
+      // Drawer + the toggle button itself live outside navRef's dropdown flow now,
+      // so check the drawer ref directly and ignore clicks on the toggle button.
+      const target = e.target as Node;
+      if (drawerRef.current && drawerRef.current.contains(target)) return;
+      if (navRef.current && navRef.current.contains(target)) return;
+      setMobileMenuOpen(false);
     };
     document.addEventListener('mousedown', c);
     return () => document.removeEventListener('mousedown', c);
@@ -89,6 +94,27 @@ export function PublicNavbar() {
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
+
+  // Lock body scroll while the drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [mobileMenuOpen]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileMenuOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [mobileMenuOpen]);
 
   const navItems = [
     { label: 'Features', href: '#features', isHash: true },
@@ -205,6 +231,8 @@ export function PublicNavbar() {
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="lg:hidden p-2 rounded-lg"
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
             style={{
               color: '#475569',
               background: 'none',
@@ -236,69 +264,113 @@ export function PublicNavbar() {
             </svg>
           </button>
         </div>
-        {mobileMenuOpen && (
-          <div
-            className="lg:hidden px-5 py-4 space-y-1"
-            style={{
-              background: 'rgba(255,255,255,0.98)',
-              backdropFilter: 'blur(24px)',
-              borderTop: '1px solid rgba(37,99,235,0.10)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+      </nav>
+
+      {/* Backdrop overlay for the slide-in drawer */}
+      <div
+        onClick={() => setMobileMenuOpen(false)}
+        className="lg:hidden fixed inset-0 z-[55] transition-opacity duration-300"
+        style={{
+          background: 'rgba(15,23,42,0.45)',
+          opacity: mobileMenuOpen ? 1 : 0,
+          pointerEvents: mobileMenuOpen ? 'auto' : 'none',
+        }}
+        aria-hidden={!mobileMenuOpen}
+      />
+
+      {/* Slide-in side drawer */}
+      <div
+        ref={drawerRef}
+        className="lg:hidden mt-9 fixed top-0 right-0 h-full z-[100] flex flex-col"
+        style={{
+          width: 'min(82vw, 340px)',
+          background: 'rgba(255,255,255,0.98)',
+          backdropFilter: 'blur(24px)',
+          borderLeft: '1px solid rgba(37,99,235,0.12)',
+          boxShadow: mobileMenuOpen ? '-12px 0 32px rgba(0,0,0,0.12)' : 'none',
+          transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform .32s cubic-bezier(.23,1,.32,1)',
+        }}
+        role="dialog"
+        aria-modal="true"
+        aria-hidden={!mobileMenuOpen}
+      >
+        <div className="flex items-center justify-between px-5 h-[64px]" style={{ borderBottom: '1px solid rgba(37,99,235,0.10)' }}>
+          <Link
+            to="/"
+            className="flex items-center gap-2"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           >
-            {navItems.map((item) => (
-              <Link
-                key={item.label}
-                to={item.isHash ? `/${item.href}` : item.href}
-                onClick={(e) => {
-                  handleNavClick(e, item);
-                  setMobileMenuOpen(false);
-                }}
-                className="block px-4 py-3 text-sm font-semibold rounded-xl"
-                style={{
-                  color: (!item.isHash && location.pathname === item.href) ? '#2563EB' : '#475569',
-                  background: (!item.isHash && location.pathname === item.href) ? 'rgba(37,99,235,.07)' : 'transparent',
-                }}
-              >
-                {item.label}
-              </Link>
-            ))}
-            <div className="pt-2 space-y-2">
-              <button
-                onClick={() => {
-                  openAuth('login');
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full text-left px-4 py-3 text-sm font-semibold rounded-xl"
-                style={{
-                  color: '#475569',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => {
-                  openAuth('register');
-                  setMobileMenuOpen(false);
-                }}
-                className="btn-responsive block w-full text-center font-bold text-white"
-                style={{
-                  background: 'var(--gg)',
-                  boxShadow: '0 4px 14px rgba(16,185,129,0.25)',
-                  borderRadius: 12,
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                Get Started Free
-              </button>
-            </div>
-          </div>
-        )}
-      </nav>
+            <img src={LOGO_SRC} alt="Autoniv" className="h-30 w-auto" />
+          </Link>
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            aria-label="Close menu"
+            className="p-2 rounded-lg"
+            style={{ color: '#475569', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-1">
+          {navItems.map((item) => (
+            <Link
+              key={item.label}
+              to={item.isHash ? `/${item.href}` : item.href}
+              onClick={(e) => {
+                handleNavClick(e, item);
+                setMobileMenuOpen(false);
+              }}
+              className="block px-4 py-3 text-sm font-semibold rounded-xl"
+              style={{
+                color: (!item.isHash && location.pathname === item.href) ? '#2563EB' : '#475569',
+                background: (!item.isHash && location.pathname === item.href) ? 'rgba(37,99,235,.07)' : 'transparent',
+              }}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+
+        <div className="px-5 py-5 mb-10 space-y-2" style={{ borderTop: '1px solid rgba(37,99,235,0.10)' }}>
+          <button
+            onClick={() => {
+              openAuth('login');
+              setMobileMenuOpen(false);
+            }}
+            className="block w-full text-left px-4 py-3 text-sm font-semibold rounded-xl"
+            style={{
+              color: '#475569',
+              background: 'none',
+              border: '1px solid rgba(37,99,235,0.15)',
+              cursor: 'pointer',
+            }}
+          >
+            Sign In
+          </button>
+          <button
+            onClick={() => {
+              openAuth('register');
+              setMobileMenuOpen(false);
+            }}
+            className="block w-full text-center font-bold text-white px-4 py-3 rounded-xl"
+            style={{
+              background: 'var(--gg)',
+              boxShadow: '0 4px 14px rgba(16,185,129,0.25)',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            Get Started Free
+          </button>
+        </div>
+      </div>
 
       <Suspense fallback={null}>
         <AuthDialog
