@@ -204,7 +204,7 @@ router.post('/', contentFilter('name', 'prompt'), async (req, res) => {
       return res.status(401).json({ message: 'User not found. Please log in again.' });
     }
 
-    const LIMITS = { pilot: 1, foundation: 2, scale: 3 };
+    const LIMITS = { free: 1, starter: 3, growth: 10 };
     const maxAgents = LIMITS[user.plan];
     if (maxAgents) {
       const count = await Agent.countDocuments({ userId: user._id });

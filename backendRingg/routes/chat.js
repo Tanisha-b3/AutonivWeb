@@ -15,8 +15,8 @@ router.use(authenticate);
 router.use(requireAdmin);
 
 const VALID_TYPES = ['receptionist', 'appointment', 'faq'];
-const VALID_PLANS = ['pilot', 'foundation', 'scale', 'dominate'];
-const PLAN_LIMITS = { pilot: 30, foundation: 120, scale: 400, dominate: 1200 };
+const VALID_PLANS = ['free', 'starter', 'growth', 'enterprise'];
+const PLAN_LIMITS = { free: 100, starter: 1000, growth: 5000, enterprise: 99999 };
 
 function escapeHtml(text) {
   const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
@@ -103,7 +103,7 @@ async function handleCreateUser(message) {
   const email = extractEmail(message);
   const password = extractPassword(message);
   const company = extractCompany(message);
-  const plan = extractPlan(message) || 'pilot';
+  const plan = extractPlan(message) || 'free';
 
   const missing = [];
   if (!name) missing.push('name');
@@ -248,7 +248,7 @@ async function handleUserInfo(message) {
 }
 
 function getHelp() {
-  return { text: `🤖 **Admin Chat Commands**\n\nHere's what I can do:\n\n**👥 Users**\n• \`create user name "John" email john@test.com password mypass company "Acme"\` — Add a new user\n• \`list users\` — Show all users\n• \`info user email john@test.com\` — Get user details\n• \`block user email john@test.com\` — Block a user\n• \`unblock user email john@test.com\` — Unblock a user\n• \`delete user email john@test.com\` — Remove a user\n\n**🤖 Agents**\n• \`create agent name "Support" type faq for user@test.com\` — Create an agent (assigns to first user if no email given)\n• \`list agents\` — Show all agents\n\n**💡 Tips**\n• You can use email or name to identify users\n• Agent types: \`receptionist\`, \`appointment\`, \`faq\`\n• Plans: \`basic\` (500 min), \`pro\` (2000 min), \`enterprise\` (10000 min)`, type: 'info' };
+  return { text: `🤖 **Admin Chat Commands**\n\nHere's what I can do:\n\n**👥 Users**\n• \`create user name "John" email john@test.com password mypass company "Acme"\` — Add a new user\n• \`list users\` — Show all users\n• \`info user email john@test.com\` — Get user details\n• \`block user email john@test.com\` — Block a user\n• \`unblock user email john@test.com\` — Unblock a user\n• \`delete user email john@test.com\` — Remove a user\n\n**🤖 Agents**\n• \`create agent name "Support" type faq for user@test.com\` — Create an agent (assigns to first user if no email given)\n• \`list agents\` — Show all agents\n\n**💡 Tips**\n• You can use email or name to identify users\n• Agent types: \`receptionist\`, \`appointment\`, \`faq\`\n• Plans: \`free\` (100 conv), \`starter\` (1,000 conv), \`growth\` (5,000 conv), \`enterprise\` (unlimited)`, type: 'info' };
 }
 
 const intentHandlers = {

@@ -85,7 +85,7 @@ async function handleCreateAgent(text, userId) {
   const user = await User.findById(userId).lean();
   if (!user) return { text: 'Your account was not found.', type: 'error' };
 
-  const LIMITS = { pilot: 1, foundation: 2, scale: 3 };
+  const LIMITS = { free: 1, starter: 3, growth: 10 };
   const maxAgents = LIMITS[user.plan];
   if (maxAgents) {
     const count = await Agent.countDocuments({ userId });
@@ -206,7 +206,7 @@ async function handleToggleAgent(text, userId) {
 }
 
 function getHelp() {
-  return { text: `🤖 **Agent Assistant**\n\nI can help you manage your voice agents:\n\n**Commands**\n• \`create agent name "My Agent" type receptionist\` — Create a new agent\n• \`list my agents\` — View all your agents\n• \`edit agent "My Agent" name "New Name"\` — Rename or change type\n• \`delete agent "My Agent"\` — Remove an agent\n• \`disable agent "My Agent"\` / \`enable agent "My Agent"\` — Toggle active status\n• \`help\` — Show this message\n\n**Agent types**: \`receptionist\`, \`appointment\`, \`faq\`\n**Plan limits**: Basic = 1 agent, Pro = 3 agents`, type: 'info' };
+  return { text: `🤖 **Agent Assistant**\n\nI can help you manage your voice agents:\n\n**Commands**\n• \`create agent name "My Agent" type receptionist\` — Create a new agent\n• \`list my agents\` — View all your agents\n• \`edit agent "My Agent" name "New Name"\` — Rename or change type\n• \`delete agent "My Agent"\` — Remove an agent\n• \`disable agent "My Agent"\` / \`enable agent "My Agent"\` — Toggle active status\n• \`help\` — Show this message\n\n**Agent types**: \`receptionist\`, \`appointment\`, \`faq\`\n**Plan limits**: Free = 1 agent, Starter = 3 agents, Growth = 10 agents`, type: 'info' };
 }
 
 function handleHelpTopic(text) {
@@ -215,7 +215,7 @@ function handleHelpTopic(text) {
   if (/edit|update|change|modify|rename/i.test(lower)) return { text: 'To edit an agent, use: `edit agent "Agent Name" name "New Name"`', type: 'info' };
   if (/delete|remove/i.test(lower)) return { text: 'To delete an agent, use: `delete agent "Agent Name"`', type: 'info' };
   if (/type|receptionist|appointment|faq/i.test(lower)) return { text: 'Agent types: **receptionist** (front desk), **appointment** (booking), **faq** (Q&A).', type: 'info' };
-  if (/limit|plan|basic|pro|max/i.test(lower)) return { text: '**Pilot** plan: 1 agent. **Foundation** plan: 2 agents. **Scale** plan: 3 agents. **Dominate**: unlimited. Go to Billing to upgrade.', type: 'info' };
+  if (/limit|plan|basic|pro|max|free|starter|growth/i.test(lower)) return { text: '**Free** plan: 1 agent. **Starter** plan: 3 agents. **Growth** plan: 10 agents. **Enterprise**: unlimited. Go to Billing to upgrade.', type: 'info' };
   return getHelp();
 }
 

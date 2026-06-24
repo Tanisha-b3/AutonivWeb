@@ -44,12 +44,12 @@ Autoniv is a professional multi-tenant SaaS platform for managing **AI voice age
 3. **FAQ Support Agent** — Knowledge base. Answers common questions instantly, escalates complex issues. Best for: customer support, e-commerce.
 
 ## Pricing Plans
-| Plan | Price | Calls/mo | Key Features |
+| Plan | Price | Conversations | Key Features |
 |------|-------|----------|-------------|
-| **Pilot** | Rs 4,999/mo | 30 | 1 AI Voice Assistant, lead capture & logging, WhatsApp delivery |
-| **Foundation** | Rs 14,999/mo | 120 | 1 AI Voice Assistant, basic analytics, free demo call |
-| **Scale (Most Popular)** | Rs 29,999/mo | 400 | Up to 3 AI Workflows, CRM integration, priority support |
-| **Dominate** | Rs 74,999/mo | 1,200 | Unlimited Workflows, dedicated account manager, white-label option |
+| **Free** | Rs 0 | 100 | 1 chatbot, website embed, basic FAQ & lead capture |
+| **Starter** | Rs 3,499/mo | 1,000 | 3 chatbots, WhatsApp + website, Hindi & Hinglish support |
+| **Growth (Most Popular)** | Rs 9,999/mo | 5,000 | 10 chatbots, all channels incl. Instagram, CRM & helpdesk integrations |
+| **Enterprise** | Custom | Unlimited | Unlimited chatbots, custom AI training, DPDP Act compliance |
 
 ## Add-Ons
 1. **Monthly Performance Report** — Rs 3,999-6,999/mo. Branded PDF with call quality scores, A/B outcomes, benchmarks.

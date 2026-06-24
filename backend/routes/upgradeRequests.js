@@ -9,12 +9,12 @@ const router = express.Router();
 router.use(authenticate);
 
 const PLAN_CONFIG = {
-  pilot:      { callsPerMonth: 30,    setupFee: 0,     monthlyPrice: 4999  },
-  foundation: { callsPerMonth: 120,   setupFee: 14999, monthlyPrice: 14999 },
-  scale:      { callsPerMonth: 400,   setupFee: 39999, monthlyPrice: 29999 },
-  dominate:   { callsPerMonth: 1200,  setupFee: 89999, monthlyPrice: 74999 },
+  free:       { callsPerMonth: 100,    setupFee: 0,    monthlyPrice: 0     },
+  starter:    { callsPerMonth: 1000,   setupFee: 0,    monthlyPrice: 3499  },
+  growth:     { callsPerMonth: 5000,   setupFee: 0,    monthlyPrice: 9999  },
+  enterprise: { callsPerMonth: 99999,  setupFee: 0,    monthlyPrice: 0     },
 };
-const VALID_UPGRADE_PLANS = ['foundation', 'scale', 'dominate'];
+const VALID_UPGRADE_PLANS = ['starter', 'growth', 'enterprise'];
 
 router.post('/', async (req, res) => {
   try {

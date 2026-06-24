@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
 
 const PLAN_CONFIG = {
-  pilot:      { callsPerMonth: 30,   setupFee: 0,     monthlyPrice: 4999  },
-  foundation: { callsPerMonth: 120,  setupFee: 14999, monthlyPrice: 14999 },
-  scale:      { callsPerMonth: 400,  setupFee: 39999, monthlyPrice: 29999 },
-  dominate:   { callsPerMonth: 1200, setupFee: 89999, monthlyPrice: 74999 },
+  free:       { callsPerMonth: 100,    setupFee: 0,    monthlyPrice: 0     },
+  starter:    { callsPerMonth: 1000,   setupFee: 0,    monthlyPrice: 3499  },
+  growth:     { callsPerMonth: 5000,   setupFee: 0,    monthlyPrice: 9999  },
+  enterprise: { callsPerMonth: 99999,  setupFee: 0,    monthlyPrice: 0     },
 };
 
 const userSchema = new mongoose.Schema(
@@ -26,12 +26,12 @@ const userSchema = new mongoose.Schema(
     phoneNumber: { type: String,  default: '',    maxlength: 30 },
     role:        { type: String,  enum: ['admin', 'user'], default: 'user', index: true },
     company:     { type: String,  default: '',    maxlength: 200 },
-    plan:        { type: String,  default: 'pilot', enum: ['pilot', 'foundation', 'scale', 'dominate'] },
+    plan:        { type: String,  default: 'free', enum: ['free', 'starter', 'growth', 'enterprise'] },
 
     minutesUsed:  { type: Number,  default: 0 },
-    minutesLimit: { type: Number,  default: 30 },
+    minutesLimit: { type: Number,  default: 100 },
     callsUsed:    { type: Number,  default: 0 },
-    callsLimit:   { type: Number,  default: 30 },
+    callsLimit:   { type: Number,  default: 100 },
 
     isActive: { type: Boolean, default: true, index: true },
 

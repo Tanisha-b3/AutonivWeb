@@ -21,10 +21,10 @@ const router = express.Router();
 router.use(authenticate);
 
 const PLAN_CONFIG = {
-  pilot:      { callsPerMonth: 30,    setupFee: 0,     monthlyPrice: 4999  },
-  foundation: { callsPerMonth: 120,   setupFee: 14999, monthlyPrice: 14999 },
-  scale:      { callsPerMonth: 400,   setupFee: 39999, monthlyPrice: 29999 },
-  dominate:   { callsPerMonth: 1200,  setupFee: 89999, monthlyPrice: 74999 },
+  free:       { callsPerMonth: 100,    setupFee: 0,    monthlyPrice: 0     },
+  starter:    { callsPerMonth: 1000,   setupFee: 0,    monthlyPrice: 3499  },
+  growth:     { callsPerMonth: 5000,   setupFee: 0,    monthlyPrice: 9999  },
+  enterprise: { callsPerMonth: 99999,  setupFee: 0,    monthlyPrice: 0     },
 };
 const VALID_PLANS = Object.keys(PLAN_CONFIG);
 
@@ -86,7 +86,7 @@ router.post('/', requireAdmin, contentFilter('name', 'company'), async (req, res
     const password = typeof req.body?.password === 'string' ? req.body.password : '';
     const company = trimString(req.body?.company, 200);
     const phoneNumber = trimString(req.body?.phoneNumber, 30);
-    const plan = typeof req.body?.plan === 'string' ? req.body.plan : 'pilot';
+    const plan = typeof req.body?.plan === 'string' ? req.body.plan : 'free';
 
     if (!name) return res.status(400).json({ message: 'Name is required' });
     if (!isValidEmail(email)) return res.status(400).json({ message: 'Valid email is required' });
@@ -145,7 +145,7 @@ router.put('/:id', contentFilter('name', 'company'), async (req, res) => {
 
     const isSelf = req.user.role !== 'admin';
     const currentPlan = isSelf ? user.plan : plan;
-    const planConfig = PLAN_CONFIG[currentPlan] || PLAN_CONFIG.pilot;
+    const planConfig = PLAN_CONFIG[currentPlan] || PLAN_CONFIG.free;
 
     const updates = {
       name: typeof name === 'string' ? name.trim().slice(0, 100) : user.name,
