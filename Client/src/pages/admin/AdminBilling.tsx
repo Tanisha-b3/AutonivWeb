@@ -552,9 +552,6 @@ export function AdminBilling() {
                       <span className="text-3xl font-extrabold text-slate-800">₹{plan.price.toLocaleString()}</span>
                       <span className="text-xs text-slate-400">/mo</span>
                     </div>
-                    {plan.annualPrice && (
-                      <p className="text-[10px] font-bold text-[#2563eb] mt-1">Annual: ₹{plan.annualPrice.toLocaleString()}/mo</p>
-                    )}
                     <div className="h-px my-4 bg-slate-200" />
                     <ul className="space-y-2.5 mb-5">
                       {plan.features.map((f, i) => (

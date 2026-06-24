@@ -211,11 +211,6 @@ export function UserBilling() {
                   </span>
                   {currentPlan.id !== 'enterprise' && <span className="text-slate-500 font-bold text-xs">/ month</span>}
                 </div>
-                {currentPlan.annualPrice && (
-                  <p className="text-[11px] text-emerald-600 mt-2 font-bold flex items-center gap-1">
-                    🎉 Annual rate: ₹{currentPlan.annualPrice.toLocaleString()}/mo — save {Math.round((1 - currentPlan.annualPrice / currentPlan.price) * 100)}%
-                  </p>
-                )}
                 {currentPlan.setupFee > 0 && (
                   <p className="text-[10px] text-slate-400 mt-1 font-semibold">One-time setup fee: ₹{currentPlan.setupFee.toLocaleString()}</p>
                 )}
@@ -487,9 +482,6 @@ export function UserBilling() {
                               </span>
                               {plan.id !== 'enterprise' && <span className="text-[10px] text-slate-400 font-bold">/mo</span>}
                             </div>
-                            {plan.annualPrice && (
-                              <p className="text-[10px] text-emerald-600 mt-1 font-bold">Annual: ₹{plan.annualPrice.toLocaleString()}/mo — save {Math.round((1 - plan.annualPrice / plan.price) * 100)}%</p>
-                            )}
                             <p className="text-[9px] text-slate-400 mt-1 font-semibold">
                               {plan.id === 'enterprise' ? 'Custom pricing' : `Setup fee: ₹${plan.setupFee.toLocaleString()}`}
                             </p>
