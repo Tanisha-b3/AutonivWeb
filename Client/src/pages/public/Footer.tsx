@@ -333,16 +333,7 @@ export default function Footer() {
                 animation: 'pulse-glow 2s ease-in-out infinite',
               }}
             />
-            <p
-              style={{
-                fontSize: 11.5,
-                color: 'rgba(148,175,210,0.38)',
-                letterSpacing: '0.04em',
-                margin: 0,
-              }}
-            >
-              Built with AI · Powered by Vapi
-            </p>
+
           </div>
         </div>
 

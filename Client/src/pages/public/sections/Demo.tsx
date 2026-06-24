@@ -301,15 +301,15 @@ export function Demo() {
                                 <rect
                                   key={i}
                                   x={i * 4}
-                                  y={10 - [2, 3, 1.5, 2.5, 1.5][i] / 2}
+                                  y={10 - [3, 4.5, 2.5, 4, 2][i] / 2}
                                   width="2"
                                   rx="1"
-                                  height={[2, 3, 1.5, 2.5, 1.5][i]}
+                                  height={[3, 4.5, 2.5, 4, 2][i]}
                                   fill="#34D399"
                                   style={{
                                     animation:
                                       speaking !== "idle" || demoRunning
-                                        ? `waveBounce 2.4s ease-in-out ${i * 0.15}s infinite`
+                                        ? `waveBounce 1.6s ease-in-out ${i * 0.15}s infinite`
                                         : "none",
                                   }}
                                 />

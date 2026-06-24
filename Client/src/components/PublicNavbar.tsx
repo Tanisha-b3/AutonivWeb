@@ -99,6 +99,7 @@ export function PublicNavbar() {
     { label: 'News', href: '/news' },
     { label: 'Add-Ons', href: '#addons', isHash: true },
     { label: 'Contact', href: '#contact', isHash: true },
+    {label:"About", href:"/about"}
   ];
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, item: typeof navItems[0]) => {

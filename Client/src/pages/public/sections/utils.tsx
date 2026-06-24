@@ -125,7 +125,7 @@ export function SpectrumField({ active }: { active: boolean }) {
 
           const h = Math.max(
             2,
-            Math.min(10, envelope * jitter * 10 * centerGap),
+            Math.min(16, envelope * jitter * 16 * centerGap),
           );
 
           const isLeftHalf = i < total / 2;
@@ -147,7 +147,7 @@ export function SpectrumField({ active }: { active: boolean }) {
                     : "0 0 4px rgba(59,130,246,0.3)"
                   : "none",
                 animation: active
-                  ? `waveBounce ${4.0 + (i % 6) * 0.35}s ease-in-out ${i * 0.05}s infinite`
+                  ? `waveBounce ${3.0 + (i % 6) * 0.35}s ease-in-out ${i * 0.05}s infinite`
                   : "none",
                 transition: "height .5s ease, opacity .5s ease",
                 flexShrink: 0,

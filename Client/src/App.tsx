@@ -4,6 +4,7 @@ import { logout, checkAuth, login as loginAction, register as registerAction, ve
 import { useEffect, lazy, Suspense, type ReactNode } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Breadcrumbs } from './components/Breadcrumbs';
+import ScrollToTop from './components/ScrollToTop';
 import LoadingScreen from './components/LoadingScreen';
 // import AIAssistantChat from './components/AIAssistantChat';
 
@@ -13,7 +14,7 @@ const ForgotPassword = lazy(() => import('./pages/public/ForgotPassword').then(m
 const PrivacyPolicy = lazy(() => import('./pages/public/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
 const TermsConditions = lazy(() => import('./pages/public/TermsConditions').then(m => ({ default: m.TermsConditions })));
 const HelpCenter = lazy(() => import('./pages/public/HelpCenter').then(m => ({ default: m.HelpCenter })));
-const AboutUs = lazy(() => import('./pages/public/AboutUs').then(m => ({ default: m.AboutUs })));
+const AboutUs = lazy(() => import('./pages/public/AboutUs').then(m => ({ default: m.AboutUS })));
 const Careers = lazy(() => import('./pages/public/Careers').then(m => ({ default: m.Careers })));
 const Blog = lazy(() => import('./pages/public/Blog').then(m => ({ default: m.Blog })));
 const Press = lazy(() => import('./pages/public/Press').then(m => ({ default: m.Press })));
@@ -143,6 +144,7 @@ function AppRoutes() {
 
   return (
     <Suspense fallback={<LoadingScreen />}>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={home} />
         <Route path="/login" element={home} />

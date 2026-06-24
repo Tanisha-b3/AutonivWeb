@@ -153,8 +153,7 @@ export function Industry({ activeUseCase, setActiveUseCase, openAuth }: {
                 <p className="text-xs mt-1" style={{ color: "#475569" }}>Our API supports webhooks, real-time events, and everything in between.</p>
               </div>
               <div className="flex gap-3">
-                <button className="px-4 py-2 rounded-xl text-xs font-semibold text-white" style={{ background: "var(--gg)", boxShadow: "0 4px 16px rgba(16,185,129,0.2)" }}>View API Docs →</button>
-                <button className="px-4 py-2 rounded-xl text-xs font-medium" style={{ border: "1px solid rgba(37,99,235,0.2)", color: "#2563EB" }}>Contact Support</button>
+                <button onClick={() => { const el = document.getElementById('contact'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="px-4 py-2 rounded-xl text-xs font-semibold text-white" style={{ background: "var(--gg)", boxShadow: "0 4px 16px rgba(16,185,129,0.2)", border: 'none', cursor: 'pointer' }}>Contact Support</button>
               </div>
             </div>
           </Reveal>

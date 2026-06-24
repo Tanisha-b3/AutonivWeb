@@ -578,6 +578,7 @@ textarea::placeholder {
   border-radius: 28px;
   overflow: hidden;
   margin: 18px auto;
+  scroll-margin-top: 100px;
 }
 .section-box.white{
   background: #ffffff;
