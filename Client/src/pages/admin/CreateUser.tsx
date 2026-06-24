@@ -11,10 +11,10 @@ const fadeUp = {
 };
 
 const PLAN_OPTIONS = [
-  { value: 'pilot', label: 'Pilot (30 calls · ₹4,999)' },
-  { value: 'foundation', label: 'Foundation (120 calls · ₹14,999)' },
-  { value: 'scale', label: 'Scale (400 calls · ₹29,999)' },
-  { value: 'dominate', label: 'Dominate (1,200 calls · ₹74,999)' },
+  { value: 'free', label: 'Free (100 conversations · ₹0)' },
+  { value: 'starter', label: 'Starter (1,000 conversations · ₹3,499)' },
+  { value: 'growth', label: 'Growth (5,000 conversations · ₹9,999)' },
+  { value: 'enterprise', label: 'Enterprise (Unlimited)' },
 ];
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
@@ -90,9 +90,9 @@ export function CreateUser() {
     email: '',
     password: '',
     company: '',
-    plan: 'pilot',
+    plan: 'free',
     phoneNumber: '',
-    minutesLimit: 30,
+    minutesLimit: 100,
   });
 
   const handleSubmit = useCallback(async () => {

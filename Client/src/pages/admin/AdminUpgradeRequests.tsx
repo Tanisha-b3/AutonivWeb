@@ -72,10 +72,10 @@ const FILTERS = [
 ];
 
 const planGradients: Record<string, string> = {
-  pilot: 'linear-gradient(135deg, #06b6d4, #0891b2)',
-  foundation: 'linear-gradient(135deg, #2563EB, #1d4ed8)',
-  scale: 'linear-gradient(135deg, #10B981, #2563EB)',
-  dominate: 'linear-gradient(135deg, #06b6d4, #0e7490)',
+  free: 'linear-gradient(135deg, #94a3b8, #64748b)',
+  starter: 'linear-gradient(135deg, #2563EB, #1d4ed8)',
+  growth: 'linear-gradient(135deg, #10B981, #059669)',
+  enterprise: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
 };
 
 export function AdminUpgradeRequests() {

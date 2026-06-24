@@ -5,7 +5,7 @@ export interface User {
   phoneNumber?: string;
   role: 'admin' | 'user';
   company?: string;
-  plan: 'pilot' | 'foundation' | 'scale' | 'dominate';
+  plan: 'free' | 'starter' | 'growth' | 'enterprise';
   minutesUsed: number;
   minutesLimit: number;
   callsUsed: number;

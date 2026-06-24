@@ -1062,9 +1062,9 @@ function getGreeting() {
   return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 }
 function getPlanColor(plan: string) {
-  return plan === 'dominate' ? { bg: 'bg-indigo-50', border: 'border-indigo-200', text: 'text-indigo-600' }
-    : plan === 'scale'     ? { bg: 'bg-[var(--primary-soft)]', border: 'border-[var(--border)]', text: 'text-[var(--primary)]' }
-    : plan === 'foundation'? { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-600' }
+  return plan === 'enterprise' ? { bg: 'bg-indigo-50', border: 'border-indigo-200', text: 'text-indigo-600' }
+    : plan === 'growth'       ? { bg: 'bg-[var(--primary-soft)]', border: 'border-[var(--border)]', text: 'text-[var(--primary)]' }
+    : plan === 'starter'      ? { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-600' }
     : { bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-600' };
 }
 function getCallDurSec(call: { startedAt?: string | null; endedAt?: string | null; duration?: number }): number {
@@ -1242,7 +1242,7 @@ export function UserDashboard() {
   }, [filteredCalls, timeFilter]);
 
   const s = stats || (cachedStats as MyStats | null) || { agentCount: 0, callCount: 0, minuteUsed: 0, leadCount: 0 };
-  const planColors = getPlanColor(user?.plan || 'pilot');
+  const planColors = getPlanColor(user?.plan || 'free');
   
   const hasNoData  = !loading && s.agentCount === 0 && s.callCount === 0 && myAgents.length === 0;
   const showEmptyGuide = hasNoData && !showOnboarding;
@@ -1469,7 +1469,7 @@ export function UserDashboard() {
 
           <div className="flex items-center gap-2 flex-wrap">
             <div className={`px-3 py-1.5 rounded-full border text-[9px] font-bold uppercase tracking-wider ${planColors.bg} ${planColors.border} ${planColors.text}`}>
-              {user?.plan || 'Pilot'} Plan
+              {user?.plan ? user.plan.charAt(0).toUpperCase() + user.plan.slice(1) : 'Free'} Plan
             </div>
 
             {/* Time filters switch */}

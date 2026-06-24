@@ -105,7 +105,7 @@ const AGENT_TEMPLATES = [
   },
 ];
 
-const PLAN_LIMITS: Record<string, number> = { pilot: 1, foundation: 2, scale: 3, dominate: 0 };
+const PLAN_LIMITS: Record<string, number> = { free: 1, starter: 3, growth: 10, enterprise: 0 };
 
 const DEFAULT_FORM_DATA = {
   name: '', type: 'receptionist', prompt: '', language: 'en', voiceId: VOICE_OPTIONS[0].value,
@@ -1048,7 +1048,7 @@ export function MyAgents() {
     dispatch(fetchMyAgents({ page, limit: 20 }));
   }, [dispatch, page]);
 
-  const plan = user?.plan || 'pilot';
+  const plan = user?.plan || 'free';
   const maxAgents = PLAN_LIMITS[plan] || 3;
   const atLimit = maxAgents ? agents.length >= maxAgents : false;
 

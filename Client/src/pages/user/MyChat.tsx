@@ -61,7 +61,7 @@ const FAQ_TOPICS = [
   { icon: '🎬', question: 'Can I try a demo?' },
   { icon: '📊', question: 'What analytics do you offer?' },
   { icon: '⚡', question: 'How fast is the response time?' },
-  { icon: '⭐', question: 'What is included in the Scale plan?' },
+  { icon: '⭐', question: 'What is included in the Growth plan?' },
   { icon: '🏪', question: 'Do you have a white-label option?' },
   { icon: '📱', question: 'What is WhatsApp follow-up?' },
   { icon: '↗️', question: 'How do I upgrade my plan?' },

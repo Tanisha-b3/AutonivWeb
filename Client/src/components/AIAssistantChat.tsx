@@ -43,10 +43,10 @@ const KB = {
     { title: 'Enterprise Security', desc: 'Bank-grade encryption, SOC 2 certified compliance.', metric: 'SOC 2 certified' },
   ],
   plans: [
-    { name: 'Pilot', price: 4999, calls: 30, features: ['1 AI Voice Assistant', '30 calls/month', 'Lead capture & logging'] },
-    { name: 'Foundation', price: 14999, calls: 120, features: ['1 AI Voice Assistant', '120 calls/month', 'Basic analytics'] },
-    { name: 'Scale', price: 29999, calls: 400, features: ['Up to 3 AI Workflows', '400 calls/month', 'CRM integration'], badge: 'Most Popular' },
-    { name: 'Dominate', price: 74999, calls: 1200, features: ['Unlimited Workflows', '1,200 calls/month', 'Dedicated account manager'] },
+    { name: 'Free', price: 0, calls: 100, features: ['1 chatbot', '100 conversations/month', 'Website embed', 'Basic FAQ & lead capture'] },
+    { name: 'Starter', price: 3499, calls: 1000, features: ['3 chatbots', '1,000 conversations/month', 'WhatsApp + website', 'Hindi & Hinglish support'] },
+    { name: 'Growth', price: 9999, calls: 5000, features: ['10 chatbots', '5,000 conversations/month', 'All channels incl. Instagram', 'CRM & helpdesk integrations'], badge: 'Most Popular' },
+    { name: 'Enterprise', price: 0, calls: 99999, features: ['Unlimited chatbots', 'Unlimited conversations', 'Custom AI model training', 'DPDP Act 2023 compliance'] },
   ],
 };
 
@@ -57,7 +57,7 @@ const KB = {
 function isOffTopicQuestion(input: string): boolean {
   const q = input.toLowerCase().trim();
   return (
-    /feature|pric|plan|cost|pilot|foundation|scale|dominate|agent|receptionist|appointment|faq|demo|integrat|use case|healthcare|real estate|finance|ecommerce|language|voice|analytic|security|what|how|tell me|show|compare|help|who are you|commands/.test(q)
+    /feature|pric|plan|cost|free|starter|growth|enterprise|agent|receptionist|appointment|faq|demo|integrat|use case|healthcare|real estate|finance|ecommerce|language|voice|analytic|security|what|how|tell me|show|compare|help|who are you|commands/.test(q)
   );
 }
 
@@ -222,16 +222,16 @@ function generateResponse(input: string): { text: string; triggerLead?: boolean 
 
   if (/pric|plan|cost|subscription|how much|charge/.test(q)) {
     if (/compare|vs|which|best|recommend/.test(q)) {
-      return { text: "**Plan Comparison**\n\n| Plan | Price | Calls |\n|------|-------|-------|\n| Pilot | ₹4,999/mo | 30 |\n| Foundation | ₹14,999/mo | 120 |\n| Scale ⭐ | ₹29,999/mo | 400 |\n| Dominate | ₹74,999/mo | 1,200 |\n\nInterested? Share your details and our team will help you choose the best plan!", triggerLead: true };
+      return { text: "**Plan Comparison**\n\n| Plan | Price | Conversations |\n|------|-------|-------|\n| Free | ₹0 | 100 |\n| Starter | ₹3,499/mo | 1,000 |\n| Growth ⭐ | ₹9,999/mo | 5,000 |\n| Enterprise | Custom | Unlimited |\n\nInterested? Share your details and our team will help you choose the best plan!", triggerLead: true };
     }
     const plans = KB.plans.map(p => `**${p.name}** — ₹${p.price.toLocaleString()}/mo\n${p.features.slice(0, 2).map(f => `- ${f}`).join('\n')}`).join('\n\n');
     return { text: `**Autoniv Pricing**\n\n${plans}\n\nWant to get started? Share your details and we'll set you up!`, triggerLead: true };
   }
 
-  if (/\bpilot\b/.test(q)) return { text: "**Pilot Plan** — ₹4,999/mo\n\n- 30 calls/month\n- 1 AI Voice Assistant\n- Lead capture & logging\n- WhatsApp delivery\n\nWant to try it? Share your details!", triggerLead: true };
-  if (/\bfoundation\b/.test(q)) return { text: "**Foundation Plan** — ₹14,999/mo\n\n- 120 calls/month\n- 1 AI Voice Assistant\n- Basic analytics\n- Free demo call\n\nReady to start? Share your details!", triggerLead: true };
-  if (/\bscale\b/.test(q)) return { text: "**Scale Plan** ⭐ — ₹29,999/mo\n\n- 400 calls/month\n- Up to 3 AI Workflows\n- CRM integration\n- Priority support\n\nMost popular! Share your details to get started!", triggerLead: true };
-  if (/\bdominate\b/.test(q)) return { text: "**Dominate Plan** — ₹74,999/mo\n\n- 1,200 calls/month\n- Unlimited Workflows\n- Dedicated account manager\n- White-label option\n\nEnterprise ready? Share your details!", triggerLead: true };
+  if (/\bfree\b/.test(q) && /plan|pric/.test(q)) return { text: "**Free Plan** — ₹0 forever\n\n- 100 conversations/month\n- 1 chatbot\n- Website embed\n- Basic FAQ & lead capture\n\nWant to try it? Share your details!", triggerLead: true };
+  if (/\bstarter\b/.test(q)) return { text: "**Starter Plan** — ₹3,499/mo\n\n- 1,000 conversations/month\n- 3 chatbots\n- WhatsApp + website\n- Hindi & Hinglish support\n\nReady to start? Share your details!", triggerLead: true };
+  if (/\bgrowth\b/.test(q)) return { text: "**Growth Plan** ⭐ — ₹9,999/mo\n\n- 5,000 conversations/month\n- 10 chatbots\n- All channels incl. Instagram\n- CRM & helpdesk integrations\n\nMost popular! Share your details to get started!", triggerLead: true };
+  if (/\benterprise\b/.test(q)) return { text: "**Enterprise Plan** — Custom pricing\n\n- Unlimited chatbots\n- Unlimited conversations\n- Custom AI model training\n- DPDP Act 2023 compliance\n\nEnterprise ready? Share your details!", triggerLead: true };
 
   if (/agent|receptionist|appointment|faq|voice assistant|ai agent|bot/.test(q)) {
     if (/receptionist|front desk/.test(q)) return { text: "**Receptionist Agent**\n\n- Front desk & general inquiries\n- Greets callers warmly\n- Collects name, phone, and purpose\n- Available 24/7\n\n**Best For**: Healthcare, real estate, any business needing a virtual front desk.\n\nWant one? Share your details!", triggerLead: true };

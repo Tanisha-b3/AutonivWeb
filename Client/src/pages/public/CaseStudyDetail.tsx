@@ -1,161 +1,9 @@
 import { useState } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { STUDIES } from './caseStudiesData';
 import Footer from './Footer';
 import ScrollToTop from '../../components/ScrollToTop';
-import { USPSlider } from './sections/USPSlider';
-
-const LOGO_SRC = '/autoniv.webp';
-
-const navItems = [
-  { label: 'Agents', href: '/agents' },
-  { label: 'Case Studies', href: '/case-studies' },
-  { label: 'Pricing', href: '/pricing' },
-  { label: 'News', href: '/news' },
-];
-
-/* ─── Nav ─── */
-function Nav({
-  mobileMenuOpen,
-  setMobileMenuOpen,
-}: {
-  mobileMenuOpen: boolean;
-  setMobileMenuOpen: (v: boolean) => void;
-}) {
-  const location = useLocation();
-  return (
-    <nav
-      className="fixed top-[36px] inset-x-0 z-50"
-      style={{
-        background: 'rgba(255,255,255,0.92)',
-        backdropFilter: 'blur(24px)',
-        borderBottom: '1px solid rgba(37,99,235,0.12)',
-      }}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[68px] flex items-center justify-between">
-        <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <img src={LOGO_SRC} alt="Autoniv" className="h-20 sm:h-24 w-auto object-contain" />
-        </Link>
-
-        <div className="hidden md:flex items-center gap-6">
-          {navItems.map((item) => (
-            <Link
-              key={item.label}
-              to={item.href}
-              className="text-sm font-semibold transition-colors"
-              style={{
-                color: location.pathname === item.href ? '#2563EB' : '#475569',
-              }}
-              onMouseEnter={(e) => {
-                if (location.pathname !== item.href) e.currentTarget.style.color = '#0a0a0a';
-              }}
-              onMouseLeave={(e) => {
-                if (location.pathname !== item.href) e.currentTarget.style.color = '#475569';
-              }}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
-
-        <div className="hidden md:flex items-center gap-3">
-          <Link
-            to="/"
-            className="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-            style={{ color: '#475569' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = '#2563EB';
-              e.currentTarget.style.background = 'rgba(37,99,235,0.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = '#475569';
-              e.currentTarget.style.background = 'transparent';
-            }}
-          >
-            Sign In
-          </Link>
-          <Link
-            to="/"
-            className="px-5 py-2.5 text-sm font-bold text-white rounded-full transition-all"
-            style={{
-              background: 'linear-gradient(135deg,#2563EB,#10B981)',
-              boxShadow: '0 4px 20px rgba(16,185,129,0.35)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 8px 30px rgba(16,185,129,0.5)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 20px rgba(16,185,129,0.35)';
-            }}
-          >
-            Get Started Free
-          </Link>
-        </div>
-
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2"
-          style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer' }}
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {mobileMenuOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            )}
-          </svg>
-        </button>
-      </div>
-
-      {mobileMenuOpen && (
-        <div
-          className="md:hidden px-5 py-4 space-y-1"
-          style={{
-            background: 'rgba(255,255,255,0.98)',
-            backdropFilter: 'blur(24px)',
-            borderTop: '1px solid rgba(37,99,235,0.10)',
-          }}
-        >
-          {navItems.map((item) => (
-            <Link
-              key={item.label}
-              to={item.href}
-              onClick={() => setMobileMenuOpen(false)}
-              className="block px-4 py-3 text-sm font-semibold rounded-xl"
-              style={{
-                color: location.pathname === item.href ? '#2563EB' : '#475569',
-                background:
-                  location.pathname === item.href ? 'rgba(37,99,235,0.07)' : 'transparent',
-              }}
-            >
-              {item.label}
-            </Link>
-          ))}
-          <div className="pt-2 flex flex-col gap-2">
-            <Link
-              to="/"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block text-center px-4 py-3 text-sm font-semibold rounded-xl"
-              style={{ color: '#475569' }}
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block text-center px-4 py-3 text-sm font-bold text-white rounded-xl"
-              style={{ background: 'linear-gradient(135deg,#2563EB,#10B981)' }}
-            >
-              Get Started Free
-            </Link>
-          </div>
-        </div>
-      )}
-    </nav>
-  );
-}
+import { Nav } from './CaseStudies';
 
 /* ─── FAQ Item ─── */
 function FAQItem({ question, answer }: { question: string; answer: string }) {
@@ -224,7 +72,6 @@ export default function CaseStudyDetail() {
         color: '#0a0a0a',
       }}
     >
-      <USPSlider />
       <Nav mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
 
       <div className="relative z-10" style={{ paddingTop: 130, paddingBottom: 80 }}>
@@ -268,7 +115,7 @@ export default function CaseStudyDetail() {
 
           {/* Key Metrics */}
           <div 
-            className="grid grid-cols-3 gap-4 mb-12 p-6 rounded-2xl"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12 p-6 rounded-2xl"
             style={{
               background: '#ffffff',
               border: '1px solid rgba(37,99,235,0.06)',
@@ -358,14 +205,14 @@ export default function CaseStudyDetail() {
           <div className="mb-12">
             <h2 className="text-2xl font-bold text-[#0a0a0a] mb-6">{story.impact.title}</h2>
             <div 
-              className="rounded-2xl overflow-hidden"
+              className="rounded-2xl overflow-hidden overflow-x-auto"
               style={{
                 background: '#ffffff',
                 border: '1px solid rgba(37,99,235,0.06)',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
               }}
             >
-              <table className="w-full text-left">
+              <table className="w-full text-left min-w-[420px] sm:min-w-0">
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(37,99,235,0.08)' }}>
                     <th className="p-4 text-xs font-bold uppercase tracking-wider" style={{ color: '#94a3b8' }}>Metric</th>

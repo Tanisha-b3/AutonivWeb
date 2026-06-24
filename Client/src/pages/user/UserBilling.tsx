@@ -7,92 +7,92 @@ import { checkAuth } from '../../store/slices/authSlice';
 
 const plans = [
   {
-    id: 'pilot',
-    name: 'Pilot',
-    tagline: 'Test the system. See results in 30 days.',
-    price: 4999,
+    id: 'free',
+    name: 'Free',
+    tagline: 'For individuals & small projects testing the waters.',
+    price: 0,
     annualPrice: null,
     setupFee: 0,
-    callsPerMonth: 30,
+    callsPerMonth: 100,
     badge: null,
+    icon: '💬',
     features: [
-      { text: '1 AI Voice Assistant', included: true },
-      { text: '30 calls / month', included: true },
-      { text: 'Lead capture & logging', included: true },
-      { text: 'WhatsApp delivery', included: true },
-      { text: '30-day upgrade path', included: true },
-      { text: 'CRM integration', included: false },
-      { text: 'Analytics dashboard', included: false },
+      { text: '1 chatbot', included: true },
+      { text: '100 conversations / month', included: true },
+      { text: 'Website embed', included: true },
+      { text: 'Basic FAQ & lead capture', included: true },
+      { text: 'WhatsApp integration', included: false },
+      { text: 'Remove branding', included: false },
     ],
-    cta: 'Start Free Trial',
+    cta: 'Get started free',
     style: 'dashed',
-    accentColor: 'from-sky-400 to-blue-500',
+    accentColor: 'from-slate-400 to-slate-500',
   },
   {
-    id: 'foundation',
-    name: 'Foundation',
-    tagline: 'For businesses automating first conversations.',
-    price: 14999,
-    annualPrice: 11999,
-    setupFee: 14999,
-    callsPerMonth: 120,
+    id: 'starter',
+    name: 'Starter',
+    tagline: 'Freelancers & small businesses getting serious.',
+    price: 3499,
+    annualPrice: null,
+    setupFee: 0,
+    callsPerMonth: 1000,
     badge: null,
+    icon: '🚀',
     features: [
-      { text: '1 AI Voice Assistant', included: true },
-      { text: '120 calls / month', included: true },
-      { text: 'Lead capture & logging', included: true },
-      { text: 'WhatsApp data delivery', included: true },
-      { text: 'Basic analytics', included: true },
-      { text: 'Free demo call', included: true },
+      { text: '3 chatbots', included: true },
+      { text: '1,000 conversations / month', included: true },
+      { text: 'WhatsApp + website', included: true },
+      { text: 'Hindi & Hinglish support', included: true },
+      { text: 'Remove branding', included: true },
       { text: 'CRM integration', included: false },
     ],
-    cta: 'Book Demo Call',
+    cta: 'Start 14-day trial',
     style: 'solid',
     accentColor: 'from-blue-500 to-indigo-600',
   },
   {
-    id: 'scale',
-    name: 'Scale',
-    tagline: 'For teams replacing a full calling function.',
-    price: 29999,
-    annualPrice: 23999,
-    setupFee: 39999,
-    callsPerMonth: 400,
+    id: 'growth',
+    name: 'Growth',
+    tagline: 'SMBs scaling support, sales & engagement.',
+    price: 9999,
+    annualPrice: null,
+    setupFee: 0,
+    callsPerMonth: 5000,
     badge: 'Most Popular',
+    icon: '📈',
     features: [
-      { text: 'Up to 3 AI Workflows', included: true },
-      { text: '400 calls / month', included: true },
-      { text: 'Custom call scripts', included: true },
-      { text: 'CRM integration', included: true },
-      { text: 'Analytics dashboard', included: true },
-      { text: 'Priority support', included: true },
-      { text: 'Free demo call', included: true },
+      { text: '10 chatbots', included: true },
+      { text: '5,000 conversations / month', included: true },
+      { text: 'All channels incl. Instagram', included: true },
+      { text: '10+ Indian languages', included: true },
+      { text: 'CRM & helpdesk integrations', included: true },
+      { text: 'Full analytics dashboard', included: true },
     ],
-    cta: 'Book Demo Call',
+    cta: 'Start 14-day trial',
     style: 'featured',
-    accentColor: 'from-indigo-600 to-violet-600',
+    accentColor: 'from-emerald-500 to-teal-600',
   },
   {
-    id: 'dominate',
-    name: 'Dominate',
-    tagline: "For high-volume operations that can't slow down.",
-    price: 74999,
-    annualPrice: 59999,
-    setupFee: 89999,
-    callsPerMonth: 1200,
+    id: 'enterprise',
+    name: 'Enterprise',
+    tagline: 'Large businesses, compliance & custom AI.',
+    price: 0,
+    annualPrice: null,
+    setupFee: 0,
+    callsPerMonth: 99999,
     badge: null,
+    icon: '🏢',
     features: [
-      { text: 'Unlimited Workflows', included: true },
-      { text: '1,200 calls / month', included: true },
-      { text: 'Advanced automation', included: true },
-      { text: 'Full API & CRM integrations', included: true },
+      { text: 'Unlimited chatbots', included: true },
+      { text: 'Unlimited conversations', included: true },
+      { text: 'Custom AI model training', included: true },
+      { text: 'DPDP Act 2023 compliance', included: true },
+      { text: 'India-region cloud hosting', included: true },
       { text: 'Dedicated account manager', included: true },
-      { text: 'Custom reporting', included: true },
-      { text: 'White-label option', included: true },
     ],
     cta: 'Contact Sales',
     style: 'solid',
-    accentColor: 'from-emerald-500 to-teal-600',
+    accentColor: 'from-violet-500 to-purple-600',
   },
 ];
 
@@ -207,9 +207,9 @@ export function UserBilling() {
                 <p className="text-xs text-slate-500 mt-1.5 font-semibold leading-relaxed max-w-xs">{currentPlan.tagline}</p>
                 <div className="flex items-baseline gap-1.5 mt-5">
                   <span className="text-4xl font-black text-slate-800 tracking-tight">
-                    ₹{currentPlan.price.toLocaleString()}
+                    {currentPlan.id === 'enterprise' ? 'Custom' : `₹${currentPlan.price.toLocaleString()}`}
                   </span>
-                  <span className="text-slate-500 font-bold text-xs">/ month</span>
+                  {currentPlan.id !== 'enterprise' && <span className="text-slate-500 font-bold text-xs">/ month</span>}
                 </div>
                 {currentPlan.annualPrice && (
                   <p className="text-[11px] text-emerald-600 mt-2 font-bold flex items-center gap-1">
@@ -224,8 +224,12 @@ export function UserBilling() {
               {/* Calls Box */}
               <div className="flex flex-col items-center justify-center p-5 rounded-2xl bg-slate-50 border border-slate-200 min-w-[125px] text-center shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)]">
                 <p className="text-[8px] font-black text-slate-400 tracking-widest uppercase mb-1.5">MONTHLY VOLUME</p>
-                <p className="text-4xl font-black text-slate-800 tracking-tight tabular-nums">{currentPlan.callsPerMonth}</p>
-                <p className="text-[10px] font-bold text-slate-400 mt-1">calls / month</p>
+                <p className="text-4xl font-black text-slate-800 tracking-tight tabular-nums">
+                  {currentPlan.id === 'enterprise' ? '∞' : currentPlan.callsPerMonth}
+                </p>
+                <p className="text-[10px] font-bold text-slate-400 mt-1">
+                  {currentPlan.id === 'enterprise' ? 'conversations' : 'calls / month'}
+                </p>
               </div>
             </div>
 
@@ -235,7 +239,9 @@ export function UserBilling() {
                 <span className="text-xs font-black text-slate-400 uppercase tracking-wider">Usage Progress</span>
                 <span className="text-xs font-extrabold text-slate-700 tabular-nums">
                   {user?.minutesUsed || 0}
-                  <span className="text-slate-400 font-medium"> / {currentPlan.callsPerMonth} calls placed</span>
+                  <span className="text-slate-400 font-medium">
+                    {currentPlan.id === 'enterprise' ? ' / ∞' : ` / ${currentPlan.callsPerMonth} conversations`}
+                  </span>
                 </span>
               </div>
               <div className="h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/50">
@@ -250,16 +256,18 @@ export function UserBilling() {
               </div>
               <div className="flex justify-between text-[11px] text-slate-500 mt-2.5 font-bold">
                 <span>{usagePercent.toFixed(1)}% consumed</span>
-                <span className="text-blue-600">{Math.max(0, remainingCalls).toLocaleString()} calls remaining</span>
+                <span className="text-blue-600">
+                  {currentPlan.id === 'enterprise' ? 'Unlimited' : `${Math.max(0, remainingCalls).toLocaleString()} conversations remaining`}
+                </span>
               </div>
             </div>
 
             {/* Metrics cards */}
             <div className="grid grid-cols-3 gap-3.5 mb-8">
               {[
-                { label: 'Used Calls', value: user?.minutesUsed || 0, bg: 'bg-blue-50 border-blue-100 text-blue-600' },
-                { label: 'Available', value: Math.max(0, remainingCalls), bg: 'bg-emerald-50 border-emerald-100 text-emerald-600' },
-                { label: 'Monthly quota', value: currentPlan.callsPerMonth, bg: 'bg-slate-50 border-slate-200 text-slate-700' },
+                { label: 'Used', value: user?.minutesUsed || 0, bg: 'bg-blue-50 border-blue-100 text-blue-600' },
+                { label: 'Available', value: currentPlan.id === 'enterprise' ? '∞' : Math.max(0, remainingCalls), bg: 'bg-emerald-50 border-emerald-100 text-emerald-600' },
+                { label: 'Monthly quota', value: currentPlan.id === 'enterprise' ? '∞' : currentPlan.callsPerMonth, bg: 'bg-slate-50 border-slate-200 text-slate-700' },
               ].map((stat, i) => (
                 <motion.div
                   key={stat.label}
@@ -283,9 +291,9 @@ export function UserBilling() {
                 </svg>
                 Upgrade request to {plans.find((p) => p.id === pendingRequest.requestedPlan)?.name || pendingRequest.requestedPlan} is pending admin review
               </div>
-            ) : user?.plan === 'dominate' ? (
+            ) : user?.plan === 'enterprise' ? (
               <div className="w-full py-4 bg-slate-50 border border-slate-200 rounded-xl font-bold text-center text-xs text-slate-500">
-                Dominate Plan — Contact support for custom volume quotas
+                Enterprise Plan — Contact support for custom volume quotas
               </div>
             ) : (
               <motion.button
@@ -464,21 +472,30 @@ export function UserBilling() {
                             </div>
                           )}
 
-                          <h3 className="text-base font-black text-slate-800 mt-1 tracking-tight">
-                            {plan.name}
-                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            {plan.icon && <span className="text-lg">{plan.icon}</span>}
+                            <h3 className="text-base font-black text-slate-800 tracking-tight">
+                              {plan.name}
+                            </h3>
+                          </div>
                           <p className="text-[10px] text-slate-450 mt-1.5 font-semibold h-10 overflow-hidden leading-normal">{plan.tagline}</p>
 
                           <div className="mt-4">
                             <div className="flex items-baseline gap-1">
-                              <span className="text-2xl font-black text-slate-800 tracking-tight">₹{plan.price.toLocaleString()}</span>
-                              <span className="text-[10px] text-slate-400 font-bold">/mo</span>
+                              <span className="text-2xl font-black text-slate-800 tracking-tight">
+                                {plan.id === 'enterprise' ? 'Custom' : `₹${plan.price.toLocaleString()}`}
+                              </span>
+                              {plan.id !== 'enterprise' && <span className="text-[10px] text-slate-400 font-bold">/mo</span>}
                             </div>
                             {plan.annualPrice && (
                               <p className="text-[10px] text-emerald-600 mt-1 font-bold">Annual: ₹{plan.annualPrice.toLocaleString()}/mo — save {Math.round((1 - plan.annualPrice / plan.price) * 100)}%</p>
                             )}
-                            <p className="text-[9px] text-slate-400 mt-1 font-semibold">Setup fee: ₹{plan.setupFee.toLocaleString()}</p>
-                            <p className="text-[10px] text-blue-500 mt-1 font-black">{plan.callsPerMonth} calls / mo</p>
+                            <p className="text-[9px] text-slate-400 mt-1 font-semibold">
+                              {plan.id === 'enterprise' ? 'Custom pricing' : `Setup fee: ₹${plan.setupFee.toLocaleString()}`}
+                            </p>
+                            <p className="text-[10px] mt-1 font-black" style={{ color: plan.id === 'enterprise' ? '#8b5cf6' : '#2563EB' }}>
+                              {plan.id === 'enterprise' ? 'Unlimited conversations' : `${plan.callsPerMonth} conversations / mo`}
+                            </p>
                           </div>
 
                           <div className="h-px bg-slate-100 my-4" />
@@ -519,7 +536,11 @@ export function UserBilling() {
                           Selected Plan:{' '}
                           <span className="font-extrabold text-blue-900">{plans.find((p) => p.id === selectedPlan)?.name} Plan</span>
                           {' — '}
-                          <span className="font-extrabold text-blue-900">₹{plans.find((p) => p.id === selectedPlan)?.price.toLocaleString()}/mo</span>
+                          <span className="font-extrabold text-blue-900">
+                            {plans.find((p) => p.id === selectedPlan)?.id === 'enterprise'
+                              ? 'Custom pricing'
+                              : `₹${plans.find((p) => p.id === selectedPlan)?.price.toLocaleString()}/mo`}
+                          </span>
                         </p>
                       </div>
                     </motion.div>

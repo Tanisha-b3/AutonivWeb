@@ -215,10 +215,10 @@ function UserPanel({
                   value={formData.plan}
                   onChange={(v) => setFormData({ ...formData, plan: v })}
                   options={[
-                    { value: 'pilot', label: 'Pilot (30 calls · ₹4,999)' },
-                    { value: 'foundation', label: 'Foundation (120 calls · ₹14,999)' },
-                    { value: 'scale', label: 'Scale (400 calls · ₹29,999)' },
-                    { value: 'dominate', label: 'Dominate (1,200 calls · ₹74,999)' },
+                    { value: 'free', label: 'Free (100 conversations · ₹0)' },
+                    { value: 'starter', label: 'Starter (1,000 conversations · ₹3,499)' },
+                    { value: 'growth', label: 'Growth (5,000 conversations · ₹9,999)' },
+                    { value: 'enterprise', label: 'Enterprise (Unlimited)' },
                   ]}
                 />
               </div>
@@ -286,9 +286,9 @@ export function AdminUsers() {
     email: '',
     password: '',
     company: '',
-    plan: 'pilot',
+    plan: 'free',
     phoneNumber: '',
-    minutesLimit: 30,
+    minutesLimit: 100,
   });
 
   useEffect(() => {
@@ -370,9 +370,9 @@ export function AdminUsers() {
       sortable: true,
       render: (user) => (
         <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${
-          user.plan === 'dominate' ? 'bg-blue-50 text-blue-600 border border-blue-200/50' :
-          user.plan === 'scale' ? 'bg-[var(--primary-soft)] text-[var(--primary)] border border-[var(--border)]/50' :
-          user.plan === 'foundation' ? 'bg-[var(--primary-soft)] text-[var(--primary)] border border-[var(--border)]/50' :
+          user.plan === 'enterprise' ? 'bg-indigo-50 text-indigo-600 border border-indigo-200/50' :
+          user.plan === 'growth' ? 'bg-[var(--primary-soft)] text-[var(--primary)] border border-[var(--border)]/50' :
+          user.plan === 'starter' ? 'bg-blue-50 text-blue-600 border border-blue-200/50' :
           'bg-[var(--surface)] text-[var(--muted)] border border-slate-200/50'
         }`}>
           {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)}
@@ -382,9 +382,9 @@ export function AdminUsers() {
         label: 'Plan',
         render: (user) => (
           <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${
-            user.plan === 'dominate' ? 'bg-blue-50 text-blue-600 border border-blue-200/50' :
-            user.plan === 'scale' ? 'bg-[var(--primary-soft)] text-[var(--primary)] border border-[var(--border)]/50' :
-            user.plan === 'foundation' ? 'bg-[var(--primary-soft)] text-[var(--primary)] border border-[var(--border)]/50' :
+            user.plan === 'enterprise' ? 'bg-indigo-50 text-indigo-600 border border-indigo-200/50' :
+            user.plan === 'growth' ? 'bg-[var(--primary-soft)] text-[var(--primary)] border border-[var(--border)]/50' :
+            user.plan === 'starter' ? 'bg-blue-50 text-blue-600 border border-blue-200/50' :
             'bg-[var(--surface)] text-[var(--muted)] border border-slate-200/50'
           }`}>
             {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)}
@@ -923,10 +923,10 @@ export function AdminUsers() {
                   <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-3">Assign Plan</p>
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { id: 'pilot',      label: 'Pilot',      calls: '30',   price: '₹4,999'  },
-                      { id: 'foundation', label: 'Foundation', calls: '120',  price: '₹14,999' },
-                      { id: 'scale',      label: 'Scale',      calls: '400',  price: '₹29,999' },
-                      { id: 'dominate',   label: 'Dominate',   calls: '1,200',price: '₹74,999' },
+                      { id: 'free',       label: 'Free',       calls: '100',      price: '₹0'      },
+                      { id: 'starter',    label: 'Starter',    calls: '1,000',    price: '₹3,499'  },
+                      { id: 'growth',     label: 'Growth',     calls: '5,000',    price: '₹9,999'  },
+                      { id: 'enterprise', label: 'Enterprise', calls: 'Unlimited',price: 'Custom'   },
                     ].map((plan) => {
                       const isActive = selectedUser.plan === plan.id;
                       return (
