@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Footer from './Footer';
+import { ScrollToTop } from '../../components/ScrollToTop';
 
 const LOGO_SRC = '/logo-autoniv.png';
 
@@ -60,7 +61,7 @@ function USPSlider() {
     return () => clearInterval(t);
   }, []);
   return (
-    <div className="fixed top-0 inset-x-0 z-[60] overflow-hidden" style={{ background: 'linear-gradient(90deg,#030B2E 0%,#051a3a 50%,#030B2E 100%)', borderBottom: '1px solid rgba(16,185,129,0.2)', height: 36 }}>
+    <div className="fixed top-0 inset-x-0 z-[60] overflow-hidden" style={{ background: 'linear-gradient(90deg,#0f2060,#0d1f4e,#0f2060)', borderBottom: '1px solid rgba(16,185,129,0.2)', height: 36 }}>
       <div className="relative flex items-center justify-center h-full px-4 sm:px-6">
         {usps.map((usp, i) => (
           <span key={i} className="absolute inline-flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-sm font-medium transition-all duration-500 text-center whitespace-nowrap overflow-hidden text-ellipsis max-w-[90vw] sm:max-w-full"
@@ -96,7 +97,7 @@ function Nav({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boolean; s
   return (
     <nav className="fixed top-[36px] inset-x-0 z-50" style={{ background: 'rgba(3,11,46,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(37,99,235,0.15)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[68px] flex items-center justify-between">
-        <Link to="/"><img src={LOGO_SRC} alt="Autoniv" className="h-28 sm:h-30 w-auto object-contain" /></Link>
+        <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}><img src={LOGO_SRC} alt="Autoniv" className="h-28 sm:h-30 w-auto object-contain" /></Link>
         <div className="hidden md:flex items-center gap-6">
           {navItems.map(item => (
             <Link key={item.label} to={item.href} className="text-sm font-semibold transition-colors"
@@ -225,6 +226,7 @@ export function News() {
         </div>
       </div>
 
+      <ScrollToTop />
       <Footer />
     </div>
   );

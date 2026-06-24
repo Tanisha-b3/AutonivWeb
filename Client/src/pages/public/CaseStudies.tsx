@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { ScrollToTop } from '../../components/ScrollToTop';
 import { Link, useLocation } from 'react-router-dom';
 import Footer from './Footer';
+import { STUDIES } from './caseStudiesData';
 
 const LOGO_SRC = '/logo-autoniv.png';
 
@@ -31,66 +33,6 @@ const GLOBAL_STATS = [
   { value: '₹50Cr+', label: 'Revenue Generated for Clients' },
 ];
 
-const STUDIES = [
-  {
-    category: 'Real Estate',
-    subcategory: 'Property Dealer (Bangalore)',
-    icon: '🏠',
-    metric: '+128%',
-    metricLabel: 'More Conversions',
-    badgeColor: '#10B981',
-    challenge: 'High lead volume, missed calls, no proper follow-ups.',
-    solutions: [
-      { icon: '📞', label: 'AI Voice Assistant' },
-      { icon: '💬', label: 'WhatsApp Chatbot' },
-      { icon: '📈', label: 'CRM Automation' },
-    ],
-    results: [
-      { value: '3.2X', label: 'More Qualified Leads', color: '#10B981' },
-      { value: '62%', label: 'Call Answer Rate', color: '#10B981' },
-      { value: '40%', label: 'Sales Team Productivity', color: '#f97316' },
-    ],
-  },
-  {
-    category: 'Healthcare',
-    subcategory: 'Multi-Speciality Clinic',
-    icon: '🏥',
-    metric: '-55%',
-    metricLabel: 'No-Show Rate',
-    badgeColor: '#2563EB',
-    challenge: 'Manual appointment booking, no reminders, high no-shows.',
-    solutions: [
-      { icon: '📞', label: 'AI Voice Agent' },
-      { icon: '📅', label: 'Appointment Bot' },
-      { icon: '📈', label: 'CRM + Reminders' },
-    ],
-    results: [
-      { value: '+72%', label: 'Appointments Booked', color: '#10B981' },
-      { value: '-55%', label: 'No-Show Rate', color: '#2563EB' },
-      { value: '+45%', label: 'Patient Re-book Rate', color: '#f97316' },
-    ],
-  },
-  {
-    category: 'E-Commerce',
-    subcategory: 'D2C Brand (Mumbai)',
-    icon: '🛒',
-    metric: '+96%',
-    metricLabel: 'Sales Growth',
-    badgeColor: '#f97316',
-    challenge: 'High cart abandonment, slow replies, lost sales.',
-    solutions: [
-      { icon: '🤖', label: 'AI Chatbot' },
-      { icon: '💬', label: 'WhatsApp Bot' },
-      { icon: '📈', label: 'CRM Automation' },
-    ],
-    results: [
-      { value: '+96%', label: 'Sales Growth', color: '#f97316' },
-      { value: '2.8X', label: 'Customer Engagement', color: '#10B981' },
-      { value: '30%', label: 'Repeat Purchases', color: '#2563EB' },
-    ],
-  },
-];
-
 /* ─── USP Ticker ─── */
 function USPSlider() {
   const [current, setCurrent] = useState(0);
@@ -99,7 +41,7 @@ function USPSlider() {
     return () => clearInterval(t);
   }, []);
   return (
-    <div className="fixed top-0 inset-x-0 z-[60] overflow-hidden" style={{ background: 'linear-gradient(90deg,#030B2E 0%,#051a3a 50%,#030B2E 100%)', borderBottom: '1px solid rgba(16,185,129,0.2)', height: 36 }}>
+    <div className="fixed top-0 inset-x-0 z-[60] overflow-hidden" style={{ background: 'linear-gradient(90deg,#0f2060,#0d1f4e,#0f2060)', borderBottom: '1px solid rgba(16,185,129,0.2)', height: 36 }}>
       <div className="relative flex items-center justify-center h-full px-4 sm:px-6">
         {usps.map((usp, i) => (
           <span key={i} className="absolute inline-flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-sm font-medium transition-all duration-500 text-center whitespace-nowrap overflow-hidden text-ellipsis max-w-[90vw] sm:max-w-full"
@@ -134,12 +76,12 @@ function Stars() {
 }
 
 /* ─── Nav ─── */
-function Nav({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boolean; setMobileMenuOpen: (v: boolean) => void }) {
+export function Nav({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boolean; setMobileMenuOpen: (v: boolean) => void }) {
   const location = useLocation();
   return (
     <nav className="fixed top-[36px] inset-x-0 z-50" style={{ background: 'rgba(3,11,46,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(37,99,235,0.15)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[68px] flex items-center justify-between">
-        <Link to="/"><img src={LOGO_SRC} alt="Autoniv" className="h-20 sm:h-28 w-auto object-contain" /></Link>
+        <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}><img src={LOGO_SRC} alt="Autoniv" className="h-20 sm:h-28 w-auto object-contain" /></Link>
         <div className="hidden md:flex items-center gap-6">
           {navItems.map(item => (
             <Link key={item.label} to={item.href} className="text-sm font-semibold transition-colors"
@@ -186,7 +128,7 @@ function Nav({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boolean; s
 }
 
 /* ─── Carousel Card ─── */
-function StudyCard({ study, active }: { study: any; active: boolean }) {
+function StudyCard({ study, active, index }: { study: any; active: boolean; index: number }) {
   return (
     <div className="bg-white rounded-2xl sm:rounded-[20px] p-5 sm:p-7 w-full box-border relative overflow-hidden" style={{
       boxShadow: active ? '0 24px 60px rgba(16,185,129,0.2), 0 8px 24px rgba(37,99,235,0.15)' : '0 8px 24px rgba(0,0,0,0.3)',
@@ -256,14 +198,14 @@ function StudyCard({ study, active }: { study: any; active: boolean }) {
       </div>
 
       {/* CTA */}
-      <a href="#" style={{
+      <Link to={`/case-studies/${index}`} style={{
         display: 'inline-flex', alignItems: 'center', gap: 6,
         fontSize: 13, fontWeight: 700, color: study.badgeColor, textDecoration: 'none',
         transition: 'gap 0.2s',
       }}
         onMouseEnter={e => e.currentTarget.style.gap = '10px'}
         onMouseLeave={e => e.currentTarget.style.gap = '6px'}
-      >View Full Case Study →</a>
+      >View Full Case Study →</Link>
     </div>
   );
 }
@@ -305,7 +247,7 @@ function Carousel() {
             transition: 'all 0.4s cubic-bezier(.16,1,.3,1)',
             cursor: pos !== 1 ? 'pointer' : 'default',
           }} onClick={() => { if (pos === 0) prev(); if (pos === 2) next(); }}>
-            <StudyCard study={STUDIES[si]} active={pos === 1} />
+            <StudyCard study={STUDIES[si]} active={pos === 1} index={si} />
           </div>
         ))}
       </div>
@@ -382,7 +324,7 @@ export function CaseStudies() {
 
         {/* ── Trusted by ── */}
         <div className="max-w-6xl mx-auto mb-12 sm:mb-20 px-4 sm:px-6">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-16 py-6 sm:py-0">
+          <div className="flex flex-col items-center gap-4 py-6 sm:py-0">
             <span className="text-[10px] sm:text-[11px] font-bold text-white/30 tracking-[0.12em] whitespace-nowrap flex-shrink-0">
               • TRUSTED BY 500+ BUSINESSES •
             </span>
@@ -477,6 +419,7 @@ export function CaseStudies() {
         }
       `}</style>
 
+      <ScrollToTop />
       <Footer />
     </div>
   );

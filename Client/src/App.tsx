@@ -7,7 +7,7 @@ import { Breadcrumbs } from './components/Breadcrumbs';
 import LoadingScreen from './components/LoadingScreen';
 // import AIAssistantChat from './components/AIAssistantChat';
 
-const Landing = lazy(() => import('./pages/public/Landing').then(m => ({ default: m.Landing })));
+const Landing = lazy(() => import('./pages/public').then(m => ({ default: m.Landing })));
 const UserDashboard = lazy(() => import('./pages/user/UserDashboard').then(m => ({ default: m.UserDashboard })));
 const ForgotPassword = lazy(() => import('./pages/public/ForgotPassword').then(m => ({ default: m.ForgotPassword })));
 const PrivacyPolicy = lazy(() => import('./pages/public/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
@@ -17,8 +17,9 @@ const AboutUs = lazy(() => import('./pages/public/AboutUs').then(m => ({ default
 const Careers = lazy(() => import('./pages/public/Careers').then(m => ({ default: m.Careers })));
 const Blog = lazy(() => import('./pages/public/Blog').then(m => ({ default: m.Blog })));
 const Press = lazy(() => import('./pages/public/Press').then(m => ({ default: m.Press })));
-const Agents = lazy(() => import('./pages/public/Agents').then(m => ({ default: m.Agents })));
+const Agents = lazy(() => import('./pages/public/Agents').then(m => ({ default: m.default })));
 const CaseStudies = lazy(() => import('./pages/public/CaseStudies').then(m => ({ default: m.CaseStudies })));
+const CaseStudyDetail = lazy(() => import('./pages/public/CaseStudyDetail'));
 const Pricing = lazy(() => import('./pages/public/Pricing').then(m => ({ default: m.Pricing })));
 const News = lazy(() => import('./pages/public/News').then(m => ({ default: m.News })));
 const MyAgents = lazy(() => import('./pages/user/MyAgents').then(m => ({ default: m.MyAgents })));
@@ -157,6 +158,7 @@ function AppRoutes() {
         <Route path="/press" element={<Press />} />
         <Route path="/agents" element={<Agents />} />
         <Route path="/case-studies" element={<CaseStudies />} />
+        <Route path="/case-studies/:id" element={<CaseStudyDetail />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/news" element={<News />} />
 

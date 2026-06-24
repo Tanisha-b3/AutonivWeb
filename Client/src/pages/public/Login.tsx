@@ -170,14 +170,13 @@ export function Login() {
   };
 
   // Timer effect
-  const activeTimer = showOtp;
-  useState(() => {
+  useEffect(() => {
     let t: ReturnType<typeof setInterval>;
-    if (activeTimer && timer > 0) {
+    if (showOtp && timer > 0) {
       t = setInterval(() => setTimer((v) => v - 1), 1000);
     }
     return () => clearInterval(t);
-  });
+  }, [showOtp, timer]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#030712] px-4 py-12 sm:py-8">

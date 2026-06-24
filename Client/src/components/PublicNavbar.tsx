@@ -92,7 +92,6 @@ export function PublicNavbar() {
 
   const navItems = [
     { label: 'Features', href: '#features', isHash: true },
-    { label: 'Services', href: '#services', isHash: true },
     { label: 'How It Works', href: '#how-it-works', isHash: true },
     { label: 'Agents', href: '/agents' },
     { label: 'Case Studies', href: '/case-studies' },
@@ -119,11 +118,17 @@ export function PublicNavbar() {
     <>
       <nav
         ref={navRef}
-        className={`mt-9 fixed top-0 inset-x-0 z-50 transition-all duration-300 nav-glass${scrolled ? ' scrolled' : ''}`}
+        className={` fixed top-[36px] inset-x-0 z-50 transition-all duration-300${scrolled ? ' shadow-md' : ''}`}
+        style={{
+          marginTop: 0,
+          background: scrolled ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.9)',
+          backdropFilter: 'blur(24px)',
+          borderBottom: '1px solid rgba(37,99,235,0.12)',
+        }}
       >
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 h-[68px] flex items-center justify-between">
-          <Link to="/" className="flex items-center">
-            <img src={LOGO_SRC} alt="Autoniv" className="logo-img animate-fade-in-up" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[64px] flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <img src={LOGO_SRC} alt="Autoniv" className="h-40 sm:h-30 md:h-30 w-auto" />
           </Link>
           <div className="hidden lg:flex items-center gap-5 xl:gap-7">
             {navItems.map((item) => (
@@ -161,14 +166,21 @@ export function PublicNavbar() {
           <div className="hidden sm:flex items-center gap-3">
             <button
               onClick={() => openAuth('login')}
-              className="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-              style={{ color: '#475569', cursor: 'pointer' }}
+              className="px-5 py-2 text-sm font-semibold rounded-lg transition-all"
+              style={{
+                color: '#475569',
+                cursor: 'pointer',
+                border: '1px solid rgba(37,99,235,0.15)',
+                background: 'transparent',
+              }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = '#0a0a0a';
-                e.currentTarget.style.background = 'rgba(37,99,235,.07)';
+                e.currentTarget.style.color = '#2563EB';
+                e.currentTarget.style.borderColor = 'rgba(37,99,235,0.35)';
+                e.currentTarget.style.background = 'rgba(37,99,235,0.05)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.color = '#475569';
+                e.currentTarget.style.borderColor = 'rgba(37,99,235,0.15)';
                 e.currentTarget.style.background = 'transparent';
               }}
             >
@@ -176,13 +188,14 @@ export function PublicNavbar() {
             </button>
             <MagBtn
               onClick={() => openAuth('register')}
-              className="btn-responsive font-bold text-white cursor-pointer"
+              className="font-bold text-white cursor-pointer"
               style={{
                 background: 'var(--gg)',
                 boxShadow: '0 4px 14px rgba(16,185,129,0.25)',
-                borderRadius: 9999,
-                padding: '10px 18px',
+                borderRadius: 10,
+                padding: '10px 20px',
                 border: 'none',
+                fontSize: '14px',
               }}
             >
               Get Started Free
@@ -190,7 +203,7 @@ export function PublicNavbar() {
           </div>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2"
+            className="lg:hidden p-2 rounded-lg"
             style={{
               color: '#475569',
               background: 'none',
@@ -226,9 +239,10 @@ export function PublicNavbar() {
           <div
             className="lg:hidden px-5 py-4 space-y-1"
             style={{
-              background: 'rgba(255,255,255,.98)',
-              backdropFilter: 'blur(20px)',
-              borderTop: '1px solid rgba(37,99,235,.10)',
+              background: 'rgba(255,255,255,0.98)',
+              backdropFilter: 'blur(24px)',
+              borderTop: '1px solid rgba(37,99,235,0.10)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
             }}
           >
             {navItems.map((item) => (

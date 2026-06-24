@@ -1,16 +1,8 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '587', 10),
-  secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
-  auth: {
-    user: process.env.SMTP_USER || 'tanishaborana05@gmail.com',
-    pass: process.env.SMTP_PASS || 'yzofrtwdzwdwbxpt',
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-const fromEmail = process.env.SMTP_USER || 'tanishaborana05@gmail.com';
+const fromEmail = process.env.RESEND_FROM || 'tanishaborana970@gmail.com';
 const fromName = process.env.MAILERSEND_FROM_NAME || 'Autoniv';
 
 export async function sendAppointmentEmail({ to, appointment }) {
@@ -39,20 +31,15 @@ export async function sendAppointmentEmail({ to, appointment }) {
     </div>
   `;
 
-  const mailOptions = {
-    from: `"${fromName}" <${fromEmail}>`,
+  const { data, error } = await resend.emails.send({
+    from: `${fromName} <${fromEmail}>`,
     to,
     subject: 'Autoniv — Appointment Confirmed',
     html,
-  };
+  });
 
-  const info = await transporter.sendMail(mailOptions);
-
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('Appointment email sent:', info);
-  }
-
-  return info;
+  if (error) throw error;
+  return data;
 }
 
 export async function sendOtpEmail({ to, otp, purpose }) {
@@ -81,22 +68,17 @@ export async function sendOtpEmail({ to, otp, purpose }) {
   `;
 
   try {
-    const mailOptions = {
-      from: `"${fromName}" <${fromEmail}>`,
+    const { data, error } = await resend.emails.send({
+      from: `${fromName} <${fromEmail}>`,
       to,
-      subject: `Autoniv — Verification Code`,
+      subject: 'Autoniv — Verification Code',
       html,
-    };
+    });
 
-    const info = await transporter.sendMail(mailOptions);
-
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('OTP email sent successfully:', info);
-    }
-    return info;
+    if (error) throw error;
+    return data;
   } catch (error) {
-    console.error('Failed to send OTP email via SMTP:', error?.message || error);
-    // Log code to console for local development fallback
+    console.error('Failed to send OTP email via Resend:', error?.message || error);
     console.log(`\n========================================\n[DEV ONLY] OTP verification code: ${otp} for email: ${to} (purpose: ${purpose})\n========================================\n`);
   }
 }
