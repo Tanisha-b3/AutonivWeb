@@ -127,9 +127,9 @@ export function PublicNavbar() {
           borderBottom: '1px solid rgba(37,99,235,0.12)',
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[64px] flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 sm:px-6 h-[64px] flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <img src={LOGO_SRC} alt="Autoniv" className="h-40 sm:h-30 md:h-30 w-auto" />
+            <img src={LOGO_SRC} alt="Autoniv" className="-ml-10 sm:-ml-6 h-40 sm:h-40 md:h-30 w-auto" />
           </Link>
           <div className="hidden lg:flex items-center gap-5 xl:gap-7">
             {navItems.map((item) => (

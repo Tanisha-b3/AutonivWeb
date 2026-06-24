@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { STUDIES } from './caseStudiesData';
 import Footer from './Footer';
 import ScrollToTop from '../../components/ScrollToTop';
+import { USPSlider } from './sections/USPSlider';
 
 const LOGO_SRC = '/autoniv.webp';
 
@@ -12,39 +13,6 @@ const navItems = [
   { label: 'Pricing', href: '/pricing' },
   { label: 'News', href: '/news' },
 ];
-
-/* ─── USP Slider ─── */
-function USPSlider() {
-  const items = [
-    'AI-Powered Voice Agents',
-    'No Long-Term Contracts',
-    '20+ Languages Supported',
-    'Setup in 24 Hours',
-    'Human Handoff Available',
-    '99.9% Uptime SLA',
-  ];
-  const [cur, setCur] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setCur((c) => (c + 1) % items.length), 4000);
-    return () => clearInterval(t);
-  }, []);
-  return (
-    <div
-      className="fixed top-0 inset-x-0 z-[60] overflow-hidden"
-      style={{
-        background: 'linear-gradient(90deg,#f0f4ff,#e8edf8,#f0f4ff)',
-        borderBottom: '1px solid rgba(37,99,235,0.08)',
-        height: 36,
-      }}
-    >
-      <div className="relative flex items-center justify-center h-full px-4 sm:px-6">
-        <span className="text-[10px] sm:text-xs font-medium text-center truncate max-w-[85vw]" style={{ color: '#475569' }}>
-          ✦ {items[cur]}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 /* ─── Nav ─── */
 function Nav({

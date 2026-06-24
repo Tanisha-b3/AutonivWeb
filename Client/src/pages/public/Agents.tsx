@@ -1,13 +1,8 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import Footer from "./Footer";
 import { Nav } from "./CaseStudies";
-
-const USPS = [
-  { icon: "🎙️", text: "AI Voice Agents That Answer, Qualify & Convert Leads 24/7" },
-  { icon: "🌍", text: "Multi-Language Support – AI That Speaks Your Customers' Language" },
-  { icon: "⚡", text: "Quick Setup – Live in Minutes, No Code Needed" },
-];
+import { USPSlider } from "./sections/USPSlider";
 
 const STATS = [
   { value: "24/7", label: "Always On", icon: "🕐" },
@@ -84,21 +79,6 @@ const TRUSTED_BRANDS = [
   { name: "UrbanCart", icon: "M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" },
   { name: "FinTrack", icon: "M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z" },
 ];
-
-/* ─── USP Banner ─── */
-function USPBanner() {
-  const [cur, setCur] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setCur((c) => (c + 1) % USPS.length), 4000);
-    return () => clearInterval(t);
-  }, []);
-  return (
-    <div className="fixed top-0 left-0 right-0 z-[60] h-9 flex items-center justify-center gap-2 overflow-hidden border-b border-blue-600/30" style={{ background: "linear-gradient(90deg,#0f2060,#0d1f4e,#0f2060)" }}>
-      <span className="text-sm flex-shrink-0">{USPS[cur].icon}</span>
-      <span className="text-[10px] sm:text-[11px] text-white/80 font-medium truncate max-w-[85vw]">{USPS[cur].text}</span>
-    </div>
-  );
-}
 
 /* ─── Hero ─── */
 function Hero() {
@@ -276,7 +256,7 @@ function StatsBar() {
 }
 
 /* ─── Agent Cards ─── */
-function AgentCard({ agent, index }: { agent: typeof AGENT_TYPES[0]; index: number }) {
+function AgentCard({ agent }: { agent: typeof AGENT_TYPES[0]; }) {
   const [isHovered, setIsHovered] = useState(false);
   
   return (
@@ -373,7 +353,7 @@ function AgentCard({ agent, index }: { agent: typeof AGENT_TYPES[0]; index: numb
 function AgentsSection() {
   const [active, setActive] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (autoplay) {
@@ -420,7 +400,7 @@ function AgentsSection() {
         <div className="hidden lg:grid grid-cols-4 gap-5">
           {AGENT_TYPES.map((agent, i) => (
             <div key={i} style={{ animationDelay: `${i * 0.1}s` }} className="animate-fadeInUp">
-              <AgentCard agent={agent} index={i} />
+              <AgentCard agent={agent} />
             </div>
           ))}
         </div>
@@ -445,7 +425,7 @@ function AgentsSection() {
           </button>
           
           <div className="transition-all duration-500 ease-in-out">
-            <AgentCard agent={AGENT_TYPES[active]} index={active} />
+            <AgentCard agent={AGENT_TYPES[active]} />
           </div>
           
           <button 
@@ -722,7 +702,7 @@ export function Agents() {
   
   return (
     <div className="min-h-screen relative" style={{ fontFamily: "'Plus Jakarta Sans',Inter,sans-serif" }}>
-      <USPBanner />
+      <USPSlider />
       <Nav mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
       <div className="page-bg" style={{ paddingTop: 120, paddingBottom: 8 }}>
         <div className="box-wrap">

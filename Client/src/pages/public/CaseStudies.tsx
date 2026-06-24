@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Footer from './Footer';
 import ScrollToTop from '../../components/ScrollToTop';
@@ -11,12 +11,6 @@ const navItems = [
   { label: 'Pricing', href: '/pricing' },
   { label: 'News', href: '/news' },
   { label: 'About', href: '/about' }
-];
-
-const usps = [
-  { icon: '🎙️', text: 'AI Voice Agents That Answer, Qualify & Convert Leads 24/7 — Without Hiring More Staff.' },
-  { icon: '🌍', text: 'Multi-Language Support – AI That Speaks Your Customers\' Language' },
-  { icon: '⚡', text: 'Quick Setup – Live in Minutes, No Code Needed' },
 ];
 
 const TRUSTED_BRANDS = [
@@ -93,26 +87,7 @@ const STUDIES = [
   },
 ];
 
-const USPS = [
-  { icon: "🎙️", text: "AI Voice Agents That Answer, Qualify & Convert Leads 24/7" },
-  { icon: "🌍", text: "Multi-Language Support – AI That Speaks Your Customers' Language" },
-  { icon: "⚡", text: "Quick Setup – Live in Minutes, No Code Needed" },
-];
-
-/* ─── USP Ticker ─── */
-export function USPSlider() {
- const [cur, setCur] = useState(0);
-   useEffect(() => {
-     const t = setInterval(() => setCur((c) => (c + 1) % USPS.length), 4000);
-     return () => clearInterval(t);
-   }, []);
-   return (
-     <div className="fixed top-0 left-0 right-0 z-[60] h-9 flex items-center justify-center gap-2 overflow-hidden border-b border-blue-600/30" style={{ background: "linear-gradient(90deg,#0f2060,#0d1f4e,#0f2060)" }}>
-       <span className="text-sm flex-shrink-0">{USPS[cur].icon}</span>
-       <span className="text-[10px] sm:text-[11px] text-white/80 font-medium truncate max-w-[85vw]">{USPS[cur].text}</span>
-     </div>
-   );
-}
+import { USPSlider } from './sections/USPSlider';
 
 /* ─── Nav ─── */
 export function Nav({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boolean; setMobileMenuOpen: (v: boolean) => void }) {
@@ -123,9 +98,9 @@ export function Nav({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boo
       backdropFilter: 'blur(24px)',
       borderBottom: '1px solid rgba(37,99,235,0.12)',
     }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[68px] flex items-center justify-between">
+      <div className="max-w-7xl -ml-10 mx-auto px-6 sm:px-6 h-[68px] flex items-center justify-between">
         <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <img src={LOGO_SRC} alt="Autoniv" className="h-20 sm:h-40 w-auto object-contain" />
+          <img src={LOGO_SRC} alt="Autoniv" className="h-40 sm:h-40 w-auto object-contain" />
         </Link>
         <div className="hidden md:flex items-center gap-6">
           {navItems.map(item => (

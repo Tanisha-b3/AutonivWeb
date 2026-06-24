@@ -1,18 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Footer from './Footer';
 import ScrollToTop from '../../components/ScrollToTop';
-import { Nav, USPSlider } from './CaseStudies';
+import { Nav } from './CaseStudies';
+import { USPSlider } from './sections/USPSlider';
 
 const LOGO_SRC = '/autoniv.webp';
-
-const navItems = [
-  { label: 'Agents', href: '/agents' },
-  { label: 'Case Studies', href: '/case-studies' },
-  { label: 'Pricing', href: '/pricing' },
-  { label: 'News', href: '/news' },
-  { label: 'About', href: '/about' }
-];
 
 /* ─── USP Slider ─── */
 

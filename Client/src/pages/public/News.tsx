@@ -1,23 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Footer from './Footer';
 import ScrollToTop from '../../components/ScrollToTop';
-
-const LOGO_SRC = '/autoniv.webp';
-
-const navItems = [
-  { label: 'Agents', href: '/agents' },
-  { label: 'Case Studies', href: '/case-studies' },
-  { label: 'Pricing', href: '/pricing' },
-  { label: 'News', href: '/news' },
-  { label: 'About', href: '/about' },
-];
-
-const usps = [
-  { icon: '🎙️', text: 'AI Voice Agents That Answer, Qualify & Convert Leads 24/7' },
-  { icon: '🌍', text: 'Multi-Language Support – AI That Speaks Your Customers\' Language' },
-  { icon: '⚡', text: 'Quick Setup – Live in Minutes, No Code Needed' },
-];
+import { USPSlider } from './sections/USPSlider';
+import { Nav } from './CaseStudies';
 
 const NEWS_ARTICLES = [
   {
@@ -100,78 +86,8 @@ const TIMELINE = [
   { date: 'March 2026', title: '100+ Businesses Milestone', desc: 'Crossed 100 active business customers.', color: '#f97316' },
 ];
 
-/* ─── USP Ticker ─── */
-function USPSlider() {
-  const [current, setCurrent] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setCurrent(i => (i + 1) % usps.length), 3000);
-    return () => clearInterval(t);
-  }, [usps.length]);
-  return (
-    <div className="fixed top-0 inset-x-0 z-[60] overflow-hidden" style={{ background: 'linear-gradient(90deg,#0f2060,#0d1f4e,#0f2060)', borderBottom: '1px solid rgba(16,185,129,0.2)', height: 36 }}>
-      <div className="relative flex items-center justify-center h-full px-4 sm:px-6">
-        {usps.map((usp, i) => (
-          <span key={i} className="absolute inline-flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-sm font-medium transition-all duration-500 text-center whitespace-nowrap overflow-hidden text-ellipsis max-w-[90vw] sm:max-w-full"
-            style={{ color: 'rgba(255,255,255,0.85)', opacity: i === current ? 1 : 0, transform: i === current ? 'translateY(0)' : 'translateY(10px)' }}>
-            <span className="text-xs sm:text-sm flex-shrink-0">{usp.icon}</span><span className="truncate">{usp.text}</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 /* ─── Nav ─── */
-function Nav({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boolean; setMobileMenuOpen: (v: boolean) => void }) {
-  const location = useLocation();
-  return (
-    <nav className="fixed top-[36px] inset-x-0 z-50" style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(37,99,235,0.12)' }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[68px] flex items-center justify-between">
-        <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}><img src={LOGO_SRC} alt="Autoniv" className="h-20 sm:h-40 w-auto object-contain" /></Link>
-        <div className="hidden md:flex items-center gap-6">
-          {navItems.map(item => (
-            <Link key={item.label} to={item.href} className="text-sm font-semibold transition-colors"
-              style={{ color: location.pathname === item.href ? '#2563EB' : '#475569' }}
-              onMouseEnter={e => { if (location.pathname !== item.href) e.currentTarget.style.color = '#0a0a0a'; }}
-              onMouseLeave={e => { if (location.pathname !== item.href) e.currentTarget.style.color = '#475569'; }}
-            >{item.label}</Link>
-          ))}
-        </div>
-        <div className="hidden md:flex items-center gap-3">
-          <Link to="/" className="px-4 py-2 text-sm font-medium rounded-lg transition-colors" style={{ color: '#475569' }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#2563EB'; e.currentTarget.style.background = 'rgba(37,99,235,0.05)'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = '#475569'; e.currentTarget.style.background = 'transparent'; }}
-          >Sign In</Link>
-          <Link to="/" className="px-5 py-2.5 text-sm font-bold text-white rounded-full transition-all" style={{ background: 'linear-gradient(135deg,#2563EB,#10B981)', boxShadow: '0 4px 20px rgba(16,185,129,0.35)' }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(16,185,129,0.5)'; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(16,185,129,0.35)'; }}
-          >Get Started Free</Link>
-        </div>
-        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2" style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer' }}>
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {mobileMenuOpen
-              ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
-          </svg>
-        </button>
-      </div>
-      {mobileMenuOpen && (
-        <div className="md:hidden px-5 py-4 space-y-1" style={{ background: 'rgba(255,255,255,0.98)', backdropFilter: 'blur(24px)', borderTop: '1px solid rgba(37,99,235,0.10)' }}>
-          {navItems.map(item => (
-            <Link key={item.label} to={item.href} onClick={() => setMobileMenuOpen(false)}
-              className="block px-4 py-3 text-sm font-semibold rounded-xl"
-              style={{ color: location.pathname === item.href ? '#2563EB' : '#475569', background: location.pathname === item.href ? 'rgba(37,99,235,0.07)' : 'transparent' }}
-            >{item.label}</Link>
-          ))}
-          <div className="pt-2 flex flex-col gap-2">
-            <Link to="/" onClick={() => setMobileMenuOpen(false)} className="block text-center px-4 py-3 text-sm font-semibold rounded-xl" style={{ color: '#475569' }}>Sign In</Link>
-            <Link to="/" onClick={() => setMobileMenuOpen(false)} className="block text-center px-4 py-3 text-sm font-bold text-white rounded-xl" style={{ background: 'linear-gradient(135deg,#2563EB,#10B981)' }}>Get Started Free</Link>
-          </div>
-        </div>
-      )}
-    </nav>
-  );
-}
+
 
 /* ─── Main ─── */
 export function News() {

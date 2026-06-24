@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense, useCallback } from "react";
+import { useState, lazy, Suspense, useCallback } from "react";
 import { PublicNavbar } from "../../../components/PublicNavbar";
 import Footer from "../Footer";
 import { USPSlider } from "./USPSlider";
@@ -27,7 +27,6 @@ export function LandingSection() {
   const [authDialog, setAuthDialog] = useState<'login' | 'register' | null>(null);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [activeUseCase, setActiveUseCase] = useState(0);
-  const [scrolled, setScrolled] = useState(false);
 
   const openAuth = useCallback((mode: 'login' | 'register') => {
     setAuthMode(mode);
@@ -36,15 +35,9 @@ export function LandingSection() {
 
   const closeAuth = useCallback(() => setAuthDialog(null), []);
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
   return (
     <div className="landing-page" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
-      <PublicNavbar scrolled={scrolled} openAuth={openAuth} />
+      <PublicNavbar />
       <div className="page-bg" style={{ paddingTop: 120, paddingBottom: 8 }}>
         <div className="box-wrap">
           <USPSlider />
