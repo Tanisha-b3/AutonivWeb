@@ -172,7 +172,7 @@ export function PublicNavbar() {
           boxShadow: scrolled ? '0 2px 16px rgba(0,0,0,0.08)' : 'none',
         }}
       >
-        <div className=" max-w-7xl mx-auto px-4 sm:px-6 lg:px-0 h-14 sm:h-16 flex items-center justify-between gap-3">
+        <div className=" max-w-7xl mx-auto px-4 sm:px-0 lg:px-0 h-14 sm:h-16 flex items-center justify-between gap-3">
 
           {/* Logo */}
           <Link
@@ -184,12 +184,12 @@ export function PublicNavbar() {
             <img
               src={LOGO_SRC}
               alt="Autoniv"
-              className="h-30 sm:h-40 md:h-40 w-auto object-contain"
+              className="-ml-8 h-30 sm:h-40 md:h-40 w-auto object-contain"
             />
           </Link>
 
           {/* Desktop nav links */}
-          <div className="hidden lg:flex items-center gap-1 xl:gap-2 flex-1 justify-center">
+          <div className="hidden lg:flex items-center gap-1  flex-1 justify-center">
             {navItems.map((item) => (
               <Link
                 key={item.label}
@@ -316,7 +316,7 @@ export function PublicNavbar() {
         >
           <Link
             to="/"
-            className="-ml-10 flex items-center"
+            className="-ml-8 flex items-center"
             onClick={() => {
               setMobileMenuOpen(false);
               window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -360,7 +360,7 @@ export function PublicNavbar() {
 
         {/* Drawer footer CTAs */}
         <div
-          className="px-4 py-4 space-y-2 flex-shrink-0"
+          className="mt-10 px-4 py-4 space-y-2 flex-shrink-0"
           style={{ borderTop: '1px solid rgba(37,99,235,0.10)' }}
         >
           <button
