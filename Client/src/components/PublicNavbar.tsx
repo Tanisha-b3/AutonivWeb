@@ -65,6 +65,23 @@ export function PublicNavbar() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const navItems = [
+    { label: 'Features', href: '#features', isHash: true },
+    { label: 'How It Works', href: '#how-it-works', isHash: true },
+    { label: 'Agents', href: '/agents' },
+    { label: 'Case Studies', href: '/case-studies' },
+    { label: 'Pricing', href: '/pricing' },
+    { label: 'News', href: '/news' },
+    { label: 'Add-Ons', href: '#addons', isHash: true },
+    { label: 'Contact', href: '#contact', isHash: true },
+    {label:"About", href:"/about"}
+  ];
+
+  const [selectedLabel, setSelectedLabel] = useState<string | null>(() => {
+    const match = navItems.find((i) => !i.isHash && i.href === location.pathname);
+    return match ? match.label : null;
+  });
+
   const openAuth = (mode: 'login' | 'register') => {
     setAuthMode(mode);
     setAuthDialog(mode);
@@ -80,8 +97,6 @@ export function PublicNavbar() {
   useEffect(() => {
     if (!mobileMenuOpen) return;
     const c = (e: MouseEvent) => {
-      // Drawer + the toggle button itself live outside navRef's dropdown flow now,
-      // so check the drawer ref directly and ignore clicks on the toggle button.
       const target = e.target as Node;
       if (drawerRef.current && drawerRef.current.contains(target)) return;
       if (navRef.current && navRef.current.contains(target)) return;
@@ -91,23 +106,23 @@ export function PublicNavbar() {
     return () => document.removeEventListener('mousedown', c);
   }, [mobileMenuOpen]);
 
-  // Close mobile menu on path changes
   useEffect(() => {
     setMobileMenuOpen(false);
+    if (!location.hash) {
+      const match = navItems.find((i) => !i.isHash && i.href === location.pathname);
+      if (match) setSelectedLabel(match.label);
+      else if (location.pathname === '/') setSelectedLabel(null);
+    }
   }, [location.pathname]);
 
-  // Lock body scroll while the drawer is open
   useEffect(() => {
     if (mobileMenuOpen) {
       const prev = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = prev;
-      };
+      return () => { document.body.style.overflow = prev; };
     }
   }, [mobileMenuOpen]);
 
-  // Close on Escape
   useEffect(() => {
     if (!mobileMenuOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -117,19 +132,8 @@ export function PublicNavbar() {
     return () => document.removeEventListener('keydown', onKey);
   }, [mobileMenuOpen]);
 
-  const navItems = [
-    { label: 'Features', href: '#features', isHash: true },
-    { label: 'How It Works', href: '#how-it-works', isHash: true },
-    { label: 'Agents', href: '/agents' },
-    { label: 'Case Studies', href: '/case-studies' },
-    { label: 'Pricing', href: '/pricing' },
-    { label: 'News', href: '/news' },
-    { label: 'Add-Ons', href: '#addons', isHash: true },
-    { label: 'Contact', href: '#contact', isHash: true },
-    {label:"About", href:"/about"}
-  ];
-
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, item: typeof navItems[0]) => {
+    setSelectedLabel(item.label);
     if (item.isHash) {
       e.preventDefault();
       const targetId = item.href.replace('#', '');
@@ -141,13 +145,16 @@ export function PublicNavbar() {
         }
       } else {
         navigate('/');
-        setTimeout(() => {
+        const retry = (count: number) => {
           const el = document.getElementById(targetId);
           if (el) {
             const y = el.getBoundingClientRect().top + window.scrollY - 72;
             window.scrollTo({ top: y, behavior: 'smooth' });
+          } else if (count < 30) {
+            setTimeout(() => retry(count + 1), 100);
           }
-        }, 150);
+        };
+        setTimeout(() => retry(0), 100);
       }
     }
   };
@@ -176,21 +183,17 @@ export function PublicNavbar() {
                 onClick={(e) => handleNavClick(e, item)}
                 className="text-sm font-semibold transition-colors relative py-1"
                 style={{
-                  color: (!item.isHash && location.pathname === item.href) ? '#2563EB' : '#475569',
+                  color: '#475569',
                 }}
                 onMouseEnter={(e) => {
-                  if (item.isHash || location.pathname !== item.href) {
-                    e.currentTarget.style.color = '#0a0a0a';
-                  }
+                  e.currentTarget.style.color = '#0a0a0a';
                 }}
                 onMouseLeave={(e) => {
-                  if (item.isHash || location.pathname !== item.href) {
-                    e.currentTarget.style.color = '#475569';
-                  }
+                  e.currentTarget.style.color = '#475569';
                 }}
               >
                 {item.label}
-                {!item.isHash && location.pathname === item.href && (
+                {selectedLabel === item.label && (
                   <span
                     className="absolute -bottom-[20px] left-0 right-0 h-[2px]"
                     style={{
@@ -340,8 +343,8 @@ export function PublicNavbar() {
               }}
               className="block px-4 py-3 text-sm font-semibold rounded-xl"
               style={{
-                color: (!item.isHash && location.pathname === item.href) ? '#2563EB' : '#475569',
-                background: (!item.isHash && location.pathname === item.href) ? 'rgba(37,99,235,.07)' : 'transparent',
+                color: '#475569',
+                background: 'transparent',
               }}
             >
               {item.label}

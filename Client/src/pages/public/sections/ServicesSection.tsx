@@ -361,12 +361,8 @@ export function Services() {
             Everything your business needs
             <br />
             <span
-              style={{
-                background:
-                  "linear-gradient(92deg, #64ddff 0%, #34d399 55%, #60a5fa 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
+              className="gradient-text"
+              
             >
               to run on autopilot.
             </span>

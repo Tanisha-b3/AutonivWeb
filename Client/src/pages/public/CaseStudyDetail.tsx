@@ -48,7 +48,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 export default function CaseStudyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const goBack = () => navigate('/case-studies');
+  const goBack = () => navigate((-1));
   const studyIndex = parseInt(id || '0');
   const study = STUDIES[studyIndex];
 
