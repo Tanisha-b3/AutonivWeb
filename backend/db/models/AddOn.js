@@ -7,6 +7,7 @@ const addOnSchema = new mongoose.Schema({
   price:       { type: String, required: true },
   category:    { type: String, enum: ['recurring', 'one-time'], default: 'recurring' },
   description: { type: String, default: '' },
+  type:        { type: String, enum: ['chat', 'voice'], default: 'chat' },
   active:      { type: Boolean, default: true },
 }, { timestamps: true });
 

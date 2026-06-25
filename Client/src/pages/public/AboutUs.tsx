@@ -5,8 +5,6 @@ import ScrollToTop from '../../components/ScrollToTop';
 import { PublicNavbar } from '../../components/PublicNavbar';
 import { USPSlider } from './sections/USPSlider';
 
-const LOGO_SRC = '/autoniv.webp';
-
 /* ───────────────────────────────────────────────────────────
    Design tokens (kept in one place so every section reads off
    the same system instead of inventing new values per-block)

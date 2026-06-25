@@ -736,7 +736,6 @@ export function Sidebar() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [toggleSidebar]);
 
-  const plan = user?.plan || 'chat_free';
   const isChat = user?.role === 'admin' || (user?.chatPlan ? user.chatPlan !== 'none' : (user?.chatEnabled !== undefined ? user.chatEnabled : true));
   const isVoice = user?.role === 'admin' || (user?.voicePlan ? user.voicePlan !== 'none' : (user?.voiceEnabled !== undefined ? user.voiceEnabled : false));
 

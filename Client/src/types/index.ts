@@ -159,6 +159,7 @@ export interface AddOnCatalogEntry {
   price: string;
   category: 'recurring' | 'one-time';
   description: string;
+  type?: 'chat' | 'voice';
 }
 
 export interface UserAddOn {

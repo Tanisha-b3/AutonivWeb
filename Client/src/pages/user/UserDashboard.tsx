@@ -1122,8 +1122,6 @@ export function UserDashboard() {
   const error      = useAppSelector((state) => state.analytics.error);
   const user       = useAppSelector((state) => state.auth.user);
   const myAgents   = useAppSelector((state) => state.agents.myAgents);
-
-  const plan = user?.plan || 'chat_free';
   const isChat = user?.role === 'admin' || (user?.chatPlan ? user.chatPlan !== 'none' : (user?.chatEnabled !== undefined ? user.chatEnabled : true));
   const isVoice = user?.role === 'admin' || (user?.voicePlan ? user.voicePlan !== 'none' : (user?.voiceEnabled !== undefined ? user.voiceEnabled : false));
   

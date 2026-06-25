@@ -645,17 +645,48 @@ router.get('/me', authenticate, async (req, res) => {
     const user = await User.findById(req.user.userId).lean();
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const plan = user.plan;
-    const features = {
-      appointments: {},
-      leads: {},
-      chat: {},
-      agents: {},
+    let chatPlan = user.chatPlan;
+    let voicePlan = user.voicePlan;
+    if (!chatPlan && !voicePlan) {
+      const plan = user.plan || 'chat_free';
+      if (plan.startsWith('chat_')) {
+        chatPlan = plan;
+        voicePlan = 'none';
+      } else if (plan.startsWith('voice_')) {
+        chatPlan = 'none';
+        voicePlan = plan;
+      } else if (plan.startsWith('both_')) {
+        chatPlan = plan.replace('both_', 'chat_');
+        voicePlan = plan.replace('both_', 'voice_');
+      } else {
+        chatPlan = `chat_${plan}`;
+        voicePlan = `voice_${plan}`;
+      }
+    }
+    chatPlan = chatPlan || 'none';
+    voicePlan = voicePlan || 'none';
+
+    const getTier = (planName) => {
+      if (!planName || planName === 'none') return 'free';
+      if (planName.includes('starter')) return 'starter';
+      if (planName.includes('growth')) return 'growth';
+      if (planName.includes('enterprise')) return 'enterprise';
+      return 'free';
     };
-    for (const [key, val] of Object.entries(User.FEATURES.appointments)) features.appointments[key] = val[plan];
-    for (const [key, val] of Object.entries(User.FEATURES.leads)) features.leads[key] = val[plan];
-    for (const [key, val] of Object.entries(User.FEATURES.chat)) features.chat[key] = val[plan];
-    for (const [key, val] of Object.entries(User.FEATURES.agents)) features.agents[key] = val[plan];
+
+    const chatTier = getTier(chatPlan);
+    const voiceTier = getTier(voicePlan);
+
+    const tierOrder = { free: 0, starter: 1, growth: 2, enterprise: 3 };
+    const sharedTier = tierOrder[chatTier] >= tierOrder[voiceTier] ? chatTier : voiceTier;
+
+    const features = { appointments: {}, leads: {}, chat: {}, agents: {} };
+    for (const [key, val] of Object.entries(User.FEATURES.appointments)) features.appointments[key] = val[sharedTier];
+    for (const [key, val] of Object.entries(User.FEATURES.leads)) features.leads[key] = val[sharedTier];
+    for (const [key, val] of Object.entries(User.FEATURES.chat)) features.chat[key] = val[chatTier];
+    for (const [key, val] of Object.entries(User.FEATURES.agents)) features.agents[key] = val[voiceTier];
+
+    const plan = user.plan || (chatPlan !== 'none' ? chatPlan : voicePlan);
 
     return res.json({
       user: {
@@ -666,17 +697,15 @@ router.get('/me', authenticate, async (req, res) => {
         role: user.role,
         company: user.company,
         plan,
+        chatPlan,
+        voicePlan,
         minutesUsed: user.minutesUsed,
         minutesLimit: user.minutesLimit,
         callsUsed: user.callsUsed || 0,
         callsLimit: user.callsLimit,
         isActive: user.isActive,
-        chatEnabled: user.chatEnabled !== undefined ? user.chatEnabled : (
-          plan.startsWith('chat_') || plan.startsWith('both_') || ['free', 'starter', 'growth', 'enterprise'].includes(plan)
-        ),
-        voiceEnabled: user.voiceEnabled !== undefined ? user.voiceEnabled : (
-          plan.startsWith('voice_') || plan.startsWith('both_') || ['free', 'starter', 'growth', 'enterprise'].includes(plan)
-        ),
+        chatEnabled: chatPlan !== 'none',
+        voiceEnabled: voicePlan !== 'none',
         features,
       },
     });

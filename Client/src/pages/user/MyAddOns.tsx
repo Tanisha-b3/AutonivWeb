@@ -240,6 +240,11 @@ export function MyAddOns() {
   const catalog    = useAppSelector((s) => s.addOns.catalog);
   const myAddOns   = useAppSelector((s) => s.addOns.my);
   const loading    = useAppSelector((s) => s.addOns.loading);
+  const user       = useAppSelector((s) => s.auth.user);
+
+  const isChat = user?.role === 'admin' || (user?.chatPlan ? user.chatPlan !== 'none' : (user?.chatEnabled !== undefined ? user.chatEnabled : true));
+  const isVoice = user?.role === 'admin' || (user?.voicePlan ? user.voicePlan !== 'none' : (user?.voiceEnabled !== undefined ? user.voiceEnabled : false));
+
   const [filter, setFilter] = useState<string>('all');
   const [selectedAddon, setSelectedAddon] = useState<AddOnCatalogEntry | null>(null);
   const [requesting, setRequesting] = useState<string | null>(null);
@@ -250,6 +255,13 @@ export function MyAddOns() {
   useEffect(() => { dispatch(fetchMyAddOns()); }, [dispatch]);
 
   // ── Derived state ──────────────────────────────────────────────────────
+  const filteredCatalog = useMemo(() => {
+    return catalog.filter((addon) => {
+      if (addon.type === 'voice') return isVoice;
+      return isChat;
+    });
+  }, [catalog, isChat, isVoice]);
+
   const myStatusMap = useMemo(() => {
     const map: Record<string, string> = {};
     myAddOns.forEach((m) => {
@@ -388,11 +400,11 @@ export function MyAddOns() {
               <h2 className="text-lg font-bold" style={{ color: 'var(--text)' }}>Available add-ons</h2>
             </div>
             <p className="text-xs self-end pb-0.5" style={{ color: 'var(--text-muted)' }}>
-              {Object.keys(myStatusMap).length} of {catalog.length} requested
+              {Object.keys(myStatusMap).filter(id => filteredCatalog.some(c => c.id === id)).length} of {filteredCatalog.length} requested
             </p>
           </div>
 
-          {catalog.length === 0 ? (
+          {filteredCatalog.length === 0 ? (
             <div
               className="rounded-2xl py-12 sm:py-20 flex flex-col items-center justify-center text-center px-4 sm:px-8"
               style={{ background: 'var(--s1)', border: '1px solid var(--border)' }}
@@ -406,7 +418,7 @@ export function MyAddOns() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {catalog.map((addon) => (
+              {filteredCatalog.map((addon) => (
                 <CatalogCard
                   key={addon.id}
                   addon={addon}
@@ -490,7 +502,7 @@ export function MyAddOns() {
                   ? 'Browse the catalog above to request your first add-on.'
                   : 'Try a different filter or browse the catalog.'}
               </p>
-              {filter === 'all' && catalog.length > 0 && (
+              {filter === 'all' && filteredCatalog.length > 0 && (
                 <a
                   href="#catalog"
                   className="btn-cta inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"

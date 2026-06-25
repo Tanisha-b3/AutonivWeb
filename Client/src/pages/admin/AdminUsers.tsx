@@ -123,24 +123,6 @@ function SelectInput({ value, onChange, options }: {
   );
 }
 
-function SwitchInput({ label, description, checked, onChange }: { label: string; description: string; checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <div className="flex items-center justify-between p-4 rounded-xl border transition-all" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-      <div className="pr-4">
-        <p className="text-sm font-bold" style={{ color: 'var(--text)' }}>{label}</p>
-        <p className="text-xs" style={{ color: 'var(--muted)' }}>{description}</p>
-      </div>
-      <button
-        type="button"
-        onClick={() => onChange(!checked)}
-        className={`w-10 h-6 rounded-full transition-colors flex items-center p-0.5 cursor-pointer flex-shrink-0 ${checked ? 'bg-[#2563eb]' : 'bg-slate-300'}`}
-      >
-        <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200 ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
-      </button>
-    </div>
-  );
-}
-
 const CHAT_PLAN_OPTIONS = [
   { value: 'chat_free', label: 'Chat Free (100 chats · ₹0)' },
   { value: 'chat_starter', label: 'Chat Starter (1,000 chats · ₹3,499)' },

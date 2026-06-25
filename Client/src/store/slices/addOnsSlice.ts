@@ -71,7 +71,7 @@ export const processAddOn = createAsyncThunk(
 
 export const createCatalogEntry = createAsyncThunk(
   'addOns/createCatalog',
-  async (data: { id: string; icon?: string; title: string; price: string; category?: string; description?: string }) => {
+  async (data: { id: string; icon?: string; title: string; price: string; category?: string; description?: string; type?: 'chat' | 'voice' }) => {
     const res = await addOnService.createCatalogEntry(data);
     return res.data.addOn as AddOnCatalogEntry;
   }
