@@ -295,7 +295,7 @@ export function PublicNavbar() {
       {/* Slide-in side drawer */}
       <div
         ref={drawerRef}
-        className="lg:hidden mt-9 fixed top-0 right-0 h-full z-[100] flex flex-col"
+        className="lg:hidden mt-9.5 fixed top-0 right-0 h-full z-[100] flex flex-col"
         style={{
           width: 'min(82vw, 340px)',
           background: 'rgba(255,255,255,0.98)',
@@ -309,7 +309,7 @@ export function PublicNavbar() {
         aria-modal="true"
         aria-hidden={!mobileMenuOpen}
       >
-        <div className="flex items-center justify-between px-5 h-[64px]" style={{ borderBottom: '1px solid rgba(37,99,235,0.10)' }}>
+        <div className="-ml-10 flex items-center justify-between px-5 h-[64px]" style={{ borderBottom: '1px solid rgba(37,99,235,0.10)' }}>
           <Link
             to="/"
             className="flex items-center gap-2"
