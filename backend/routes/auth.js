@@ -333,7 +333,6 @@ router.post('/login', authLimiter, loginLimiter, async (req, res) => {
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const purpose = user.isVerified ? 'login' : 'register';
 
     await User.updateOne(
       { _id: user._id },
@@ -341,20 +340,20 @@ router.post('/login', authLimiter, loginLimiter, async (req, res) => {
         $set: {
           otpCode: otp,
           otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
-          otpPurpose: purpose,
+          otpPurpose: 'login',
         },
       }
     );
 
-    log.info('login_pending_otp', { userId: String(user._id), purpose, ip: getClientIp(req) });
+    log.info('login_pending_otp', { userId: String(user._id), ip: getClientIp(req) });
 
     // Respond immediately, send email in background
-    sendOtpEmail({ to: email, otp, purpose }).catch((err) => log.error('otp_email_send_failed', { error: err.message }));
+    sendOtpEmail({ to: email, otp, purpose: 'login' }).catch((err) => log.error('otp_email_send_failed', { error: err.message }));
 
     return res.json({
       requiresOtp: true,
       email,
-      message: `Verification code sent to your email. Please verify to complete ${purpose === 'register' ? 'registration' : 'sign in'}.`,
+      message: 'Verification code sent to your email. Please verify to complete sign in.',
     });
   } catch (error) {
     log.error('login_error', { error: error.message, stack: error.stack, email: req.body?.email });

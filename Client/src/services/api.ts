@@ -90,6 +90,10 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/register')) {
+      return Promise.reject(error);
+    }
+
     if (originalRequest.url?.includes('/auth/refresh')) {
       clearSession();
       window.location.href = '/login';

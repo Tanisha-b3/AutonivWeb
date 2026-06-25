@@ -318,7 +318,7 @@ export function PublicNavbar() {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           >
-            <img src={LOGO_SRC} alt="Autoniv" className="h-30 w-auto" />
+            <img src={LOGO_SRC} alt="Autoniv" className="h-40 w-auto" />
           </Link>
           <button
             onClick={() => setMobileMenuOpen(false)}
