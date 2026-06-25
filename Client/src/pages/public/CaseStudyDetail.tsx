@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { STUDIES } from './caseStudiesData';
 import Footer from './Footer';
 import ScrollToTop from '../../components/ScrollToTop';
-import { Nav } from './CaseStudies';
+import { PublicNavbar } from '../../components/PublicNavbar';
+import { USPSlider } from './sections/USPSlider';
 
 /* ─── FAQ Item ─── */
 function FAQItem({ question, answer }: { question: string; answer: string }) {
@@ -46,7 +47,8 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 
 export default function CaseStudyDetail() {
   const { id } = useParams();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const goBack = () => navigate('/case-studies');
   const studyIndex = parseInt(id || '0');
   const study = STUDIES[studyIndex];
 
@@ -55,7 +57,7 @@ export default function CaseStudyDetail() {
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#f8fafc' }}>
         <div className="text-center">
           <h1 className="text-2xl font-bold text-[#0a0a0a] mb-4">Case Study Not Found</h1>
-          <Link to="/case-studies" className="text-[#2563EB] font-semibold hover:underline">← Back to Case Studies</Link>
+          <button onClick={goBack} className="text-[#2563EB] font-semibold hover:underline cursor-pointer" style={{ background: 'none', border: 'none' }}>← Back to Case Studies</button>
         </div>
       </div>
     );
@@ -72,21 +74,22 @@ export default function CaseStudyDetail() {
         color: '#0a0a0a',
       }}
     >
-      <Nav mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <USPSlider />
+      <PublicNavbar />
 
       <div className="relative z-10" style={{ paddingTop: 130, paddingBottom: 80 }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           {/* Back Button */}
-          <Link 
-            to="/case-studies" 
-            className="inline-flex items-center gap-2 text-sm font-medium mb-8 transition-colors hover:underline"
-            style={{ color: '#64748b' }}
+          <button 
+            onClick={goBack} 
+            className="inline-flex items-center gap-2 text-sm font-medium mb-8 transition-colors hover:underline cursor-pointer"
+            style={{ color: '#64748b', background: 'none', border: 'none' }}
           >
             <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
             </svg>
             Back to Case Studies
-          </Link>
+          </button>
 
           {/* Header */}
           <div className="mb-12">

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Footer from './Footer';
 import { USPSlider } from './sections/USPSlider';
-import { Nav } from './CaseStudies';
+import { PublicNavbar } from '../../components/PublicNavbar';
 
 /* ─── Nav (matching Agents component) ─── */
 
@@ -308,8 +308,6 @@ function SocialProof() {
 
 /* ─── Main Export ─── */
 export function Pricing() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   return (
     <div
       className="min-h-screen relative"
@@ -320,7 +318,7 @@ export function Pricing() {
       }}
     >
       <USPSlider />
-      <Nav mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <PublicNavbar />
 
       <div style={{ paddingTop: 130, paddingBottom: 80 }}>
         {/* Hero */}

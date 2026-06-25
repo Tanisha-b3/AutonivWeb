@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Footer from './Footer';
 import ScrollToTop from '../../components/ScrollToTop';
-import { Nav } from './CaseStudies';
+import { PublicNavbar } from '../../components/PublicNavbar';
 import { USPSlider } from './sections/USPSlider';
 
 const LOGO_SRC = '/autoniv.webp';
@@ -75,62 +75,6 @@ function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
    A literal nod to "voice" rather than a generic gradient
    blob; sits quiet and low-opacity, doesn't compete with type.
 ─────────────────────────────────────────────────────────────── */
-function HeroWaveform() {
-  const bars = Array.from({ length: 64 });
-  return (
-    <svg
-      viewBox="0 0 800 160"
-      preserveAspectRatio="none"
-      style={{
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100%',
-        height: 160,
-        opacity: 0.55,
-        pointerEvents: 'none',
-      }}
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id="waveFade" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#2563EB" stopOpacity="0.30" />
-          <stop offset="100%" stopColor="#10B981" stopOpacity="0.05" />
-        </linearGradient>
-      </defs>
-      {bars.map((_, i) => {
-        const x = (i / bars.length) * 800;
-        const seed = Math.sin(i * 1.7) * Math.cos(i * 0.6);
-        const h = 18 + Math.abs(seed) * 90 + Math.abs(Math.sin(i * 0.35)) * 30;
-        return (
-          <rect
-            key={i}
-            x={x}
-            y={160 - h}
-            width={800 / bars.length - 3}
-            height={h}
-            rx={2}
-            fill="url(#waveFade)"
-            style={{
-              animation: `wavePulse 3.2s ease-in-out ${(i % 12) * 0.12}s infinite`,
-              transformOrigin: 'bottom',
-            }}
-          />
-        );
-      })}
-      <style>{`
-        @keyframes wavePulse {
-          0%, 100% { transform: scaleY(1); }
-          50% { transform: scaleY(0.62); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          rect { animation: none !important; }
-        }
-      `}</style>
-    </svg>
-  );
-}
 
 /* ─── FAQ Item ─── */
 function FAQItem({ question, answer }: { question: string; answer: string }) {
@@ -359,8 +303,6 @@ function GradientText({ children }: { children: React.ReactNode }) {
 
 /* ─── Main Export ─── */
 export function AboutUS() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   const faqs = [
     { q: 'What exactly does Autoniv do?', a: 'Autoniv deploys AI voice agents that handle your business phone calls 24/7 — answering inbound calls, running outbound campaigns, qualifying leads, booking appointments, and following up with customers, all without adding headcount.' },
     { q: 'Is this just another IVR or phone bot?', a: "No. Traditional IVRs make callers press buttons and navigate menus. Autoniv's AI voice agents hold natural two-way conversations, handle unexpected questions, and respond intelligently — the way a trained human rep would." },
@@ -384,7 +326,7 @@ export function AboutUS() {
       }}
     >
       <USPSlider />
-      <Nav mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <PublicNavbar />
 
       <div style={{ paddingTop: 130 }}>
 
@@ -443,7 +385,7 @@ export function AboutUS() {
             </Reveal>
           </div>
           {/* Signature ambient waveform — literal nod to "voice" */}
-          <HeroWaveform />
+          {/* <HeroWaveform /> */}
         </div>
 
         {/* ── Stats ── */}

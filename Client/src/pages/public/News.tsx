@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import Footer from './Footer';
 import ScrollToTop from '../../components/ScrollToTop';
 import { USPSlider } from './sections/USPSlider';
-import { Nav } from './CaseStudies';
+import { PublicNavbar } from '../../components/PublicNavbar';
 import { BRAND, INK, SLATE, MUTE, HAIRLINE, SURFACE, TINT, MONO, SANS, Reveal, SectionLabel, GradientText, StatCard, CTADecorations } from './design';
 
 const NEWS_ARTICLES = [
@@ -105,13 +105,12 @@ function ArticleModal({ article, onClose }: { article: typeof NEWS_ARTICLES[0] |
 }
 
 export function News() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<typeof NEWS_ARTICLES[0] | null>(null);
 
   return (
     <div style={{ minHeight: '100vh', background: TINT, fontFamily: SANS, color: INK }}>
       <USPSlider />
-      <Nav mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <PublicNavbar />
 
       <div style={{ paddingTop: 130 }}>
 

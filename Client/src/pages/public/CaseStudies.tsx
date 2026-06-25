@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Footer from './Footer';
 import ScrollToTop from '../../components/ScrollToTop';
+import { PublicNavbar } from '../../components/PublicNavbar';
 import { BRAND, INK, SLATE, MUTE, HAIRLINE, SURFACE, TINT, MONO, SANS, LOGO_SRC, Reveal, SectionLabel, GradientText, StatCard, CTADecorations } from './design';
 import { STUDIES } from './caseStudiesData';
 
@@ -364,12 +365,10 @@ function Carousel() {
 
 /* ─── Main export ─── */
 export function CaseStudies() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   return (
     <div style={{ minHeight: '100vh', background: TINT, fontFamily: SANS, color: INK }}>
       <USPSlider />
-      <Nav mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <PublicNavbar />
 
       <div style={{ paddingTop: 130 }}>
 

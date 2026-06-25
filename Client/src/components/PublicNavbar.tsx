@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const AuthDialog = lazy(() =>
   import('../pages/public/AuthDialog').then((m) => ({ default: m.AuthDialog }))
@@ -63,6 +63,7 @@ export function PublicNavbar() {
   const navRef = useRef<HTMLElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const openAuth = (mode: 'login' | 'register') => {
     setAuthMode(mode);
@@ -130,13 +131,23 @@ export function PublicNavbar() {
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, item: typeof navItems[0]) => {
     if (item.isHash) {
+      e.preventDefault();
+      const targetId = item.href.replace('#', '');
       if (location.pathname === '/') {
-        e.preventDefault();
-        const el = document.getElementById(item.href.replace('#', ''));
+        const el = document.getElementById(targetId);
         if (el) {
           const y = el.getBoundingClientRect().top + window.scrollY - 72;
           window.scrollTo({ top: y, behavior: 'smooth' });
         }
+      } else {
+        navigate('/');
+        setTimeout(() => {
+          const el = document.getElementById(targetId);
+          if (el) {
+            const y = el.getBoundingClientRect().top + window.scrollY - 72;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+          }
+        }, 150);
       }
     }
   };

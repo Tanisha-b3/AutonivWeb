@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import Footer from "./Footer";
-import { Nav } from "./CaseStudies";
+import { PublicNavbar } from "../../components/PublicNavbar";
 import { USPSlider } from "./sections/USPSlider";
 import { BRAND, INK, SLATE, MUTE, HAIRLINE, SURFACE, TINT, MONO, SANS, Reveal, SectionLabel, GradientText, StatCard, CTADecorations } from './design';
 
@@ -301,12 +301,10 @@ function CTASection() {
 
 /* ─── Main ─── */
 export function Agents() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
   return (
     <div style={{ minHeight: '100vh', background: TINT, fontFamily: SANS, color: INK }}>
       <USPSlider />
-      <Nav mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <PublicNavbar />
       <div style={{ paddingTop: 130 }}>
         <Hero />
 
