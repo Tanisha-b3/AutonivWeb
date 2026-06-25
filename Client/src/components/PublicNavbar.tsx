@@ -360,7 +360,7 @@ export function PublicNavbar() {
 
         {/* Drawer footer CTAs */}
         <div
-          className="mt-10 px-4 py-4 space-y-2 flex-shrink-0"
+          className="mb-10 px-4 py-4 space-y-2 flex-shrink-0"
           style={{ borderTop: '1px solid rgba(37,99,235,0.10)' }}
         >
           <button
