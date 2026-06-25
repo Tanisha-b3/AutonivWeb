@@ -363,9 +363,9 @@ export function MyAddOns() {
                 {myAddOns.length} active
               </span>
             </div>
-            <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight leading-none" style={{ color: 'var(--text)' }}>Add-On Marketplace</h1>
-            <p className="mt-2 text-xs sm:text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Enhance your plan with powerful add-ons and manage your subscriptions.
+            <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight leading-none" style={{ color: 'var(--text)' }}>Power-Ups Marketplace</h1>
+            <p className="mt-2 text-xs sm:text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>
+              Stack only what you need. Available on all paid Autoniv plans.
             </p>
           </div>
 

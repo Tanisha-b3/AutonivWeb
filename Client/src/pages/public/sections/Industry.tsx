@@ -1,19 +1,13 @@
+import { useState } from "react";
 import { useCases, integrationsRow1, integrationsRow2 } from "./data";
 import { Reveal } from "./utils";
 
 export function Industry({ activeUseCase, setActiveUseCase, openAuth }: {
   activeUseCase: number; setActiveUseCase: (i: number) => void; openAuth: (m: "login" | "register") => void;
 }) {
-  const keyOutcomes = [
-    [{ label: "No-show reduction", value: "60%" }, { label: "Calls handled/day", value: "500+" }, { label: "Avg handle time", value: "< 2 min" }],
-    [{ label: "Lead qualification rate", value: "3×" }, { label: "Response time", value: "< 5 sec" }, { label: "Viewing bookings", value: "+85%" }],
-    [{ label: "Cost reduction", value: "50%" }, { label: "Inquiry resolution", value: "92%" }, { label: "Collections rate", value: "+38%" }],
-  ];
-  const features = [
-    ["Automated patient appointment scheduling", "Prescription refill reminders via call", "Post-visit follow-up and satisfaction surveys", "Insurance pre-auth intake collection"],
-    ["Instant lead qualification from property portals", "24/7 viewing slot booking & confirmation", "Automated follow-ups on expired listings", "Multi-language support for NRI buyers"],
-    ["Loan inquiry intake and pre-qualification", "EMI due-date reminders and payment nudges", "KYC document follow-up automation", "Account support without agent involvement"],
-  ];
+  const [mode, setMode] = useState<"chat" | "voice">("chat");
+  const uc = useCases[activeUseCase];
+  const variant = uc[mode];
 
   return (
     <section className="section-box white">
@@ -31,25 +25,25 @@ export function Industry({ activeUseCase, setActiveUseCase, openAuth }: {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
           {useCases.map((uc, i) => (
             <Reveal key={i} delay={i * 0.08}>
-              <div onClick={() => setActiveUseCase(i)} className="relative rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300" style={{
-                background: activeUseCase === i ? "linear-gradient(135deg, rgba(37,99,235,0.07), rgba(16,185,129,0.07))" : "#ffffff",
-                border: activeUseCase === i ? "2px solid rgba(16,185,129,0.35)" : "1px solid rgba(37,99,235,0.10)",
-                boxShadow: activeUseCase === i ? "0 16px 48px rgba(16,185,129,0.10)" : "0 4px 16px rgba(0,0,0,0.03)",
-                transform: activeUseCase === i ? "translateY(-4px)" : "translateY(0)",
-              }}>
-                {activeUseCase === i && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg,#2563EB,#10B981)" }} />}
-                <div style={{ padding: "28px 24px 24px" }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
-                    <div style={{ width: 52, height: 52, borderRadius: 14, background: activeUseCase === i ? "linear-gradient(135deg, rgba(37,99,235,0.12), rgba(16,185,129,0.12))" : "rgba(37,99,235,0.06)", border: activeUseCase === i ? "1px solid rgba(16,185,129,0.25)" : "1px solid rgba(37,99,235,0.10)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, transition: "all 0.3s" }}>{uc.icon}</div>
-                    <span style={{ fontSize: 10, fontWeight: 600, padding: "4px 10px", borderRadius: 99, background: activeUseCase === i ? "rgba(16,185,129,0.10)" : "rgba(37,99,235,0.06)", color: activeUseCase === i ? "#10B981" : "#2563EB", border: activeUseCase === i ? "1px solid rgba(16,185,129,0.22)" : "1px solid rgba(37,99,235,0.14)", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.06em", transition: "all 0.3s" }}>
-                      {["Healthcare", "Real Estate", "Finance"][i]}
+                  <div onClick={() => setActiveUseCase(i)} className="relative rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300" style={{
+                    background: activeUseCase === i ? "linear-gradient(135deg, rgba(37,99,235,0.07), rgba(16,185,129,0.07))" : "#ffffff",
+                    border: activeUseCase === i ? "2px solid rgba(16,185,129,0.35)" : "1px solid rgba(37,99,235,0.10)",
+                    boxShadow: activeUseCase === i ? "0 16px 48px rgba(16,185,129,0.10)" : "0 4px 16px rgba(0,0,0,0.03)",
+                    transform: activeUseCase === i ? "translateY(-4px)" : "translateY(0)",
+                  }}>
+                    {activeUseCase === i && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg,#2563EB,#10B981)" }} />}
+                    <div style={{ padding: "28px 24px 24px" }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
+                        <div style={{ width: 52, height: 52, borderRadius: 14, background: activeUseCase === i ? "linear-gradient(135deg, rgba(37,99,235,0.12), rgba(16,185,129,0.12))" : "rgba(37,99,235,0.06)", border: activeUseCase === i ? "1px solid rgba(16,185,129,0.25)" : "1px solid rgba(37,99,235,0.10)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, transition: "all 0.3s" }}>{uc.icon}</div>
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: "4px 10px", borderRadius: 99, background: activeUseCase === i ? "rgba(16,185,129,0.10)" : "rgba(37,99,235,0.06)", color: activeUseCase === i ? "#10B981" : "#2563EB", border: activeUseCase === i ? "1px solid rgba(16,185,129,0.22)" : "1px solid rgba(37,99,235,0.14)", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.06em", transition: "all 0.3s" }}>
+                      {uc.title}
                     </span>
                   </div>
                   <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0a0a0a", marginBottom: 8 }}>{uc.title}</h3>
-                  <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.65, marginBottom: 18 }}>{uc.desc}</p>
+                  <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.65, marginBottom: 18 }}>{variant.desc}</p>
                   <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 99, background: activeUseCase === i ? "linear-gradient(135deg, rgba(37,99,235,0.10), rgba(16,185,129,0.10))" : "rgba(37,99,235,0.04)", border: activeUseCase === i ? "1px solid rgba(16,185,129,0.25)" : "1px solid rgba(37,99,235,0.10)" }}>
                     <svg width="14" height="14" fill="none" stroke={activeUseCase === i ? "#10B981" : "#2563EB"} strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: activeUseCase === i ? "#10B981" : "#2563EB" }}>{uc.stat}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: activeUseCase === i ? "#10B981" : "#2563EB" }}>{variant.stat}</span>
                   </div>
                 </div>
                 {activeUseCase === i && (
@@ -63,12 +57,24 @@ export function Industry({ activeUseCase, setActiveUseCase, openAuth }: {
         </div>
 
         <Reveal>
-          <div key={activeUseCase} className="animate-fade-up rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.04), rgba(16,185,129,0.03))", border: "1px solid rgba(16,185,129,0.14)", marginBottom: 48 }}>
+          <div key={`${activeUseCase}-${mode}`} className="animate-fade-up rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.04), rgba(16,185,129,0.03))", border: "1px solid rgba(16,185,129,0.14)", marginBottom: 48 }}>
+            {/* Chat / Voice Toggle */}
+            <div style={{ display: "flex", borderBottom: "1px solid rgba(37,99,235,0.08)" }}>
+              <button onClick={() => setMode("chat")} style={{ flex: 1, padding: "14px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", border: "none", background: mode === "chat" ? "rgba(37,99,235,0.06)" : "transparent", color: mode === "chat" ? "#2563EB" : "#475569", borderBottom: mode === "chat" ? "2px solid #2563EB" : "2px solid transparent", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                Chat Box
+              </button>
+              <button onClick={() => setMode("voice")} style={{ flex: 1, padding: "14px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", border: "none", background: mode === "voice" ? "rgba(16,185,129,0.06)" : "transparent", color: mode === "voice" ? "#10B981" : "#475569", borderBottom: mode === "voice" ? "2px solid #10B981" : "2px solid transparent", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" /></svg>
+                Voice Agent
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
               <div style={{ padding: "32px 36px", borderRight: "1px solid rgba(37,99,235,0.08)" }}>
-                <p style={{ fontSize: 11, fontWeight: 600, color: "#2563EB", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "'JetBrains Mono',monospace", marginBottom: 12 }}>Key outcomes</p>
+                <p style={{ fontSize: 11, fontWeight: 600, color: mode === "chat" ? "#2563EB" : "#10B981", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "'JetBrains Mono',monospace", marginBottom: 12 }}>Key outcomes</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {keyOutcomes[activeUseCase].map((item, j) => (
+                  {variant.outcomes.map((item: { label: string; value: string }, j: number) => (
                     <div key={j} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.65)", border: "1px solid rgba(37,99,235,0.08)" }}>
                       <span style={{ fontSize: 13, color: "#475569" }}>{item.label}</span>
                       <span style={{ fontSize: 16, fontWeight: 700, color: "#0a0a0a", fontFamily: "'JetBrains Mono',monospace" }}>{item.value}</span>
@@ -77,12 +83,12 @@ export function Industry({ activeUseCase, setActiveUseCase, openAuth }: {
                 </div>
               </div>
               <div style={{ padding: "32px 36px" }}>
-                <p style={{ fontSize: 11, fontWeight: 600, color: "#10B981", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "'JetBrains Mono',monospace", marginBottom: 12 }}>What Autoniv does</p>
+                <p style={{ fontSize: 11, fontWeight: 600, color: mode === "chat" ? "#2563EB" : "#10B981", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "'JetBrains Mono',monospace", marginBottom: 12 }}>What Autoniv does</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {features[activeUseCase].map((feat, j) => (
+                  {variant.features.map((feat: string, j: number) => (
                     <div key={j} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                      <div style={{ width: 20, height: 20, borderRadius: "50%", flexShrink: 0, marginTop: 1, background: "rgba(16,185,129,0.10)", border: "1px solid rgba(16,185,129,0.22)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <svg width="10" height="10" fill="none" stroke="#10B981" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                      <div style={{ width: 20, height: 20, borderRadius: "50%", flexShrink: 0, marginTop: 1, background: mode === "chat" ? "rgba(37,99,235,0.10)" : "rgba(16,185,129,0.10)", border: mode === "chat" ? "1px solid rgba(37,99,235,0.22)" : "1px solid rgba(16,185,129,0.22)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <svg width="10" height="10" fill="none" stroke={mode === "chat" ? "#2563EB" : "#10B981"} strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                       </div>
                       <span style={{ fontSize: 13, color: "#475569", lineHeight: 1.55 }}>{feat}</span>
                     </div>
@@ -90,8 +96,11 @@ export function Industry({ activeUseCase, setActiveUseCase, openAuth }: {
                 </div>
                 <div style={{ marginTop: 20, paddingTop: 18, borderTop: "1px solid rgba(37,99,235,0.08)", display: "flex", gap: 10 }}>
                   <button onClick={() => openAuth("register")} className="font-bold text-white flex items-center gap-2" style={{ padding: "9px 18px", borderRadius: 10, fontSize: 13, background: "linear-gradient(135deg,#2563EB,#10B981)", boxShadow: "0 4px 14px rgba(16,185,129,0.20)", border: "none", cursor: "pointer" }}>
-                    Try for {useCases[activeUseCase].title}
+                    {variant.cta}
                     <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+                  </button>
+                  <button onClick={() => { const el = document.getElementById('contact'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} style={{ padding: "9px 18px", borderRadius: 10, fontSize: 13, fontWeight: 600, border: "1px solid rgba(37,99,235,0.2)", background: "transparent", color: "#475569", cursor: "pointer" }}>
+                    Contact Sales
                   </button>
                 </div>
               </div>

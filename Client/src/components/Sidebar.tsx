@@ -736,7 +736,17 @@ export function Sidebar() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [toggleSidebar]);
 
-  const navItems = isAdmin ? adminNavItems : userNavItems;
+  const plan = user?.plan || 'chat_free';
+  const isChat = user?.role === 'admin' || (user?.chatPlan ? user.chatPlan !== 'none' : (user?.chatEnabled !== undefined ? user.chatEnabled : true));
+  const isVoice = user?.role === 'admin' || (user?.voicePlan ? user.voicePlan !== 'none' : (user?.voiceEnabled !== undefined ? user.voiceEnabled : false));
+
+  const navItems = isAdmin
+    ? adminNavItems
+    : userNavItems.filter((item) => {
+        if (item.path === '/dashboard/chat') return isChat;
+        if (item.path === '/dashboard/agents' || item.path === '/dashboard/calls') return isVoice;
+        return true;
+      });
 
   const renderLogo = (forceExpanded: boolean) => (
     <div className={`p-4 border-b border-white/5 ${isCollapsed && !forceExpanded ? 'px-3' : ''}`}>

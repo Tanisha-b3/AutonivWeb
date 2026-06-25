@@ -1,6 +1,6 @@
 import express from 'express';
 import Appointment from '../db/models/Appointment.js';
-import { authenticate, requireAdmin } from '../middleware/auth.js';
+import { authenticate, requireAdmin, requireFeature } from '../middleware/auth.js';
 import { contentFilter } from '../services/contentModeration.js';
 import { log } from '../services/logger.js';
 import { sendAppointmentConfirmation } from '../services/whatsappService.js';

@@ -76,6 +76,21 @@ const planGradients: Record<string, string> = {
   starter: 'linear-gradient(135deg, #2563EB, #1d4ed8)',
   growth: 'linear-gradient(135deg, #10B981, #059669)',
   enterprise: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+
+  chat_free: 'linear-gradient(135deg, #94a3b8, #64748b)',
+  chat_starter: 'linear-gradient(135deg, #2563EB, #1d4ed8)',
+  chat_growth: 'linear-gradient(135deg, #10B981, #059669)',
+  chat_enterprise: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+
+  voice_free: 'linear-gradient(135deg, #94a3b8, #64748b)',
+  voice_starter: 'linear-gradient(135deg, #2563EB, #1d4ed8)',
+  voice_growth: 'linear-gradient(135deg, #10B981, #059669)',
+  voice_enterprise: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+
+  both_free: 'linear-gradient(135deg, #94a3b8, #64748b)',
+  both_starter: 'linear-gradient(135deg, #2563EB, #1d4ed8)',
+  both_growth: 'linear-gradient(135deg, #10B981, #059669)',
+  both_enterprise: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
 };
 
 export function AdminUpgradeRequests() {

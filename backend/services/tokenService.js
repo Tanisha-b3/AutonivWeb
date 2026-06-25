@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
+import User from '../db/models/User.js';
 import { securityEvent, IS_PROD, log } from '../services/logger.js';
 
 function getAccessSecret() {
@@ -85,6 +86,49 @@ export function hashRefreshToken(token) {
 }
 
 export function tokenResponse({ user, dashboardStats, accessToken, refreshToken }) {
+  let chatPlan = user.chatPlan;
+  let voicePlan = user.voicePlan;
+  if (!chatPlan && !voicePlan) {
+    const plan = user.plan || 'chat_free';
+    if (plan.startsWith('chat_')) {
+      chatPlan = plan;
+      voicePlan = 'none';
+    } else if (plan.startsWith('voice_')) {
+      chatPlan = 'none';
+      voicePlan = plan;
+    } else if (plan.startsWith('both_')) {
+      chatPlan = plan.replace('both_', 'chat_');
+      voicePlan = plan.replace('both_', 'voice_');
+    } else {
+      chatPlan = `chat_${plan}`;
+      voicePlan = `voice_${plan}`;
+    }
+  }
+  chatPlan = chatPlan || 'none';
+  voicePlan = voicePlan || 'none';
+
+  const getTier = (planName) => {
+    if (!planName || planName === 'none') return 'free';
+    if (planName.includes('starter')) return 'starter';
+    if (planName.includes('growth')) return 'growth';
+    if (planName.includes('enterprise')) return 'enterprise';
+    return 'free';
+  };
+
+  const chatTier = getTier(chatPlan);
+  const voiceTier = getTier(voicePlan);
+
+  const tierOrder = { free: 0, starter: 1, growth: 2, enterprise: 3 };
+  const sharedTier = tierOrder[chatTier] >= tierOrder[voiceTier] ? chatTier : voiceTier;
+
+  const features = { appointments: {}, leads: {}, chat: {}, agents: {} };
+  for (const [key, val] of Object.entries(User.FEATURES.appointments)) features.appointments[key] = val[sharedTier];
+  for (const [key, val] of Object.entries(User.FEATURES.leads)) features.leads[key] = val[sharedTier];
+  for (const [key, val] of Object.entries(User.FEATURES.chat)) features.chat[key] = val[chatTier];
+  for (const [key, val] of Object.entries(User.FEATURES.agents)) features.agents[key] = val[voiceTier];
+
+  const plan = user.plan || (chatPlan !== 'none' ? chatPlan : voicePlan);
+
   const out = {
     accessToken,
     token: accessToken,
@@ -95,12 +139,17 @@ export function tokenResponse({ user, dashboardStats, accessToken, refreshToken 
       phoneNumber: user.phoneNumber,
       role: user.role,
       company: user.company,
-      plan: user.plan,
+      plan,
+      chatPlan,
+      voicePlan,
       minutesUsed: user.minutesUsed,
       minutesLimit: user.minutesLimit,
       callsUsed: user.callsUsed || 0,
-      callsLimit: user.callsLimit || 30,
+      callsLimit: user.callsLimit,
       isActive: user.isActive,
+      chatEnabled: chatPlan !== 'none',
+      voiceEnabled: voicePlan !== 'none',
+      features,
     },
   };
   if (refreshToken) out.refreshToken = refreshToken;

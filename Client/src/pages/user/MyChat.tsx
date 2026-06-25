@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAppSelector } from '../../hooks/useStore';
 import { userChatService, chatHistoryService } from '../../services/api';
 import type { ChatSessionSummary, ChatMessage } from '../../services/api';
 
@@ -219,6 +220,7 @@ const UserAvatar = () => (
 );
 
 export function MyChat() {
+  const user = useAppSelector((state) => state.auth.user);
   const [messages, setMessages]   = useState<Message[]>(() => loadMessages() ?? [WELCOME_MESSAGE]);
   const [input, setInput]         = useState('');
   const [loading, setLoading]     = useState(false);
@@ -441,6 +443,46 @@ export function MyChat() {
           </button>
         </div>
       </motion.div>
+
+      {/* ── Chat usage bar ── */}
+      {(() => {
+        const used = user?.callsUsed ?? 0;
+        const limit = user?.callsLimit ?? 100;
+        const pct = Math.min((used / (limit || 1)) * 100, 100);
+        const over = used >= limit;
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.1 }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '7px 12px', borderRadius: 10, marginBottom: 12,
+              background: over ? 'rgba(239,68,68,0.06)' : 'rgba(59,130,246,0.04)',
+              border: `1px solid ${over ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.1)'}`,
+              flexShrink: 0,
+            }}
+          >
+            <svg width="14" height="14" fill="none" stroke={over ? '#ef4444' : 'var(--primary)'} viewBox="0 0 24 24" strokeWidth={2} style={{ flexShrink: 0 }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>
+              {used}<span style={{ color: 'var(--text-muted)' }}>/{limit}</span>
+            </span>
+            <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'var(--border)', overflow: 'hidden' }}>
+              <div style={{ width: `${pct}%`, height: '100%', borderRadius: 2, background: over ? '#ef4444' : 'var(--primary)', transition: 'width 0.4s' }} />
+            </div>
+            <span style={{ fontSize: 10, fontWeight: 500, color: over ? '#ef4444' : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+              {over ? 'Limit reached' : `${Math.round(pct)}% used`}
+            </span>
+            {over && (
+              <button type="button" onClick={() => window.location.href = '/dashboard/billing'} style={{ fontSize: 10, fontWeight: 600, background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', padding: 0, textDecoration: 'underline', whiteSpace: 'nowrap' }}>
+                Upgrade
+              </button>
+            )}
+          </motion.div>
+        );
+      })()}
 
       {/* ── History sidebar ── */}
       <AnimatePresence>

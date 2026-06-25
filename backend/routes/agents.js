@@ -5,7 +5,7 @@ import User from '../db/models/User.js';
 import Call from '../db/models/Call.js';
 import Lead from '../db/models/Lead.js';
 import Appointment from '../db/models/Appointment.js';
-import { authenticate, requireAdmin } from '../middleware/auth.js';
+import { authenticate, requireAdmin, requireFeature } from '../middleware/auth.js';
 import { contentFilter } from '../services/contentModeration.js';
 import { log } from '../services/logger.js';
 import { parsePage, paginatedResponse } from '../services/pagination.js';
@@ -20,6 +20,7 @@ import {
 
 const router = express.Router();
 router.use(authenticate);
+router.use(requireFeature('voice'));
 
 const VALID_TYPES = ['receptionist', 'appointment', 'faq'];
 
@@ -259,20 +260,20 @@ router.put('/:id', contentFilter('name', 'prompt'), async (req, res) => {
     const { name, type, prompt, isActive, language, voiceId } = req.body;
 
     const { agent, forbidden } = await resolveAgentForUser(id, req.user);
-    if (!agent)    return res.status(404).json({ message: 'Agent not found' });
+    if (!agent) return res.status(404).json({ message: 'Agent not found' });
     if (forbidden) return res.status(403).json({ message: 'Access denied' });
 
     if (type !== undefined && !VALID_TYPES.includes(type)) {
       return res.status(400).json({ message: `type must be one of: ${VALID_TYPES.join(', ')}` });
     }
 
-    const effectiveName      = name     || agent.name;
-    const effectiveType      = type     || agent.type;
-    const effectiveLanguage  = language || agent.language || 'en';
-    const effectiveVoiceId   = voiceId  || agent.voiceId;
+    const effectiveName = name || agent.name;
+    const effectiveType = type || agent.type;
+    const effectiveLanguage = language || agent.language || 'en';
+    const effectiveVoiceId = voiceId || agent.voiceId;
     const userProvidedPrompt = prompt !== undefined && prompt !== null && prompt !== '';
-    const languageChanged    = language !== undefined && language !== agent.language;
-    const promptForVapi      = userProvidedPrompt
+    const languageChanged = language !== undefined && language !== agent.language;
+    const promptForVapi = userProvidedPrompt
       ? prompt
       : languageChanged ? null : (agent.prompt || null);
 
@@ -281,12 +282,12 @@ router.put('/:id', contentFilter('name', 'prompt'), async (req, res) => {
     if (agent.vapiId && configChanged) {
       try {
         await updateVapiAssistant(agent.vapiId, {
-          name:      effectiveName,
-          prompt:    promptForVapi,
-          type:      effectiveType,
-          language:  effectiveLanguage,
-          voiceId:   effectiveVoiceId,
-          userId:    agent.userId,
+          name: effectiveName,
+          prompt: promptForVapi,
+          type: effectiveType,
+          language: effectiveLanguage,
+          voiceId: effectiveVoiceId,
+          userId: agent.userId,
           serverUrl: process.env.WEBHOOK_URL || process.env.SERVER_URL,
         });
       } catch (vapiErr) {
@@ -296,12 +297,12 @@ router.put('/:id', contentFilter('name', 'prompt'), async (req, res) => {
     }
 
     const updates = {};
-    if (name !== undefined)     updates.name = name;
-    if (type !== undefined)     updates.type = type;
-    if (prompt !== undefined)   updates.prompt = prompt || null;
+    if (name !== undefined) updates.name = name;
+    if (type !== undefined) updates.type = type;
+    if (prompt !== undefined) updates.prompt = prompt || null;
     if (isActive !== undefined) updates.isActive = isActive;
     if (language !== undefined) updates.language = language;
-    if (voiceId !== undefined)  updates.voiceId = voiceId;
+    if (voiceId !== undefined) updates.voiceId = voiceId;
 
     const updated = await Agent.findByIdAndUpdate(id, updates, { new: true }).lean();
 
@@ -324,7 +325,7 @@ router.delete('/:id', async (req, res) => {
     const { id } = req.params;
 
     const { agent, forbidden } = await resolveAgentForUser(id, req.user);
-    if (!agent)    return res.status(404).json({ message: 'Agent not found' });
+    if (!agent) return res.status(404).json({ message: 'Agent not found' });
     if (forbidden) return res.status(403).json({ message: 'Access denied' });
 
     if (agent.vapiId) {

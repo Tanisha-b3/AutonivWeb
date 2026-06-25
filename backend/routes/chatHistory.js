@@ -1,11 +1,12 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import ChatSession from '../db/models/ChatSession.js';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, requireFeature } from '../middleware/auth.js';
 import { log } from '../services/logger.js';
 
 const router = express.Router();
 router.use(authenticate);
+router.use(requireFeature('chat'));
 
 // GET /api/chat-history — list all sessions for current user
 router.get('/', async (req, res) => {

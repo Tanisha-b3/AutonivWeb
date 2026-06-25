@@ -7,101 +7,81 @@ import { PublicNavbar } from '../../components/PublicNavbar';
 /* ─── Nav (matching Agents component) ─── */
 
 
-const PLANS = [
+const chatPlans = [
   {
-    name: 'Free',
-    icon: '💬',
-    iconBg: 'rgba(100,116,139,0.12)',
-    price: '₹0',
-    period: 'forever',
-    badge: 'ALWAYS FREE',
+    name: 'Free', icon: '💬', iconBg: 'rgba(100,116,139,0.12)',
+    price: '₹0', period: 'forever', badge: 'ALWAYS FREE',
     desc: 'For individuals & small projects testing the waters.',
-    features: [
-      '1 chatbot',
-      '100 conversations / month',
-      'Website embed',
-      'Basic FAQ & lead capture',
-      'WhatsApp not included',
-      'Branding visible',
-    ],
-    cta: 'Get started free',
-    popular: false,
-    checkColor: '#64748b',
-    border: '1px solid rgba(37,99,235,0.08)',
-    bg: '#ffffff',
-    shadow: '0 4px 20px rgba(0,0,0,0.04)',
-    hoverShadow: '0 8px 40px rgba(0,0,0,0.08)',
+    features: ['1 chatbot','100 conversations / month','Website embed','Basic FAQ & lead capture','WhatsApp not included','Branding visible'],
+    cta: 'Get started free', popular: false, checkColor: '#64748b',
+    border: '1px solid rgba(37,99,235,0.08)', bg: '#ffffff',
+    shadow: '0 4px 20px rgba(0,0,0,0.04)', hoverShadow: '0 8px 40px rgba(0,0,0,0.08)',
   },
   {
-    name: 'Starter',
-    icon: '🚀',
-    iconBg: 'rgba(37,99,235,0.10)',
-    price: '₹3,499',
-    period: '/month',
+    name: 'Starter', icon: '🚀', iconBg: 'rgba(37,99,235,0.10)',
+    price: '₹3,499', period: '/month', badge: null,
     desc: 'Freelancers & small businesses getting serious.',
-    features: [
-      '3 chatbots',
-      '1,000 conversations / month',
-      'WhatsApp + website',
-      'Hindi & Hinglish support',
-      'Remove branding',
-      'No CRM integration',
-    ],
-    cta: 'Start 14-day trial',
-    popular: false,
-    checkColor: '#2563EB',
-    border: '1px solid rgba(37,99,235,0.12)',
-    bg: '#ffffff',
-    shadow: '0 4px 20px rgba(0,0,0,0.04)',
-    hoverShadow: '0 8px 40px rgba(0,0,0,0.08)',
+    features: ['3 chatbots','1,000 conversations / month','WhatsApp + website','Hindi & Hinglish support','Remove branding','CRM integration'],
+    cta: 'Start 14-day trial', popular: false, checkColor: '#2563EB',
+    border: '1px solid rgba(37,99,235,0.12)', bg: '#ffffff',
+    shadow: '0 4px 20px rgba(0,0,0,0.04)', hoverShadow: '0 8px 40px rgba(0,0,0,0.08)',
   },
   {
-    name: 'Growth',
-    icon: '📈',
-    iconBg: 'rgba(16,185,129,0.10)',
-    price: '₹9,999',
-    period: '/month',
-    badge: 'MOST POPULAR',
+    name: 'Growth', icon: '📈', iconBg: 'rgba(16,185,129,0.10)',
+    price: '₹9,999', period: '/month', badge: 'MOST POPULAR',
     desc: 'SMBs scaling support, sales & engagement.',
-    features: [
-      '10 chatbots',
-      '5,000 conversations / month',
-      'All channels incl. Instagram',
-      '10+ Indian languages',
-      'CRM & helpdesk integrations',
-      'Full analytics dashboard',
-    ],
-    cta: 'Start 14-day trial',
-    popular: true,
-    checkColor: '#10B981',
-    border: '2px solid #10B981',
-    bg: '#ffffff',
-    shadow: '0 8px 30px rgba(16,185,129,0.15)',
-    hoverShadow: '0 12px 48px rgba(16,185,129,0.25)',
+    features: ['10 chatbots','5,000 conversations / month','All channels incl. Instagram','10+ Indian languages','CRM & helpdesk integrations','Full analytics dashboard'],
+    cta: 'Start 14-day trial', popular: true, checkColor: '#10B981',
+    border: '2px solid #10B981', bg: '#ffffff',
+    shadow: '0 8px 30px rgba(16,185,129,0.15)', hoverShadow: '0 12px 48px rgba(16,185,129,0.25)',
   },
   {
-    name: 'Enterprise',
-    icon: '🏢',
-    iconBg: 'rgba(139,92,246,0.10)',
-    price: 'Custom',
-    period: '',
-    badge: 'CUSTOM',
+    name: 'Enterprise', icon: '🏢', iconBg: 'rgba(139,92,246,0.10)',
+    price: 'Custom', period: '', badge: 'CUSTOM',
     desc: 'Large businesses, compliance & custom AI.',
-    features: [
-      'Unlimited chatbots',
-      'Unlimited conversations',
-      'Custom AI model training',
-      'DPDP Act 2023 compliance',
-      'India-region cloud hosting',
-      'Dedicated account manager',
-    ],
-    cta: 'Contact sales →',
-    popular: false,
-    checkColor: '#8b5cf6',
-    border: '1px solid rgba(37,99,235,0.08)',
-    bg: '#ffffff',
-    shadow: '0 4px 20px rgba(0,0,0,0.04)',
-    hoverShadow: '0 8px 40px rgba(0,0,0,0.08)',
+    features: ['Unlimited chatbots','Unlimited conversations','Custom AI model training','DPDP Act 2023 compliance','India-region cloud hosting','Dedicated account manager'],
+    cta: 'Contact sales →', popular: false, checkColor: '#8b5cf6',
+    border: '1px solid rgba(37,99,235,0.08)', bg: '#ffffff',
+    shadow: '0 4px 20px rgba(0,0,0,0.04)', hoverShadow: '0 8px 40px rgba(0,0,0,0.08)',
+  },
+];
+
+const voicePlans = [
+  {
+    name: 'Free', icon: '🎙️', iconBg: 'rgba(100,116,139,0.12)',
+    price: '₹0', period: 'forever', badge: 'ALWAYS FREE',
+    desc: 'Try voice agents with basic capabilities.',
+    features: ['1 voice agent','50 voice minutes / month','Website embed','Basic call routing','Call recording not included','Custom voice model not included'],
+    cta: 'Get started free', popular: false, checkColor: '#64748b',
+    border: '1px solid rgba(37,99,235,0.08)', bg: '#ffffff',
+    shadow: '0 4px 20px rgba(0,0,0,0.04)', hoverShadow: '0 8px 40px rgba(0,0,0,0.08)',
+  },
+  {
+    name: 'Starter', icon: '🎤', iconBg: 'rgba(37,99,235,0.10)',
+    price: '₹4,999', period: '/month', badge: null,
+    desc: 'For businesses ready to automate phone support.',
+    features: ['3 voice agents','500 voice minutes / month','Dedicated phone number','Hindi, English & Hinglish','Call recording & logs','CRM integration'],
+    cta: 'Start 14-day trial', popular: false, checkColor: '#2563EB',
+    border: '1px solid rgba(37,99,235,0.12)', bg: '#ffffff',
+    shadow: '0 4px 20px rgba(0,0,0,0.04)', hoverShadow: '0 8px 40px rgba(0,0,0,0.08)',
+  },
+  {
+    name: 'Growth', icon: '📞', iconBg: 'rgba(16,185,129,0.10)',
+    price: '₹12,999', period: '/month', badge: 'MOST POPULAR',
+    desc: 'For SMBs scaling phone support & outreach.',
+    features: ['10 voice agents','3,000 voice minutes / month','Multiple phone numbers','10+ Indian languages','CRM & helpdesk integrations','Full analytics dashboard'],
+    cta: 'Start 14-day trial', popular: true, checkColor: '#10B981',
+    border: '2px solid #10B981', bg: '#ffffff',
+    shadow: '0 8px 30px rgba(16,185,129,0.15)', hoverShadow: '0 12px 48px rgba(16,185,129,0.25)',
+  },
+  {
+    name: 'Enterprise', icon: '🏢', iconBg: 'rgba(139,92,246,0.10)',
+    price: 'Custom', period: '', badge: 'CUSTOM',
+    desc: 'For large call centers & custom compliance needs.',
+    features: ['Unlimited voice agents','Unlimited voice minutes','Custom voice AI training','DPDP Act 2023 compliance','India-region cloud hosting','Dedicated account manager'],
+    cta: 'Contact sales →', popular: false, checkColor: '#8b5cf6',
+    border: '1px solid rgba(37,99,235,0.08)', bg: '#ffffff',
+    shadow: '0 4px 20px rgba(0,0,0,0.04)', hoverShadow: '0 8px 40px rgba(0,0,0,0.08)',
   },
 ];
 
@@ -308,6 +288,9 @@ function SocialProof() {
 
 /* ─── Main Export ─── */
 export function Pricing() {
+  const [pricingMode, setPricingMode] = useState<'chat' | 'voice'>('chat');
+  const plans = pricingMode === 'chat' ? chatPlans : voicePlans;
+
   return (
     <div
       className="min-h-screen relative"
@@ -359,9 +342,23 @@ export function Pricing() {
           </p>
         </div>
 
+        {/* Chat / Voice Toggle */}
+        <div className="flex justify-center mb-8">
+          <div className="inline-flex items-center gap-0 bg-white border border-slate-200 rounded-full p-1 shadow-sm">
+            <button onClick={() => setPricingMode('chat')} className={`px-6 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${pricingMode === 'chat' ? 'bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 bg-transparent'}`}>
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+              Chat
+            </button>
+            <button onClick={() => setPricingMode('voice')} className={`px-6 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${pricingMode === 'voice' ? 'bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 bg-transparent'}`}>
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" /></svg>
+              Voice
+            </button>
+          </div>
+        </div>
+
         {/* Pricing Cards */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 mb-12 sm:mb-16 items-stretch">
-          {PLANS.map((plan) => (
+        <div key={pricingMode} className="animate-fade-up max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 mb-12 sm:mb-16 items-stretch">
+          {plans.map((plan) => (
             <div
               key={plan.name}
               className="rounded-2xl sm:rounded-3xl p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:-translate-y-1"
@@ -625,7 +622,7 @@ export function Pricing() {
                     { feature: 'Channels', free: 'Website', starter: 'WhatsApp + Website', growth: 'All incl. Instagram', enterprise: 'All Channels' },
                     { feature: 'Languages', free: 'English', starter: 'Hindi & Hinglish', growth: '10+ Indian Languages', enterprise: 'All + Custom' },
                     { feature: 'Branding', free: 'Visible', starter: 'Removed', growth: 'Removed', enterprise: 'White Label' },
-                    { feature: 'CRM Integration', free: 'No', starter: 'No', growth: 'Yes', enterprise: 'Custom' },
+                    { feature: 'CRM Integration', free: 'No', starter: 'Yes', growth: 'Yes', enterprise: 'Custom' },
                     { feature: 'Analytics', free: 'Basic', starter: 'Standard', growth: 'Full Dashboard', enterprise: 'Advanced + API' },
                     { feature: 'Support', free: 'Community', starter: 'Email', growth: 'Priority', enterprise: 'Dedicated 24/7' },
                     { feature: 'DPDP Act 2023', free: '—', starter: '—', growth: '—', enterprise: '✓ Compliant' },

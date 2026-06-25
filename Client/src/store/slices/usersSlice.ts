@@ -29,7 +29,18 @@ export const fetchAllUsers = createAsyncThunk(
 
 export const createUser = createAsyncThunk(
   'users/create',
-  async (data: { name: string; email: string; password: string; company?: string; plan?: string; phoneNumber?: string }) => {
+  async (data: {
+    name: string;
+    email: string;
+    password: string;
+    company?: string;
+    plan?: string;
+    chatPlan?: string;
+    voicePlan?: string;
+    phoneNumber?: string;
+    chatEnabled?: boolean;
+    voiceEnabled?: boolean;
+  }) => {
     const res = await userService.create(data);
     return res.data.user as User;
   }
@@ -37,7 +48,23 @@ export const createUser = createAsyncThunk(
 
 export const updateUser = createAsyncThunk(
   'users/update',
-  async ({ id, data }: { id: string; data: { name: string; email: string; company?: string; plan?: string; phoneNumber?: string } }) => {
+  async ({
+    id,
+    data,
+  }: {
+    id: string;
+    data: {
+      name?: string;
+      email?: string;
+      company?: string;
+      plan?: string;
+      chatPlan?: string;
+      voicePlan?: string;
+      phoneNumber?: string;
+      chatEnabled?: boolean;
+      voiceEnabled?: boolean;
+    };
+  }) => {
     const res = await userService.update(id, data);
     return res.data.user as User;
   }
@@ -58,8 +85,8 @@ export const deleteUser = createAsyncThunk('users/delete', async (id: string) =>
 
 export const upgradePlan = createAsyncThunk(
   'users/upgradePlan',
-  async ({ id, plan }: { id: string; plan: string }) => {
-    const res = await userService.upgradePlan(id, plan);
+  async ({ id, plan, chatPlan, voicePlan }: { id: string; plan: string; chatPlan?: string; voicePlan?: string }) => {
+    const res = await userService.upgradePlan(id, plan, chatPlan, voicePlan);
     return res.data.user as User;
   }
 );

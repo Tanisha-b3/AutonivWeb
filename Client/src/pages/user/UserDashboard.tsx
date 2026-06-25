@@ -1085,7 +1085,34 @@ const callStatus: Record<string, { label: string; color: string; dotColor: strin
   failed:    { label: 'Failed',    color: '#ef4444', dotColor: '#ef4444', bg: 'bg-rose-50' },
 };
 
+const dummyTrendData = [
+  { name: 'Mon', 'Calls Volume': 12, 'Minutes Used': 1.5 },
+  { name: 'Tue', 'Calls Volume': 19, 'Minutes Used': 2.4 },
+  { name: 'Wed', 'Calls Volume': 15, 'Minutes Used': 1.8 },
+  { name: 'Thu', 'Calls Volume': 29, 'Minutes Used': 3.6 },
+  { name: 'Fri', 'Calls Volume': 22, 'Minutes Used': 2.8 },
+  { name: 'Sat', 'Calls Volume': 35, 'Minutes Used': 4.2 },
+  { name: 'Sun', 'Calls Volume': 40, 'Minutes Used': 4.8 },
+];
+
 // ─── Main Dashboard Component ─────────────────────────────────────────
+function LockedSectionOverlay({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm rounded-2xl text-center select-none border border-white/5 animate-fadeIn">
+      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center text-white mb-4 shadow-lg animate-pulse">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      </div>
+      <h3 className="text-sm font-extrabold text-white tracking-tight">{title}</h3>
+      <p className="text-[11px] text-slate-300 max-w-xs mt-1.5 font-semibold leading-relaxed">{desc}</p>
+      <Link to="/dashboard/billing" className="mt-4 inline-flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 transition-all hover:scale-[1.02] shadow-md hover:shadow-indigo-500/10">
+        Upgrade Subscription
+      </Link>
+    </div>
+  );
+}
+
 export function UserDashboard() {
   const dispatch   = useAppDispatch();
   const stats      = useAppSelector((state) => state.analytics.myStats);
@@ -1095,6 +1122,10 @@ export function UserDashboard() {
   const error      = useAppSelector((state) => state.analytics.error);
   const user       = useAppSelector((state) => state.auth.user);
   const myAgents   = useAppSelector((state) => state.agents.myAgents);
+
+  const plan = user?.plan || 'chat_free';
+  const isChat = user?.role === 'admin' || (user?.chatPlan ? user.chatPlan !== 'none' : (user?.chatEnabled !== undefined ? user.chatEnabled : true));
+  const isVoice = user?.role === 'admin' || (user?.voicePlan ? user.voicePlan !== 'none' : (user?.voiceEnabled !== undefined ? user.voiceEnabled : false));
   
   const { toasts, add: addToast, remove: removeToast } = useToast();
   
@@ -1129,6 +1160,18 @@ export function UserDashboard() {
   }, [dispatch]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const errorParam = params.get('error');
+    if (errorParam === 'chat_restricted') {
+      addToast('Upgrade Required: Please subscribe to Chat Plan or Chat + Voice Plan to access Chat features.', 'warning');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (errorParam === 'voice_restricted') {
+      addToast('Upgrade Required: Please subscribe to Voice Plan or Chat + Voice Plan to access Voice Agents.', 'warning');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [addToast]);
 
   const handleRefresh = useCallback(async () => {
     setRetrying(true);
@@ -1243,13 +1286,92 @@ export function UserDashboard() {
 
   const s = stats || (cachedStats as MyStats | null) || { agentCount: 0, callCount: 0, minuteUsed: 0, leadCount: 0 };
   const planColors = getPlanColor(user?.plan || 'free');
-  
-  const hasNoData  = !loading && s.agentCount === 0 && s.callCount === 0 && myAgents.length === 0;
-  const showEmptyGuide = hasNoData && !showOnboarding;
 
-  const hasCallData    = callBreakdown.total > 0;
-  const hasAgents      = myAgents.length > 0;
-  const hasRecentCalls = recentCalls.length > 0;
+  const statsCardsList = useMemo(() => {
+    const isChatOnly = isChat && !isVoice;
+    const isVoiceOnly = isVoice && !isChat;
+    const isBoth = isChat && isVoice;
+
+    const list = [];
+
+    if (isChatOnly || isBoth) {
+      list.push({
+        label: 'Chat Conversations',
+        value: user?.callsUsed || 0,
+        accentColor: '37,99,235',
+        icon: (
+          <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        ),
+        delta: `Limit: ${user?.callsLimit || 100} / mo`,
+        colorHex: '#2563EB',
+      });
+    }
+
+    if (isVoiceOnly || isBoth) {
+      list.push({
+        label: 'Total Agents',
+        value: myAgents.length,
+        accentColor: '37,99,235',
+        icon: <AgentIcon />,
+        delta: `${myAgentStats.active} active logs`,
+        colorHex: '#2563EB',
+      });
+      list.push({
+        label: 'Calls Placed',
+        value: filteredCalls.length,
+        accentColor: '0,163,255',
+        icon: <CallIcon />,
+        delta: `${callBreakdown.answerRate}% answer rate`,
+        trend: 'up' as const,
+        colorHex: '#00A3FF',
+      });
+      list.push({
+        label: 'Minutes Used',
+        value: minutesUsed,
+        accentColor: '0,212,255',
+        icon: <ClockIcon />,
+        delta: `${Math.round(usagePercent)}% billing limit`,
+        colorHex: '#10B981',
+      });
+    }
+
+    if (isChatOnly) {
+      list.push({
+        label: 'Chats Remaining',
+        value: Math.max(0, (user?.callsLimit || 100) - (user?.callsUsed || 0)),
+        accentColor: '0,212,255',
+        icon: (
+          <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        ),
+        delta: 'Active subscription tier',
+        colorHex: '#10B981',
+      });
+    }
+
+    if (list.length < 4) {
+      list.push({
+        label: 'Leads Logged',
+        value: s.leadCount || 0,
+        accentColor: '20,184,166',
+        icon: <UsersIcon />,
+        delta: 'Synced with platform node',
+        colorHex: '#14B8A6',
+      });
+    }
+
+    return list.slice(0, 4);
+  }, [isChat, isVoice, user, myAgents, myAgentStats, filteredCalls, callBreakdown, minutesUsed, usagePercent, s.leadCount]);
+
+  const hasNoData  = !loading && s.agentCount === 0 && s.callCount === 0 && myAgents.length === 0;
+  const showEmptyGuide = hasNoData && !showOnboarding && isVoice;
+
+  const hasCallData    = callBreakdown.total > 0 || !isVoice; // Show trend section so it can render lock screen
+  const hasAgents      = myAgents.length > 0 || !isVoice;     // Show agents section so it can render lock screen
+  const hasRecentCalls = recentCalls.length > 0 || !isVoice;   // Show recent calls so it can render lock screen
 
   // Custom Chart Tooltip styling
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -1498,17 +1620,19 @@ export function UserDashboard() {
               </button>
             </Tip>
 
-            <Link to="/dashboard/agents/new">
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all text-white shadow-sm cursor-pointer hover:shadow-md"
-                style={{ background: T.gradient }}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                New Agent
-              </motion.button>
-            </Link>
+            {isVoice && (
+              <Link to="/dashboard/agents/new">
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all text-white shadow-sm cursor-pointer hover:shadow-md"
+                  style={{ background: T.gradient }}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  New Agent
+                </motion.button>
+              </Link>
+            )}
           </div>
         </motion.div>
 
@@ -1530,12 +1654,7 @@ export function UserDashboard() {
 
         {/* ── Stats Row ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: 'Total Agents', value: myAgents.length, accentColor: '37,99,235',  icon: <AgentIcon />, delta: `${myAgentStats.active} active logs`, colorHex: '#2563EB' },
-            { label: 'Calls Placed', value: filteredCalls.length, accentColor: '0,163,255', icon: <CallIcon />, delta: `${callBreakdown.answerRate}% answer rate`, trend: 'up' as const, colorHex: '#00A3FF' },
-            { label: 'Minutes Used', value: minutesUsed, accentColor: '0,212,255', icon: <ClockIcon />, delta: `${Math.round(usagePercent)}% billing limit`, colorHex: '#10B981' },
-            { label: 'Leads Logged', value: s.leadCount || 0, accentColor: '20,184,166', icon: <UsersIcon />, delta: 'Synced with Vapi node', colorHex: '#14B8A6' },
-          ].map(card => (
+          {statsCardsList.map(card => (
             <StatCard
               key={card.label}
               {...card}
@@ -1549,10 +1668,16 @@ export function UserDashboard() {
         {hasCallData && (
         <motion.div
           variants={fadeUp}
-          className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md"
+          className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md relative overflow-hidden"
           style={{ borderColor: 'var(--slate-border)' }}
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4.5">
+          {!isVoice && (
+            <LockedSectionOverlay
+              title="Call Performance Trends"
+              desc="Deploy automated voice assistants to map call volume metrics and minutes consumed."
+            />
+          )}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4.5" style={{ filter: !isVoice ? 'blur(4px)' : 'none', pointerEvents: !isVoice ? 'none' : 'auto' }}>
             <div>
               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">ANALYTICS ENGINE</p>
               <h2 className="text-sm font-extrabold text-slate-800 mt-0.5">Performance Trends</h2>
@@ -1581,9 +1706,9 @@ export function UserDashboard() {
             </div>
           </div>
 
-          <div className="h-64 w-full">
+          <div className="h-64 w-full" style={{ filter: !isVoice ? 'blur(4px)' : 'none', pointerEvents: !isVoice ? 'none' : 'auto' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={performanceTrendData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
+              <AreaChart data={!isVoice ? dummyTrendData : performanceTrendData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
                 <defs>
                   <linearGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--primary-blue)" stopOpacity={0.20} />
@@ -1622,54 +1747,62 @@ export function UserDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           
           {/* Call status breakdown */}
-          <motion.div variants={fadeUp} className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md" style={{ borderColor: 'var(--slate-border)' }}>
-            <div className="flex items-center justify-between mb-1.5">
-              <h2 className="text-sm font-bold text-slate-800">Call Breakdown</h2>
-              <Link to="/dashboard/calls" className="text-[10px] font-bold uppercase tracking-wider text-[var(--primary-blue)] hover:text-[var(--primary-blue-dark)] transition-colors">
-                All Logs →
-              </Link>
-            </div>
-            <p className="text-[10px] font-semibold text-slate-400 mb-5">
-              {callBreakdown.total} calls filtered for the chosen range
-            </p>
-
-            {hasCallData ? (
-              <div className="flex flex-col sm:flex-row items-center gap-6">
-                <DonutChart data={callBreakdown.chartData} rate={callBreakdown.answerRate} />
-                <div className="flex-1 w-full space-y-3.5">
-                  {callBreakdown.listItems.map(item => (
-                    <div key={item.name}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                          <span className="text-xs font-semibold text-slate-600">{item.name}</span>
-                        </div>
-                        <span className="text-xs font-bold text-slate-800">
-                          {item.value} <span className="text-slate-400 font-medium">({item.pct}%)</span>
-                        </span>
-                      </div>
-                      <div className="h-1.5 rounded-full overflow-hidden bg-slate-100">
-                        <motion.div initial={{ width: 0 }} animate={{ width: `${item.pct}%` }}
-                          transition={{ delay: 0.2, duration: 0.65, ease: 'easeOut' }}
-                          className="h-full rounded-full" style={{ backgroundColor: item.color }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-4 py-6">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-slate-50 border border-slate-200">
-                  <CallIcon />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">No call history matches range</p>
-                  <Link to="/dashboard/agents" className="text-xs text-[var(--primary-blue)] hover:underline font-bold mt-1 block">
-                    Create agent & dial test call →
-                  </Link>
-                </div>
-              </div>
+          <motion.div variants={fadeUp} className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md relative overflow-hidden" style={{ borderColor: 'var(--slate-border)' }}>
+            {!isVoice && (
+              <LockedSectionOverlay
+                title="Call Status Breakdown"
+                desc="Upgrade your plan to see voice agent answer rates and connection statistics."
+              />
             )}
+            <div style={{ filter: !isVoice ? 'blur(4px)' : 'none', pointerEvents: !isVoice ? 'none' : 'auto' }}>
+              <div className="flex items-center justify-between mb-1.5">
+                <h2 className="text-sm font-bold text-slate-800">Call Breakdown</h2>
+                <Link to="/dashboard/calls" className="text-[10px] font-bold uppercase tracking-wider text-[var(--primary-blue)] hover:text-[var(--primary-blue-dark)] transition-colors">
+                  All Logs →
+                </Link>
+              </div>
+              <p className="text-[10px] font-semibold text-slate-400 mb-5">
+                {callBreakdown.total} calls filtered for the chosen range
+              </p>
+
+              {hasCallData ? (
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  <DonutChart data={callBreakdown.chartData} rate={callBreakdown.answerRate} />
+                  <div className="flex-1 w-full space-y-3.5">
+                    {callBreakdown.listItems.map(item => (
+                      <div key={item.name}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                            <span className="text-xs font-semibold text-slate-600">{item.name}</span>
+                          </div>
+                          <span className="text-xs font-bold text-slate-800">
+                            {item.value} <span className="text-slate-400 font-medium">({item.pct}%)</span>
+                          </span>
+                        </div>
+                        <div className="h-1.5 rounded-full overflow-hidden bg-slate-100">
+                          <motion.div initial={{ width: 0 }} animate={{ width: `${item.pct}%` }}
+                            transition={{ delay: 0.2, duration: 0.65, ease: 'easeOut' }}
+                            className="h-full rounded-full" style={{ backgroundColor: item.color }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-4 py-6">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-slate-50 border border-slate-200">
+                    <CallIcon />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">No call history matches range</p>
+                    <Link to="/dashboard/agents" className="text-xs text-[var(--primary-blue)] hover:underline font-bold mt-1 block">
+                      Create agent & dial test call →
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
           </motion.div>
 
           {/* Usage limit card */}
@@ -1678,20 +1811,24 @@ export function UserDashboard() {
 
             <div className="rounded-xl p-4 mb-4 bg-slate-50/70 border border-slate-100">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-slate-600 font-bold">Billing Minutes</span>
-                <span className={`text-xs font-extrabold ${usagePercent > 80 ? 'text-rose-600' : 'text-slate-800'}`}>
-                  <AnimatedCounter value={minutesUsed} />
-                  {minutesLimit > 0 && <span className="text-slate-400 font-semibold"> / {minutesLimit.toLocaleString()} mins</span>}
+                <span className="text-xs text-slate-600 font-bold">{isVoice ? 'Billing Minutes' : 'Chat Conversations'}</span>
+                <span className={`text-xs font-extrabold ${(isVoice ? usagePercent : ((user?.callsUsed || 0) / (user?.callsLimit || 100)) * 100) > 80 ? 'text-rose-600' : 'text-slate-800'}`}>
+                  <AnimatedCounter value={isVoice ? minutesUsed : (user?.callsUsed || 0)} />
+                  {isVoice ? (
+                    minutesLimit > 0 && <span className="text-slate-400 font-semibold"> / {minutesLimit.toLocaleString()} mins</span>
+                  ) : (
+                    user?.callsLimit && <span className="text-slate-400 font-semibold"> / {user.callsLimit.toLocaleString()} chats</span>
+                  )}
                 </span>
               </div>
               <div className="h-2 rounded-full overflow-hidden bg-slate-200">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${usagePercent}%` }}
+                <motion.div initial={{ width: 0 }} animate={{ width: `${isVoice ? usagePercent : ((user?.callsUsed || 0) / (user?.callsLimit || 100)) * 100}%` }}
                   transition={{ delay: 0.2, duration: 0.75, ease: 'easeOut' }}
-                  className={`h-full rounded-full ${usagePercent > 80 ? 'bg-gradient-to-r from-rose-500 to-amber-500' : 'bg-gradient-to-r from-[var(--primary-blue)] to-[#10B981]'}`} />
+                  className={`h-full rounded-full ${(isVoice ? usagePercent : ((user?.callsUsed || 0) / (user?.callsLimit || 100)) * 100) > 80 ? 'bg-gradient-to-r from-rose-500 to-amber-500' : 'bg-gradient-to-r from-[var(--primary-blue)] to-[#10B981]'}`} />
               </div>
               <div className="flex items-center justify-between mt-1.5">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{usagePercent.toFixed(0)}% metrics consumed</span>
-                {usagePercent > 80 && (
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{Math.round(isVoice ? usagePercent : ((user?.callsUsed || 0) / (user?.callsLimit || 100)) * 100)}% metrics consumed</span>
+                {(isVoice ? usagePercent : ((user?.callsUsed || 0) / (user?.callsLimit || 100)) * 100) > 80 && (
                   <span className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 text-rose-500">
                     ⚠ quota critical
                   </span>
@@ -1700,12 +1837,17 @@ export function UserDashboard() {
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
-              {[
+              {(isVoice ? [
                 { label: 'Active Agents',   value: myAgentStats.active,   color: 'text-green-600', bg: 'bg-green-50/30' },
                 { label: 'Muted Agents',    value: myAgentStats.inactive,  color: 'text-slate-400', bg: 'bg-slate-50/30' },
                 { label: 'All Agents Count', value: myAgentStats.total,     color: 'text-[var(--primary-blue)]', bg: 'bg-[var(--primary-blue-soft)]/20' },
                 { label: 'Captured Leads',  value: s.leadCount || 0,       color: 'text-amber-600', bg: 'bg-amber-50/30', to: '/dashboard/leads' },
-              ].map(item => {
+              ] : [
+                { label: 'Chats Used',      value: user?.callsUsed || 0,   color: 'text-blue-600', bg: 'bg-blue-50/30' },
+                { label: 'Chats Available', value: Math.max(0, (user?.callsLimit || 100) - (user?.callsUsed || 0)), color: 'text-green-600', bg: 'bg-green-50/30' },
+                { label: 'Monthly Quota',   value: user?.callsLimit || 100, color: 'text-[var(--primary-blue)]', bg: 'bg-[var(--primary-blue-soft)]/20' },
+                { label: 'Captured Leads',  value: s.leadCount || 0,       color: 'text-amber-600', bg: 'bg-amber-50/30', to: '/dashboard/leads' },
+              ]).map(item => {
                 const inner = (
                   <div className={`rounded-xl p-3 border transition-all ${item.bg} border-slate-100 hover:border-slate-200`}>
                     <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">{item.label}</p>
@@ -1724,20 +1866,32 @@ export function UserDashboard() {
 
         {/* ── My Agents Grid ── */}
         {hasAgents ? (
-          <motion.div variants={fadeUp} className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md" style={{ borderColor: 'var(--slate-border)' }}>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">AGENT FACTORY</p>
-                <h2 className="text-sm font-extrabold text-slate-800 mt-0.5">My Agents</h2>
+          <motion.div variants={fadeUp} className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md relative overflow-hidden" style={{ borderColor: 'var(--slate-border)' }}>
+            {!isVoice && (
+              <LockedSectionOverlay
+                title="My Agents"
+                desc="Upgrade your plan to build, test, and manage custom voice AI receptionists."
+              />
+            )}
+            <div style={{ filter: !isVoice ? 'blur(4px)' : 'none', pointerEvents: !isVoice ? 'none' : 'auto' }}>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">AGENT FACTORY</p>
+                  <h2 className="text-sm font-extrabold text-slate-800 mt-0.5">My Agents</h2>
+                </div>
+                <Link to="/dashboard/agents" className="text-[10px] font-bold uppercase tracking-wider text-[var(--primary-blue)] hover:text-[var(--primary-blue-dark)] transition-colors">
+                  Manage Agents →
+                </Link>
               </div>
-              <Link to="/dashboard/agents" className="text-[10px] font-bold uppercase tracking-wider text-[var(--primary-blue)] hover:text-[var(--primary-blue-dark)] transition-colors">
-                Manage Agents →
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {myAgents.map((agent, i) => (
-                <AgentCard key={agent.id} agent={agent} index={i} onWebCall={handleWebCall} onCallMe={(a) => setCallTarget(a)} />
-              ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {(!isVoice && myAgents.length === 0 ? [
+                  { id: 'mock-1', name: 'Alisha (Front Desk)', type: 'receptionist', isActive: true },
+                  { id: 'mock-2', name: 'Rohan (Bookings)', type: 'appointment', isActive: true },
+                  { id: 'mock-3', name: 'FAQ Bot', type: 'faq', isActive: false }
+                ] : myAgents).map((agent, i) => (
+                  <AgentCard key={agent.id} agent={agent} index={i} onWebCall={handleWebCall} onCallMe={(a) => setCallTarget(a)} />
+                ))}
+              </div>
             </div>
           </motion.div>
         ) : !loading && (
@@ -1760,71 +1914,83 @@ export function UserDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
           {/* Recent call list */}
-          <motion.div variants={fadeUp} className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md" style={{ borderColor: 'var(--slate-border)' }}>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">ACTIVITY LOGS</p>
-                <h2 className="text-sm font-extrabold text-slate-800 mt-0.5">Recent Call Logs</h2>
-              </div>
-              <Link to="/dashboard/calls" className="text-[10px] font-bold uppercase tracking-wider text-[var(--primary-blue)] hover:text-[var(--primary-blue-dark)] transition-colors">
-                View All →
-              </Link>
-            </div>
-
-            {hasRecentCalls ? (
-              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-                {recentCalls.map((call, i) => {
-                  const dur = formatDur(getCallDurSec(call));
-                  const st  = callStatus[call.status] ?? callStatus.failed;
-                  return (
-                    <motion.div key={call.id}
-                      initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.03 }}
-                      onClick={() => setDetailCall(call)}
-                      className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-white hover:bg-slate-50/50 hover:border-slate-300/60 cursor-pointer transition-all group shadow-sm active:scale-99"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${st.bg}`}>
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: st.dotColor }} />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.8">
-                            <span className="text-xs font-bold text-slate-700 truncate">{call.agentName || 'AI Receptionist'}</span>
-                            <span className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-md ${st.bg}`} style={{ color: st.color }}>
-                              {st.label}
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-slate-400 mt-0.5 truncate">
-                            {call.callerNumber && call.callerNumber !== 'Unknown' ? call.callerNumber : 'Vapi Caller'} · {call.startedAt ? new Date(call.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No Data'}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-semibold text-slate-400 font-mono">
-                          {dur}
-                        </span>
-                        <svg className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex items-center gap-4 py-6">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-slate-50 border border-slate-200">
-                  <CallIcon />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">No call activity recorded</p>
-                  <Link to="/dashboard/agents" className="text-xs font-bold text-[var(--primary-blue)] hover:underline mt-0.5 block">
-                    Launch test dialer simulator →
-                  </Link>
-                </div>
-              </div>
+          <motion.div variants={fadeUp} className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md relative overflow-hidden" style={{ borderColor: 'var(--slate-border)' }}>
+            {!isVoice && (
+              <LockedSectionOverlay
+                title="Recent Call Logs"
+                desc="Upgrade your plan to see real-time inbound & outbound agent conversation logs."
+              />
             )}
+            <div style={{ filter: !isVoice ? 'blur(4px)' : 'none', pointerEvents: !isVoice ? 'none' : 'auto' }}>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">ACTIVITY LOGS</p>
+                  <h2 className="text-sm font-extrabold text-slate-800 mt-0.5">Recent Call Logs</h2>
+                </div>
+                <Link to="/dashboard/calls" className="text-[10px] font-bold uppercase tracking-wider text-[var(--primary-blue)] hover:text-[var(--primary-blue-dark)] transition-colors">
+                  View All →
+                </Link>
+              </div>
+
+              {hasRecentCalls ? (
+                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                  {(!isVoice && recentCalls.length === 0 ? [
+                    { id: 'mock-c1', agentName: 'Alisha (Front Desk)', status: 'completed', callerNumber: '+91 98765 43210', startedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(), duration: 120 },
+                    { id: 'mock-c2', agentName: 'Rohan (Bookings)', status: 'missed', callerNumber: '+91 87654 32109', startedAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(), duration: 0 },
+                    { id: 'mock-c3', agentName: 'FAQ Bot', status: 'completed', callerNumber: '+91 76543 21098', startedAt: new Date(Date.now() - 120 * 60 * 1000).toISOString(), duration: 45 }
+                  ] : recentCalls).map((call, i) => {
+                    const dur = formatDur(getCallDurSec(call));
+                    const st  = callStatus[call.status] ?? callStatus.failed;
+                    return (
+                      <motion.div key={call.id}
+                        initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                        onClick={() => setDetailCall(call)}
+                        className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-white hover:bg-slate-50/50 hover:border-slate-300/60 cursor-pointer transition-all group shadow-sm active:scale-99"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${st.bg}`}>
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: st.dotColor }} />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.8">
+                              <span className="text-xs font-bold text-slate-700 truncate">{call.agentName || 'AI Receptionist'}</span>
+                              <span className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-md ${st.bg}`} style={{ color: st.color }}>
+                                {st.label}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-0.5 truncate">
+                              {call.callerNumber && call.callerNumber !== 'Unknown' ? call.callerNumber : 'Vapi Caller'} · {call.startedAt ? new Date(call.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No Data'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-semibold text-slate-400 font-mono">
+                            {dur}
+                          </span>
+                          <svg className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex items-center gap-4 py-6">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-slate-50 border border-slate-200">
+                    <CallIcon />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">No call activity recorded</p>
+                    <Link to="/dashboard/agents" className="text-xs font-bold text-[var(--primary-blue)] hover:underline mt-0.5 block">
+                      Launch test dialer simulator →
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
           </motion.div>
 
           {/* Quick shortcuts */}

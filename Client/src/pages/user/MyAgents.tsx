@@ -105,7 +105,7 @@ const AGENT_TEMPLATES = [
   },
 ];
 
-const PLAN_LIMITS: Record<string, number> = { free: 1, starter: 3, growth: 10, enterprise: 0 };
+const PLAN_LIMITS: Record<string, number> = { free: 1, starter: 3, growth: 10, enterprise: Infinity };
 
 const DEFAULT_FORM_DATA = {
   name: '', type: 'receptionist', prompt: '', language: 'en', voiceId: VOICE_OPTIONS[0].value,
@@ -1049,7 +1049,8 @@ export function MyAgents() {
   }, [dispatch, page]);
 
   const plan = user?.plan || 'free';
-  const maxAgents = PLAN_LIMITS[plan] || 3;
+  const tier = plan.replace(/^(chat_|voice_|both_)/, '');
+  const maxAgents = PLAN_LIMITS[tier] || PLAN_LIMITS[plan] || 3;
   const atLimit = maxAgents ? agents.length >= maxAgents : false;
 
   const openCreate = () => {
@@ -1351,6 +1352,37 @@ export function MyAgents() {
             </p>
           </motion.div>
         )}
+
+        {/* ── Voice minutes usage bar ── */}
+        <motion.div variants={fadeUp} style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '7px 12px', borderRadius: 10,
+          background: (user?.minutesUsed ?? 0) >= (user?.minutesLimit ?? 999999) ? 'rgba(239,68,68,0.06)' : 'rgba(16,185,129,0.04)',
+          border: `1px solid ${(user?.minutesUsed ?? 0) >= (user?.minutesLimit ?? 999999) ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.1)'}`,
+          position: 'relative', zIndex: 10,
+        }}>
+          <svg width="14" height="14" fill="none" stroke={(user?.minutesUsed ?? 0) >= (user?.minutesLimit ?? 999999) ? '#ef4444' : '#10b981'} viewBox="0 0 24 24" strokeWidth={2} style={{ flexShrink: 0 }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4 0h8m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+          </svg>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>
+            {user?.minutesUsed ?? 0}<span style={{ color: 'var(--text-muted)' }}>/{user?.minutesLimit ?? '∞'}</span>
+          </span>
+          <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>voice min</span>
+          <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'var(--border)', overflow: 'hidden' }}>
+            <div style={{
+              width: `${Math.min(((user?.minutesUsed ?? 0) / ((user?.minutesLimit || 1))) * 100, 100)}%`,
+              height: '100%', borderRadius: 2,
+              background: (user?.minutesUsed ?? 0) >= (user?.minutesLimit ?? 999999) ? '#ef4444' : '#10b981',
+              transition: 'width 0.4s',
+            }} />
+          </div>
+          <span style={{ fontSize: 10, fontWeight: 500, color: (user?.minutesUsed ?? 0) >= (user?.minutesLimit ?? 999999) ? '#ef4444' : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+            {(user?.minutesUsed ?? 0) >= (user?.minutesLimit ?? 999999) ? 'Limit reached' : `${Math.round(Math.min(((user?.minutesUsed ?? 0) / ((user?.minutesLimit || 1))) * 100, 100))}%`}
+          </span>
+          {(user?.minutesUsed ?? 0) >= (user?.minutesLimit ?? 999999) && (
+            <button type="button" onClick={() => navigate('/dashboard/billing')} style={{ fontSize: 10, fontWeight: 600, background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', padding: 0, textDecoration: 'underline', whiteSpace: 'nowrap' }}>Upgrade</button>
+          )}
+        </motion.div>
 
         {/* Search & Filter Bar */}
         {agents.length > 0 && (

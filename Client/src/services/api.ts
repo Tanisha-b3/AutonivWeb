@@ -216,15 +216,23 @@ export const userService = {
     password: string;
     company?: string;
     plan?: string;
+    chatPlan?: string;
+    voicePlan?: string;
     phoneNumber?: string;
+    chatEnabled?: boolean;
+    voiceEnabled?: boolean;
   }) => api.post('/users', data),
 
   update: (id: string, data: {
-    name: string;
-    email: string;
+    name?: string;
+    email?: string;
     company?: string;
     plan?: string;
+    chatPlan?: string;
+    voicePlan?: string;
     phoneNumber?: string;
+    chatEnabled?: boolean;
+    voiceEnabled?: boolean;
   }) => api.put(`/users/${id}`, data),
 
   delete: (id: string) => api.delete(`/users/${id}`),
@@ -232,8 +240,8 @@ export const userService = {
   toggleBlock: (id: string, isActive: boolean) =>
     api.put(`/users/${id}/block`, { isActive }),
 
-  upgradePlan: (id: string, plan: string) =>
-    api.put(`/users/${id}/plan`, { plan }),
+  upgradePlan: (id: string, plan: string, chatPlan?: string, voicePlan?: string) =>
+    api.put(`/users/${id}/plan`, { plan, chatPlan, voicePlan }),
 };
 
 // ── Agents ─────────────────────────────────────────────────────────────────

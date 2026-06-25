@@ -8,13 +8,12 @@ import { parsePage, paginatedResponse } from '../services/pagination.js';
 const router = express.Router();
 router.use(authenticate);
 
-const PLAN_CONFIG = {
-  free:       { callsPerMonth: 100,    setupFee: 0,    monthlyPrice: 0     },
-  starter:    { callsPerMonth: 1000,   setupFee: 0,    monthlyPrice: 3499  },
-  growth:     { callsPerMonth: 5000,   setupFee: 0,    monthlyPrice: 9999  },
-  enterprise: { callsPerMonth: 99999,  setupFee: 0,    monthlyPrice: 0     },
-};
-const VALID_UPGRADE_PLANS = ['starter', 'growth', 'enterprise'];
+const VALID_UPGRADE_PLANS = [
+  'chat_starter', 'chat_growth', 'chat_enterprise',
+  'voice_starter', 'voice_growth', 'voice_enterprise',
+  'both_starter', 'both_growth', 'both_enterprise',
+  'starter', 'growth', 'enterprise' // backward compatibility
+];
 
 router.post('/', async (req, res) => {
   try {
@@ -115,12 +114,46 @@ router.put('/:id', requireAdmin, async (req, res) => {
     await request.save();
 
     if (status === 'approved') {
-      const planConfig = PLAN_CONFIG[request.requestedPlan];
-      if (planConfig) {
+      const plan = request.requestedPlan;
+      const user = await User.findById(request.userId).lean();
+      if (user) {
+        let chatPlan = user.chatPlan || 'chat_free';
+        let voicePlan = user.voicePlan || 'none';
+
+        if (plan.startsWith('chat_')) {
+          chatPlan = plan;
+        } else if (plan.startsWith('voice_')) {
+          voicePlan = plan;
+        } else if (plan.startsWith('both_')) {
+          chatPlan = plan.replace('both_', 'chat_');
+          voicePlan = plan.replace('both_', 'voice_');
+        } else if (User.VALID_PLANS.includes(plan)) {
+          chatPlan = `chat_${plan}`;
+          voicePlan = `voice_${plan}`;
+        }
+
+        const chatConfig = User.PLAN_CONFIG[chatPlan] || { callsPerMonth: 0 };
+        const voiceConfig = User.PLAN_CONFIG[voicePlan] || { minutesPerMonth: 0 };
+
+        let planLegacy = plan;
+        if (chatPlan !== 'none' && voicePlan !== 'none') {
+          const chatTier = chatPlan.replace('chat_', '');
+          const voiceTier = voicePlan.replace('voice_', '');
+          planLegacy = chatTier === voiceTier ? `both_${chatTier}` : chatPlan;
+        } else if (chatPlan !== 'none') {
+          planLegacy = chatPlan;
+        } else if (voicePlan !== 'none') {
+          planLegacy = voicePlan;
+        }
+
         await User.findByIdAndUpdate(request.userId, {
-          plan: request.requestedPlan,
-          minutesLimit: planConfig.callsPerMonth,
-          callsLimit: planConfig.callsPerMonth,
+          plan: planLegacy,
+          chatPlan,
+          voicePlan,
+          chatEnabled: chatPlan !== 'none',
+          voiceEnabled: voicePlan !== 'none',
+          callsLimit: chatConfig.callsPerMonth,
+          minutesLimit: voiceConfig.minutesPerMonth,
         });
       }
     }

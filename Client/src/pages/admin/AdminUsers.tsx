@@ -123,6 +123,51 @@ function SelectInput({ value, onChange, options }: {
   );
 }
 
+function SwitchInput({ label, description, checked, onChange }: { label: string; description: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between p-4 rounded-xl border transition-all" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+      <div className="pr-4">
+        <p className="text-sm font-bold" style={{ color: 'var(--text)' }}>{label}</p>
+        <p className="text-xs" style={{ color: 'var(--muted)' }}>{description}</p>
+      </div>
+      <button
+        type="button"
+        onClick={() => onChange(!checked)}
+        className={`w-10 h-6 rounded-full transition-colors flex items-center p-0.5 cursor-pointer flex-shrink-0 ${checked ? 'bg-[#2563eb]' : 'bg-slate-300'}`}
+      >
+        <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200 ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
+      </button>
+    </div>
+  );
+}
+
+const CHAT_PLAN_OPTIONS = [
+  { value: 'chat_free', label: 'Chat Free (100 chats · ₹0)' },
+  { value: 'chat_starter', label: 'Chat Starter (1,000 chats · ₹3,499)' },
+  { value: 'chat_growth', label: 'Chat Growth (5,000 chats · ₹9,999)' },
+  { value: 'chat_enterprise', label: 'Chat Enterprise (Unlimited chats)' },
+  { value: 'none', label: 'None (Disabled)' },
+];
+
+const VOICE_PLAN_OPTIONS = [
+  { value: 'voice_free', label: 'Voice Free (50 voice mins · ₹0)' },
+  { value: 'voice_starter', label: 'Voice Starter (500 voice mins · ₹4,999)' },
+  { value: 'voice_growth', label: 'Voice Growth (3,000 voice mins · ₹12,999)' },
+  { value: 'voice_enterprise', label: 'Voice Enterprise (Unlimited voice mins)' },
+  { value: 'none', label: 'None (Disabled)' },
+];
+
+function getPlanFeatureDefaults(plan: string) {
+  if (!plan) return { chatEnabled: true, voiceEnabled: false };
+  if (plan.startsWith('chat_')) {
+    return { chatEnabled: true, voiceEnabled: false };
+  } else if (plan.startsWith('voice_')) {
+    return { chatEnabled: false, voiceEnabled: true };
+  } else {
+    return { chatEnabled: true, voiceEnabled: true };
+  }
+}
+
 // ── Slide-over panel ───────────────────────────────────────────────────────
 
 function UserPanel({
@@ -131,7 +176,7 @@ function UserPanel({
   open: boolean;
   onClose: () => void;
   editing: User | null;
-  formData: { name: string; email: string; password: string; company: string; plan: string; phoneNumber: string; minutesLimit: number };
+  formData: { name: string; email: string; password: string; company: string; chatPlan: string; voicePlan: string; phoneNumber: string; minutesLimit: number; chatEnabled: boolean; voiceEnabled: boolean };
   setFormData: (d: any) => void;
   onSubmit: () => void;
   submitting: boolean;
@@ -209,18 +254,35 @@ function UserPanel({
                 <TextInput value={formData.company} onChange={(v) => setFormData({ ...formData, company: v })} placeholder="Company Name" />
               </div>
 
-              <div>
-                <FieldLabel>Plan</FieldLabel>
-                <SelectInput
-                  value={formData.plan}
-                  onChange={(v) => setFormData({ ...formData, plan: v })}
-                  options={[
-                    { value: 'free', label: 'Free (100 conversations · ₹0)' },
-                    { value: 'starter', label: 'Starter (1,000 conversations · ₹3,499)' },
-                    { value: 'growth', label: 'Growth (5,000 conversations · ₹9,999)' },
-                    { value: 'enterprise', label: 'Enterprise (Unlimited)' },
-                  ]}
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <FieldLabel>Chat Plan</FieldLabel>
+                  <SelectInput
+                    value={formData.chatPlan}
+                    onChange={(v) => {
+                      setFormData({
+                        ...formData,
+                        chatPlan: v,
+                        chatEnabled: v !== 'none'
+                      });
+                    }}
+                    options={CHAT_PLAN_OPTIONS}
+                  />
+                </div>
+                <div>
+                  <FieldLabel>Voice Plan</FieldLabel>
+                  <SelectInput
+                    value={formData.voicePlan}
+                    onChange={(v) => {
+                      setFormData({
+                        ...formData,
+                        voicePlan: v,
+                        voiceEnabled: v !== 'none'
+                      });
+                    }}
+                    options={VOICE_PLAN_OPTIONS}
+                  />
+                </div>
               </div>
 
               {!editing && (
@@ -286,9 +348,12 @@ export function AdminUsers() {
     email: '',
     password: '',
     company: '',
-    plan: 'free',
+    chatPlan: 'chat_free',
+    voicePlan: 'none',
     phoneNumber: '',
     minutesLimit: 100,
+    chatEnabled: true,
+    voiceEnabled: false,
   });
 
   useEffect(() => {
@@ -368,28 +433,70 @@ export function AdminUsers() {
       key: 'plan',
       header: 'Plan',
       sortable: true,
-      render: (user) => (
-        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${
-          user.plan === 'enterprise' ? 'bg-indigo-50 text-indigo-600 border border-indigo-200/50' :
-          user.plan === 'growth' ? 'bg-[var(--primary-soft)] text-[var(--primary)] border border-[var(--border)]/50' :
-          user.plan === 'starter' ? 'bg-blue-50 text-blue-600 border border-blue-200/50' :
-          'bg-[var(--surface)] text-[var(--muted)] border border-slate-200/50'
-        }`}>
-          {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)}
-        </span>
-      ),
+      render: (user) => {
+        const getPlanBadge = (p: string | undefined, type: 'chat' | 'voice') => {
+          if (!p || p === 'none') return null;
+          const planName = p.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+          const isEnterprise = p.includes('enterprise');
+          const isGrowth = p.includes('growth');
+          const isStarter = p.includes('starter');
+          const emoji = type === 'chat' ? '💬' : '📞';
+          return (
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold border ${
+              isEnterprise ? 'bg-indigo-50/50 text-indigo-400 border-indigo-500/20' :
+              isGrowth ? 'bg-[var(--primary-soft)] text-[var(--primary)] border-[var(--border)]/50' :
+              isStarter ? 'bg-blue-50/10 text-blue-400 border-blue-500/20' :
+              'bg-slate-800/50 text-slate-400 border-slate-700/50'
+            }`}>
+              <span className="mr-1">{emoji}</span> {planName}
+            </span>
+          );
+        };
+        const chatBadge = getPlanBadge(user.chatPlan, 'chat');
+        const voiceBadge = getPlanBadge(user.voicePlan, 'voice');
+        if (!chatBadge && !voiceBadge) {
+          return <span className="text-xs text-[var(--muted)]">None</span>;
+        }
+        return (
+          <div className="flex flex-col gap-1">
+            {chatBadge}
+            {voiceBadge}
+          </div>
+        );
+      },
       card: {
         label: 'Plan',
-        render: (user) => (
-          <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${
-            user.plan === 'enterprise' ? 'bg-indigo-50 text-indigo-600 border border-indigo-200/50' :
-            user.plan === 'growth' ? 'bg-[var(--primary-soft)] text-[var(--primary)] border border-[var(--border)]/50' :
-            user.plan === 'starter' ? 'bg-blue-50 text-blue-600 border border-blue-200/50' :
-            'bg-[var(--surface)] text-[var(--muted)] border border-slate-200/50'
-          }`}>
-            {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)}
-          </span>
-        ),
+        render: (user) => {
+          const getPlanBadge = (p: string | undefined, type: 'chat' | 'voice') => {
+            if (!p || p === 'none') return null;
+            const planName = p.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            const isEnterprise = p.includes('enterprise');
+            const isGrowth = p.includes('growth');
+            const isStarter = p.includes('starter');
+            const emoji = type === 'chat' ? '💬' : '📞';
+            return (
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold border ${
+                isEnterprise ? 'bg-indigo-50/50 text-indigo-400 border-indigo-500/20' :
+                isGrowth ? 'bg-[var(--primary-soft)] text-[var(--primary)] border-[var(--border)]/50' :
+                isStarter ? 'bg-blue-50/10 text-blue-400 border-blue-500/20' :
+                'bg-slate-800/50 text-slate-400 border-slate-700/50'
+              }`}>
+                <span className="mr-1">{emoji}</span> {planName}
+              </span>
+            );
+          };
+          const chatBadge = getPlanBadge(user.chatPlan, 'chat');
+          const voiceBadge = getPlanBadge(user.voicePlan, 'voice');
+          if (!chatBadge && !voiceBadge) {
+            return <span className="text-xs text-[var(--muted)]">None</span>;
+          }
+          return (
+            <div className="flex flex-wrap gap-1">
+              {chatBadge}
+              {voiceBadge}
+            </div>
+          );
+        },
       },
     },
     {
@@ -533,9 +640,12 @@ export function AdminUsers() {
       email: user.email,
       password: '',
       company: user.company || '',
-      plan: user.plan,
+      chatPlan: user.chatPlan || 'chat_free',
+      voicePlan: user.voicePlan || 'none',
       phoneNumber: (user as any).phoneNumber || '',
       minutesLimit: user.minutesLimit || 500,
+      chatEnabled: user.chatPlan ? user.chatPlan !== 'none' : (user.chatEnabled !== undefined ? user.chatEnabled : true),
+      voiceEnabled: user.voicePlan ? user.voicePlan !== 'none' : (user.voiceEnabled !== undefined ? user.voiceEnabled : false),
     });
     setModalOpen(true);
   };
@@ -547,14 +657,30 @@ export function AdminUsers() {
       if (editingUser) {
         await dispatch(updateUser({
           id: editingUser.id,
-          data: { name: formData.name, email: formData.email, company: formData.company, plan: formData.plan, phoneNumber: formData.phoneNumber },
+          data: {
+            name: formData.name,
+            email: formData.email,
+            company: formData.company,
+            chatPlan: formData.chatPlan,
+            voicePlan: formData.voicePlan,
+            phoneNumber: formData.phoneNumber,
+            chatEnabled: formData.chatEnabled,
+            voiceEnabled: formData.voiceEnabled,
+          },
         })).unwrap();
-        if (formData.minutesLimit !== editingUser.minutesLimit) {
-          await dispatch(upgradePlan({ id: editingUser.id, plan: formData.plan })).unwrap();
-        }
       } else {
         if (!formData.password) return;
-        await dispatch(createUser(formData)).unwrap();
+        await dispatch(createUser({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          company: formData.company,
+          chatPlan: formData.chatPlan,
+          voicePlan: formData.voicePlan,
+          phoneNumber: formData.phoneNumber,
+          chatEnabled: formData.chatEnabled,
+          voiceEnabled: formData.voiceEnabled,
+        })).unwrap();
       }
       setModalOpen(false);
     } catch (err) {
@@ -591,10 +717,41 @@ export function AdminUsers() {
     setDetailOpen(true);
   };
 
-  const handlePlanChange = async (userId: string, newPlan: string) => {
+  const handleChatPlanChange = async (userId: string, newChatPlan: string) => {
     try {
-      await dispatch(upgradePlan({ id: userId, plan: newPlan })).unwrap();
-      setSelectedUser((prev) => prev ? { ...prev, plan: newPlan as User['plan'] } : null);
+      const userToUpdate = users.find(u => u.id === userId);
+      if (!userToUpdate) return;
+      const voicePlan = userToUpdate.voicePlan || 'none';
+      await dispatch(upgradePlan({ id: userId, plan: newChatPlan, chatPlan: newChatPlan, voicePlan })).unwrap();
+      setSelectedUser((prev) => prev ? { ...prev, chatPlan: newChatPlan, plan: newChatPlan } : null);
+      // Fetch users again to update table
+      dispatch(fetchAllUsers({ period: timeRange === 'all' ? undefined : timeRange, page, limit: 20 }));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleVoicePlanChange = async (userId: string, newVoicePlan: string) => {
+    try {
+      const userToUpdate = users.find(u => u.id === userId);
+      if (!userToUpdate) return;
+      const chatPlan = userToUpdate.chatPlan || 'chat_free';
+      await dispatch(upgradePlan({ id: userId, plan: chatPlan, chatPlan, voicePlan: newVoicePlan })).unwrap();
+      setSelectedUser((prev) => prev ? { ...prev, voicePlan: newVoicePlan } : null);
+      // Fetch users again to update table
+      dispatch(fetchAllUsers({ period: timeRange === 'all' ? undefined : timeRange, page, limit: 20 }));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleFeatureToggle = async (userId: string, feature: 'chat' | 'voice', enabled: boolean) => {
+    try {
+      const data = feature === 'chat' ? { chatEnabled: enabled } : { voiceEnabled: enabled };
+      await dispatch(updateUser({ id: userId, data })).unwrap();
+      setSelectedUser((prev) => prev ? { ...prev, ...data } : null);
+      // Fetch users again to update table
+      dispatch(fetchAllUsers({ period: timeRange === 'all' ? undefined : timeRange, page, limit: 20 }));
     } catch (err) {
       console.error(err);
     }
@@ -918,29 +1075,98 @@ export function AdminUsers() {
                   )}
                 </div>
 
-                {/* Plan Selector */}
-                <div>
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-3">Assign Plan</p>
+                {/* Independent Feature Overrides */}
+                <div className="border-t border-slate-100 pt-4">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-3">Independent Feature Access Overrides</p>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50/60 border border-slate-100">
+                      <div>
+                        <span className="text-xs font-bold text-slate-700 block">Chat Support</span>
+                        <span className="text-[10px] text-slate-400">Access chat interface, widgets, and analytics</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleFeatureToggle(selectedUser.id, 'chat', !(selectedUser.chatEnabled !== undefined ? selectedUser.chatEnabled : getPlanFeatureDefaults(selectedUser.plan).chatEnabled))}
+                        className={`w-10 h-6 rounded-full transition-colors flex items-center p-0.5 cursor-pointer flex-shrink-0 ${(selectedUser.chatEnabled !== undefined ? selectedUser.chatEnabled : getPlanFeatureDefaults(selectedUser.plan).chatEnabled) ? 'bg-[#2563eb]' : 'bg-slate-300'}`}
+                      >
+                        <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200 ${(selectedUser.chatEnabled !== undefined ? selectedUser.chatEnabled : getPlanFeatureDefaults(selectedUser.plan).chatEnabled) ? 'translate-x-4' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50/60 border border-slate-100">
+                      <div>
+                        <span className="text-xs font-bold text-slate-700 block">Voice AI Support</span>
+                        <span className="text-[10px] text-slate-400">Access calling agents, logs, and billing quota</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleFeatureToggle(selectedUser.id, 'voice', !(selectedUser.voiceEnabled !== undefined ? selectedUser.voiceEnabled : getPlanFeatureDefaults(selectedUser.plan).voiceEnabled))}
+                        className={`w-10 h-6 rounded-full transition-colors flex items-center p-0.5 cursor-pointer flex-shrink-0 ${(selectedUser.voiceEnabled !== undefined ? selectedUser.voiceEnabled : getPlanFeatureDefaults(selectedUser.plan).voiceEnabled) ? 'bg-[#2563eb]' : 'bg-slate-300'}`}
+                      >
+                        <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200 ${(selectedUser.voiceEnabled !== undefined ? selectedUser.voiceEnabled : getPlanFeatureDefaults(selectedUser.plan).voiceEnabled) ? 'translate-x-4' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chat Plan Selector */}
+                <div className="space-y-2">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Assign Chat Plan</p>
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { id: 'free',       label: 'Free',       calls: '100',      price: '₹0'      },
-                      { id: 'starter',    label: 'Starter',    calls: '1,000',    price: '₹3,499'  },
-                      { id: 'growth',     label: 'Growth',     calls: '5,000',    price: '₹9,999'  },
-                      { id: 'enterprise', label: 'Enterprise', calls: 'Unlimited',price: 'Custom'   },
+                      { id: 'chat_free',       label: 'Chat Free',       calls: '100',      price: '₹0'      },
+                      { id: 'chat_starter',    label: 'Chat Starter',    calls: '1,000',    price: '₹3,499'  },
+                      { id: 'chat_growth',     label: 'Chat Growth',     calls: '5,000',    price: '₹9,999'  },
+                      { id: 'chat_enterprise', label: 'Chat Ent.',       calls: 'Unlimited',price: 'Custom'  },
+                      { id: 'none',            label: 'Disabled',        calls: '0',        price: '—'       },
                     ].map((plan) => {
-                      const isActive = selectedUser.plan === plan.id;
+                      const isActive = (selectedUser.chatPlan || 'chat_free') === plan.id;
                       return (
                         <button
                           key={plan.id}
-                          onClick={() => handlePlanChange(selectedUser.id, plan.id)}
-                          className={`px-3 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left ${
+                          onClick={() => handleChatPlanChange(selectedUser.id, plan.id)}
+                          className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left ${
                             isActive
                               ? 'bg-[#2563eb] text-white border-[#2563eb] shadow-sm'
                               : 'bg-white text-slate-500 border-slate-200 hover:border-blue-300 hover:text-slate-700'
                           }`}
                         >
                           {plan.label}
-                          <span className={`block text-[10px] mt-0.5 ${ isActive ? 'text-blue-100' : 'text-slate-400' }`}>{plan.calls} calls · {plan.price}</span>
+                          <span className={`block text-[10px] mt-0.5 ${ isActive ? 'text-blue-100' : 'text-slate-400' }`}>
+                            {plan.id === 'none' ? 'Disabled' : `${plan.calls} chats · ${plan.price}`}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Voice Plan Selector */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Assign Voice Plan</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { id: 'voice_free',      label: 'Voice Free',      calls: '50m',      price: '₹0'      },
+                      { id: 'voice_starter',   label: 'Voice Starter',   calls: '500m',     price: '₹4,999'  },
+                      { id: 'voice_growth',    label: 'Voice Growth',    calls: '3,000m',   price: '₹12,999' },
+                      { id: 'voice_enterprise',label: 'Voice Ent.',      calls: 'Unlimited',price: 'Custom'  },
+                      { id: 'none',            label: 'Disabled',        calls: '0',        price: '—'       },
+                    ].map((plan) => {
+                      const isActive = (selectedUser.voicePlan || 'none') === plan.id;
+                      return (
+                        <button
+                          key={plan.id}
+                          onClick={() => handleVoicePlanChange(selectedUser.id, plan.id)}
+                          className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left ${
+                            isActive
+                              ? 'bg-[#2563eb] text-white border-[#2563eb] shadow-sm'
+                              : 'bg-white text-slate-500 border-slate-200 hover:border-blue-300 hover:text-slate-700'
+                          }`}
+                        >
+                          {plan.label}
+                          <span className={`block text-[10px] mt-0.5 ${ isActive ? 'text-blue-100' : 'text-slate-400' }`}>
+                            {plan.id === 'none' ? 'Disabled' : `${plan.calls} · ${plan.price}`}
+                          </span>
                         </button>
                       );
                     })}

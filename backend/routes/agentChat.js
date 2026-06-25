@@ -6,11 +6,12 @@ import Agent from '../db/models/Agent.js';
 import Call from '../db/models/Call.js';
 import Lead from '../db/models/Lead.js';
 import Appointment from '../db/models/Appointment.js';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, requireFeature } from '../middleware/auth.js';
 import { containsAbuse } from '../services/contentModeration.js';
 
 const router = express.Router();
 router.use(authenticate);
+router.use(requireFeature('chat'));
 
 const VALID_TYPES = ['receptionist', 'appointment', 'faq'];
 

@@ -33,6 +33,7 @@ const stagger = { container: { animate: { transition: { staggerChildren: 0.04 } 
 
 export function MyAppointments() {
   const dispatch     = useAppDispatch();
+  const user = useAppSelector((s) => s.auth.user);
   const appointments = useAppSelector((s) => s.appointments.myAppointments);
   const loading      = useAppSelector((s) => s.appointments.loading);
   const pagination   = useAppSelector((s) => s.appointments.myPagination);
@@ -62,7 +63,7 @@ export function MyAppointments() {
         id:   selected.id,
         data: { status: editStatus },
       })).unwrap();
-      if (editStatus === 'confirmed') {
+      if (editStatus === 'confirmed' && user?.features?.appointments?.whatsappNotification) {
         try {
           await dispatch(notifyAppointmentWhatsApp(selected.id)).unwrap();
         } catch (notifyErr) {

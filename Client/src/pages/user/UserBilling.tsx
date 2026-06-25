@@ -3,98 +3,204 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useStore';
 import { createUpgradeRequest, fetchMyUpgradeRequests } from '../../store/slices/upgradeRequestsSlice';
+import { fetchMyAgents } from '../../store/slices/agentsSlice';
 import { checkAuth } from '../../store/slices/authSlice';
 
-const plans = [
-  {
-    id: 'free',
-    name: 'Free',
-    tagline: 'For individuals & small projects testing the waters.',
-    price: 0,
-    annualPrice: null,
-    setupFee: 0,
-    callsPerMonth: 100,
-    badge: null,
-    icon: '💬',
-    features: [
-      { text: '1 chatbot', included: true },
-      { text: '100 conversations / month', included: true },
-      { text: 'Website embed', included: true },
-      { text: 'Basic FAQ & lead capture', included: true },
-      { text: 'WhatsApp integration', included: false },
-      { text: 'Remove branding', included: false },
-    ],
-    cta: 'Get started free',
-    style: 'dashed',
-    accentColor: 'from-slate-400 to-slate-500',
-  },
-  {
-    id: 'starter',
-    name: 'Starter',
-    tagline: 'Freelancers & small businesses getting serious.',
-    price: 3499,
-    annualPrice: null,
-    setupFee: 0,
-    callsPerMonth: 1000,
-    badge: null,
-    icon: '🚀',
-    features: [
-      { text: '3 chatbots', included: true },
-      { text: '1,000 conversations / month', included: true },
-      { text: 'WhatsApp + website', included: true },
-      { text: 'Hindi & Hinglish support', included: true },
-      { text: 'Remove branding', included: true },
-      { text: 'CRM integration', included: false },
-    ],
-    cta: 'Start 14-day trial',
-    style: 'solid',
-    accentColor: 'from-blue-500 to-indigo-600',
-  },
-  {
-    id: 'growth',
-    name: 'Growth',
-    tagline: 'SMBs scaling support, sales & engagement.',
-    price: 9999,
-    annualPrice: null,
-    setupFee: 0,
-    callsPerMonth: 5000,
-    badge: 'Most Popular',
-    icon: '📈',
-    features: [
-      { text: '10 chatbots', included: true },
-      { text: '5,000 conversations / month', included: true },
-      { text: 'All channels incl. Instagram', included: true },
-      { text: '10+ Indian languages', included: true },
-      { text: 'CRM & helpdesk integrations', included: true },
-      { text: 'Full analytics dashboard', included: true },
-    ],
-    cta: 'Start 14-day trial',
-    style: 'featured',
-    accentColor: 'from-emerald-500 to-teal-600',
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    tagline: 'Large businesses, compliance & custom AI.',
-    price: 0,
-    annualPrice: null,
-    setupFee: 0,
-    callsPerMonth: 99999,
-    badge: null,
-    icon: '🏢',
-    features: [
-      { text: 'Unlimited chatbots', included: true },
-      { text: 'Unlimited conversations', included: true },
-      { text: 'Custom AI model training', included: true },
-      { text: 'DPDP Act 2023 compliance', included: true },
-      { text: 'India-region cloud hosting', included: true },
-      { text: 'Dedicated account manager', included: true },
-    ],
-    cta: 'Contact Sales',
-    style: 'solid',
-    accentColor: 'from-violet-500 to-purple-600',
-  },
-];
+// ─── Plan Configurations ────────────────────────────────────────────────
+const planCategories = {
+  chat: [
+    {
+      id: 'chat_free', name: 'Chat Free', tagline: 'For individuals & small projects testing the waters.',
+      price: 0, callsPerMonth: 100, minutesPerMonth: 0,
+      features: [
+        { text: '1 chatbot', included: true },
+        { text: '100 conversations / month', included: true },
+        { text: 'Website embed', included: true },
+        { text: 'Basic FAQ & lead capture', included: true },
+        { text: 'WhatsApp integration', included: false },
+        { text: 'Remove branding', included: false },
+      ],
+      icon: '💬', style: 'dashed', accentColor: 'from-slate-400 to-slate-500'
+    },
+    {
+      id: 'chat_starter', name: 'Chat Starter', tagline: 'Freelancers & small businesses getting serious.',
+      price: 3499, callsPerMonth: 1000, minutesPerMonth: 0,
+      features: [
+        { text: '3 chatbots', included: true },
+        { text: '1,000 conversations / month', included: true },
+        { text: 'WhatsApp + website', included: true },
+        { text: 'Hindi & Hinglish support', included: true },
+        { text: 'Remove branding', included: true },
+        { text: 'CRM integration', included: true },
+      ],
+      icon: '🚀', style: 'solid', accentColor: 'from-blue-500 to-indigo-600'
+    },
+    {
+      id: 'chat_growth', name: 'Chat Growth', tagline: 'SMBs scaling support, sales & engagement.',
+      price: 9999, callsPerMonth: 5000, minutesPerMonth: 0,
+      badge: 'Most Popular', icon: '📈', style: 'featured',
+      features: [
+        { text: '10 chatbots', included: true },
+        { text: '5,000 conversations / month', included: true },
+        { text: 'All channels incl. Instagram', included: true },
+        { text: '10+ Indian languages', included: true },
+        { text: 'CRM & helpdesk integrations', included: true },
+        { text: 'Full analytics dashboard', included: true },
+      ],
+      accentColor: 'from-emerald-500 to-teal-600'
+    },
+    {
+      id: 'chat_enterprise', name: 'Chat Enterprise', tagline: 'Large businesses, compliance & custom AI.',
+      price: 0, callsPerMonth: 99999, minutesPerMonth: 0,
+      features: [
+        { text: 'Unlimited chatbots', included: true },
+        { text: 'Unlimited conversations', included: true },
+        { text: 'Custom AI model training', included: true },
+        { text: 'DPDP Act 2023 compliance', included: true },
+        { text: 'India-region cloud hosting', included: true },
+        { text: 'Dedicated account manager', included: true },
+      ],
+      icon: '🏢', style: 'solid', accentColor: 'from-violet-500 to-purple-650'
+    }
+  ],
+  voice: [
+    {
+      id: 'voice_free', name: 'Voice Free', tagline: 'Try voice agents with basic capabilities.',
+      price: 0, callsPerMonth: 0, minutesPerMonth: 50,
+      features: [
+        { text: '1 voice agent', included: true },
+        { text: '50 voice minutes / month', included: true },
+        { text: 'Website embed', included: true },
+        { text: 'Basic call routing', included: true },
+        { text: 'Call recording', included: false },
+        { text: 'Custom voice model', included: false },
+      ],
+      icon: '🎙️', style: 'dashed', accentColor: 'from-slate-400 to-slate-500'
+    },
+    {
+      id: 'voice_starter', name: 'Voice Starter', tagline: 'For businesses ready to automate phone support.',
+      price: 4999, callsPerMonth: 0, minutesPerMonth: 500,
+      features: [
+        { text: '3 voice agents', included: true },
+        { text: '500 voice minutes / month', included: true },
+        { text: 'Dedicated phone number', included: true },
+        { text: 'Hindi, English & Hinglish', included: true },
+        { text: 'Call recording & logs', included: true },
+        { text: 'CRM integration', included: true },
+      ],
+      icon: '🎤', style: 'solid', accentColor: 'from-blue-500 to-indigo-600'
+    },
+    {
+      id: 'voice_growth', name: 'Voice Growth', tagline: 'For SMBs scaling phone support & outreach.',
+      price: 12999, callsPerMonth: 0, minutesPerMonth: 3000,
+      badge: 'Most Popular', icon: '📞', style: 'featured',
+      features: [
+        { text: '10 voice agents', included: true },
+        { text: '3,000 voice minutes / month', included: true },
+        { text: 'Multiple phone numbers', included: true },
+        { text: '10+ Indian languages', included: true },
+        { text: 'CRM & helpdesk integrations', included: true },
+        { text: 'Full analytics dashboard', included: true },
+      ],
+      accentColor: 'from-emerald-500 to-teal-600'
+    },
+    {
+      id: 'voice_enterprise', name: 'Voice Enterprise', tagline: 'For large call centers & compliance.',
+      price: 0, callsPerMonth: 0, minutesPerMonth: 999999,
+      features: [
+        { text: 'Unlimited voice agents', included: true },
+        { text: 'Unlimited voice minutes', included: true },
+        { text: 'Custom voice AI training', included: true },
+        { text: 'DPDP Act 2023 compliance', included: true },
+        { text: 'India-region cloud hosting', included: true },
+        { text: 'Dedicated account manager', included: true },
+      ],
+      icon: '🏢', style: 'solid', accentColor: 'from-violet-500 to-purple-650'
+    }
+  ],
+  both: [
+    {
+      id: 'both_free', name: 'Chat + Voice Free', tagline: 'Test both chat and voice capabilities.',
+      price: 0, callsPerMonth: 100, minutesPerMonth: 50,
+      features: [
+        { text: '1 chatbot & 1 voice agent', included: true },
+        { text: '100 conversations & 50 mins', included: true },
+        { text: 'Website embed', included: true },
+        { text: 'Basic FAQ & call routing', included: true },
+        { text: 'WhatsApp & call recording', included: false },
+        { text: 'Remove branding', included: false },
+      ],
+      icon: '✨', style: 'dashed', accentColor: 'from-slate-400 to-slate-500'
+    },
+    {
+      id: 'both_starter', name: 'Chat + Voice Starter', tagline: 'Combined starter package for startups.',
+      price: 6999, callsPerMonth: 1000, minutesPerMonth: 500,
+      features: [
+        { text: '3 chatbots & 3 voice agents', included: true },
+        { text: '1,000 chats & 500 voice mins', included: true },
+        { text: 'Dedicated phone + WhatsApp', included: true },
+        { text: 'Remove branding', included: true },
+        { text: 'Call recording & logs', included: true },
+        { text: 'CRM integrations', included: true },
+      ],
+      icon: '⚡', style: 'solid', accentColor: 'from-blue-500 to-indigo-600'
+    },
+    {
+      id: 'both_growth', name: 'Chat + Voice Growth', tagline: 'Omnichannel automation for scaling brands.',
+      price: 19999, callsPerMonth: 5000, minutesPerMonth: 3000,
+      badge: 'Best Value', icon: '🔥', style: 'featured',
+      features: [
+        { text: '10 chatbots & 10 voice agents', included: true },
+        { text: '5,000 chats & 3,000 voice mins', included: true },
+        { text: 'All channels (Insta, WhatsApp)', included: true },
+        { text: 'Multi-lingual support (10+)', included: true },
+        { text: 'CRM & helpdesk integrations', included: true },
+        { text: 'Full analytics dashboard', included: true },
+      ],
+      accentColor: 'from-emerald-500 to-teal-600'
+    },
+    {
+      id: 'both_enterprise', name: 'Chat + Voice Enterprise', tagline: 'Complete customized AI architecture.',
+      price: 0, callsPerMonth: 99999, minutesPerMonth: 999999,
+      features: [
+        { text: 'Unlimited chatbots & agents', included: true },
+        { text: 'Unlimited chats & voice mins', included: true },
+        { text: 'Custom voice & LLM training', included: true },
+        { text: 'DPDP Act 2023 compliance', included: true },
+        { text: 'Dedicated account manager', included: true },
+        { text: 'Custom deployment node', included: true },
+      ],
+      icon: '🏢', style: 'solid', accentColor: 'from-violet-500 to-purple-650'
+    }
+  ]
+};
+
+// Flat array for lookup convenience
+const legacyPlansMap: Record<string, string> = {
+  free: 'both_free',
+  starter: 'both_starter',
+  growth: 'both_growth',
+  enterprise: 'both_enterprise'
+};
+
+function getPlanConfig(planId: string | undefined) {
+  const normId = planId ? (legacyPlansMap[planId] || planId) : 'chat_free';
+  
+  // Find in chat
+  let found = planCategories.chat.find(p => p.id === normId);
+  if (found) return { plan: found, type: 'chat' as const };
+
+  // Find in voice
+  found = planCategories.voice.find(p => p.id === normId);
+  if (found) return { plan: found, type: 'voice' as const };
+
+  // Find in both
+  found = planCategories.both.find(p => p.id === normId);
+  if (found) return { plan: found, type: 'both' as const };
+
+  // Fallback to chat_free
+  return { plan: planCategories.chat[0], type: 'chat' as const };
+}
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -116,24 +222,65 @@ function getUsageBarColor(pct: number) {
   return 'from-blue-500 to-emerald-400';
 }
 
+function LockedSectionOverlay({ title, desc, onUnlock }: { title: string; desc: string; onUnlock: () => void }) {
+  return (
+    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 bg-slate-900/65 backdrop-blur-[4px] rounded-2xl text-center select-none border border-white/5 animate-fadeIn">
+      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center text-white mb-4 shadow-lg animate-pulse">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      </div>
+      <h3 className="text-sm font-extrabold text-white tracking-tight">{title}</h3>
+      <p className="text-[11px] text-slate-300 max-w-xs mt-1.5 font-semibold leading-relaxed">{desc}</p>
+      <button 
+        onClick={onUnlock}
+        className="mt-4 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider text-white bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 transition-all hover:scale-[1.02] shadow-md hover:shadow-indigo-500/10 cursor-pointer border-none"
+      >
+        Unlock Plan
+      </button>
+    </div>
+  );
+}
+
 export function UserBilling() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
+  const myAgents = useAppSelector((state) => state.agents.myAgents);
   const pendingRequest = useAppSelector((state) =>
     state.upgradeRequests.my.find((r) => r.status === 'pending')
   );
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [upgrading, setUpgrading] = useState(false);
+  const [modalTab, setModalTab] = useState<'chat' | 'voice' | 'both'>('chat');
 
   useEffect(() => {
     dispatch(fetchMyUpgradeRequests());
+    dispatch(fetchMyAgents({ page: 1, limit: 50 }));
     dispatch(checkAuth());
   }, [dispatch]);
 
-  const currentPlan = plans.find((p) => p.id === user?.plan) || plans[0];
-  const usagePercent = ((user?.minutesUsed || 0) / (currentPlan.callsPerMonth || 1)) * 100;
-  const remainingCalls = currentPlan.callsPerMonth - (user?.minutesUsed || 0);
+  const isChat = user?.role === 'admin' || (user?.chatPlan ? user.chatPlan !== 'none' : (user?.chatEnabled !== undefined ? user.chatEnabled : true));
+  const isVoice = user?.role === 'admin' || (user?.voicePlan ? user.voicePlan !== 'none' : (user?.voiceEnabled !== undefined ? user.voiceEnabled : false));
+
+  const { plan: activePlanConfig, type: activePlanType } = getPlanConfig(user?.plan);
+
+  // Synchronize upgrade modal default tab
+  useEffect(() => {
+    if (showUpgrade) {
+      setModalTab(activePlanType);
+      setSelectedPlan(null);
+    }
+  }, [showUpgrade, activePlanType]);
+
+  const callsLimit = user?.callsLimit || activePlanConfig.callsPerMonth || 100;
+  const minutesLimit = user?.minutesLimit || activePlanConfig.minutesPerMonth || 50;
+
+  const chatUsagePct = callsLimit > 0 ? ((user?.callsUsed || 0) / callsLimit) * 100 : 0;
+  const voiceUsagePct = minutesLimit > 0 ? ((user?.minutesUsed || 0) / minutesLimit) * 100 : 0;
+  
+  const chatRemaining = callsLimit - (user?.callsUsed || 0);
+  const voiceRemaining = minutesLimit - (user?.minutesUsed || 0);
 
   const handleUpgrade = async () => {
     if (!selectedPlan) return;
@@ -173,11 +320,10 @@ export function UserBilling() {
             <p className="mt-1.5 text-xs sm:text-sm text-slate-500 font-semibold">Manage plan levels, monitor usage quotas, and check invoices</p>
           </div>
 
-          {/* Active status pill */}
           <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200 shadow-sm w-fit">
             <span className="w-2 h-2 rounded-full animate-pulse bg-emerald-500" />
             <span className="text-xs text-slate-700 font-bold">
-              {currentPlan.name} Plan Active
+              {activePlanConfig.name} Plan Active
             </span>
           </div>
         </motion.div>
@@ -190,11 +336,9 @@ export function UserBilling() {
             variants={fadeUp}
             className="lg:col-span-2 rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-md shadow-sm p-6 sm:p-8 relative overflow-hidden group"
           >
-            {/* Elegant glowing graphics in background */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-radial-gradient from-blue-500/5 to-transparent rounded-full pointer-events-none" />
             <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-radial-gradient from-emerald-500/5 to-transparent rounded-full pointer-events-none" />
 
-            {/* Plan header */}
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5 mb-8 relative">
               <div>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black border bg-emerald-50 text-emerald-600 border-emerald-200 mb-4">
@@ -202,91 +346,27 @@ export function UserBilling() {
                   CURRENT ACTIVE PLAN
                 </span>
                 <h2 className="text-3xl font-black text-slate-800 tracking-tight">
-                  {currentPlan.name}
+                  {activePlanConfig.name}
                 </h2>
-                <p className="text-xs text-slate-500 mt-1.5 font-semibold leading-relaxed max-w-xs">{currentPlan.tagline}</p>
+                <p className="text-xs text-slate-500 mt-1.5 font-semibold leading-relaxed max-w-xs">{activePlanConfig.tagline}</p>
                 <div className="flex items-baseline gap-1.5 mt-5">
                   <span className="text-4xl font-black text-slate-800 tracking-tight">
-                    {currentPlan.id === 'enterprise' ? 'Custom' : `₹${currentPlan.price.toLocaleString()}`}
+                    {activePlanConfig.id.endsWith('enterprise') ? 'Custom' : `₹${activePlanConfig.price.toLocaleString()}`}
                   </span>
-                  {currentPlan.id !== 'enterprise' && <span className="text-slate-500 font-bold text-xs">/ month</span>}
+                  {!activePlanConfig.id.endsWith('enterprise') && <span className="text-slate-500 font-bold text-xs">/ month</span>}
                 </div>
-                {currentPlan.setupFee > 0 && (
-                  <p className="text-[10px] text-slate-400 mt-1 font-semibold">One-time setup fee: ₹{currentPlan.setupFee.toLocaleString()}</p>
-                )}
-              </div>
-
-              {/* Calls Box */}
-              <div className="flex flex-col items-center justify-center p-5 rounded-2xl bg-slate-50 border border-slate-200 min-w-[125px] text-center shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)]">
-                <p className="text-[8px] font-black text-slate-400 tracking-widest uppercase mb-1.5">MONTHLY VOLUME</p>
-                <p className="text-4xl font-black text-slate-800 tracking-tight tabular-nums">
-                  {currentPlan.id === 'enterprise' ? '∞' : currentPlan.callsPerMonth}
-                </p>
-                <p className="text-[10px] font-bold text-slate-400 mt-1">
-                  {currentPlan.id === 'enterprise' ? 'conversations' : 'calls / month'}
-                </p>
               </div>
             </div>
 
-            {/* Usage section */}
-            <div className="mb-8 relative">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-xs font-black text-slate-400 uppercase tracking-wider">Usage Progress</span>
-                <span className="text-xs font-extrabold text-slate-700 tabular-nums">
-                  {user?.minutesUsed || 0}
-                  <span className="text-slate-400 font-medium">
-                    {currentPlan.id === 'enterprise' ? ' / ∞' : ` / ${currentPlan.callsPerMonth} conversations`}
-                  </span>
-                </span>
-              </div>
-              <div className="h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/50">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(usagePercent, 100)}%` }}
-                  transition={{ delay: 0.35, duration: 0.95, ease }}
-                  className={`h-full rounded-full bg-gradient-to-r ${getUsageBarColor(usagePercent)} relative`}
-                >
-                  <span className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse-glow" />
-                </motion.div>
-              </div>
-              <div className="flex justify-between text-[11px] text-slate-500 mt-2.5 font-bold">
-                <span>{usagePercent.toFixed(1)}% consumed</span>
-                <span className="text-blue-600">
-                  {currentPlan.id === 'enterprise' ? 'Unlimited' : `${Math.max(0, remainingCalls).toLocaleString()} conversations remaining`}
-                </span>
-              </div>
-            </div>
-
-            {/* Metrics cards */}
-            <div className="grid grid-cols-3 gap-3.5 mb-8">
-              {[
-                { label: 'Used', value: user?.minutesUsed || 0, bg: 'bg-blue-50 border-blue-100 text-blue-600' },
-                { label: 'Available', value: currentPlan.id === 'enterprise' ? '∞' : Math.max(0, remainingCalls), bg: 'bg-emerald-50 border-emerald-100 text-emerald-600' },
-                { label: 'Monthly quota', value: currentPlan.id === 'enterprise' ? '∞' : currentPlan.callsPerMonth, bg: 'bg-slate-50 border-slate-200 text-slate-700' },
-              ].map((stat, i) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 + i * 0.05, duration: 0.28, ease }}
-                  className={`${stat.bg} border rounded-xl p-3.5 text-center`}
-                >
-                  <p className="text-2xl font-black tracking-tight tabular-nums">{stat.value.toLocaleString()}</p>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider mt-1">{stat.label}</p>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Upgrade triggers */}
             {pendingRequest ? (
               <div className="w-full py-4 rounded-xl font-bold text-center text-xs bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center gap-2">
                 <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Upgrade request to {plans.find((p) => p.id === pendingRequest.requestedPlan)?.name || pendingRequest.requestedPlan} is pending admin review
+                Upgrade request to {getPlanConfig(pendingRequest.requestedPlan).plan.name} is pending admin review
               </div>
-            ) : user?.plan === 'enterprise' ? (
+            ) : activePlanConfig.id.endsWith('enterprise') ? (
               <div className="w-full py-4 bg-slate-50 border border-slate-200 rounded-xl font-bold text-center text-xs text-slate-500">
                 Enterprise Plan — Contact support for custom volume quotas
               </div>
@@ -295,7 +375,7 @@ export function UserBilling() {
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 onClick={() => setShowUpgrade(true)}
-                className="btn-cta w-full py-3.5 rounded-xl font-bold transition-all shadow-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center gap-2 text-xs cursor-pointer btn-press"
+                className="btn-cta w-full py-3.5 rounded-xl font-bold transition-all shadow-sm bg-gradient-to-r from-blue-600 to-indigo-650 text-white flex items-center justify-center gap-2 text-xs cursor-pointer btn-press border-none"
               >
                 Upgrade Subscription
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
@@ -307,11 +387,10 @@ export function UserBilling() {
 
           {/* ── Sidebar ── */}
           <div className="space-y-4">
-            {/* Features List */}
             <motion.div variants={fadeSlide} className="rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-md p-6">
               <h3 className="text-[10px] font-black text-slate-400 mb-5 tracking-[0.16em] uppercase">Plan Entitlements</h3>
               <ul className="space-y-3">
-                {currentPlan.features.map((feature, i) => (
+                {activePlanConfig.features.map((feature, i) => (
                   <motion.li
                     key={i}
                     initial={{ opacity: 0, x: 8 }}
@@ -338,7 +417,6 @@ export function UserBilling() {
               </ul>
             </motion.div>
 
-            {/* Support info card */}
             <motion.div variants={fadeSlide} className="rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-md p-6 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-radial-gradient from-blue-500/5 to-transparent rounded-full pointer-events-none" />
               <div className="flex items-center gap-3 mb-3">
@@ -355,17 +433,16 @@ export function UserBilling() {
               </button>
             </motion.div>
 
-            {/* Cycle Details */}
             <motion.div variants={fadeSlide} className="rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-md p-6">
               <h3 className="text-[10px] font-black text-slate-400 mb-4 tracking-[0.16em] uppercase">Billing Cycle</h3>
               <div className="space-y-3">
                 {[
                   { label: 'Billing Period', value: 'Monthly recurring' },
                   { label: 'Next Renewal', value: '1st of next month' },
-                  { label: 'Setup Fee', value: currentPlan.setupFee > 0 ? `₹${currentPlan.setupFee.toLocaleString()}` : 'Waived (₹0)' },
+                  { label: 'Setup Fee', value: 'Waived (₹0)' },
                 ].map((item) => (
                   <div key={item.label} className="flex justify-between items-center text-xs">
-                    <span className="text-slate-455 font-bold">{item.label}</span>
+                    <span className="text-slate-400 font-bold">{item.label}</span>
                     <span className="text-slate-700 font-extrabold">{item.value}</span>
                   </div>
                 ))}
@@ -373,143 +450,350 @@ export function UserBilling() {
             </motion.div>
           </div>
         </div>
-      </motion.div>
 
-      {/* ── Upgrade Modal ── */}
-      <AnimatePresence>
-        {showUpgrade && (
+        {/* ── My Chat ── */}
+        <div className="relative">
+          {!isChat && (
+            <LockedSectionOverlay 
+              title="Chat Capabilities Locked"
+              desc="Upgrade your plan to a Chat Plan or combined Chat + Voice Plan to access chatbot conversations."
+              onUnlock={() => setShowUpgrade(true)}
+            />
+          )}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-[3px] flex items-center justify-center p-4"
-            onClick={() => setShowUpgrade(false)}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.35, ease }}
+            className="rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-md p-6 sm:p-8 relative overflow-hidden"
+            style={{ filter: !isChat ? 'blur(4px)' : 'none', pointerEvents: !isChat ? 'none' : 'auto' }}
           >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 12 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 12 }}
-              transition={{ duration: 0.32, ease }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-5xl bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
-            >
-              {/* Modal header */}
-              <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/20">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-blue-100 flex items-center justify-center text-blue-600">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-extrabold text-slate-800">
-                      Choose Your Upgrade Path
-                    </h2>
-                    <p className="text-[10px] text-slate-455 mt-0.5 font-bold uppercase tracking-wider">Select the scale that matches your business growth</p>
-                  </div>
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-radial-gradient from-blue-500/5 to-transparent rounded-full pointer-events-none" />
+
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <p className="text-[9px] font-black tracking-[0.25em] uppercase text-blue-600 mb-1">MY CHAT</p>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">Chat Conversations</h2>
+                <p className="mt-1 text-xs font-semibold text-slate-500">Conversation usage according to your current active subscription</p>
+              </div>
+              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-50 border border-blue-200">
+                <span className="text-xs font-extrabold text-blue-700">{activePlanConfig.name}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider">Conversations used</span>
+                  <span className="text-xs font-extrabold text-slate-700 tabular-nums">
+                    {user?.callsUsed || 0}
+                    <span className="text-slate-400 font-medium">
+                      {activePlanConfig.id.endsWith('enterprise') ? ' / ∞' : ` / ${callsLimit}`}
+                    </span>
+                  </span>
                 </div>
-                <button
-                  onClick={() => setShowUpgrade(false)}
-                  className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-655 hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
-                  aria-label="Close"
+                <div className="h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/50">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min(chatUsagePct, 100)}%` }}
+                    transition={{ delay: 0.35, duration: 0.95, ease }}
+                    className={`h-full rounded-full bg-gradient-to-r ${getUsageBarColor(chatUsagePct)} relative`}
+                  >
+                    <span className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse-glow" />
+                  </motion.div>
+                </div>
+                <div className="flex justify-between text-[11px] text-slate-500 mt-2.5 font-bold">
+                  <span>{chatUsagePct.toFixed(1)}% of monthly limit</span>
+                  <span className="text-blue-600">
+                    {activePlanConfig.id.endsWith('enterprise') ? 'Unlimited' : `${Math.max(0, chatRemaining).toLocaleString()} conversations remaining`}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: 'Chats Used', value: user?.callsUsed || 0, bg: 'bg-blue-50 border-blue-100 text-blue-600' },
+                  { label: 'Available', value: activePlanConfig.id.endsWith('enterprise') ? '∞' : Math.max(0, chatRemaining), bg: 'bg-emerald-50 border-emerald-100 text-emerald-600' },
+                  { label: 'Monthly Limit', value: activePlanConfig.id.endsWith('enterprise') ? '∞' : callsLimit, bg: 'bg-slate-50 border-slate-200 text-slate-700' },
+                ].map((stat, i) => (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 + i * 0.05, duration: 0.28, ease }}
+                    className={`${stat.bg} border rounded-xl p-3.5 text-center`}
+                  >
+                    <p className="text-2xl font-black tracking-tight tabular-nums">{typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider mt-1">{stat.label}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* ── My Agents ── */}
+        <div className="relative">
+          {!isVoice && (
+            <LockedSectionOverlay 
+              title="Voice Agent Capabilities Locked"
+              desc="Upgrade your plan to a Voice Plan or combined Chat + Voice Plan to build, test and deploy voice receptionists."
+              onUnlock={() => setShowUpgrade(true)}
+            />
+          )}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25, duration: 0.35, ease }}
+            className="rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-md p-6 sm:p-8 relative overflow-hidden"
+            style={{ filter: !isVoice ? 'blur(4px)' : 'none', pointerEvents: !isVoice ? 'none' : 'auto' }}
+          >
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-radial-gradient from-emerald-50/5 to-transparent rounded-full pointer-events-none" />
+
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <p className="text-[9px] font-black tracking-[0.25em] uppercase text-emerald-600 mb-1">MY AGENTS</p>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">Voice Agents</h2>
+                <p className="mt-1 text-xs font-semibold text-slate-500">Voice minutes usage according to your current active subscription</p>
+              </div>
+              <Link
+                to="/dashboard/agents"
+                className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 transition-all shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] border-none"
+              >
+                Manage Agents
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </Link>
+            </div>
+
+            {/* Voice minutes usage */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-xs font-black text-slate-400 uppercase tracking-wider">Voice minutes used</span>
+                <span className="text-xs font-extrabold text-slate-700 tabular-nums">
+                  {user?.minutesUsed || 0}
+                  <span className="text-slate-400 font-medium">
+                    {activePlanConfig.id.endsWith('enterprise') ? ' / ∞' : ` / ${minutesLimit}`}
+                  </span>
+                </span>
+              </div>
+              <div className="h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/50">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(voiceUsagePct, 100)}%` }}
+                  transition={{ delay: 0.35, duration: 0.95, ease }}
+                  className={`h-full rounded-full bg-gradient-to-r ${getUsageBarColor(voiceUsagePct)} relative`}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                  <span className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse-glow" />
+                </motion.div>
               </div>
-
-              {/* Guarantee banner */}
-              <div className="mx-6 mt-5 p-4 rounded-xl bg-emerald-50 border border-emerald-150 flex items-start gap-3.5">
-                <div className="text-xl">🛡️</div>
-                <div>
-                  <p className="text-xs font-extrabold text-emerald-600 uppercase tracking-wide">30-Day Performance Guarantee</p>
-                  <p className="text-xs text-slate-500 font-semibold mt-1 leading-relaxed">We stand by our AI voice performance. If our connection flows do not show measurable call conversion improvements, request a full refund within 30 days.</p>
-                </div>
+              <div className="flex justify-between text-[11px] text-slate-500 mt-2.5 font-bold">
+                <span>{voiceUsagePct.toFixed(1)}% of monthly limit</span>
+                <span className="text-emerald-600">
+                  {activePlanConfig.id.endsWith('enterprise') ? 'Unlimited' : `${Math.max(0, voiceRemaining).toLocaleString()} minutes remaining`}
+                </span>
               </div>
+            </div>
 
-              {/* Plans grid */}
-              <div className="px-6 py-5 overflow-y-auto flex-1">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {plans.map((plan) => {
-                    const isCurrent = plan.id === user?.plan;
-                    const isSelected = selectedPlan === plan.id;
-                    const isFeatured = plan.style === 'featured';
-
-                    return (
-                      <motion.button
-                        key={plan.id}
-                        whileHover={!isCurrent ? { scale: 1.02, y: -2 } : undefined}
-                        whileTap={!isCurrent ? { scale: 0.98 } : undefined}
-                        onClick={() => !isCurrent && setSelectedPlan(plan.id)}
-                        disabled={isCurrent}
-                        className={`relative p-5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between h-full ${
-                          isCurrent
-                            ? 'border-emerald-200 bg-emerald-50/20 opacity-70 cursor-default'
-                            : isSelected
-                              ? 'border-blue-500 bg-blue-50/20 shadow-md ring-2 ring-blue-500/20'
-                              : isFeatured
-                                ? 'border-indigo-200 bg-indigo-50/5 hover:border-indigo-300'
-                                : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
-                        }`}
-                      >
-                        <div>
-                          {/* Badge */}
-                          {plan.badge && !isCurrent && (
-                            <div className="btn-cta absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[9px] font-black text-white bg-gradient-to-r from-blue-650 to-indigo-600 shadow-md uppercase tracking-wider whitespace-nowrap">
-                              {plan.badge}
-                            </div>
-                          )}
-                          {isCurrent && (
-                            <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[9px] font-black text-white bg-emerald-500 shadow-md uppercase tracking-wider whitespace-nowrap">
-                              Current Plan
-                            </div>
-                          )}
-
-                          <div className="flex items-center gap-2 mt-1">
-                            {plan.icon && <span className="text-lg">{plan.icon}</span>}
-                            <h3 className="text-base font-black text-slate-800 tracking-tight">
-                              {plan.name}
-                            </h3>
+            {/* Agent cards */}
+            {myAgents.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {myAgents.slice(0, 8).map((agent) => (
+                  <div
+                    key={agent.id}
+                    className="rounded-xl border border-slate-200 bg-white p-4 flex flex-col justify-between hover:shadow-sm hover:border-slate-300 transition-all"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-base ${agent.isActive ? 'bg-emerald-50 border border-emerald-200' : 'bg-slate-50 border border-slate-200'}`}>
+                            {agent.type === 'receptionist' ? '🎙️' : agent.type === 'appointment' ? '📅' : '❓'}
                           </div>
-                          <p className="text-[10px] text-slate-450 mt-1.5 font-semibold h-10 overflow-hidden leading-normal">{plan.tagline}</p>
-
-                          <div className="mt-4">
-                            <div className="flex items-baseline gap-1">
-                              <span className="text-2xl font-black text-slate-800 tracking-tight">
-                                {plan.id === 'enterprise' ? 'Custom' : `₹${plan.price.toLocaleString()}`}
-                              </span>
-                              {plan.id !== 'enterprise' && <span className="text-[10px] text-slate-400 font-bold">/mo</span>}
-                            </div>
-                            <p className="text-[9px] text-slate-400 mt-1 font-semibold">
-                              {plan.id === 'enterprise' ? 'Custom pricing' : `Setup fee: ₹${plan.setupFee.toLocaleString()}`}
-                            </p>
-                            <p className="text-[10px] mt-1 font-black" style={{ color: plan.id === 'enterprise' ? '#8b5cf6' : '#2563EB' }}>
-                              {plan.id === 'enterprise' ? 'Unlimited conversations' : `${plan.callsPerMonth} conversations / mo`}
-                            </p>
+                          <div>
+                            <p className="text-xs font-extrabold text-slate-800 truncate max-w-[120px]">{agent.name}</p>
+                            <p className="text-[9px] text-slate-400 font-semibold capitalize">{agent.type} Agent</p>
                           </div>
-
-                          <div className="h-px bg-slate-100 my-4" />
-
-                          <ul className="space-y-2 mb-4">
-                            {plan.features.map((f, i) => (
-                              <li key={i} className="flex items-center gap-2 text-[10px] font-bold text-slate-600">
-                                {f.included ? (
-                                  <svg className="w-3 h-3 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                  </svg>
-                                ) : (
-                                  <span className="w-3 h-3 flex items-center justify-center flex-shrink-0 text-slate-350 text-xs">—</span>
-                                )}
-                                <span className={!f.included ? 'opacity-35 line-through font-normal' : ''}>{f.text}</span>
-                              </li>
-                            ))}
-                          </ul>
                         </div>
-                      </motion.button>
-                    );
-                  })}
+                        <span className={`w-2 h-2 rounded-full ${agent.isActive ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                      </div>
+                      <div className="flex items-center gap-3 mt-2 pt-2 border-t border-slate-100">
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] font-bold text-slate-600">{agent.callCount || 0}</span>
+                          <span className="text-[8px] text-slate-400 font-semibold">calls</span>
+                        </div>
+                        {agent.phoneNumber && (
+                          <div className="flex items-center gap-1">
+                            <span className="text-[9px] text-slate-500 font-medium truncate max-w-[100px]">{agent.phoneNumber}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl bg-slate-50 border border-slate-200 p-5 text-center">
+                <p className="text-xs font-bold text-slate-400">No active agents</p>
+                <Link to="/dashboard/agents" className="text-xs font-bold text-emerald-600 hover:underline mt-1 inline-block">
+                  Create your first agent →
+                </Link>
+              </div>
+            )}
+          </motion.div>
+        </div>
+
+        {/* ── Upgrade Modal ── */}
+        <AnimatePresence>
+          {showUpgrade && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-[3px] flex items-center justify-center p-4"
+              onClick={() => setShowUpgrade(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 12 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 12 }}
+                transition={{ duration: 0.32, ease }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-5xl bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+              >
+                {/* Modal header */}
+                <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-blue-100 flex items-center justify-center text-blue-600">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-extrabold text-slate-800">
+                        Choose Your Upgrade Path
+                      </h2>
+                      <p className="text-[10px] text-slate-400 mt-0.5 font-bold uppercase tracking-wider">Select the scale that matches your business growth</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowUpgrade(false)}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-655 hover:bg-slate-100 active:scale-95 transition-all cursor-pointer border-none bg-transparent"
+                    aria-label="Close"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Categories Tabs Selector */}
+                <div className="flex border-b border-slate-100 px-6 bg-slate-50/10">
+                  {(['chat', 'voice', 'both'] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => {
+                        setModalTab(tab);
+                        setSelectedPlan(null);
+                      }}
+                      className={`py-3.5 px-4.5 text-xs font-black uppercase tracking-wider border-b-2 transition-all cursor-pointer bg-transparent border-t-0 border-l-0 border-r-0 ${
+                        modalTab === tab
+                          ? 'border-blue-600 text-blue-600'
+                          : 'border-transparent text-slate-400 hover:text-slate-650'
+                      }`}
+                    >
+                      {tab === 'chat' ? '💬 Chat Only Plans' : tab === 'voice' ? '🎙️ Voice Only Plans' : '⚡ Combined Plans'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Guarantee banner */}
+                <div className="mx-6 mt-5 p-4 rounded-xl bg-emerald-50/60 border border-emerald-100 flex items-start gap-3.5">
+                  <div className="text-xl">🛡️</div>
+                  <div>
+                    <p className="text-xs font-extrabold text-emerald-700 uppercase tracking-wide">30-Day Performance Guarantee</p>
+                    <p className="text-xs text-slate-500 font-semibold mt-1 leading-relaxed">We stand by our AI voice & chat performance. If our automated systems do not meet your business requirements, request a full refund within 30 days.</p>
+                  </div>
+                </div>
+
+                {/* Plans grid */}
+                <div className="px-6 py-5 overflow-y-auto flex-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {planCategories[modalTab].map((p) => {
+                      const isCurrent = p.id === user?.plan;
+                      const isSelected = selectedPlan === p.id;
+                      const isFeatured = p.style === 'featured';
+
+                      return (
+                        <motion.button
+                          key={p.id}
+                          whileHover={!isCurrent ? { scale: 1.02, y: -2 } : undefined}
+                          whileTap={!isCurrent ? { scale: 0.98 } : undefined}
+                          onClick={() => !isCurrent && setSelectedPlan(p.id)}
+                          disabled={isCurrent}
+                          className={`relative p-5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between h-full ${
+                            isCurrent
+                              ? 'border-emerald-200 bg-emerald-50/20 opacity-70 cursor-default'
+                              : isSelected
+                                ? 'border-blue-500 bg-blue-50/20 shadow-md ring-2 ring-blue-500/20'
+                                : isFeatured
+                                  ? 'border-indigo-200 bg-indigo-50/5 hover:border-indigo-300'
+                                  : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
+                          }`}
+                        >
+                          <div>
+                            {p.badge && !isCurrent && (
+                              <div className="btn-cta absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[9px] font-black text-white bg-gradient-to-r from-blue-600 to-indigo-650 shadow-md uppercase tracking-wider whitespace-nowrap">
+                                {p.badge}
+                              </div>
+                            )}
+                            {isCurrent && (
+                              <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[9px] font-black text-white bg-emerald-500 shadow-md uppercase tracking-wider whitespace-nowrap">
+                                Current Plan
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-2 mt-1">
+                              {p.icon && <span className="text-lg">{p.icon}</span>}
+                              <h3 className="text-base font-black text-slate-800 tracking-tight">{p.name}</h3>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-1.5 font-semibold h-10 overflow-hidden leading-normal">{p.tagline}</p>
+
+                            <div className="mt-4">
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-2xl font-black text-slate-800 tracking-tight">
+                                  {p.id.endsWith('enterprise') ? 'Custom' : `₹${p.price.toLocaleString()}`}
+                                </span>
+                                {!p.id.endsWith('enterprise') && <span className="text-[10px] text-slate-400 font-bold">/mo</span>}
+                              </div>
+                              <p className="text-[10px] mt-1 font-black text-blue-600">
+                                {p.callsPerMonth > 0 && `${p.callsPerMonth.toLocaleString()} chats / mo`}
+                                {p.callsPerMonth > 0 && p.minutesPerMonth > 0 && ' & '}
+                                {p.minutesPerMonth > 0 && `${p.minutesPerMonth.toLocaleString()} mins / mo`}
+                              </p>
+                            </div>
+
+                            <div className="h-px bg-slate-100 my-4" />
+
+                            <ul className="space-y-2 mb-4">
+                              {p.features.map((f, i) => (
+                                <li key={i} className="flex items-center gap-2 text-[10px] font-bold text-slate-600">
+                                  {f.included ? (
+                                    <svg className="w-3 h-3 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  ) : (
+                                    <span className="w-3 h-3 flex items-center justify-center flex-shrink-0 text-slate-300 text-xs">—</span>
+                                  )}
+                                  <span className={!f.included ? 'opacity-35 line-through font-normal' : ''}>{f.text}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Selected plan summary */}
@@ -522,92 +806,92 @@ export function UserBilling() {
                       transition={{ duration: 0.2, ease }}
                       className="overflow-hidden"
                     >
-                      <div className="mt-4 p-4.5 rounded-xl bg-blue-50/50 border border-blue-150 flex items-center gap-3">
+                      <div className="mx-6 p-4 rounded-xl bg-blue-50/50 border border-blue-150 flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                         <p className="text-xs font-bold text-blue-800">
                           Selected Plan:{' '}
-                          <span className="font-extrabold text-blue-900">{plans.find((p) => p.id === selectedPlan)?.name} Plan</span>
+                          <span className="font-extrabold text-blue-900">
+                            {getPlanConfig(selectedPlan).plan.name}
+                          </span>
                           {' — '}
                           <span className="font-extrabold text-blue-900">
-                            {plans.find((p) => p.id === selectedPlan)?.id === 'enterprise'
-                              ? 'Custom pricing'
-                              : `₹${plans.find((p) => p.id === selectedPlan)?.price.toLocaleString()}/mo`}
+                            {selectedPlan.endsWith('enterprise') ? 'Custom pricing' : `₹${getPlanConfig(selectedPlan).plan.price.toLocaleString()}/mo`}
                           </span>
                         </p>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
 
-              {/* Modal footer buttons */}
-              <div className="px-6 py-5 border-t border-slate-100 bg-slate-50/20 flex items-center gap-3">
-                <button
-                  onClick={() => setShowUpgrade(false)}
-                  className="flex-1 py-3 rounded-xl text-xs font-bold text-slate-550 bg-white hover:bg-slate-50 border border-slate-200 transition-all cursor-pointer shadow-sm text-center"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleUpgrade}
-                  disabled={!selectedPlan || upgrading}
-                  className="btn-cta flex-1 py-3 rounded-xl text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-blue-600 to-indigo-650 text-white transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm text-center"
-                >
-                  {upgrading ? (
-                    <>
-                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      Sending request...
-                    </>
-                  ) : (
-                    <>
-                      Submit Upgrade Request
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                      </svg>
-                    </>
-                  )}
-                </button>
-              </div>
+                {/* Modal footer buttons */}
+                <div className="px-6 py-5 border-t border-slate-100 bg-slate-50/20 flex items-center gap-3">
+                  <button
+                    onClick={() => setShowUpgrade(false)}
+                    className="flex-1 py-3 rounded-xl text-xs font-bold text-slate-550 bg-white hover:bg-slate-50 border border-slate-200 transition-all cursor-pointer shadow-sm text-center"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleUpgrade}
+                    disabled={!selectedPlan || upgrading}
+                    className="btn-cta flex-1 py-3 rounded-xl text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-blue-600 to-indigo-650 text-white transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm text-center border-none"
+                  >
+                    {upgrading ? (
+                      <>
+                        <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Sending request...
+                      </>
+                    ) : (
+                      <>
+                        Submit Upgrade Request
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
 
-      {/* ── Add-Ons CTA ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.35, duration: 0.35, ease }}
-        className="mt-8 rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-md p-6 sm:p-8 relative overflow-hidden group"
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-emerald-500/5 pointer-events-none rounded-2xl" />
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-radial-gradient from-indigo-500/5 to-transparent rounded-full pointer-events-none" />
+        {/* ── Add-Ons CTA ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.35, ease }}
+          className="rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-md p-6 sm:p-8 relative overflow-hidden group"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-emerald-500/5 pointer-events-none rounded-2xl" />
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-radial-gradient from-indigo-500/5 to-transparent rounded-full pointer-events-none" />
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 relative">
-          <div>
-            <p className="text-[9px] font-black tracking-[0.25em] uppercase text-indigo-600 mb-2">
-              SYSTEM ADD-ONS
-            </p>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">
-              Supercharge your system flows
-            </h2>
-            <p className="mt-2 text-xs font-semibold text-slate-500 max-w-lg leading-relaxed">
-              Explore additional modules including regional language voice packs, daily performance insights, WhatsApp workflows, and advanced CRM webhooks.
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 relative">
+            <div>
+              <p className="text-[9px] font-black tracking-[0.25em] uppercase text-indigo-600 mb-2">
+                SYSTEM ADD-ONS
+              </p>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">
+                Supercharge your system flows
+              </h2>
+              <p className="mt-2 text-xs font-semibold text-slate-500 max-w-lg leading-relaxed">
+                Explore additional modules including regional language voice packs, daily performance insights, WhatsApp workflows, and advanced CRM webhooks.
+              </p>
+            </div>
+            <Link
+              to="/dashboard/add-ons"
+              className="btn-cta flex-shrink-0 inline-flex items-center gap-2.5 px-5 py-3 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-650 transition-all shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] border-none"
+            >
+              Browse Modules
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </Link>
           </div>
-          <Link
-            to="/dashboard/add-ons"
-            className="btn-cta flex-shrink-0 inline-flex items-center gap-2.5 px-5 py-3 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-650 transition-all shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99]"
-          >
-            Browse Modules
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </Link>
-        </div>
+        </motion.div>
       </motion.div>
     </div>
   );

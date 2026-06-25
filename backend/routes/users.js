@@ -20,14 +20,6 @@ import {
 const router = express.Router();
 router.use(authenticate);
 
-const PLAN_CONFIG = {
-  free:       { callsPerMonth: 100,    setupFee: 0,    monthlyPrice: 0     },
-  starter:    { callsPerMonth: 1000,   setupFee: 0,    monthlyPrice: 3499  },
-  growth:     { callsPerMonth: 5000,   setupFee: 0,    monthlyPrice: 9999  },
-  enterprise: { callsPerMonth: 99999,  setupFee: 0,    monthlyPrice: 0     },
-};
-const VALID_PLANS = Object.keys(PLAN_CONFIG);
-
 router.get('/', requireAdmin, async (req, res) => {
   try {
     const { page, limit, skip } = parsePage(req.query);
@@ -49,9 +41,9 @@ router.get('/', requireAdmin, async (req, res) => {
     const userIds = users.map(u => u._id);
     const callAgg = userIds.length > 0
       ? await Call.aggregate([
-          { $match: { ...callAggFilter, userId: { $in: userIds } } },
-          { $group: { _id: '$userId', callCount: { $sum: 1 }, calcMinutes: { $sum: { $divide: [{ $subtract: ['$endedAt', '$startedAt'] }, 60000] } }, lastCallAt: { $max: '$startedAt' }, lastCallEnded: { $max: '$endedAt' } } },
-        ])
+        { $match: { ...callAggFilter, userId: { $in: userIds } } },
+        { $group: { _id: '$userId', callCount: { $sum: 1 }, calcMinutes: { $sum: { $divide: [{ $subtract: ['$endedAt', '$startedAt'] }, 60000] } }, lastCallAt: { $max: '$startedAt' }, lastCallEnded: { $max: '$endedAt' } } },
+      ])
       : [];
     const callMap = {};
     for (const c of callAgg) {
@@ -60,15 +52,39 @@ router.get('/', requireAdmin, async (req, res) => {
 
     const result = users.map(u => {
       const stats = callMap[u._id.toString()] || {};
+      let chatPlan = u.chatPlan;
+      let voicePlan = u.voicePlan;
+      if (!chatPlan && !voicePlan) {
+        const p = u.plan || 'chat_free';
+        if (p.startsWith('chat_')) {
+          chatPlan = p;
+          voicePlan = 'none';
+        } else if (p.startsWith('voice_')) {
+          chatPlan = 'none';
+          voicePlan = p;
+        } else if (p.startsWith('both_')) {
+          chatPlan = p.replace('both_', 'chat_');
+          voicePlan = p.replace('both_', 'voice_');
+        } else {
+          chatPlan = `chat_${p}`;
+          voicePlan = `voice_${p}`;
+        }
+      }
+      chatPlan = chatPlan || 'none';
+      voicePlan = voicePlan || 'none';
+
       return {
         id: u._id, email: u.email, name: u.name, phoneNumber: u.phoneNumber,
-        role: u.role, company: u.company, plan: u.plan,
+        role: u.role, company: u.company, plan: u.plan || chatPlan,
+        chatPlan, voicePlan,
         minutesUsed: u.minutesUsed, minutesLimit: u.minutesLimit,
         isActive: u.isActive, createdAt: u.createdAt,
         callCount: stats.callCount || 0,
         calcMinutes: Math.round(stats.calcMinutes || 0),
         lastCallAt: stats.lastCallAt || null,
         lastCallEnded: stats.lastCallEnded || null,
+        chatEnabled: chatPlan !== 'none',
+        voiceEnabled: voicePlan !== 'none',
       };
     });
 
@@ -86,13 +102,16 @@ router.post('/', requireAdmin, contentFilter('name', 'company'), async (req, res
     const password = typeof req.body?.password === 'string' ? req.body.password : '';
     const company = trimString(req.body?.company, 200);
     const phoneNumber = trimString(req.body?.phoneNumber, 30);
-    const plan = typeof req.body?.plan === 'string' ? req.body.plan : 'free';
+    const chatPlan = typeof req.body?.chatPlan === 'string' ? req.body.chatPlan : 'chat_free';
+    const voicePlan = typeof req.body?.voicePlan === 'string' ? req.body.voicePlan : 'none';
 
     if (!name) return res.status(400).json({ message: 'Name is required' });
     if (!isValidEmail(email)) return res.status(400).json({ message: 'Valid email is required' });
     const pwdErr = passwordError(password);
     if (pwdErr) return res.status(400).json({ message: pwdErr });
-    if (!PLAN_CONFIG[plan]) return res.status(400).json({ message: 'Invalid plan' });
+
+    if (chatPlan !== 'none' && !User.PLAN_CONFIG[chatPlan]) return res.status(400).json({ message: 'Invalid Chat plan' });
+    if (voicePlan !== 'none' && !User.PLAN_CONFIG[voicePlan]) return res.status(400).json({ message: 'Invalid Voice plan' });
 
     const existing = await User.findOne({ email }).lean();
     if (existing) {
@@ -100,7 +119,19 @@ router.post('/', requireAdmin, contentFilter('name', 'company'), async (req, res
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-    const planConfig = PLAN_CONFIG[plan];
+    const chatConfig = User.PLAN_CONFIG[chatPlan] || { callsPerMonth: 0 };
+    const voiceConfig = User.PLAN_CONFIG[voicePlan] || { minutesPerMonth: 0 };
+
+    let plan = 'chat_free';
+    if (chatPlan !== 'none' && voicePlan !== 'none') {
+      const chatTier = chatPlan.replace('chat_', '');
+      const voiceTier = voicePlan.replace('voice_', '');
+      plan = chatTier === voiceTier ? `both_${chatTier}` : chatPlan;
+    } else if (chatPlan !== 'none') {
+      plan = chatPlan;
+    } else if (voicePlan !== 'none') {
+      plan = voicePlan;
+    }
 
     const user = await User.create({
       email,
@@ -109,8 +140,12 @@ router.post('/', requireAdmin, contentFilter('name', 'company'), async (req, res
       phoneNumber,
       company,
       plan,
-      minutesLimit: planConfig.callsPerMonth,
-      callsLimit: planConfig.callsPerMonth,
+      chatPlan,
+      voicePlan,
+      chatEnabled: chatPlan !== 'none',
+      voiceEnabled: voicePlan !== 'none',
+      minutesLimit: voiceConfig.minutesPerMonth,
+      callsLimit: chatConfig.callsPerMonth,
       passwordChangedAt: new Date(),
     });
 
@@ -118,9 +153,11 @@ router.post('/', requireAdmin, contentFilter('name', 'company'), async (req, res
       user: {
         id: user._id, email: user.email, name: user.name,
         phoneNumber: user.phoneNumber, role: user.role, company: user.company,
-        plan: user.plan, minutesUsed: user.minutesUsed, minutesLimit: user.minutesLimit,
+        plan: user.plan, chatPlan: user.chatPlan, voicePlan: user.voicePlan,
+        minutesUsed: user.minutesUsed, minutesLimit: user.minutesLimit,
         callsUsed: user.callsUsed || 0, callsLimit: user.callsLimit,
         isActive: user.isActive, createdAt: user.createdAt, updatedAt: user.updatedAt,
+        chatEnabled: user.chatPlan !== 'none', voiceEnabled: user.voicePlan !== 'none',
       },
     });
   } catch (error) {
@@ -132,7 +169,7 @@ router.post('/', requireAdmin, contentFilter('name', 'company'), async (req, res
 router.put('/:id', contentFilter('name', 'company'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, company, plan, password, oldPassword, phoneNumber } = req.body;
+    const { name, email, company, password, oldPassword, phoneNumber, chatPlan, voicePlan } = req.body;
 
     const user = await User.findById(id).select('+password');
     if (!user) {
@@ -144,20 +181,44 @@ router.put('/:id', contentFilter('name', 'company'), async (req, res) => {
     }
 
     const isSelf = req.user.role !== 'admin';
-    const currentPlan = isSelf ? user.plan : plan;
-    const planConfig = PLAN_CONFIG[currentPlan] || PLAN_CONFIG.free;
+    const currentChatPlan = isSelf ? (user.chatPlan || 'chat_free') : (chatPlan !== undefined ? chatPlan : (user.chatPlan || 'chat_free'));
+    const currentVoicePlan = isSelf ? (user.voicePlan || 'none') : (voicePlan !== undefined ? voicePlan : (user.voicePlan || 'none'));
+
+    const chatConfig = User.PLAN_CONFIG[currentChatPlan] || { callsPerMonth: 0 };
+    const voiceConfig = User.PLAN_CONFIG[currentVoicePlan] || { minutesPerMonth: 0 };
+
+    let planLegacy = user.plan;
+    if (!isSelf && (chatPlan !== undefined || voicePlan !== undefined)) {
+      if (currentChatPlan !== 'none' && currentVoicePlan !== 'none') {
+        const chatTier = currentChatPlan.replace('chat_', '');
+        const voiceTier = currentVoicePlan.replace('voice_', '');
+        planLegacy = chatTier === voiceTier ? `both_${chatTier}` : currentChatPlan;
+      } else if (currentChatPlan !== 'none') {
+        planLegacy = currentChatPlan;
+      } else if (currentVoicePlan !== 'none') {
+        planLegacy = currentVoicePlan;
+      } else {
+        planLegacy = 'chat_free';
+      }
+    }
 
     const updates = {
       name: typeof name === 'string' ? name.trim().slice(0, 100) : user.name,
       email: email ? String(email).toLowerCase().trim().slice(0, 254) : user.email,
       phoneNumber: typeof phoneNumber === 'string' ? phoneNumber.trim().slice(0, 30) : user.phoneNumber,
       company: typeof company === 'string' ? company.trim().slice(0, 200) : user.company,
-      plan: currentPlan,
+      plan: planLegacy,
     };
-    if (req.user.role === 'admin' && plan) {
-      updates.minutesLimit = planConfig.callsPerMonth;
-      updates.callsLimit = planConfig.callsPerMonth;
+
+    if (req.user.role === 'admin') {
+      updates.chatPlan = currentChatPlan;
+      updates.voicePlan = currentVoicePlan;
+      updates.chatEnabled = currentChatPlan !== 'none';
+      updates.voiceEnabled = currentVoicePlan !== 'none';
+      updates.callsLimit = chatConfig.callsPerMonth;
+      updates.minutesLimit = voiceConfig.minutesPerMonth;
     }
+
     if (password) {
       if (isSelf) {
         if (!oldPassword) {
@@ -180,9 +241,11 @@ router.put('/:id', contentFilter('name', 'company'), async (req, res) => {
       user: {
         id: updated._id, email: updated.email, name: updated.name,
         phoneNumber: updated.phoneNumber, role: updated.role, company: updated.company,
-        plan: updated.plan, minutesUsed: updated.minutesUsed, minutesLimit: updated.minutesLimit,
+        plan: updated.plan, chatPlan: updated.chatPlan, voicePlan: updated.voicePlan,
+        minutesUsed: updated.minutesUsed, minutesLimit: updated.minutesLimit,
         callsUsed: updated.callsUsed || 0, callsLimit: updated.callsLimit,
         isActive: updated.isActive, createdAt: updated.createdAt, updatedAt: updated.updatedAt,
+        chatEnabled: updated.chatPlan !== 'none', voiceEnabled: updated.voicePlan !== 'none',
       },
     });
   } catch (error) {
@@ -246,22 +309,61 @@ router.put('/:id/block', requireAdmin, async (req, res) => {
 router.put('/:id/plan', async (req, res) => {
   try {
     const { id } = req.params;
-    const { plan } = req.body;
+    let { plan, chatPlan, voicePlan } = req.body;
 
     if (req.user.role !== 'admin' && req.user.userId !== id) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    if (!VALID_PLANS.includes(plan)) {
-      return res.status(400).json({ message: `Plan must be one of: ${VALID_PLANS.join(', ')}` });
+    const user = await User.findById(id).lean();
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    const planConfig = PLAN_CONFIG[plan];
-    const updated = await User.findByIdAndUpdate(id, {
-      plan,
-      minutesLimit: planConfig.callsPerMonth,
-      callsLimit: planConfig.callsPerMonth,
-    }, { new: true }).lean();
+    if (plan) {
+      if (plan.startsWith('chat_')) {
+        chatPlan = plan;
+      } else if (plan.startsWith('voice_')) {
+        voicePlan = plan;
+      } else if (plan.startsWith('both_')) {
+        chatPlan = plan.replace('both_', 'chat_');
+        voicePlan = plan.replace('both_', 'voice_');
+      } else if (User.VALID_PLANS.includes(plan)) {
+        chatPlan = `chat_${plan}`;
+        voicePlan = `voice_${plan}`;
+      }
+    }
+
+    const updates = {};
+    if (chatPlan) {
+      if (chatPlan !== 'none' && !User.PLAN_CONFIG[chatPlan]) return res.status(400).json({ message: 'Invalid Chat plan' });
+      updates.chatPlan = chatPlan;
+      updates.chatEnabled = chatPlan !== 'none';
+      updates.callsLimit = (User.PLAN_CONFIG[chatPlan] || { callsPerMonth: 0 }).callsPerMonth;
+    }
+    if (voicePlan) {
+      if (voicePlan !== 'none' && !User.PLAN_CONFIG[voicePlan]) return res.status(400).json({ message: 'Invalid Voice plan' });
+      updates.voicePlan = voicePlan;
+      updates.voiceEnabled = voicePlan !== 'none';
+      updates.minutesLimit = (User.PLAN_CONFIG[voicePlan] || { minutesPerMonth: 0 }).minutesPerMonth;
+    }
+
+    const finalChat = updates.chatPlan !== undefined ? updates.chatPlan : (user.chatPlan || 'chat_free');
+    const finalVoice = updates.voicePlan !== undefined ? updates.voicePlan : (user.voicePlan || 'none');
+
+    if (finalChat !== 'none' && finalVoice !== 'none') {
+      const chatTier = finalChat.replace('chat_', '');
+      const voiceTier = finalVoice.replace('voice_', '');
+      updates.plan = chatTier === voiceTier ? `both_${chatTier}` : finalChat;
+    } else if (finalChat !== 'none') {
+      updates.plan = finalChat;
+    } else if (finalVoice !== 'none') {
+      updates.plan = finalVoice;
+    } else {
+      updates.plan = 'chat_free';
+    }
+
+    const updated = await User.findByIdAndUpdate(id, updates, { new: true }).lean();
 
     if (!updated) {
       return res.status(500).json({ message: 'Failed to update plan' });
@@ -271,9 +373,11 @@ router.put('/:id/plan', async (req, res) => {
       user: {
         id: updated._id, email: updated.email, name: updated.name,
         phoneNumber: updated.phoneNumber, role: updated.role, company: updated.company,
-        plan: updated.plan, minutesUsed: updated.minutesUsed, minutesLimit: updated.minutesLimit,
+        plan: updated.plan, chatPlan: updated.chatPlan, voicePlan: updated.voicePlan,
+        minutesUsed: updated.minutesUsed, minutesLimit: updated.minutesLimit,
         callsUsed: updated.callsUsed || 0, callsLimit: updated.callsLimit,
         isActive: updated.isActive, createdAt: updated.createdAt, updatedAt: updated.updatedAt,
+        chatEnabled: updated.chatPlan !== 'none', voiceEnabled: updated.voicePlan !== 'none',
       },
     });
   } catch (error) {

@@ -1,5 +1,6 @@
 import { verifyAccessToken, authSecurityEvent } from '../services/tokenService.js';
 import { extractTokenFromCookie } from '../services/cookieService.js';
+import User from '../db/models/User.js';
 
 function extractToken(req) {
   const authHeader = req.headers.authorization;
@@ -70,6 +71,71 @@ export function requireOwnershipOrAdmin(getOwnerId) {
       if (String(ownerId) === String(req.user.userId)) return next();
       authSecurityEvent('ownership_violation', { ip: req.ip, userId: req.user.userId, ownerId: String(ownerId) });
       return res.status(403).json({ message: 'Access denied' });
+    } catch (err) {
+      return next(err);
+    }
+  };
+}
+
+export function requireFeature(feature) {
+  return async (req, res, next) => {
+    try {
+      if (!req.user || !req.user.userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      // Admins bypass plan restrictions
+      if (req.user.role === 'admin') {
+        return next();
+      }
+
+      const user = await User.findById(req.user.userId).lean();
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      let chatPlan = user.chatPlan;
+      let voicePlan = user.voicePlan;
+      if (!chatPlan && !voicePlan) {
+        const plan = user.plan || 'chat_free';
+        if (plan.startsWith('chat_')) {
+          chatPlan = plan;
+          voicePlan = 'none';
+        } else if (plan.startsWith('voice_')) {
+          chatPlan = 'none';
+          voicePlan = plan;
+        } else if (plan.startsWith('both_')) {
+          chatPlan = plan.replace('both_', 'chat_');
+          voicePlan = plan.replace('both_', 'voice_');
+        } else {
+          chatPlan = `chat_${plan}`;
+          voicePlan = `voice_${plan}`;
+        }
+      }
+      chatPlan = chatPlan || 'none';
+      voicePlan = voicePlan || 'none';
+
+      if (feature === 'chat') {
+        if (chatPlan !== 'none') {
+          return next();
+        }
+        return res.status(403).json({
+          message: 'Chat features are not included in your current subscription plan. Please upgrade.',
+          code: 'CHAT_ACCESS_DENIED'
+        });
+      }
+
+      if (feature === 'voice') {
+        if (voicePlan !== 'none') {
+          return next();
+        }
+        return res.status(403).json({
+          message: 'Voice/Agent features are not included in your current subscription plan. Please upgrade.',
+          code: 'VOICE_ACCESS_DENIED'
+        });
+      }
+
+      return next();
     } catch (err) {
       return next(err);
     }

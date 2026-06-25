@@ -91,7 +91,17 @@ export function useAuth() {
 }
 
 
-function ProtectedRoute({ children, adminOnly = false, hideSidebar = false }: { children: ReactNode; adminOnly?: boolean; hideSidebar?: boolean }) {
+function ProtectedRoute({
+  children,
+  adminOnly = false,
+  hideSidebar = false,
+  feature
+}: {
+  children: ReactNode;
+  adminOnly?: boolean;
+  hideSidebar?: boolean;
+  feature?: 'chat' | 'voice';
+}) {
   const { user, isAdmin } = useAuth();
   const initialized = useAppSelector((s) => s.auth.initialized);
   const token = useAppSelector((s) => s.auth.token);
@@ -101,6 +111,21 @@ function ProtectedRoute({ children, adminOnly = false, hideSidebar = false }: { 
 
   if (!user) return <Navigate to="/" replace />;
   if (adminOnly && !isAdmin) return <Navigate to="/dashboard" replace />;
+
+  if (feature && !isAdmin) {
+    if (feature === 'chat') {
+      const isChat = user.chatPlan ? user.chatPlan !== 'none' : (user.chatEnabled !== undefined ? user.chatEnabled : true);
+      if (!isChat) {
+        return <Navigate to="/dashboard?error=chat_restricted" replace />;
+      }
+    }
+    if (feature === 'voice') {
+      const isVoice = user.voicePlan ? user.voicePlan !== 'none' : (user.voiceEnabled !== undefined ? user.voiceEnabled : false);
+      if (!isVoice) {
+        return <Navigate to="/dashboard?error=voice_restricted" replace />;
+      }
+    }
+  }
 
   if (hideSidebar) {
     return (
@@ -165,12 +190,12 @@ function AppRoutes() {
         <Route path="/news" element={<News />} />
 
         <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
-        <Route path="/dashboard/agents" element={<ProtectedRoute><MyAgents /></ProtectedRoute>} />
-        <Route path="/dashboard/agents/new" element={<ProtectedRoute><CreateAgent /></ProtectedRoute>} />
-        <Route path="/dashboard/calls" element={<ProtectedRoute><MyCalls /></ProtectedRoute>} />
+        <Route path="/dashboard/agents" element={<ProtectedRoute feature="voice"><MyAgents /></ProtectedRoute>} />
+        <Route path="/dashboard/agents/new" element={<ProtectedRoute feature="voice"><CreateAgent /></ProtectedRoute>} />
+        <Route path="/dashboard/calls" element={<ProtectedRoute feature="voice"><MyCalls /></ProtectedRoute>} />
         <Route path="/dashboard/leads" element={<ProtectedRoute><MyLeads /></ProtectedRoute>} />
         <Route path="/dashboard/appointments" element={<ProtectedRoute><MyAppointments /></ProtectedRoute>} />
-        <Route path="/dashboard/chat" element={<ProtectedRoute><MyChat /></ProtectedRoute>} />
+        <Route path="/dashboard/chat" element={<ProtectedRoute feature="chat"><MyChat /></ProtectedRoute>} />
         <Route path="/dashboard/billing" element={<ProtectedRoute><UserBilling /></ProtectedRoute>} />
         <Route path="/dashboard/add-ons" element={<ProtectedRoute><MyAddOns /></ProtectedRoute>} />
 

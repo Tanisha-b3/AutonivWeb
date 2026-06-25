@@ -71,7 +71,7 @@ async function issueTokensForUser({ user, req }) {
   RefreshToken.deleteMany({
     userId: user._id,
     expiresAt: { $lt: new Date() },
-  }).catch(() => {});
+  }).catch(() => { });
 
   return { accessToken, refreshToken };
 }
@@ -209,9 +209,13 @@ router.post('/register', registerLimiter, contentFilter('name', 'company'), asyn
       phoneNumber,
       company,
       role: 'user',
-      plan: 'free',
-      minutesLimit: 100,
-      callsLimit: 100,
+      plan: 'chat_free',
+      chatPlan: 'chat_free',
+      voicePlan: 'none',
+      chatEnabled: true,
+      voiceEnabled: false,
+      minutesLimit: 0,
+      callsLimit: User.PLAN_CONFIG.chat_free.callsPerMonth,
       isVerified: false,
       otpCode: otp,
       otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
@@ -267,9 +271,13 @@ router.post('/register-admin', registerLimiter, contentFilter('name', 'company')
       name,
       company,
       role: 'admin',
-      plan: 'enterprise',
-      minutesLimit: 100000,
-      callsLimit: 100000,
+      plan: 'both_enterprise',
+      chatPlan: 'chat_enterprise',
+      voicePlan: 'voice_enterprise',
+      chatEnabled: true,
+      voiceEnabled: true,
+      minutesLimit: User.PLAN_CONFIG.voice_enterprise.minutesPerMonth,
+      callsLimit: User.PLAN_CONFIG.chat_enterprise.callsPerMonth,
       passwordChangedAt: new Date(),
     });
 
@@ -329,7 +337,7 @@ router.post('/login', authLimiter, loginLimiter, async (req, res) => {
       const { accessToken, refreshToken } = await issueTokensForUser({ user, req });
       setTokenCookies(res, accessToken, refreshToken);
       log.info('login_success_admin_skip_otp', { userId: String(user._id), ip: getClientIp(req) });
-    return res.json(tokenResponse({ user, accessToken, refreshToken }));
+      return res.json(tokenResponse({ user, accessToken, refreshToken }));
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -432,9 +440,13 @@ router.post('/google', authLimiter, loginLimiter, async (req, res) => {
         password: hashedPassword,
         name: name || email.split('@')[0],
         role: 'user',
-        plan: 'free',
-        minutesLimit: 100,
-        callsLimit: 100,
+        plan: 'chat_free',
+        chatPlan: 'chat_free',
+        voicePlan: 'none',
+        chatEnabled: true,
+        voiceEnabled: false,
+        minutesLimit: 0,
+        callsLimit: User.PLAN_CONFIG.chat_free.callsPerMonth,
         isVerified: true, // Google already verified this email
         passwordChangedAt: new Date(),
       });
@@ -464,7 +476,7 @@ router.post('/google', authLimiter, loginLimiter, async (req, res) => {
 
     const tokenResp = tokenResponse({ user, accessToken, refreshToken });
     setTokenCookies(res, accessToken, refreshToken);
-    
+
     return res.status(isNewUser ? 201 : 200).json(tokenResp);
   } catch (error) {
     log.error('google_auth_error', { error: error.message, stack: error.stack });
@@ -633,6 +645,18 @@ router.get('/me', authenticate, async (req, res) => {
     const user = await User.findById(req.user.userId).lean();
     if (!user) return res.status(404).json({ message: 'User not found' });
 
+    const plan = user.plan;
+    const features = {
+      appointments: {},
+      leads: {},
+      chat: {},
+      agents: {},
+    };
+    for (const [key, val] of Object.entries(User.FEATURES.appointments)) features.appointments[key] = val[plan];
+    for (const [key, val] of Object.entries(User.FEATURES.leads)) features.leads[key] = val[plan];
+    for (const [key, val] of Object.entries(User.FEATURES.chat)) features.chat[key] = val[plan];
+    for (const [key, val] of Object.entries(User.FEATURES.agents)) features.agents[key] = val[plan];
+
     return res.json({
       user: {
         id: user._id,
@@ -641,12 +665,19 @@ router.get('/me', authenticate, async (req, res) => {
         phoneNumber: user.phoneNumber,
         role: user.role,
         company: user.company,
-        plan: user.plan,
+        plan,
         minutesUsed: user.minutesUsed,
         minutesLimit: user.minutesLimit,
         callsUsed: user.callsUsed || 0,
-        callsLimit: user.callsLimit || 30,
+        callsLimit: user.callsLimit,
         isActive: user.isActive,
+        chatEnabled: user.chatEnabled !== undefined ? user.chatEnabled : (
+          plan.startsWith('chat_') || plan.startsWith('both_') || ['free', 'starter', 'growth', 'enterprise'].includes(plan)
+        ),
+        voiceEnabled: user.voiceEnabled !== undefined ? user.voiceEnabled : (
+          plan.startsWith('voice_') || plan.startsWith('both_') || ['free', 'starter', 'growth', 'enterprise'].includes(plan)
+        ),
+        features,
       },
     });
   } catch (error) {

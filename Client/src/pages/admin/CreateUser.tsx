@@ -10,11 +10,20 @@ const fadeUp = {
   animate: { opacity: 1, y: 0, transition: { duration: 0.3, ease } },
 };
 
-const PLAN_OPTIONS = [
-  { value: 'free', label: 'Free (100 conversations · ₹0)' },
-  { value: 'starter', label: 'Starter (1,000 conversations · ₹3,499)' },
-  { value: 'growth', label: 'Growth (5,000 conversations · ₹9,999)' },
-  { value: 'enterprise', label: 'Enterprise (Unlimited)' },
+const CHAT_PLAN_OPTIONS = [
+  { value: 'chat_free', label: 'Chat Free (100 chats · ₹0)' },
+  { value: 'chat_starter', label: 'Chat Starter (1,000 chats · ₹3,499)' },
+  { value: 'chat_growth', label: 'Chat Growth (5,000 chats · ₹9,999)' },
+  { value: 'chat_enterprise', label: 'Chat Enterprise (Unlimited chats)' },
+  { value: 'none', label: 'None (Disabled)' },
+];
+
+const VOICE_PLAN_OPTIONS = [
+  { value: 'voice_free', label: 'Voice Free (50 voice mins · ₹0)' },
+  { value: 'voice_starter', label: 'Voice Starter (500 voice mins · ₹4,999)' },
+  { value: 'voice_growth', label: 'Voice Growth (3,000 voice mins · ₹12,999)' },
+  { value: 'voice_enterprise', label: 'Voice Enterprise (Unlimited voice mins)' },
+  { value: 'none', label: 'None (Disabled)' },
 ];
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
@@ -90,10 +99,28 @@ export function CreateUser() {
     email: '',
     password: '',
     company: '',
-    plan: 'free',
+    chatPlan: 'chat_free',
+    voicePlan: 'none',
     phoneNumber: '',
-    minutesLimit: 100,
+    chatEnabled: true,
+    voiceEnabled: false,
   });
+
+  const handleChatPlanChange = (selectedPlan: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      chatPlan: selectedPlan,
+      chatEnabled: selectedPlan !== 'none',
+    }));
+  };
+
+  const handleVoicePlanChange = (selectedPlan: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      voicePlan: selectedPlan,
+      voiceEnabled: selectedPlan !== 'none',
+    }));
+  };
 
   const handleSubmit = useCallback(async () => {
     if (submitting || !formData.name.trim() || !formData.email.trim() || !formData.password) return;
@@ -171,13 +198,23 @@ export function CreateUser() {
           <TextInput value={formData.company} onChange={(v) => setFormData({ ...formData, company: v })} placeholder="Company Name" />
         </div>
 
-        <div>
-          <FieldLabel>Plan</FieldLabel>
-          <SelectInput
-            value={formData.plan}
-            onChange={(v) => setFormData({ ...formData, plan: v })}
-            options={PLAN_OPTIONS}
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <FieldLabel>Chat Plan</FieldLabel>
+            <SelectInput
+              value={formData.chatPlan}
+              onChange={handleChatPlanChange}
+              options={CHAT_PLAN_OPTIONS}
+            />
+          </div>
+          <div>
+            <FieldLabel>Voice Plan</FieldLabel>
+            <SelectInput
+              value={formData.voicePlan}
+              onChange={handleVoicePlanChange}
+              options={VOICE_PLAN_OPTIONS}
+            />
+          </div>
         </div>
 
         <div>

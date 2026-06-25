@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAppDispatch } from '../../hooks/useStore';
+import { useAppDispatch, useAppSelector } from '../../hooks/useStore';
 import { createAgent, fetchMyAgents } from '../../store/slices/agentsSlice';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { VoicePreviewButton } from '../../components/VoicePreviewButton';
@@ -269,6 +269,7 @@ function PanelCard({ label, children }: { label: string; children: React.ReactNo
 // ── Main component ─────────────────────────────────────────────────────────
 export function CreateAgent() {
   const dispatch   = useAppDispatch();
+  const user       = useAppSelector((s) => s.auth.user);
   const navigate   = useNavigate();
   const location   = useLocation();
   const templateData = location.state?.template;
@@ -490,7 +491,20 @@ export function CreateAgent() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label style={fieldLabel}>Language</label>
-                  <SelectInput value={formData.language} onChange={v => patch({ language: v })} options={LANGUAGE_OPTIONS} />
+                  <SelectInput
+                    value={formData.language}
+                    onChange={v => patch({ language: v })}
+                    options={
+                      user?.features?.agents?.multiLanguage
+                        ? LANGUAGE_OPTIONS
+                        : LANGUAGE_OPTIONS.filter(o => o.value === 'en')
+                    }
+                  />
+                  {!user?.features?.agents?.multiLanguage && (
+                    <p style={{ fontSize: 9.5, color: '#9ca3af', marginTop: 4, fontWeight: 500 }}>
+                      Upgrade to Starter+ for multi-language support
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label style={fieldLabel}>Voice model</label>

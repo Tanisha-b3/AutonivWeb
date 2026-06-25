@@ -5,12 +5,22 @@ export interface User {
   phoneNumber?: string;
   role: 'admin' | 'user';
   company?: string;
-  plan: 'free' | 'starter' | 'growth' | 'enterprise';
+  plan: string;
+  chatPlan?: string;
+  voicePlan?: string;
   minutesUsed: number;
   minutesLimit: number;
   callsUsed: number;
   callsLimit: number;
   isActive: boolean;
+  chatEnabled?: boolean;
+  voiceEnabled?: boolean;
+  features?: {
+    appointments: Record<string, boolean>;
+    leads: Record<string, boolean>;
+    chat: Record<string, boolean>;
+    agents: Record<string, boolean>;
+  };
   createdAt?: string;
   updatedAt?: string;
   callCount?: number;

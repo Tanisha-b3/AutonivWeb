@@ -2,13 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Reveal } from "./utils";
 
-const plans = [
+const chatPlans = [
   {
-    name: "Free",
-    icon: "💬",
-    monthlyPrice: "₹0",
-    yearlyPrice: "₹0",
-    period: "forever",
+    name: "Free", icon: "💬", monthlyPrice: "₹0", yearlyPrice: "₹0", period: "forever",
     badge: "ALWAYS FREE",
     desc: "Perfect for individuals & small projects testing the waters.",
     features: [
@@ -19,15 +15,10 @@ const plans = [
       { text: "WhatsApp integration", included: false },
       { text: "Remove branding", included: false },
     ],
-    cta: "Get started free",
-    highlight: false,
+    cta: "Get started free", highlight: false,
   },
   {
-    name: "Starter",
-    icon: "🚀",
-    monthlyPrice: "₹3,499",
-    yearlyPrice: "₹2,799",
-    period: "/month",
+    name: "Starter", icon: "🚀", monthlyPrice: "₹3,499", yearlyPrice: "₹2,799", period: "/month",
     badge: null,
     desc: "For freelancers & small businesses getting serious.",
     features: [
@@ -36,17 +27,12 @@ const plans = [
       { text: "WhatsApp + website", included: true },
       { text: "Hindi & Hinglish support", included: true },
       { text: "Remove branding", included: true },
-      { text: "CRM integration", included: false },
+      { text: "CRM integration", included: true },
     ],
-    cta: "Start 14-day trial",
-    highlight: false,
+    cta: "Start 14-day trial", highlight: false,
   },
   {
-    name: "Growth",
-    icon: "📈",
-    monthlyPrice: "₹9,999",
-    yearlyPrice: "₹7,999",
-    period: "/month",
+    name: "Growth", icon: "📈", monthlyPrice: "₹9,999", yearlyPrice: "₹7,999", period: "/month",
     badge: "MOST POPULAR",
     desc: "For SMBs scaling support, sales & engagement.",
     features: [
@@ -57,15 +43,10 @@ const plans = [
       { text: "CRM & helpdesk integrations", included: true },
       { text: "Full analytics dashboard", included: true },
     ],
-    cta: "Start 14-day trial",
-    highlight: true,
+    cta: "Start 14-day trial", highlight: true,
   },
   {
-    name: "Enterprise",
-    icon: "🏢",
-    monthlyPrice: "Custom",
-    yearlyPrice: "Custom",
-    period: "",
+    name: "Enterprise", icon: "🏢", monthlyPrice: "Custom", yearlyPrice: "Custom", period: "",
     badge: "CUSTOM",
     desc: "For large businesses, compliance & custom AI.",
     features: [
@@ -76,13 +57,73 @@ const plans = [
       { text: "India-region cloud hosting", included: true },
       { text: "Dedicated account manager", included: true },
     ],
-    cta: "Contact sales →",
-    highlight: false,
+    cta: "Contact sales →", highlight: false,
+  },
+];
+
+const voicePlans = [
+  {
+    name: "Free", icon: "🎙️", monthlyPrice: "₹0", yearlyPrice: "₹0", period: "forever",
+    badge: "ALWAYS FREE",
+    desc: "Try voice agents with basic capabilities.",
+    features: [
+      { text: "1 voice agent", included: true },
+      { text: "50 voice minutes / month", included: true },
+      { text: "Website embed", included: true },
+      { text: "Basic call routing", included: true },
+      { text: "Call recording", included: false },
+      { text: "Custom voice model", included: false },
+    ],
+    cta: "Get started free", highlight: false,
+  },
+  {
+    name: "Starter", icon: "🎤", monthlyPrice: "₹4,999", yearlyPrice: "₹3,999", period: "/month",
+    badge: null,
+    desc: "For businesses ready to automate phone support.",
+    features: [
+      { text: "3 voice agents", included: true },
+      { text: "500 voice minutes / month", included: true },
+      { text: "Dedicated phone number", included: true },
+      { text: "Hindi, English & Hinglish", included: true },
+      { text: "Call recording & logs", included: true },
+      { text: "CRM integration", included: true },
+    ],
+    cta: "Start 14-day trial", highlight: false,
+  },
+  {
+    name: "Growth", icon: "📞", monthlyPrice: "₹12,999", yearlyPrice: "₹10,399", period: "/month",
+    badge: "MOST POPULAR",
+    desc: "For SMBs scaling phone support & outreach.",
+    features: [
+      { text: "10 voice agents", included: true },
+      { text: "3,000 voice minutes / month", included: true },
+      { text: "Multiple phone numbers", included: true },
+      { text: "10+ Indian languages", included: true },
+      { text: "CRM & helpdesk integrations", included: true },
+      { text: "Full analytics dashboard", included: true },
+    ],
+    cta: "Start 14-day trial", highlight: true,
+  },
+  {
+    name: "Enterprise", icon: "🏢", monthlyPrice: "Custom", yearlyPrice: "Custom", period: "",
+    badge: "CUSTOM",
+    desc: "For large call centers & custom compliance needs.",
+    features: [
+      { text: "Unlimited voice agents", included: true },
+      { text: "Unlimited voice minutes", included: true },
+      { text: "Custom voice AI training", included: true },
+      { text: "DPDP Act 2023 compliance", included: true },
+      { text: "India-region cloud hosting", included: true },
+      { text: "Dedicated account manager", included: true },
+    ],
+    cta: "Contact sales →", highlight: false,
   },
 ];
 
 export function Pricing({ openAuth }: { openAuth: (m: "login" | "register") => void }) {
   const [pricingYearly, setPricingYearly] = useState(false);
+  const [pricingMode, setPricingMode] = useState<"chat" | "voice">("chat");
+  const plans = pricingMode === "chat" ? chatPlans : voicePlans;
 
   return (
     <section id="pricing" className="section-box black">
@@ -139,8 +180,22 @@ export function Pricing({ openAuth }: { openAuth: (m: "login" | "register") => v
           </div>
         </Reveal>
 
+        {/* Chat / Voice Toggle */}
+        <div className="flex justify-center mb-8">
+          <div className="inline-flex items-center gap-0 bg-white/5 border border-white/10 rounded-full p-1">
+            <button onClick={() => setPricingMode("chat")} className={`px-6 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${pricingMode === "chat" ? "bg-gradient-to-r from-blue-600 to-emerald-500 text-white" : "text-slate-400 hover:text-white"}`}>
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+              Chat
+            </button>
+            <button onClick={() => setPricingMode("voice")} className={`px-6 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${pricingMode === "voice" ? "bg-gradient-to-r from-blue-600 to-emerald-500 text-white" : "text-slate-400 hover:text-white"}`}>
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" /></svg>
+              Voice
+            </button>
+          </div>
+        </div>
+
         {/* Pricing Cards */}
-        <div className="grid gap-6 max-w-6xl mx-auto grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
+        <div key={pricingMode} className="animate-fade-up grid gap-6 max-w-6xl mx-auto grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
           {plans.map((plan, i) => (
             <Reveal key={i} delay={i * 0.08}>
               <div

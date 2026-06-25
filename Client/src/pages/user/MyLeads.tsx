@@ -27,6 +27,7 @@ const EMPTY_LEADS: Lead[] = [];
 
 export function MyLeads() {
   const dispatch = useAppDispatch();
+  const user = useAppSelector((s) => s.auth.user);
   const leads = useAppSelector((s) => s.leads.myLeads) ?? EMPTY_LEADS;
   const loading = useAppSelector((s) => s.leads.loading);
   const pagination = useAppSelector((s) => s.leads.myPagination);
@@ -222,7 +223,13 @@ export function MyLeads() {
           </div>
           <button
             onClick={handleExport}
-            className="btn-cta self-start group inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-[var(--text)] border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)] transition-all"
+            disabled={!user?.features?.leads?.exportCsv}
+            className="btn-cta self-start group inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{
+              color: user?.features?.leads?.exportCsv ? 'var(--text)' : 'var(--text-muted)',
+              border: `1px solid ${user?.features?.leads?.exportCsv ? 'var(--border)' : 'transparent'}`,
+              background: user?.features?.leads?.exportCsv ? 'var(--surface)' : 'var(--s1)',
+            }}
           >
             <svg className="w-3.5 h-3.5 transition-transform group-hover:translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

@@ -1,6 +1,6 @@
 import express from 'express';
 import OpenAI from 'openai';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, requireFeature } from '../middleware/auth.js';
 import { containsAbuse } from '../services/contentModeration.js';
 import { log } from '../services/logger.js';
 import Lead from '../db/models/Lead.js';
@@ -8,6 +8,7 @@ import Appointment from '../db/models/Appointment.js';
 
 const router = express.Router();
 router.use(authenticate);
+router.use(requireFeature('chat'));
 
 let _groq;
 function getGroq() {

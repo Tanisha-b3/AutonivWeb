@@ -3,36 +3,37 @@ import express from 'express';
 import Call from '../db/models/Call.js';
 import Agent from '../db/models/Agent.js';
 import User from '../db/models/User.js';
-import { authenticate, requireAdmin } from '../middleware/auth.js';
+import { authenticate, requireAdmin, requireFeature } from '../middleware/auth.js';
 import { log } from '../services/logger.js';
 import { getVapiCalls, extractVapiCallData, createVapiOutboundCall } from '../services/vapi.js';
 import { parsePage, paginatedResponse } from '../services/pagination.js';
 
 const router = express.Router();
 router.use(authenticate);
+router.use(requireFeature('voice'));
 
 // Normalize a call document for frontend consumption
 function normalizeCall(c) {
   return {
     ...c,
-    id:        c._id?.toString(),
-    agentId:   c.agentId?._id?.toString() ?? c.agentId?.toString() ?? null,
-    userId:    c.userId?._id?.toString()  ?? c.userId?.toString()  ?? null,
-    agentName: c.agentId?.name  ?? null,
-    agentType: c.agentId?.type  ?? null,
-    userName:  c.userId?.name   ?? null,
-    userEmail: c.userId?.email  ?? null,
+    id: c._id?.toString(),
+    agentId: c.agentId?._id?.toString() ?? c.agentId?.toString() ?? null,
+    userId: c.userId?._id?.toString() ?? c.userId?.toString() ?? null,
+    agentName: c.agentId?.name ?? null,
+    agentType: c.agentId?.type ?? null,
+    userName: c.userId?.name ?? null,
+    userEmail: c.userId?.email ?? null,
   };
 }
 
 // Status mapping shared between sync routes
 const STATUS_MAP = {
-  ended:                  'completed',
-  'customer-ended-call':  'completed',
+  ended: 'completed',
+  'customer-ended-call': 'completed',
   'assistant-ended-call': 'completed',
-  'silence-timed-out':    'missed',
-  'max-duration-exceeded':'completed',
-  error:                  'failed',
+  'silence-timed-out': 'missed',
+  'max-duration-exceeded': 'completed',
+  error: 'failed',
 };
 
 // GET /calls — admin: all calls
@@ -92,25 +93,25 @@ router.get('/stats/summary', async (req, res) => {
       { $match: filter },
       {
         $group: {
-          _id:            null,
-          totalCalls:     { $sum: 1 },
+          _id: null,
+          totalCalls: { $sum: 1 },
           completedCalls: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } },
-          missedCalls:    { $sum: { $cond: [{ $eq: ['$status', 'missed'] }, 1, 0] } },
-          activeCalls:    { $sum: { $cond: [{ $eq: ['$status', 'in-progress'] }, 1, 0] } },
-          totalSeconds:   { $sum: '$duration' },
-          avgDuration:    { $avg: '$duration' },
+          missedCalls: { $sum: { $cond: [{ $eq: ['$status', 'missed'] }, 1, 0] } },
+          activeCalls: { $sum: { $cond: [{ $eq: ['$status', 'in-progress'] }, 1, 0] } },
+          totalSeconds: { $sum: '$duration' },
+          avgDuration: { $avg: '$duration' },
         },
       },
     ]);
 
     const s = stats[0] || {};
     res.json({
-      totalCalls:     s.totalCalls     || 0,
+      totalCalls: s.totalCalls || 0,
       completedCalls: s.completedCalls || 0,
-      missedCalls:    s.missedCalls    || 0,
-      activeCalls:    s.activeCalls    || 0,
-      totalMinutes:   Math.ceil((s.totalSeconds || 0) / 60),
-      avgDuration:    Math.round(s.avgDuration || 0),
+      missedCalls: s.missedCalls || 0,
+      activeCalls: s.activeCalls || 0,
+      totalMinutes: Math.ceil((s.totalSeconds || 0) / 60),
+      avgDuration: Math.round(s.avgDuration || 0),
     });
   } catch (error) {
     log.error('call_stats_error', { error: error.message, userId: req.user?.userId });
@@ -176,13 +177,13 @@ router.post('/sync', requireAdmin, async (req, res) => {
           await Call.updateOne(
             { _id: existing._id },
             {
-              duration:     vapiData.duration,
+              duration: vapiData.duration,
               status,
               recordingUrl: vapiData.recordingUrl,
-              transcript:   vapiData.transcript,
-              startedAt:    vapiData.startedAt,
-              endedAt:      vapiData.endedAt,
-              endedReason:  vapiData.endedReason,
+              transcript: vapiData.transcript,
+              startedAt: vapiData.startedAt,
+              endedAt: vapiData.endedAt,
+              endedReason: vapiData.endedReason,
               ...(vapiData.callerNumber ? { callerNumber: vapiData.callerNumber } : {}),
             }
           );
@@ -197,17 +198,17 @@ router.post('/sync', requireAdmin, async (req, res) => {
           updated++;
         } else {
           await Call.create({
-            agentId:      agent._id,
-            userId:       agent.userId,
-            vapiCallId:   vapiCall.id,
+            agentId: agent._id,
+            userId: agent.userId,
+            vapiCallId: vapiCall.id,
             callerNumber: vapiData.callerNumber || null,
-            duration:     vapiData.duration,
+            duration: vapiData.duration,
             status,
             recordingUrl: vapiData.recordingUrl,
-            transcript:   vapiData.transcript,
-            startedAt:    vapiData.startedAt,
-            endedAt:      vapiData.endedAt,
-            endedReason:  vapiData.endedReason,
+            transcript: vapiData.transcript,
+            startedAt: vapiData.startedAt,
+            endedAt: vapiData.endedAt,
+            endedReason: vapiData.endedReason,
           });
           const incObj = { callsUsed: 1 };
           if (status === 'completed' && vapiData.duration > 0) {
@@ -270,16 +271,16 @@ router.post('/sync-my', async (req, res) => {
         const status = STATUS_MAP[vapiData.endedReason ?? vapiData.status] ?? 'completed';
 
         await Call.create({
-          agentId:      agent._id,
-          userId:       agent.userId,
-          vapiCallId:   vapiCall.id,
+          agentId: agent._id,
+          userId: agent.userId,
+          vapiCallId: vapiCall.id,
           callerNumber: vapiData.callerNumber || null,
-          duration:     vapiData.duration,
+          duration: vapiData.duration,
           status,
           recordingUrl: vapiData.recordingUrl,
-          transcript:   vapiData.transcript,
-          startedAt:    vapiData.startedAt,
-          endedAt:      vapiData.endedAt,
+          transcript: vapiData.transcript,
+          startedAt: vapiData.startedAt,
+          endedAt: vapiData.endedAt,
         });
         const incObj = { callsUsed: 1 };
         if (status === 'completed' && vapiData.duration > 0) {
@@ -342,9 +343,9 @@ router.post('/outbound', async (req, res) => {
     const e164Number = phoneClean.startsWith('+') ? phoneClean : `+${phoneClean}`;
 
     const vapiCall = await createVapiOutboundCall({
-      assistantId:  agent.vapiId,
+      assistantId: agent.vapiId,
       phoneNumberId: agent.phoneNumberId,
-      customer:     { number: e164Number, name: req.user.userId },
+      customer: { number: e164Number, name: req.user.userId },
     });
 
     log.info('outbound_call_initiated', {

@@ -16,7 +16,8 @@ router.use(requireAdmin);
 
 const VALID_TYPES = ['receptionist', 'appointment', 'faq'];
 const VALID_PLANS = ['free', 'starter', 'growth', 'enterprise'];
-const PLAN_LIMITS = { free: 100, starter: 1000, growth: 5000, enterprise: 99999 };
+const PLAN_LIMITS = { free: 50, starter: 500, growth: 3000, enterprise: 999999 };
+const CALLS_LIMITS = { free: 100, starter: 1000, growth: 5000, enterprise: 99999 };
 
 function escapeHtml(text) {
   const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
@@ -120,7 +121,7 @@ async function handleCreateUser(message) {
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
-  await User.create({ email, password: hashedPassword, name, company: company || '', plan, minutesLimit: PLAN_LIMITS[plan] });
+  await User.create({ email, password: hashedPassword, name, company: company || '', plan, minutesLimit: PLAN_LIMITS[plan], callsLimit: CALLS_LIMITS[plan] });
 
   return { text: `✅ User **${escapeHtml(name)}** created successfully!\n- Email: ${escapeHtml(email)}\n- Plan: ${plan}\n- Company: ${escapeHtml(company || 'N/A')}\n- Minutes Limit: ${PLAN_LIMITS[plan]}`, type: 'success' };
 }
@@ -200,7 +201,7 @@ async function handleDeleteUser(message) {
   const agents = await Agent.find({ userId: user._id }).lean();
   for (const agent of agents) {
     if (agent.vapiId) {
-      try { const { deleteVapiAssistant } = await import('../services/vapi.js'); await deleteVapiAssistant(agent.vapiId); } catch {}
+      try { const { deleteVapiAssistant } = await import('../services/vapi.js'); await deleteVapiAssistant(agent.vapiId); } catch { }
     }
   }
   await Agent.deleteMany({ userId: user._id });

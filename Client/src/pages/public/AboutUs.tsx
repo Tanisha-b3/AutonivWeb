@@ -746,37 +746,7 @@ export function AboutUS() {
         </div>
 
         {/* ── Footer strip ── */}
-        <div
-          style={{
-            padding: '28px 24px',
-            background: SURFACE,
-            borderTop: `1px solid ${HAIRLINE}`,
-          }}
-        >
-          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-5">
-            <div className="flex items-center gap-2">
-              <img src={LOGO_SRC} alt="Autoniv" className="h-10 w-auto object-contain" />
-            </div>
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs" style={{ color: MUTE }}>
-              {['Home', 'Solutions', 'Pricing', 'Blog', 'Contact', 'Privacy'].map((label) => (
-                <Link
-                  key={label}
-                  to={`/${label.toLowerCase()}`}
-                  className="transition-colors"
-                  style={{ color: MUTE, textDecoration: 'none' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = INK; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = MUTE; }}
-                >
-                  {label}
-                </Link>
-              ))}
-            </div>
-            <div className="text-xs" style={{ color: '#cbd5e1', fontFamily: MONO }}>
-              © 2025 Autoniv · Founded by Rajnesh Yadav
-            </div>
-          </div>
-        </div>
-
+     
       </div>
 
       <ScrollToTop />
