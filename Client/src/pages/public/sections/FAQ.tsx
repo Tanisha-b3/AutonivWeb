@@ -1,14 +1,45 @@
 import { FAQItem } from "./FAQItem";
-
 const faqs = [
-  { q: "What is Autoniv?", a: "Autoniv is an AI-powered voice agent platform that handles business calls 24/7 in 20+ languages. Our AI agents answer calls, qualify leads, book appointments, and integrate with your existing CRM — no human intervention needed." },
-  { q: "How long does setup take?", a: "Most businesses are live within 48 hours. Simply describe what your agent should do, pick a voice and language, test it with our simulation tool, and deploy to your phone number or website widget in one click." },
-  { q: "Does it work with my existing phone number?", a: "Yes. Autoniv integrates with your current phone system via SIP trunking. You can forward calls to our AI agent or use a dedicated number — your choice. No hardware changes required." },
-  { q: "What languages are supported?", a: "We support 20+ languages including English, Hindi, Spanish, French, Arabic, Mandarin, and more. Each agent can handle multiple languages and switch mid-conversation based on the caller's preference." },
-  { q: "How much does it cost?", a: "Plans start at ₹4,999/month for small businesses (500 minutes, 1 agent). Pro plans at ₹12,999/month include 3 agents, 1,500 minutes, CRM integrations, and premium voices. Enterprise pricing is custom." },
-  { q: "Can I try before I buy?", a: "Yes! You can test our AI agents with a free demo. Sign up, configure your agent, and run simulated calls before going live. No credit card required for the trial." },
-  { q: "What integrations do you support?", a: "We integrate with 50+ tools including HubSpot, Salesforce, Google Calendar, Outlook, Zapier, Make, n8n, WhatsApp, and more. Our API also allows custom integrations for enterprise needs." },
-  { q: "Is my data secure?", a: "Absolutely. We use bank-grade encryption, SOC 2 certified infrastructure, and GDPR-compliant data handling. All call data is encrypted at rest and in transit. Enterprise plans include dedicated instances." },
+  {
+    q: "What exactly does Autoniv do?",
+    a: "Autoniv deploys AI voice agents that handle your business phone calls 24/7. Our AI agents answer inbound calls, make outbound calls, qualify leads, book appointments, follow up with customers, and automate repetitive conversations—without increasing your team size.",
+  },
+  {
+    q: "Is this just another IVR or phone bot?",
+    a: "No. Unlike traditional IVR systems that rely on menus and button presses, Autoniv's AI voice agents hold natural, human-like conversations. They understand context, answer unexpected questions, and respond intelligently just like a trained customer service representative.",
+  },
+  {
+    q: "How fast can we go live?",
+    a: "Most businesses are live within 24 hours. Our team handles voice setup, agent configuration, workflow customization, and CRM integration, allowing you to start using your AI voice agent quickly without complex implementation.",
+  },
+  {
+    q: "Will our customers know they're talking to AI?",
+    a: "Our AI voice agents are designed to sound natural, professional, and conversational. If a customer requests a human or the conversation requires human assistance, the AI transfers the call seamlessly while sharing the full conversation context.",
+  },
+  {
+    q: "What happens if the AI doesn't know the answer?",
+    a: "When the AI encounters a question outside its knowledge or requires human intervention, it immediately transfers the call to your team. The agent passes along the conversation history so your staff can continue without asking customers to repeat themselves.",
+  },
+  {
+    q: "Which tools does Autoniv integrate with?",
+    a: "Autoniv integrates with leading CRMs, calendars, and business phone systems. Leads are automatically captured, appointments are scheduled in real time, customer information is synced instantly, and manual data entry is eliminated.",
+  },
+  {
+    q: "What types of businesses use Autoniv?",
+    a: "Autoniv serves healthcare providers, real estate agencies, financial services, insurance companies, startups, enterprises, service businesses, agencies, and SMBs. Every AI voice agent is customized to match your industry's workflows and customer conversations.",
+  },
+  {
+    q: "How much can Autoniv reduce call center costs?",
+    a: "Businesses typically reduce call-handling costs by up to 70% compared to traditional call centers by eliminating staffing overhead, repetitive manual work, training costs, and inconsistent customer experiences. Contact us for a custom quote based on your call volume.",
+  },
+  {
+    q: "Can I monitor what my AI agent says?",
+    a: "Yes. Every call is automatically recorded, transcribed, and available in your real-time dashboard. You can review conversations, monitor performance, identify trends, and continuously improve your AI agent using detailed analytics.",
+  },
+  {
+    q: "How do I get started?",
+    a: "Book a free 30-minute strategy call with the Autoniv team. We'll understand your business, map your call workflows, identify automation opportunities, and demonstrate how a customized AI voice agent can improve your customer experience—no obligation and no credit card required.",
+  },
 ];
 
 export function FAQ() {

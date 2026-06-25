@@ -49,22 +49,29 @@ export function LandingSection() {
             </div>
             <Services openAuth={openAuth} />
             <Comparison />
-            <div id="how-it-works">
-              <HowItWorks openAuth={openAuth} />
-            </div>
-            
-            <Industry activeUseCase={activeUseCase} setActiveUseCase={setActiveUseCase} openAuth={openAuth} />
-            <AddOns />
-            <Testimonials />
            
             
-            <FAQ />
+            <Industry activeUseCase={activeUseCase} setActiveUseCase={setActiveUseCase} openAuth={openAuth} />
+           <div id="how-it-works">
+              <HowItWorks openAuth={openAuth} />
+            </div>
+          
+
+            <AddOns />
+
+             
+           
+            
+            
              <CaseStudiesSection />
             <Blog />
             
             <Pricing openAuth={openAuth} />
             <Contact />
             <CTABanner openAuth={openAuth} />
+
+              <Testimonials />
+            <FAQ />
           </Suspense>
         </div>
       </div>

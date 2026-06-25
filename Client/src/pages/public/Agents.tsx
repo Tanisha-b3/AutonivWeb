@@ -21,41 +21,71 @@ const GLOBAL_STATS = [
   { value: "₹50Cr+", label: "Revenue Generated", desc: "For clients" },
 ];
 
-const AGENT_TYPES = [
-  { icon: "📞", title: "AI Receptionist", desc: "Never miss another business call. Answers 24/7, handles FAQs, filters spam, and forwards high-priority calls.", features: ["Instant Call Routing", "Custom Greetings", "Spam Filtering"], color: "#2563EB", metric: "3.2X", metricLabel: "More Leads" },
-  { icon: "📅", title: "Appointment Scheduler", desc: "Integrates with calendars to schedule, reschedule, or cancel client appointments on the call.", features: ["Calendar Sync", "SMS Confirmations", "Follow-up Automation"], color: "#10B981", metric: "+72%", metricLabel: "Bookings" },
-  { icon: "💡", title: "FAQ Support Assistant", desc: "Trained on your knowledge base. Answers detailed product and service questions with 99%+ accuracy.", features: ["Knowledge Base Training", "Dynamic Responses", "Context Preservation"], color: "#f97316", metric: "99%", metricLabel: "Accuracy" },
-  { icon: "🎯", title: "Lead Qualifier", desc: "Engages inbound leads instantly. Asks qualifying questions and syncs data to your CRM automatically.", features: ["CRM Auto-Sync", "Custom Scripts", "Sentiment Analysis"], color: "#8b5cf6", metric: "40%", metricLabel: "More Conversions" },
-];
-
-const HOW_IT_WORKS = [
-  { step: "01", title: "Connect Your Channel", desc: "Link your phone number, website widget, or WhatsApp in under 2 minutes.", icon: "🔗", color: "#2563EB" },
-  { step: "02", title: "Train Your Agent", desc: "Upload your FAQ, knowledge base, and scripts. The AI learns your business instantly.", icon: "🧠", color: "#10B981" },
-  { step: "03", title: "Go Live & Scale", desc: "Start receiving calls immediately. Scale to thousands of concurrent conversations.", icon: "🚀", color: "#f97316" },
-];
-
-const TRUSTED_BRANDS = [
-  "RealtyMax", "Care+ Clinics", "LearnUp", "The Skin Lounge",
-  "EduSphere", "FitNation", "UrbanCart", "FinTrack",
+// ─── Services Data ───
+const SERVICES = [
+  {
+    id: "chat",
+    title: "Chat Assistant",
+    icon: "💬",
+    color: "#2563EB",
+    description: "Intelligent AI chat assistants that handle customer queries, qualify leads, and provide instant support across websites, WhatsApp, and messaging platforms.",
+    features: [
+      "Instant Responses",
+      "Lead Qualification",
+      "Multi-platform Support",
+      "Smart Escalation",
+      "Analytics Dashboard"
+    ],
+    metrics: [
+      { value: "85%", label: "Resolution Rate" },
+      { value: "24/7", label: "Availability" },
+      { value: "45%", label: "Cost Reduction" }
+    ],
+    useCases: [
+      { icon: "🛒", title: "E-commerce Support", desc: "Help customers find products, track orders, and resolve issues." },
+      { icon: "🏥", title: "Healthcare Triage", desc: "Pre-screen patients and schedule appointments." },
+      { icon: "🏦", title: "Banking Queries", desc: "Handle account questions and transaction support." }
+    ]
+  },
+  {
+    id: "voice",
+    title: "Voice Assistant",
+    icon: "🎙️",
+    color: "#10B981",
+    description: "Advanced voice AI agents that handle inbound/outbound calls, book appointments, qualify leads, and provide natural conversational experiences.",
+    features: [
+      "Natural Language Understanding",
+      "Call Routing",
+      "Appointment Scheduling",
+      "CRM Integration",
+      "Multi-language Support"
+    ],
+    metrics: [
+      { value: "98%", label: "Accuracy" },
+      { value: "3.2X", label: "More Leads" },
+      { value: "40%", label: "Efficiency Gain" }
+    ],
+    useCases: [
+      { icon: "📞", title: "Receptionist", desc: "Answer calls 24/7, handle FAQs, and filter spam." },
+      { icon: "📅", title: "Scheduler", desc: "Book, reschedule, or cancel appointments on the call." },
+      { icon: "🎯", title: "Lead Qualifier", desc: "Engage leads instantly with qualifying questions." }
+    ]
+  }
 ];
 
 /* ─── Hero ─── */
 function Hero() {
   return (
     <div style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%)', borderBottom: `1px solid ${HAIRLINE}`, padding: '76px 24px 0', position: 'relative', overflow: 'hidden' }}>
-      {/* <HeroWaveform /> */}
-     <div
-  className="max-w-6xl mx-auto flex flex-col items-center justify-center text-center"
-  style={{ paddingBottom: 64, position: 'relative', zIndex: 1 }}
->
+      <div className="max-w-6xl mx-auto flex flex-col items-center justify-center text-center" style={{ paddingBottom: 64, position: 'relative', zIndex: 1 }}>
         <Reveal>
-          <SectionLabel text="AI Voice Agents · Powered by Autoniv" />
+          <SectionLabel text="AI Services · Powered by Autoniv" />
           <h1 style={{ fontSize: 'clamp(28px,4vw,48px)', fontWeight: 900, letterSpacing: '-0.03em', color: INK, lineHeight: 1.15, margin: '0 0 14px' }}>
-            AI Voice Agents{' '}
-            <GradientText>That Work 24/7</GradientText>
+            Chat & Voice <GradientText>AI Solutions</GradientText>
           </h1>
-          <p style={{ fontSize: 15, color: SLATE, maxWidth: 520, lineHeight: 1.6, margin: '0 0 32px' }}>
-            Deploy AI Voice Agents that answer calls, qualify leads, and book appointments — so you never miss a customer again.
+          <p style={{ fontSize: 15, color: SLATE, maxWidth: 560, lineHeight: 1.6, margin: '0 0 32px' }}>
+            Deploy intelligent chat and voice assistants that work 24/7 to engage customers, 
+            qualify leads, and drive conversions — across every channel.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link to="/register"
@@ -78,89 +108,189 @@ function Hero() {
   );
 }
 
-/* ─── Agent Card ─── */
-function AgentCard({ agent }: { agent: typeof AGENT_TYPES[0]; }) {
+/* ─── Service Card ─── */
+function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: number; }) {
+  const [isHovered, setIsHovered] = useState(false);
+  
   return (
-    <div className="rounded-2xl p-6 h-full flex flex-col transition-all duration-300" style={{ background: SURFACE, border: `1px solid ${HAIRLINE}` }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = agent.color; e.currentTarget.style.boxShadow = `0 12px 32px -8px ${agent.color}18`; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = HAIRLINE; e.currentTarget.style.boxShadow = 'none'; }}>
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ background: `${agent.color}10`, border: `1px solid ${agent.color}20` }}>
-            {agent.icon}
-          </div>
-          <div>
-            <div className="text-sm font-bold" style={{ color: INK }}>{agent.title}</div>
-            <div className="text-[10px] mt-0.5" style={{ color: MUTE }}>{agent.features.length} capabilities</div>
-          </div>
+    <div 
+      className="rounded-2xl p-8 h-full flex flex-col transition-all duration-500"
+      style={{ 
+        background: SURFACE, 
+        border: `2px solid ${isHovered ? service.color : HAIRLINE}`,
+        boxShadow: isHovered ? `0 20px 60px -12px ${service.color}25` : '0 4px 12px rgba(0,0,0,0.04)',
+        transform: isHovered ? 'translateY(-4px)' : 'translateY(0)'
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 transition-all duration-300"
+          style={{ 
+            background: `${service.color}12`, 
+            border: `2px solid ${service.color}25`,
+            transform: isHovered ? 'scale(1.05) rotate(-3deg)' : 'scale(1) rotate(0)'
+          }}>
+          {service.icon}
         </div>
-        <div className="w-16 h-16 rounded-full flex flex-col items-center justify-center flex-shrink-0" style={{ background: `${agent.color}08`, border: `1px solid ${agent.color}15` }}>
-          <div className="text-sm font-bold" style={{ color: agent.color }}>{agent.metric}</div>
-          <div className="text-[8px] text-center" style={{ color: MUTE }}>{agent.metricLabel}</div>
+        <div>
+          <h3 className="text-xl font-bold" style={{ color: INK }}>{service.title}</h3>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-xs font-mono" style={{ color: service.color }}>●</span>
+            <span className="text-xs" style={{ color: MUTE }}>{service.features.length} capabilities</span>
+          </div>
         </div>
       </div>
-      <p className="text-sm leading-relaxed mb-4 flex-1" style={{ color: SLATE }}>{agent.desc}</p>
-      <div className="mb-4">
-        <div className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: MUTE, fontFamily: MONO }}>Key Capabilities</div>
-        <div className="flex flex-wrap gap-1.5">
-          {agent.features.map((f) => (
-            <span key={f} className="px-2.5 py-1 rounded-full text-[10px] font-medium" style={{ background: `${agent.color}08`, border: `1px solid ${agent.color}15`, color: agent.color }}>✓ {f}</span>
+
+      {/* Description */}
+      <p className="text-sm leading-relaxed mb-6" style={{ color: SLATE }}>
+        {service.description}
+      </p>
+
+      {/* Metrics */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        {service.metrics.map((metric) => (
+          <div key={metric.label} className="text-center p-3 rounded-xl" style={{ background: `${service.color}06`, border: `1px solid ${service.color}12` }}>
+            <div className="text-lg font-bold" style={{ color: service.color }}>{metric.value}</div>
+            <div className="text-[10px] font-medium" style={{ color: MUTE }}>{metric.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Features */}
+      <div className="mb-6">
+        <div className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: MUTE, fontFamily: MONO }}>
+          Key Features
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {service.features.map((f) => (
+            <span key={f} className="px-3 py-1.5 rounded-full text-[11px] font-medium transition-all duration-300"
+              style={{ 
+                background: `${service.color}08`, 
+                border: `1px solid ${service.color}15`, 
+                color: service.color,
+                transform: isHovered ? 'scale(1.02)' : 'scale(1)'
+              }}>
+              ✓ {f}
+            </span>
           ))}
         </div>
       </div>
-      <div className="h-px mb-4" style={{ background: HAIRLINE }} />
-      <Link to="/register" className="text-sm font-semibold flex items-center gap-1 group no-underline transition-colors" style={{ color: '#2563EB' }}
-        onMouseEnter={e => e.currentTarget.style.color = agent.color}
-        onMouseLeave={e => e.currentTarget.style.color = '#2563EB'}>
-        Learn More <span className="transition-transform group-hover:translate-x-1">→</span>
+
+      {/* Use Cases */}
+      <div className="mb-6">
+        <div className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: MUTE, fontFamily: MONO }}>
+          Use Cases
+        </div>
+        <div className="space-y-2">
+          {service.useCases.map((useCase) => (
+            <div key={useCase.title} className="flex items-start gap-2 p-2 rounded-lg transition-all duration-300"
+              style={{ background: isHovered ? `${service.color}04` : 'transparent' }}>
+              <span className="text-base flex-shrink-0 mt-0.5">{useCase.icon}</span>
+              <div>
+                <div className="text-xs font-semibold" style={{ color: INK }}>{useCase.title}</div>
+                <div className="text-[11px]" style={{ color: SLATE }}>{useCase.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="h-px mb-5" style={{ background: HAIRLINE }} />
+      
+      {/* CTA */}
+      <Link to="/register" 
+        className="text-sm font-semibold flex items-center justify-center gap-2 py-3 px-6 rounded-xl transition-all duration-300 no-underline"
+        style={{ 
+          background: `${service.color}08`,
+          border: `1px solid ${service.color}20`,
+          color: service.color,
+          transform: isHovered ? 'scale(1.02)' : 'scale(1)'
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = service.color; e.currentTarget.style.color = 'white'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = `${service.color}08`; e.currentTarget.style.color = service.color; }}>
+        Get Started <span className="transition-transform group-hover:translate-x-1">→</span>
       </Link>
     </div>
   );
 }
 
-function AgentsSection() {
-  const [active, setActive] = useState(0);
-  const [autoplay, setAutoplay] = useState(true);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    if (autoplay) timerRef.current = setInterval(() => setActive((a) => (a + 1) % AGENT_TYPES.length), 5000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [autoplay]);
-
-  const handleDotClick = (index: number) => { setActive(index); setAutoplay(false); setTimeout(() => setAutoplay(true), 5000); };
-
+/* ─── Services Section ─── */
+function ServicesSection() {
   return (
     <div className="max-w-6xl mx-auto">
       <Reveal>
         <div className="text-center">
-          <SectionLabel text="Meet Our Agents" />
+          <SectionLabel text="Our Services" />
           <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: '0 0 10px' }}>
-            Intelligent <GradientText>AI Voice Agents</GradientText>
-            <br />Tailored to Your Business
+            Chat & Voice <GradientText>AI Solutions</GradientText>
           </h2>
-          <p style={{ fontSize: 14, color: SLATE, marginBottom: 36 }}>Deploy specialized voice assistants that look up information, book slots, and converse in 20+ languages.</p>
+          <p style={{ fontSize: 14, color: SLATE, marginBottom: 36, maxWidth: 540, marginLeft: 'auto', marginRight: 'auto' }}>
+            Choose the right AI assistant for your business needs or combine both for 
+            omnichannel customer engagement.
+          </p>
         </div>
       </Reveal>
 
       <Reveal delay={80}>
-        <div className="hidden lg:grid grid-cols-4 gap-5">
-          {AGENT_TYPES.map((agent) => <AgentCard key={agent.title} agent={agent} />)}
-        </div>
-        <div className="lg:hidden relative px-10">
-          <button onClick={() => { setActive((a) => (a - 1 + AGENT_TYPES.length) % AGENT_TYPES.length); setAutoplay(false); setTimeout(() => setAutoplay(true), 5000); }}
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center text-lg z-10 transition-all duration-300"
-            style={{ background: SURFACE, border: `1px solid ${HAIRLINE}`, color: '#2563EB', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', cursor: 'pointer' }}>‹</button>
-          <AgentCard agent={AGENT_TYPES[active]} />
-          <button onClick={() => { setActive((a) => (a + 1) % AGENT_TYPES.length); setAutoplay(false); setTimeout(() => setAutoplay(true), 5000); }}
-            className="absolute right-0 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center text-lg z-10 transition-all duration-300"
-            style={{ background: SURFACE, border: `1px solid ${HAIRLINE}`, color: '#2563EB', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', cursor: 'pointer' }}>›</button>
-        </div>
-        <div className="flex justify-center gap-2 mt-8">
-          {AGENT_TYPES.map((_, i) => (
-            <button key={i} onClick={() => handleDotClick(i)} className="h-1.5 rounded-full border-none transition-all duration-300 p-0"
-              style={{ width: i === active ? 32 : 8, background: i === active ? '#2563EB' : '#d1d5db', cursor: 'pointer' }} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {SERVICES.map((service, index) => (
+            <ServiceCard key={service.id} service={service} index={index} />
           ))}
+        </div>
+      </Reveal>
+    </div>
+  );
+}
+
+/* ─── Comparison Section ─── */
+function ComparisonSection() {
+  return (
+    <div className="max-w-6xl mx-auto">
+      <Reveal>
+        <div className="text-center">
+          <SectionLabel text="Compare Solutions" />
+          <h2 style={{ fontSize: 'clamp(20px,2.5vw,30px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: '0 0 10px' }}>
+            Choose Your <GradientText>AI Assistant</GradientText>
+          </h2>
+          <p style={{ fontSize: 14, color: SLATE, marginBottom: 36 }}>
+            Compare features and capabilities to find the perfect fit for your business.
+          </p>
+        </div>
+      </Reveal>
+
+      <Reveal delay={80}>
+        <div className="overflow-x-auto">
+          <table className="w-full rounded-2xl" style={{ background: SURFACE, border: `1px solid ${HAIRLINE}` }}>
+            <thead>
+              <tr style={{ borderBottom: `1px solid ${HAIRLINE}` }}>
+                <th className="p-4 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: MUTE, fontFamily: MONO }}>Feature</th>
+                <th className="p-4 text-center text-sm font-bold" style={{ color: SERVICES[0].color }}>💬 Chat Assistant</th>
+                <th className="p-4 text-center text-sm font-bold" style={{ color: SERVICES[1].color }}>🎙️ Voice Assistant</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { feature: "24/7 Availability", chat: "✅", voice: "✅" },
+                { feature: "Natural Language Processing", chat: "✅", voice: "✅" },
+                { feature: "Multi-language Support", chat: "✅", voice: "✅" },
+                { feature: "Real-time Responses", chat: "✅", voice: "✅" },
+                { feature: "Phone Call Handling", chat: "❌", voice: "✅" },
+                { feature: "Website Widget", chat: "✅", voice: "❌" },
+                { feature: "WhatsApp Integration", chat: "✅", voice: "✅" },
+                { feature: "Appointment Scheduling", chat: "✅", voice: "✅" },
+                { feature: "CRM Integration", chat: "✅", voice: "✅" },
+                { feature: "Lead Qualification", chat: "✅", voice: "✅" },
+              ].map((row, i) => (
+                <tr key={i} style={{ borderBottom: i < 9 ? `1px solid ${HAIRLINE}` : 'none' }}>
+                  <td className="p-4 text-sm font-medium" style={{ color: INK }}>{row.feature}</td>
+                  <td className="p-4 text-center text-lg" style={{ color: SERVICES[0].color }}>{row.chat}</td>
+                  <td className="p-4 text-center text-lg" style={{ color: SERVICES[1].color }}>{row.voice}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </Reveal>
     </div>
@@ -175,7 +305,7 @@ function HowItWorks() {
         <div className="text-center">
           <SectionLabel text="How It Works" />
           <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: '0 0 10px' }}>
-            Go Live in <GradientText>3 Simple Steps</GradientText>
+            Deploy in <GradientText>3 Simple Steps</GradientText>
           </h2>
           <p style={{ fontSize: 14, color: SLATE, marginBottom: 36 }}>
             From setup to launch in under 48 hours.
@@ -184,7 +314,11 @@ function HowItWorks() {
       </Reveal>
       <Reveal delay={80}>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {HOW_IT_WORKS.map((step) => (
+          {[
+            { step: "01", title: "Connect Your Channels", desc: "Link your website, WhatsApp, or phone number in under 2 minutes.", icon: "🔗", color: "#2563EB" },
+            { step: "02", title: "Train Your AI", desc: "Upload your knowledge base, FAQs, and scripts. The AI learns instantly.", icon: "🧠", color: "#10B981" },
+            { step: "03", title: "Go Live & Scale", desc: "Launch your AI assistant and scale to thousands of conversations.", icon: "🚀", color: "#f97316" },
+          ].map((step) => (
             <div key={step.step} className="rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:-translate-y-1" style={{ background: SURFACE, border: `1px solid ${HAIRLINE}` }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = step.color; e.currentTarget.style.boxShadow = `0 12px 32px -8px ${step.color}15`; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = HAIRLINE; e.currentTarget.style.boxShadow = 'none'; }}>
@@ -204,6 +338,11 @@ function HowItWorks() {
 
 /* ─── Trusted Brands ─── */
 function TrustedSection() {
+  const TRUSTED_BRANDS = [
+    "RealtyMax", "Care+ Clinics", "LearnUp", "The Skin Lounge",
+    "EduSphere", "FitNation", "UrbanCart", "FinTrack",
+  ];
+  
   return (
     <div className="max-w-6xl mx-auto" style={{ textAlign: 'center' }}>
       <Reveal>
@@ -273,7 +412,7 @@ function CTASection() {
         <CTADecorations />
         <div className="relative z-10">
           <h2 style={{ fontSize: 'clamp(24px,4vw,44px)', fontWeight: 900, letterSpacing: '-0.03em', color: INK, margin: '0 0 16px', lineHeight: 1.15 }}>
-            Deploy Your <GradientText>AI Agent</GradientText> Today
+            Deploy Your <GradientText>AI Assistant</GradientText> Today
           </h2>
           <p style={{ fontSize: 15, color: SLATE, maxWidth: 440, margin: '0 auto 32px', lineHeight: 1.7 }}>
             Join 500+ businesses already growing with Autoniv.
@@ -321,30 +460,35 @@ export function Agents() {
           </div>
         </div>
 
-        {/* ── Agent Cards ── */}
+        {/* ── Services Section ── */}
         <div style={{ padding: '64px 24px', background: SURFACE, borderTop: `1px solid ${HAIRLINE}` }}>
-          <AgentsSection />
+          <ServicesSection />
+        </div>
+
+        {/* ── Comparison Section ── */}
+        <div style={{ padding: '64px 24px' }}>
+          <ComparisonSection />
         </div>
 
         {/* ── How It Works ── */}
-        <div style={{ padding: '64px 24px' }}>
+        <div style={{ padding: '64px 24px', background: SURFACE, borderTop: `1px solid ${HAIRLINE}` }}>
           <HowItWorks />
         </div>
 
         {/* ── Trusted Brands ── */}
-        <div style={{ padding: '64px 24px', background: SURFACE, borderTop: `1px solid ${HAIRLINE}` }}>
+        <div style={{ padding: '64px 24px' }}>
           <TrustedSection />
         </div>
 
         {/* ── Global Stats ── */}
-        <div style={{ padding: '64px 24px' }}>
+        <div style={{ padding: '64px 24px', background: SURFACE, borderTop: `1px solid ${HAIRLINE}` }}>
           <div className="max-w-6xl mx-auto">
             <GlobalStats />
           </div>
         </div>
 
         {/* ── CTA ── */}
-        <div style={{ padding: '0 24px 80px', background: SURFACE }}>
+        <div style={{ padding: '0 24px 80px' }}>
           <div className="max-w-6xl mx-auto">
             <CTASection />
           </div>

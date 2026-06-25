@@ -466,6 +466,7 @@ export const addOnService = {
     price: string;
     category?: string;
     description?: string;
+    type?: 'chat' | 'voice';
   }) => api.post('/add-ons/catalog', data),
 };
 
