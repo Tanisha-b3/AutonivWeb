@@ -47,7 +47,7 @@ export function LandingSection() {
             <div id="features">
               <Features />
             </div>
-            <Services />
+            <Services openAuth={openAuth} />
             <Comparison />
             <div id="how-it-works">
               <HowItWorks openAuth={openAuth} />
