@@ -109,7 +109,7 @@ function Hero() {
 }
 
 /* ─── Service Card ─── */
-function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: number; }) {
+function ServiceCard({ service  }: { service: typeof SERVICES[0]}) {
   const [isHovered, setIsHovered] = useState(false);
   
   return (
@@ -235,8 +235,8 @@ function ServicesSection() {
 
       <Reveal delay={80}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {SERVICES.map((service, index) => (
-            <ServiceCard key={service.id} service={service} index={index} />
+          {SERVICES.map((service) => (
+            <ServiceCard key={service.id} service={service} />
           ))}
         </div>
       </Reveal>
