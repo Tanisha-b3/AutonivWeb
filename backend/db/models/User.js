@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import crypto from 'crypto';
 
 const PLAN_CONFIG = {
   // Chat-only plans
@@ -113,11 +114,18 @@ const userSchema = new mongoose.Schema(
     passwordChangedAt: { type: Date,   default: null },
     lastLoginAt:       { type: Date,   default: null },
     lastLoginIp:       { type: String, default: null },
+
+    apiKey: { type: String, default: null, select: false },
   },
   { timestamps: true }
 );
 
 userSchema.pre('save', function (next) {
+  // Auto-generate API key for new users
+  if (!this.apiKey) {
+    this.apiKey = 'ak_' + crypto.randomBytes(24).toString('hex');
+  }
+
   let chatPlan = this.chatPlan;
   let voicePlan = this.voicePlan;
 

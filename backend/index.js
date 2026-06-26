@@ -25,6 +25,7 @@ import publicDemoRoutes from './routes/publicDemo.js';
 import contactRoutes from './routes/contact.js';
 import reportRoutes from './routes/reports.js';
 import chatHistoryRoutes from './routes/chatHistory.js';
+import widgetRoutes from './routes/widget.js';
 
 import {
   buildCors,
@@ -132,6 +133,7 @@ app.use('/api/user-chat', userChatRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/chat-history', chatHistoryRoutes);
+app.use('/api/widget', widgetRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

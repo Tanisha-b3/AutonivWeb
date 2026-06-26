@@ -22,7 +22,7 @@ import { useOnboarding } from '../../hooks/useOnboarding';
 import { OnboardingTour } from '../../components/OnboardingTour';
 import { EmptyStateGuide } from '../../components/EmptyStateGuide';
 import VapiModule from '@vapi-ai/web';
-import { callService } from '../../services/api';
+import { callService, apiKeyService } from '../../services/api';
 import type { MyStats } from '../../types';
 
 const Vapi = (typeof VapiModule === 'function' ? VapiModule : (VapiModule as any).default) as new (key: string) => any;
@@ -1105,6 +1105,10 @@ export function UserDashboard() {
   const [timeFilter, setTimeFilter] = useState<'7d' | '30d' | 'all'>('30d');
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   
+  // API Key state for widget embed
+  const [widgetApiKey, setWidgetApiKey] = useState<string | null>(null);
+  const [apiKeyLoading, setApiKeyLoading] = useState(false);
+  
   // Chart active tab
   const [chartTab, setChartTab] = useState<'volume' | 'minutes'>('volume');
   
@@ -1143,6 +1147,22 @@ export function UserDashboard() {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [addToast]);
+
+  // Fetch widget API key on mount
+  useEffect(() => {
+    const fetchApiKey = async () => {
+      setApiKeyLoading(true);
+      try {
+        const { data } = await apiKeyService.get();
+        setWidgetApiKey(data.apiKey || null);
+      } catch (err) {
+        console.error('Failed to fetch API key:', err);
+      } finally {
+        setApiKeyLoading(false);
+      }
+    };
+    fetchApiKey();
+  }, []);
 
   const handleRefresh = useCallback(async () => {
     setRetrying(true);
@@ -1649,21 +1669,47 @@ export function UserDashboard() {
             </div>
             <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Embed Code</p>
-              <div className="bg-slate-900 rounded-xl p-4 font-mono text-[11px] text-green-400 overflow-x-auto">
-                <code>{`<script src="https://cdn.autoniv.com/widget.js"\n  data-api-key="YOUR_API_KEY"\n  data-position="bottom-right">\n</script>`}</code>
-              </div>
-              <div className="flex items-center gap-2 mt-3">
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(`<script src="https://cdn.autoniv.com/widget.js" data-api-key="YOUR_API_KEY" data-position="bottom-right"></script>`);
-                    addToast('Embed code copied to clipboard', 'success');
-                  }}
-                  className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-[var(--primary-blue)] text-white hover:opacity-90 transition-all cursor-pointer border-none"
-                >
-                  Copy Code
-                </button>
-                <span className="text-[10px] text-slate-400 font-medium">Add this to your website's &lt;head&gt; tag</span>
-              </div>
+              {apiKeyLoading ? (
+                <div className="bg-slate-900 rounded-xl p-4 font-mono text-[11px] text-slate-500 overflow-x-auto">
+                  Loading API key...
+                </div>
+              ) : widgetApiKey ? (
+                <>
+                  <div className="bg-slate-900 rounded-xl p-4 font-mono text-[11px] text-green-400 overflow-x-auto">
+                    <code>{`<script src="${window.location.protocol}//${window.location.host}/api/widget/widget.js"\n  data-api-key="${widgetApiKey}"\n  data-position="bottom-right">\n</script>`}</code>
+                  </div>
+                  <div className="flex items-center gap-2 mt-3">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`<script src="${window.location.protocol}//${window.location.host}/api/widget/widget.js" data-api-key="${widgetApiKey}" data-position="bottom-right"></script>`);
+                        addToast('Embed code copied to clipboard', 'success');
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-[var(--primary-blue)] text-white hover:opacity-90 transition-all cursor-pointer border-none"
+                    >
+                      Copy Code
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const { data } = await apiKeyService.regenerate();
+                          setWidgetApiKey(data.apiKey);
+                          addToast('API key regenerated successfully', 'success');
+                        } catch (err) {
+                          addToast('Failed to regenerate API key', 'error');
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-slate-200 text-slate-600 hover:bg-slate-300 transition-all cursor-pointer border-none"
+                    >
+                      Regenerate Key
+                    </button>
+                    <span className="text-[10px] text-slate-400 font-medium">Add this to your website's &lt;head&gt; tag</span>
+                  </div>
+                </>
+              ) : (
+                <div className="bg-slate-900 rounded-xl p-4 font-mono text-[11px] text-slate-500 overflow-x-auto">
+                  No API key available. Please contact support.
+                </div>
+              )}
             </div>
           </motion.div>
         )}

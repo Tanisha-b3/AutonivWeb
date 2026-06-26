@@ -1,5 +1,6 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import User from '../db/models/User.js';
 import Agent from '../db/models/Agent.js';
 import Call from '../db/models/Call.js';
@@ -391,6 +392,31 @@ router.put('/:id/plan', async (req, res) => {
   } catch (error) {
     log.error('upgrade_plan_error', { error: error.message, userId: req.user?.userId });
     res.status(500).json({ message: 'Failed to upgrade plan' });
+  }
+});
+
+// ─── API Key management ─────────────────────────────────────────────────────
+router.get('/api-key', async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('+apiKey').lean();
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ apiKey: user.apiKey || null });
+  } catch (error) {
+    log.error('get_api_key_error', { error: error.message, userId: req.user?.userId });
+    res.status(500).json({ message: 'Failed to get API key' });
+  }
+});
+
+router.post('/api-key/regenerate', async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('+apiKey');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    user.apiKey = 'ak_' + crypto.randomBytes(24).toString('hex');
+    await user.save();
+    res.json({ apiKey: user.apiKey });
+  } catch (error) {
+    log.error('regenerate_api_key_error', { error: error.message, userId: req.user?.userId });
+    res.status(500).json({ message: 'Failed to regenerate API key' });
   }
 });
 

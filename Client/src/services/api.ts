@@ -529,6 +529,12 @@ export const publicDemoService = {
     ),
 };
 
+// ── API Key Management ─────────────────────────────────────────────────────
+export const apiKeyService = {
+  get: () => api.get('/users/api-key'),
+  regenerate: () => api.post('/users/api-key/regenerate'),
+};
+
 // ── TTS ────────────────────────────────────────────────────────────────────
 export const ttsService = {
   preview: (voiceId: string, language: string, text?: string, raw?: boolean) =>
