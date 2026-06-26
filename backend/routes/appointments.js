@@ -38,7 +38,16 @@ router.get('/', requireAdmin, async (req, res) => {
 router.get('/my', async (req, res) => {
   try {
     const { page, limit, skip } = parsePage(req.query);
-    const filter = { userId: req.user.userId };
+    const user = req.user;
+    const filter = { userId: user.userId };
+
+    // Filter by plan: chat-only shows chat appointments (callId null), voice-only shows voice appointments (callId present)
+    if (user.chatPlan && user.chatPlan !== 'none' && (!user.voicePlan || user.voicePlan === 'none')) {
+      filter.callId = null;
+    } else if (user.voicePlan && user.voicePlan !== 'none' && (!user.chatPlan || user.chatPlan === 'none')) {
+      filter.callId = { $ne: null };
+    }
+    // both plans: no callId filter (shows all)
     const [appointments, total] = await Promise.all([
       Appointment.find(filter).sort({ createdAt: -1 }).populate('agentId', 'name').skip(skip).limit(limit).lean(),
       Appointment.countDocuments(filter),

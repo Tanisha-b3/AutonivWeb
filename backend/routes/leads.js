@@ -88,13 +88,22 @@ router.get('/public-leads', requireAdmin, async (req, res) => {
 });
 
 router.get('/my', async (req, res) => {
-  // User sees only their own leads (leadType: 'call', never 'public')
+  // User sees only their own leads, filtered by plan type
   try {
     const { page, limit, skip } = parsePage(req.query);
+    const user = req.user;
     const filter = { 
-      userId: req.user.userId,
-      leadType: { $ne: 'public' },   // ← extra safety: exclude public leads
+      userId: user.userId,
+      leadType: { $ne: 'public' },
     };
+
+    // Filter by plan: chat-only shows 'chat' leads, voice-only shows 'call' leads
+    if (user.chatPlan && user.chatPlan !== 'none' && (!user.voicePlan || user.voicePlan === 'none')) {
+      filter.leadType = 'chat';
+    } else if (user.voicePlan && user.voicePlan !== 'none' && (!user.chatPlan || user.chatPlan === 'none')) {
+      filter.leadType = 'call';
+    }
+    // both plans: no leadType filter (shows all)
     const [leads, total] = await Promise.all([
       Lead.find(filter).sort({ createdAt: -1 }).populate('agentId', 'name').skip(skip).limit(limit).lean(),
       Lead.countDocuments(filter),

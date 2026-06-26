@@ -193,6 +193,34 @@ export function MyAppointments() {
       },
     },
     {
+      key: 'source',
+      header: 'Source',
+      sortable: false,
+      render: (appt) => {
+        const isVoice = !!appt.callId;
+        return (
+          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
+            isVoice ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-blue-50 border-blue-200 text-blue-600'
+          }`}>
+            {isVoice ? 'Voice' : 'Chat'}
+          </span>
+        );
+      },
+      card: {
+        label: 'Source',
+        render: (appt) => {
+          const isVoice = !!appt.callId;
+          return (
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+              isVoice ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-blue-50 border-blue-200 text-blue-600'
+            }`}>
+              {isVoice ? 'Voice' : 'Chat'}
+            </span>
+          );
+        },
+      },
+    },
+    {
       key: 'agentName',
       header: 'Agent',
       sortable: true,

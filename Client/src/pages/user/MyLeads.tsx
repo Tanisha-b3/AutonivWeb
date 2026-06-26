@@ -180,6 +180,40 @@ export function MyLeads() {
       },
     },
     {
+      key: 'leadType',
+      header: 'Source',
+      sortable: true,
+      render: (lead) => {
+        const sourceConfig: Record<string, { label: string; color: string; bg: string }> = {
+          chat: { label: 'Chat', color: 'text-blue-600', bg: 'bg-blue-50 border-blue-200' },
+          call: { label: 'Voice', color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-200' },
+          public: { label: 'Widget', color: 'text-purple-600', bg: 'bg-purple-50 border-purple-200' },
+        };
+        const s = sourceConfig[lead.leadType || 'call'] ?? sourceConfig.call;
+        return (
+          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${s.bg} ${s.color}`}>
+            {s.label}
+          </span>
+        );
+      },
+      card: {
+        label: 'Source',
+        render: (lead) => {
+          const sourceConfig: Record<string, { label: string; color: string; bg: string }> = {
+            chat: { label: 'Chat', color: 'text-blue-600', bg: 'bg-blue-50 border-blue-200' },
+            call: { label: 'Voice', color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-200' },
+            public: { label: 'Widget', color: 'text-purple-600', bg: 'bg-purple-50 border-purple-200' },
+          };
+          const s = sourceConfig[lead.leadType || 'call'] ?? sourceConfig.call;
+          return (
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border ${s.bg} ${s.color}`}>
+              {s.label}
+            </span>
+          );
+        },
+      },
+    },
+    {
       key: 'agentName',
       header: 'Agent',
       sortable: true,
