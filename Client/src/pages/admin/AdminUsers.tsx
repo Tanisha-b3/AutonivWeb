@@ -726,18 +726,21 @@ export function AdminUsers() {
       let chatPlan = userToUpdate.chatPlan || 'chat_free';
       let voicePlan = userToUpdate.voicePlan || 'none';
 
-      if (newPlan === 'none') {
-        chatPlan = 'none';
-        voicePlan = 'none';
-      } else if (newPlan.startsWith('chat_')) {
-        chatPlan = newPlan;
-        voicePlan = 'none';
+      if (newPlan.startsWith('chat_')) {
+        chatPlan = chatPlan === newPlan ? 'none' : newPlan;
       } else if (newPlan.startsWith('voice_')) {
-        voicePlan = newPlan;
-        chatPlan = 'none';
+        voicePlan = voicePlan === newPlan ? 'none' : newPlan;
       }
 
       await dispatch(upgradePlan({ id: userId, plan: newPlan, chatPlan, voicePlan })).unwrap();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDisableAll = async (userId: string) => {
+    try {
+      await dispatch(upgradePlan({ id: userId, plan: 'none', chatPlan: 'none', voicePlan: 'none' })).unwrap();
     } catch (err) {
       console.error(err);
     }
@@ -1081,7 +1084,7 @@ export function AdminUsers() {
                           type="button"
                           onClick={() => {
                             if (hasPlan) {
-                              handlePlanChange(selectedUser.id, 'none');
+                              handleDisableAll(selectedUser.id);
                             } else {
                               handlePlanChange(selectedUser.id, 'chat_free');
                             }
