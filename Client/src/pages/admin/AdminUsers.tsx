@@ -158,9 +158,9 @@ const CHAT_PLAN_LIMITS: Record<string, number> = {
 };
 
 const VOICE_PLAN_LIMITS: Record<string, number> = {
-  voice_free: 50,
-  voice_starter: 500,
-  voice_growth: 3000,
+  voice_free: 30,
+  voice_starter: 120,
+  voice_growth: 400,
   voice_enterprise: -1,
 };
 
@@ -533,7 +533,7 @@ export function AdminUsers() {
           return (
             <div className="space-y-1">
               <div className="flex justify-between text-xs">
-                <span className="text-slate-500 font-medium">{Math.round(mu)} / {user.minutesLimit || 500} min</span>
+                <span className="text-slate-500 font-medium">{Math.round(mu)} / {user.minutesLimit || 0} min</span>
                 <span className="tabular-nums text-slate-400 font-semibold">{usagePercent.toFixed(0)}%</span>
               </div>
               <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -996,7 +996,7 @@ export function AdminUsers() {
                     {/* Voice Minutes */}
                     {(() => {
                       const voicePlan = selectedUser.voicePlan || 'none';
-                      const voiceLimit = VOICE_PLAN_LIMITS[voicePlan] ?? 0;
+                      const voiceLimit = selectedUser.minutesLimit ?? VOICE_PLAN_LIMITS[voicePlan] ?? 0;
                       const voiceUsed = Math.round(calcMinutes(selectedUser));
                       const voicePercent = voiceLimit > 0 ? Math.min((voiceUsed / voiceLimit) * 100, 100) : 0;
                       const isUnlimited = voiceLimit === -1;
@@ -1137,9 +1137,9 @@ export function AdminUsers() {
                     </p>
                     <div className="grid grid-cols-4 gap-1.5">
                       {[
-                        { id: 'voice_free',       label: 'Free',       detail: '50m' },
-                        { id: 'voice_starter',    label: 'Starter',    detail: '500m' },
-                        { id: 'voice_growth',     label: 'Growth',     detail: '3K' },
+                        { id: 'voice_free',       label: 'Free',       detail: '30m' },
+                        { id: 'voice_starter',    label: 'Starter',    detail: '120m' },
+                        { id: 'voice_growth',     label: 'Growth',     detail: '400m' },
                         { id: 'voice_enterprise', label: 'Enterprise', detail: '∞' },
                       ].map((plan) => {
                         const isActive = (selectedUser.voicePlan || 'none') === plan.id && (selectedUser.voicePlan || 'none') !== 'none';

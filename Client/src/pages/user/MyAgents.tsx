@@ -1359,7 +1359,7 @@ export function MyAgents() {
           const minutesLimit = user?.minutesLimit ?? 0;
           // -1 = unlimited (enterprise). 0 = no voice plan / chat-only.
           const isUnlimited = minutesLimit === -1;
-          const hasVoicePlan = isUnlimited || minutesLimit > 0;
+          const hasVoicePlan = isUnlimited || minutesLimit > 0 || (user?.voicePlan && user.voicePlan !== 'none');
           const isAtLimit = !isUnlimited && hasVoicePlan && minutesUsed >= minutesLimit;
           const pct = isUnlimited ? 100 : hasVoicePlan ? Math.min((minutesUsed / minutesLimit) * 100, 100) : 0;
           const barColor = isUnlimited ? '#10b981' : isAtLimit ? '#ef4444' : '#10b981';

@@ -1201,8 +1201,9 @@ export function UserDashboard() {
     return Math.round(total / 60);
   }, [filteredCalls]);
 
-  const minutesLimit  = user?.minutesLimit || 100;
-  const usagePercent  = minutesLimit > 0 ? Math.min((minutesUsed / minutesLimit) * 100, 100) : 0;
+  const minutesLimit  = user?.minutesLimit ?? 0;
+  const isUnlimitedMinutes = minutesLimit === -1;
+  const usagePercent  = isUnlimitedMinutes ? 0 : minutesLimit > 0 ? Math.min((minutesUsed / minutesLimit) * 100, 100) : 0;
 
   const callBreakdown = useMemo(() => {
     const total     = filteredCalls.length;
@@ -1933,7 +1934,9 @@ export function UserDashboard() {
                 <span className={`text-xs font-extrabold ${(isVoice ? usagePercent : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100) > 80 ? 'text-rose-600' : 'text-slate-800'}`}>
                   <AnimatedCounter value={isVoice ? minutesUsed : (user?.chatUsed || 0)} />
                   {isVoice ? (
-                    minutesLimit > 0 && <span className="text-slate-400 font-semibold"> / {minutesLimit.toLocaleString()} mins</span>
+                    isUnlimitedMinutes
+                      ? <span className="text-slate-400 font-semibold"> / ∞ mins</span>
+                      : minutesLimit > 0 && <span className="text-slate-400 font-semibold"> / {minutesLimit.toLocaleString()} mins</span>
                   ) : (
                     user?.chatLimit ? <span className="text-slate-400 font-semibold"> / {user.chatLimit.toLocaleString()} chats</span> : null
                   )}
