@@ -26,18 +26,35 @@ function buildAllowedOrigins() {
 }
 
 export function buildCors() {
-  const allow = buildAllowedOrigins();
-  return cors({
-    origin(origin, cb) {
-      if (!origin) return cb(null, true);
-      if (allow.includes(origin)) return cb(null, true);
-      return cb(new Error('CORS: origin not allowed'));
-    },
-    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Vapi-Signature', 'X-Request-Id'],
-    exposedHeaders: ['X-Request-Id'],
-    credentials: true,
-    maxAge: 600,
+  return cors((req, cb) => {
+    const origin = req.header('Origin');
+    const isWidgetRoute = req.path && req.path.startsWith('/api/widget');
+
+    if (isWidgetRoute) {
+      cb(null, {
+        origin: origin || '*',
+        methods: ['GET', 'POST', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Api-Key', 'x-api-key'],
+        exposedHeaders: ['X-Request-Id'],
+        credentials: true,
+        maxAge: 600,
+      });
+      return;
+    }
+
+    const allow = buildAllowedOrigins();
+    if (!origin || allow.includes(origin)) {
+      cb(null, {
+        origin: true,
+        methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Vapi-Signature', 'X-Request-Id', 'X-Api-Key', 'x-api-key'],
+        exposedHeaders: ['X-Request-Id'],
+        credentials: true,
+        maxAge: 600,
+      });
+    } else {
+      cb(new Error('CORS: origin not allowed'));
+    }
   });
 }
 

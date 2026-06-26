@@ -185,7 +185,7 @@ const legacyPlansMap: Record<string, string> = {
 
 function getPlanConfig(planId: string | undefined) {
   const normId = planId ? (legacyPlansMap[planId] || planId) : 'chat_free';
-  
+
   // Find in chat
   let found = planCategories.chat.find(p => p.id === normId);
   if (found) return { plan: found, type: 'chat' as const };
@@ -232,7 +232,7 @@ function LockedSectionOverlay({ title, desc, onUnlock }: { title: string; desc: 
       </div>
       <h3 className="text-sm font-extrabold text-white tracking-tight">{title}</h3>
       <p className="text-[11px] text-slate-300 max-w-xs mt-1.5 font-semibold leading-relaxed">{desc}</p>
-      <button 
+      <button
         onClick={onUnlock}
         className="mt-4 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider text-white bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 transition-all hover:scale-[1.02] shadow-md hover:shadow-indigo-500/10 cursor-pointer border-none"
       >
@@ -279,7 +279,7 @@ export function UserBilling() {
 
   const chatUsagePct = callsLimit > 0 ? ((user?.callsUsed || 0) / callsLimit) * 100 : 0;
   const voiceUsagePct = minutesLimit > 0 ? ((user?.minutesUsed || 0) / minutesLimit) * 100 : 0;
-  
+
   const chatRemaining = callsLimit - (user?.callsUsed || 0);
   const voiceRemaining = minutesLimit - (user?.minutesUsed || 0);
 
@@ -325,21 +325,19 @@ export function UserBilling() {
             <div className="flex items-center rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden">
               <button
                 onClick={() => setCurrency('usd')}
-                className={`px-3.5 py-2 text-xs font-bold transition-all cursor-pointer border-none ${
-                  currency === 'usd'
+                className={`px-3.5 py-2 text-xs font-bold transition-all cursor-pointer border-none ${currency === 'usd'
                     ? 'bg-blue-600 text-white'
                     : 'bg-white text-slate-500 hover:bg-slate-50'
-                }`}
+                  }`}
               >
                 USD
               </button>
               <button
                 onClick={() => setCurrency('inr')}
-                className={`px-3.5 py-2 text-xs font-bold transition-all cursor-pointer border-none ${
-                  currency === 'inr'
+                className={`px-3.5 py-2 text-xs font-bold transition-all cursor-pointer border-none ${currency === 'inr'
                     ? 'bg-blue-600 text-white'
                     : 'bg-white text-slate-500 hover:bg-slate-50'
-                }`}
+                  }`}
               >
                 INR
               </button>
@@ -423,9 +421,8 @@ export function UserBilling() {
                     transition={{ delay: 0.3 + i * 0.04, duration: 0.22, ease }}
                     className="flex items-center gap-3.5"
                   >
-                    <div className={`w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      feature.included ? 'bg-blue-50 border border-blue-100 text-blue-500' : 'bg-slate-50 border border-slate-200 text-slate-400'
-                    }`}>
+                    <div className={`w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 ${feature.included ? 'bg-blue-50 border border-blue-100 text-blue-500' : 'bg-slate-50 border border-slate-200 text-slate-400'
+                      }`}>
                       {feature.included ? (
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.6}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -479,7 +476,7 @@ export function UserBilling() {
         {/* ── My Chat ── */}
         <div className="relative">
           {!isChat && (
-            <LockedSectionOverlay 
+            <LockedSectionOverlay
               title="Chat Capabilities Locked"
               desc="Upgrade your plan to a Chat Plan or combined Chat + Voice Plan to access chatbot conversations."
               onUnlock={() => setShowUpgrade(true)}
@@ -559,7 +556,7 @@ export function UserBilling() {
         {/* ── My Agents ── */}
         <div className="relative">
           {!isVoice && (
-            <LockedSectionOverlay 
+            <LockedSectionOverlay
               title="Voice Agent Capabilities Locked"
               desc="Upgrade your plan to a Voice Plan or combined Chat + Voice Plan to build, test and deploy voice receptionists."
               onUnlock={() => setShowUpgrade(true)}
@@ -721,11 +718,10 @@ export function UserBilling() {
                         setModalTab(tab);
                         setSelectedPlan(null);
                       }}
-                      className={`py-3.5 px-4.5 text-xs font-black uppercase tracking-wider border-b-2 transition-all cursor-pointer bg-transparent border-t-0 border-l-0 border-r-0 ${
-                        modalTab === tab
+                      className={`py-3.5 px-4.5 text-xs font-black uppercase tracking-wider border-b-2 transition-all cursor-pointer bg-transparent border-t-0 border-l-0 border-r-0 ${modalTab === tab
                           ? 'border-blue-600 text-blue-600'
                           : 'border-transparent text-slate-400 hover:text-slate-650'
-                      }`}
+                        }`}
                     >
                       {tab === 'chat' ? '💬 Chat Only Plans' : tab === 'voice' ? '🎙️ Voice Only Plans' : '⚡ Combined Plans'}
                     </button>
@@ -756,15 +752,14 @@ export function UserBilling() {
                           whileTap={!isCurrent ? { scale: 0.98 } : undefined}
                           onClick={() => !isCurrent && setSelectedPlan(p.id)}
                           disabled={isCurrent}
-                          className={`relative p-5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between h-full ${
-                            isCurrent
+                          className={`relative p-5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between h-full ${isCurrent
                               ? 'border-emerald-200 bg-emerald-50/20 opacity-70 cursor-default'
                               : isSelected
                                 ? 'border-blue-500 bg-blue-50/20 shadow-md ring-2 ring-blue-500/20'
                                 : isFeatured
                                   ? 'border-indigo-200 bg-indigo-50/5 hover:border-indigo-300'
                                   : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
-                          }`}
+                            }`}
                         >
                           <div>
                             {p.badge && !isCurrent && (
@@ -839,7 +834,7 @@ export function UserBilling() {
                             {getPlanConfig(selectedPlan).plan.name}
                           </span>
                           {' — '}
-                           <span className="font-extrabold text-blue-900">
+                          <span className="font-extrabold text-blue-900">
                             {selectedPlan.endsWith('enterprise') ? 'Custom pricing' : currency === 'usd' ? `$${(getPlanConfig(selectedPlan).plan.priceUSD || 0).toLocaleString()}/mo` : `₹${getPlanConfig(selectedPlan).plan.price.toLocaleString()}/mo`}
                           </span>
                         </p>
