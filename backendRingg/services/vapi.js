@@ -1,1 +1,0 @@
-// Vapi service is not used in this Ringg standalone backend.

@@ -82,6 +82,8 @@ const userSchema = new mongoose.Schema(
     minutesLimit: { type: Number,  default: 0 },
     callsUsed:    { type: Number,  default: 0 },
     callsLimit:   { type: Number,  default: 100 },
+    chatUsed:     { type: Number,  default: 0 },
+    chatLimit:    { type: Number,  default: 0 },
 
     isActive: { type: Boolean, default: true, index: true },
 
@@ -147,7 +149,10 @@ userSchema.pre('save', function (next) {
   // Auto calculate limits
   if (this.chatPlan && this.chatPlan !== 'none') {
     const chatConfig = PLAN_CONFIG[this.chatPlan];
-    if (chatConfig) this.callsLimit = chatConfig.callsPerMonth;
+    if (chatConfig) {
+      this.callsLimit = chatConfig.callsPerMonth;
+      this.chatLimit = chatConfig.callsPerMonth;
+    }
   }
   if (this.voicePlan && this.voicePlan !== 'none') {
     const voiceConfig = PLAN_CONFIG[this.voicePlan];

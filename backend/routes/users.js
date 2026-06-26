@@ -78,6 +78,8 @@ router.get('/', requireAdmin, async (req, res) => {
         role: u.role, company: u.company, plan: u.plan || chatPlan,
         chatPlan, voicePlan,
         minutesUsed: u.minutesUsed, minutesLimit: u.minutesLimit,
+        callsUsed: u.callsUsed || 0, callsLimit: u.callsLimit,
+        chatUsed: u.chatUsed || 0, chatLimit: u.chatLimit || 0,
         isActive: u.isActive, createdAt: u.createdAt,
         callCount: stats.callCount || 0,
         calcMinutes: Math.round(stats.calcMinutes || 0),
@@ -146,6 +148,7 @@ router.post('/', requireAdmin, contentFilter('name', 'company'), async (req, res
       voiceEnabled: voicePlan !== 'none',
       minutesLimit: voiceConfig.minutesPerMonth,
       callsLimit: chatConfig.callsPerMonth,
+      chatLimit: chatConfig.callsPerMonth,
       passwordChangedAt: new Date(),
     });
 
@@ -156,6 +159,7 @@ router.post('/', requireAdmin, contentFilter('name', 'company'), async (req, res
         plan: user.plan, chatPlan: user.chatPlan, voicePlan: user.voicePlan,
         minutesUsed: user.minutesUsed, minutesLimit: user.minutesLimit,
         callsUsed: user.callsUsed || 0, callsLimit: user.callsLimit,
+        chatUsed: user.chatUsed || 0, chatLimit: user.chatLimit || 0,
         isActive: user.isActive, createdAt: user.createdAt, updatedAt: user.updatedAt,
         chatEnabled: user.chatPlan !== 'none', voiceEnabled: user.voicePlan !== 'none',
       },
@@ -216,6 +220,7 @@ router.put('/:id', contentFilter('name', 'company'), async (req, res) => {
       updates.chatEnabled = currentChatPlan !== 'none';
       updates.voiceEnabled = currentVoicePlan !== 'none';
       updates.callsLimit = chatConfig.callsPerMonth;
+      updates.chatLimit = chatConfig.callsPerMonth;
       updates.minutesLimit = voiceConfig.minutesPerMonth;
     }
 
@@ -244,6 +249,7 @@ router.put('/:id', contentFilter('name', 'company'), async (req, res) => {
         plan: updated.plan, chatPlan: updated.chatPlan, voicePlan: updated.voicePlan,
         minutesUsed: updated.minutesUsed, minutesLimit: updated.minutesLimit,
         callsUsed: updated.callsUsed || 0, callsLimit: updated.callsLimit,
+        chatUsed: updated.chatUsed || 0, chatLimit: updated.chatLimit || 0,
         isActive: updated.isActive, createdAt: updated.createdAt, updatedAt: updated.updatedAt,
         chatEnabled: updated.chatPlan !== 'none', voiceEnabled: updated.voicePlan !== 'none',
       },
@@ -340,6 +346,7 @@ router.put('/:id/plan', async (req, res) => {
       updates.chatPlan = chatPlan;
       updates.chatEnabled = chatPlan !== 'none';
       updates.callsLimit = (User.PLAN_CONFIG[chatPlan] || { callsPerMonth: 0 }).callsPerMonth;
+      updates.chatLimit = (User.PLAN_CONFIG[chatPlan] || { callsPerMonth: 0 }).callsPerMonth;
     }
     if (voicePlan) {
       if (voicePlan !== 'none' && !User.PLAN_CONFIG[voicePlan]) return res.status(400).json({ message: 'Invalid Voice plan' });
@@ -376,6 +383,7 @@ router.put('/:id/plan', async (req, res) => {
         plan: updated.plan, chatPlan: updated.chatPlan, voicePlan: updated.voicePlan,
         minutesUsed: updated.minutesUsed, minutesLimit: updated.minutesLimit,
         callsUsed: updated.callsUsed || 0, callsLimit: updated.callsLimit,
+        chatUsed: updated.chatUsed || 0, chatLimit: updated.chatLimit || 0,
         isActive: updated.isActive, createdAt: updated.createdAt, updatedAt: updated.updatedAt,
         chatEnabled: updated.chatPlan !== 'none', voiceEnabled: updated.voicePlan !== 'none',
       },

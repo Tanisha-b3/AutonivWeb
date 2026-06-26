@@ -720,7 +720,24 @@ export function AdminUsers() {
 
   const handlePlanChange = async (userId: string, newPlan: string) => {
     try {
-      await dispatch(upgradePlan({ id: userId, plan: newPlan })).unwrap();
+      const userToUpdate = users.find(u => u.id === userId);
+      if (!userToUpdate) return;
+
+      let chatPlan = userToUpdate.chatPlan || 'chat_free';
+      let voicePlan = userToUpdate.voicePlan || 'none';
+
+      if (newPlan === 'none') {
+        chatPlan = 'none';
+        voicePlan = 'none';
+      } else if (newPlan.startsWith('chat_')) {
+        chatPlan = newPlan;
+        voicePlan = 'none';
+      } else if (newPlan.startsWith('voice_')) {
+        voicePlan = newPlan;
+        chatPlan = 'none';
+      }
+
+      await dispatch(upgradePlan({ id: userId, plan: newPlan, chatPlan, voicePlan })).unwrap();
     } catch (err) {
       console.error(err);
     }
