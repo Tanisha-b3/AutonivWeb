@@ -184,7 +184,7 @@ export function PublicNavbar() {
             <img
               src={LOGO_SRC}
               alt="Autoniv"
-              className="-ml-8 h-30 sm:h-40 md:h-40 w-auto object-contain"
+              className="-ml-6 h-40 sm:h-40 md:h-40 w-auto object-contain"
             />
           </Link>
 

@@ -140,7 +140,7 @@ const VOICE_PLAN_OPTIONS = [
 ];
 
 function getPlanFeatureDefaults(plan: string) {
-  if (!plan) return { chatEnabled: true, voiceEnabled: false };
+  if (!plan || plan === 'none') return { chatEnabled: false, voiceEnabled: false };
   if (plan.startsWith('chat_')) {
     return { chatEnabled: true, voiceEnabled: false };
   } else if (plan.startsWith('voice_')) {
@@ -149,6 +149,20 @@ function getPlanFeatureDefaults(plan: string) {
     return { chatEnabled: true, voiceEnabled: true };
   }
 }
+
+const CHAT_PLAN_LIMITS: Record<string, number> = {
+  chat_free: 100,
+  chat_starter: 1000,
+  chat_growth: 5000,
+  chat_enterprise: -1,
+};
+
+const VOICE_PLAN_LIMITS: Record<string, number> = {
+  voice_free: 50,
+  voice_starter: 500,
+  voice_growth: 3000,
+  voice_enterprise: -1,
+};
 
 // ── Slide-over panel ───────────────────────────────────────────────────────
 
@@ -316,8 +330,9 @@ export function AdminUsers() {
   const [modalOpen, setModalOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const selectedUser = useAppSelector((state) => state.users.items.find((u) => u.id === selectedUserId) || null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [timeRange, setTimeRange] = useState<'all' | '7d' | '30d' | '90d'>('all');
@@ -418,29 +433,31 @@ export function AdminUsers() {
       render: (user) => {
         const getPlanBadge = (p: string | undefined, type: 'chat' | 'voice') => {
           if (!p || p === 'none') return null;
-          const planName = p.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-          const isEnterprise = p.includes('enterprise');
-          const isGrowth = p.includes('growth');
-          const isStarter = p.includes('starter');
+          const parts = p.split('_');
+          const tier = parts[parts.length - 1];
+          const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
           const emoji = type === 'chat' ? '💬' : '📞';
+          const isEnterprise = tier === 'enterprise';
+          const isGrowth = tier === 'growth';
+          const isStarter = tier === 'starter';
           return (
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold border ${
-              isEnterprise ? 'bg-indigo-50/50 text-indigo-400 border-indigo-500/20' :
-              isGrowth ? 'bg-[var(--primary-soft)] text-[var(--primary)] border-[var(--border)]/50' :
-              isStarter ? 'bg-blue-50/10 text-blue-400 border-blue-500/20' :
-              'bg-slate-800/50 text-slate-400 border-slate-700/50'
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border whitespace-nowrap ${
+              isEnterprise ? 'bg-violet-50 text-violet-600 border-violet-200' :
+              isGrowth ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
+              isStarter ? 'bg-blue-50 text-blue-600 border-blue-200' :
+              'bg-slate-50 text-slate-500 border-slate-200'
             }`}>
-              <span className="mr-1">{emoji}</span> {planName}
+              {emoji} {tierLabel}
             </span>
           );
         };
         const chatBadge = getPlanBadge(user.chatPlan, 'chat');
         const voiceBadge = getPlanBadge(user.voicePlan, 'voice');
         if (!chatBadge && !voiceBadge) {
-          return <span className="text-xs text-[var(--muted)]">None</span>;
+          return <span className="text-[11px] text-slate-400 font-medium">—</span>;
         }
         return (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-wrap gap-1">
             {chatBadge}
             {voiceBadge}
           </div>
@@ -451,26 +468,28 @@ export function AdminUsers() {
         render: (user) => {
           const getPlanBadge = (p: string | undefined, type: 'chat' | 'voice') => {
             if (!p || p === 'none') return null;
-            const planName = p.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-            const isEnterprise = p.includes('enterprise');
-            const isGrowth = p.includes('growth');
-            const isStarter = p.includes('starter');
+            const parts = p.split('_');
+            const tier = parts[parts.length - 1];
+            const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
             const emoji = type === 'chat' ? '💬' : '📞';
+            const isEnterprise = tier === 'enterprise';
+            const isGrowth = tier === 'growth';
+            const isStarter = tier === 'starter';
             return (
-              <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold border ${
-                isEnterprise ? 'bg-indigo-50/50 text-indigo-400 border-indigo-500/20' :
-                isGrowth ? 'bg-[var(--primary-soft)] text-[var(--primary)] border-[var(--border)]/50' :
-                isStarter ? 'bg-blue-50/10 text-blue-400 border-blue-500/20' :
-                'bg-slate-800/50 text-slate-400 border-slate-700/50'
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border whitespace-nowrap ${
+                isEnterprise ? 'bg-violet-50 text-violet-600 border-violet-200' :
+                isGrowth ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
+                isStarter ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                'bg-slate-50 text-slate-500 border-slate-200'
               }`}>
-                <span className="mr-1">{emoji}</span> {planName}
+                {emoji} {tierLabel}
               </span>
             );
           };
           const chatBadge = getPlanBadge(user.chatPlan, 'chat');
           const voiceBadge = getPlanBadge(user.voicePlan, 'voice');
           if (!chatBadge && !voiceBadge) {
-            return <span className="text-xs text-[var(--muted)]">None</span>;
+            return <span className="text-[11px] text-slate-400 font-medium">—</span>;
           }
           return (
             <div className="flex flex-wrap gap-1">
@@ -695,45 +714,13 @@ export function AdminUsers() {
   };
 
   const openDetail = (user: User) => {
-    setSelectedUser(user);
+    setSelectedUserId(user.id);
     setDetailOpen(true);
   };
 
-  const handleChatPlanChange = async (userId: string, newChatPlan: string) => {
+  const handlePlanChange = async (userId: string, newPlan: string) => {
     try {
-      const userToUpdate = users.find(u => u.id === userId);
-      if (!userToUpdate) return;
-      const voicePlan = userToUpdate.voicePlan || 'none';
-      await dispatch(upgradePlan({ id: userId, plan: newChatPlan, chatPlan: newChatPlan, voicePlan })).unwrap();
-      setSelectedUser((prev) => prev ? { ...prev, chatPlan: newChatPlan, plan: newChatPlan } : null);
-      // Fetch users again to update table
-      dispatch(fetchAllUsers({ period: timeRange === 'all' ? undefined : timeRange, page, limit: 20 }));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleVoicePlanChange = async (userId: string, newVoicePlan: string) => {
-    try {
-      const userToUpdate = users.find(u => u.id === userId);
-      if (!userToUpdate) return;
-      const chatPlan = userToUpdate.chatPlan || 'chat_free';
-      await dispatch(upgradePlan({ id: userId, plan: chatPlan, chatPlan, voicePlan: newVoicePlan })).unwrap();
-      setSelectedUser((prev) => prev ? { ...prev, voicePlan: newVoicePlan } : null);
-      // Fetch users again to update table
-      dispatch(fetchAllUsers({ period: timeRange === 'all' ? undefined : timeRange, page, limit: 20 }));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleFeatureToggle = async (userId: string, feature: 'chat' | 'voice', enabled: boolean) => {
-    try {
-      const data = feature === 'chat' ? { chatEnabled: enabled } : { voiceEnabled: enabled };
-      await dispatch(updateUser({ id: userId, data })).unwrap();
-      setSelectedUser((prev) => prev ? { ...prev, ...data } : null);
-      // Fetch users again to update table
-      dispatch(fetchAllUsers({ period: timeRange === 'all' ? undefined : timeRange, page, limit: 20 }));
+      await dispatch(upgradePlan({ id: userId, plan: newPlan })).unwrap();
     } catch (err) {
       console.error(err);
     }
@@ -927,7 +914,7 @@ export function AdminUsers() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4"
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
             onClick={() => setDetailOpen(false)}
           >
             <motion.div
@@ -936,11 +923,11 @@ export function AdminUsers() {
               exit={{ scale: 0.97, opacity: 0, y: 8 }}
               transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] as const }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full sm:max-w-lg bg-[var(--surface)] border border-[var(--border)]/30 rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl shadow-[var(--primary)]/20 max-h-[90vh] sm:max-h-[85vh]"
+              className="w-full sm:max-w-2xl bg-[var(--surface)] border border-[var(--border)]/30 rounded-2xl overflow-hidden shadow-2xl shadow-[var(--primary)]/20 flex flex-col"
+              style={{ maxHeight: '90vh' }}
             >
-              <div className="sm:hidden w-10 h-1 rounded-full bg-blue-200 mx-auto mt-3" />
               {/* Header */}
-              <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 bg-slate-50/30">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/30 flex-shrink-0">
                 <div className="flex items-center gap-3 min-w-0">
                   <div
                     className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow-sm"
@@ -965,16 +952,17 @@ export function AdminUsers() {
                 </button>
               </div>
 
-              <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-5 sm:space-y-6 max-h-[80vh] overflow-y-auto">
+              {/* Scrollable Body */}
+              <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
                 {/* Info Grid */}
-                <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
                     { label: 'Company', value: selectedUser.company || '—' },
                     { label: 'Role',   value: selectedUser.role },
                     { label: 'Phone',  value: (selectedUser as any).phoneNumber || '—', mono: true },
                     { label: 'Status', value: selectedUser.isActive ? 'Active' : 'Blocked' },
                   ].map((item) => (
-                    <div key={item.label} className="rounded-xl bg-slate-50/60 border border-slate-100 px-3.5 py-2.5">
+                    <div key={item.label} className="rounded-xl bg-slate-50/60 border border-slate-100 px-3 py-2">
                       <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">{item.label}</span>
                       <span className={`text-[11px] font-semibold text-slate-700 block truncate ${item.mono ? 'font-mono' : ''}`}>{item.value}</span>
                     </div>
@@ -982,67 +970,207 @@ export function AdminUsers() {
                 </div>
 
                 {/* Usage */}
-                <div className="border-t border-slate-100 pt-4">
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-3">Usage & Billing</p>
-                  <div className="rounded-xl bg-slate-50/70 border border-slate-100 px-4 py-3 space-y-2">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-slate-600 font-bold">Minutes Used</span>
-                      <span className={`font-extrabold ${
-                        (calcMinutes(selectedUser) / (selectedUser.minutesLimit || 500)) * 100 > 80 ? 'text-rose-600' : 'text-slate-800'
-                      }`}>
-                        {Math.round(calcMinutes(selectedUser))}
-                        <span className="text-slate-400 font-semibold"> / {selectedUser.minutesLimit || 500} mins</span>
-                      </span>
-                    </div>
-                    <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.min((calcMinutes(selectedUser) / (selectedUser.minutesLimit || 500)) * 100, 100)}%` }}
-                        transition={{ delay: 0.2, duration: 0.75, ease: 'easeOut' }}
-                        className={`h-full rounded-full ${
-                          (calcMinutes(selectedUser) / (selectedUser.minutesLimit || 500)) * 100 > 80
-                            ? 'bg-gradient-to-r from-rose-500 to-amber-500'
-                            : 'bg-gradient-to-r from-[#2563eb] to-[#10B981]'
-                        }`}
-                      />
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                        {((calcMinutes(selectedUser) / (selectedUser.minutesLimit || 500)) * 100).toFixed(0)}% consumed
-                      </span>
-                      {(calcMinutes(selectedUser) / (selectedUser.minutesLimit || 500)) * 100 > 80 && (
-                        <span className="text-[9px] font-bold text-rose-500 uppercase tracking-widest">⚠ quota critical</span>
-                      )}
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-2">Usage & Billing</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {/* Voice Minutes */}
+                    {(() => {
+                      const voicePlan = selectedUser.voicePlan || 'none';
+                      const voiceLimit = VOICE_PLAN_LIMITS[voicePlan] ?? 0;
+                      const voiceUsed = Math.round(calcMinutes(selectedUser));
+                      const voicePercent = voiceLimit > 0 ? Math.min((voiceUsed / voiceLimit) * 100, 100) : 0;
+                      const isUnlimited = voiceLimit === -1;
+                      return (
+                        <div className="rounded-xl bg-slate-50/70 border border-slate-100 px-3 py-2.5 space-y-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs">📞</span>
+                            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Voice Minutes</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className={`font-extrabold ${!isUnlimited && voicePercent > 80 ? 'text-rose-600' : 'text-slate-800'}`}>
+                              {voiceUsed}
+                              <span className="text-slate-400 font-semibold"> / {isUnlimited ? '∞' : voiceLimit}</span>
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-400">
+                              {isUnlimited ? '∞' : `${voicePercent.toFixed(0)}%`}
+                            </span>
+                          </div>
+                          <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: isUnlimited ? '100%' : `${voicePercent}%` }}
+                              transition={{ delay: 0.2, duration: 0.75, ease: 'easeOut' }}
+                              className={`h-full rounded-full ${
+                                !isUnlimited && voicePercent > 80
+                                  ? 'bg-gradient-to-r from-rose-500 to-amber-500'
+                                  : 'bg-gradient-to-r from-[#2563eb] to-[#10B981]'
+                              }`}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Chat Conversations */}
+                    {(() => {
+                      const chatPlan = selectedUser.chatPlan || 'none';
+                      const chatUsed = (selectedUser as any).chatUsed ?? 0;
+                      const chatLimit = (selectedUser as any).chatLimit ?? CHAT_PLAN_LIMITS[chatPlan] ?? 0;
+                      const isUnlimited = chatLimit === -1 || chatLimit === 99999;
+                      const chatPercent = chatLimit > 0 && !isUnlimited ? Math.min((chatUsed / chatLimit) * 100, 100) : 0;
+                      return (
+                        <div className="rounded-xl bg-slate-50/70 border border-slate-100 px-3 py-2.5 space-y-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs">💬</span>
+                            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Chat Conversations</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className={`font-extrabold ${!isUnlimited && chatPercent > 80 ? 'text-rose-600' : 'text-slate-800'}`}>
+                              {chatUsed}
+                              <span className="text-slate-400 font-semibold"> / {isUnlimited ? '∞' : chatLimit}</span>
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-400">
+                              {isUnlimited ? '∞' : `${chatPercent.toFixed(0)}%`}
+                            </span>
+                          </div>
+                          <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: isUnlimited ? '100%' : `${chatPercent}%` }}
+                              transition={{ delay: 0.3, duration: 0.75, ease: 'easeOut' }}
+                              className={`h-full rounded-full ${
+                                !isUnlimited && chatPercent > 80
+                                  ? 'bg-gradient-to-r from-rose-500 to-amber-500'
+                                  : 'bg-gradient-to-r from-violet-500 to-blue-500'
+                              }`}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                {/* Plan Selector */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Active Plan</p>
+                    {(() => {
+                      const chatEnabled = getPlanFeatureDefaults(selectedUser.chatPlan || 'none').chatEnabled;
+                      const voiceEnabled = getPlanFeatureDefaults(selectedUser.voicePlan || 'none').voiceEnabled;
+                      const hasPlan = chatEnabled || voiceEnabled;
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (hasPlan) {
+                              handlePlanChange(selectedUser.id, 'none');
+                            } else {
+                              handlePlanChange(selectedUser.id, 'chat_free');
+                            }
+                          }}
+                          className={`w-9 h-5 rounded-full transition-colors flex items-center p-0.5 cursor-pointer flex-shrink-0 ${hasPlan ? 'bg-[#2563eb]' : 'bg-slate-300'}`}
+                        >
+                          <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ${hasPlan ? 'translate-x-4' : 'translate-x-0'}`} />
+                        </button>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Chat Plans */}
+                  <div className="mb-2">
+                    <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 flex items-center gap-1">
+                      <span>💬</span> Chat
+                    </p>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {[
+                        { id: 'chat_free',       label: 'Free',       detail: '100' },
+                        { id: 'chat_starter',    label: 'Starter',    detail: '1K' },
+                        { id: 'chat_growth',     label: 'Growth',     detail: '5K' },
+                        { id: 'chat_enterprise', label: 'Enterprise', detail: '∞' },
+                      ].map((plan) => {
+                        const isActive = (selectedUser.chatPlan || 'chat_free') === plan.id && (selectedUser.chatPlan || 'chat_free') !== 'none';
+                        return (
+                          <button
+                            key={plan.id}
+                            onClick={() => handlePlanChange(selectedUser.id, plan.id)}
+                            className={`px-2 py-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer text-center ${
+                              isActive
+                                ? 'bg-[#2563eb] text-white border-[#2563eb] shadow-sm'
+                                : 'bg-white text-slate-500 border-slate-200 hover:border-blue-300'
+                            }`}
+                          >
+                            {plan.label}
+                            <span className={`block text-[8px] mt-0.5 ${isActive ? 'text-blue-100' : 'text-slate-400'}`}>
+                              {plan.detail}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
+
+                  {/* Voice Plans */}
+                  <div className="mb-2">
+                    <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 flex items-center gap-1">
+                      <span>📞</span> Voice
+                    </p>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {[
+                        { id: 'voice_free',       label: 'Free',       detail: '50m' },
+                        { id: 'voice_starter',    label: 'Starter',    detail: '500m' },
+                        { id: 'voice_growth',     label: 'Growth',     detail: '3K' },
+                        { id: 'voice_enterprise', label: 'Enterprise', detail: '∞' },
+                      ].map((plan) => {
+                        const isActive = (selectedUser.voicePlan || 'none') === plan.id && (selectedUser.voicePlan || 'none') !== 'none';
+                        return (
+                          <button
+                            key={plan.id}
+                            onClick={() => handlePlanChange(selectedUser.id, plan.id)}
+                            className={`px-2 py-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer text-center ${
+                              isActive
+                                ? 'bg-[#10B981] text-white border-[#10B981] shadow-sm'
+                                : 'bg-white text-slate-500 border-slate-200 hover:border-emerald-300'
+                            }`}
+                          >
+                            {plan.label}
+                            <span className={`block text-[8px] mt-0.5 ${isActive ? 'text-emerald-100' : 'text-slate-400'}`}>
+                              {plan.detail}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Disabled */}
+                  {((selectedUser.chatPlan || 'none') === 'none' && (selectedUser.voicePlan || 'none') === 'none') && (
+                    <div className="text-center py-2 rounded-lg bg-slate-50 border border-dashed border-slate-200">
+                      <span className="text-[10px] font-bold text-slate-400">No active plan</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Call Activity */}
                 <div>
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-3">Call Activity</p>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div className="rounded-xl bg-slate-50/60 border border-slate-100 px-3.5 py-2.5">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-2">Call Activity</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-xl bg-slate-50/60 border border-slate-100 px-3 py-2">
                       <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Total Calls</span>
                       <p className="text-xl font-extrabold text-[#2563eb]">{(selectedUser as any).callCount || 0}</p>
                     </div>
-                    <div className="rounded-xl bg-slate-50/60 border border-slate-100 px-3.5 py-2.5">
+                    <div className="rounded-xl bg-slate-50/60 border border-slate-100 px-3 py-2">
                       <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Period</span>
                       <p className="text-sm font-bold text-slate-700 capitalize">{timeRange === 'all' ? 'All time' : timeRange}</p>
                     </div>
                   </div>
                   {(selectedUser as any).lastCallAt && (
-                    <div className="mt-2.5 rounded-xl bg-slate-50/60 border border-slate-100 px-3.5 py-3 space-y-2">
+                    <div className="mt-2 rounded-xl bg-slate-50/60 border border-slate-100 px-3 py-2 space-y-1">
                       <div className="flex justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Last Call Start</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Last Call</span>
                         <span className="text-[10px] font-semibold text-slate-600">{new Date((selectedUser as any).lastCallAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
                       </div>
                       {(selectedUser as any).lastCallEnded && (
-                        <div className="flex justify-between">
-                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Last Call End</span>
-                          <span className="text-[10px] font-semibold text-slate-600">{new Date((selectedUser as any).lastCallEnded).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
-                        </div>
-                      )}
-                      {(selectedUser as any).lastCallAt && (selectedUser as any).lastCallEnded && (
                         <div className="flex justify-between">
                           <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Duration</span>
                           <span className="text-[10px] font-bold text-[#10B981]">
@@ -1052,128 +1180,27 @@ export function AdminUsers() {
                       )}
                     </div>
                   )}
-                  {!(selectedUser as any).lastCallAt && (
-                    <p className="text-[10px] font-semibold text-slate-400 mt-2">No calls recorded in this period</p>
-                  )}
                 </div>
+              </div>
 
-                {/* Independent Feature Overrides */}
-                <div className="border-t border-slate-100 pt-4">
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-3">Independent Feature Access Overrides</p>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50/60 border border-slate-100">
-                      <div>
-                        <span className="text-xs font-bold text-slate-700 block">Chat Support</span>
-                        <span className="text-[10px] text-slate-400">Access chat interface, widgets, and analytics</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleFeatureToggle(selectedUser.id, 'chat', !(selectedUser.chatEnabled !== undefined ? selectedUser.chatEnabled : getPlanFeatureDefaults(selectedUser.plan).chatEnabled))}
-                        className={`w-10 h-6 rounded-full transition-colors flex items-center p-0.5 cursor-pointer flex-shrink-0 ${(selectedUser.chatEnabled !== undefined ? selectedUser.chatEnabled : getPlanFeatureDefaults(selectedUser.plan).chatEnabled) ? 'bg-[#2563eb]' : 'bg-slate-300'}`}
-                      >
-                        <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200 ${(selectedUser.chatEnabled !== undefined ? selectedUser.chatEnabled : getPlanFeatureDefaults(selectedUser.plan).chatEnabled) ? 'translate-x-4' : 'translate-x-0'}`} />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50/60 border border-slate-100">
-                      <div>
-                        <span className="text-xs font-bold text-slate-700 block">Voice AI Support</span>
-                        <span className="text-[10px] text-slate-400">Access calling agents, logs, and billing quota</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleFeatureToggle(selectedUser.id, 'voice', !(selectedUser.voiceEnabled !== undefined ? selectedUser.voiceEnabled : getPlanFeatureDefaults(selectedUser.plan).voiceEnabled))}
-                        className={`w-10 h-6 rounded-full transition-colors flex items-center p-0.5 cursor-pointer flex-shrink-0 ${(selectedUser.voiceEnabled !== undefined ? selectedUser.voiceEnabled : getPlanFeatureDefaults(selectedUser.plan).voiceEnabled) ? 'bg-[#2563eb]' : 'bg-slate-300'}`}
-                      >
-                        <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200 ${(selectedUser.voiceEnabled !== undefined ? selectedUser.voiceEnabled : getPlanFeatureDefaults(selectedUser.plan).voiceEnabled) ? 'translate-x-4' : 'translate-x-0'}`} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Chat Plan Selector */}
-                <div className="space-y-2">
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Assign Chat Plan</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { id: 'chat_free',       label: 'Chat Free',       calls: '100',      price: '₹0'      },
-                      { id: 'chat_starter',    label: 'Chat Starter',    calls: '1,000',    price: '₹3,499'  },
-                      { id: 'chat_growth',     label: 'Chat Growth',     calls: '5,000',    price: '₹9,999'  },
-                      { id: 'chat_enterprise', label: 'Chat Ent.',       calls: 'Unlimited',price: 'Custom'  },
-                      { id: 'none',            label: 'Disabled',        calls: '0',        price: '—'       },
-                    ].map((plan) => {
-                      const isActive = (selectedUser.chatPlan || 'chat_free') === plan.id;
-                      return (
-                        <button
-                          key={plan.id}
-                          onClick={() => handleChatPlanChange(selectedUser.id, plan.id)}
-                          className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left ${
-                            isActive
-                              ? 'bg-[#2563eb] text-white border-[#2563eb] shadow-sm'
-                              : 'bg-white text-slate-500 border-slate-200 hover:border-blue-300 hover:text-slate-700'
-                          }`}
-                        >
-                          {plan.label}
-                          <span className={`block text-[10px] mt-0.5 ${ isActive ? 'text-blue-100' : 'text-slate-400' }`}>
-                            {plan.id === 'none' ? 'Disabled' : `${plan.calls} chats · ${plan.price}`}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Voice Plan Selector */}
-                <div className="space-y-2 pt-2 border-t border-slate-100">
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Assign Voice Plan</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { id: 'voice_free',      label: 'Voice Free',      calls: '50m',      price: '₹0'      },
-                      { id: 'voice_starter',   label: 'Voice Starter',   calls: '500m',     price: '₹4,999'  },
-                      { id: 'voice_growth',    label: 'Voice Growth',    calls: '3,000m',   price: '₹12,999' },
-                      { id: 'voice_enterprise',label: 'Voice Ent.',      calls: 'Unlimited',price: 'Custom'  },
-                      { id: 'none',            label: 'Disabled',        calls: '0',        price: '—'       },
-                    ].map((plan) => {
-                      const isActive = (selectedUser.voicePlan || 'none') === plan.id;
-                      return (
-                        <button
-                          key={plan.id}
-                          onClick={() => handleVoicePlanChange(selectedUser.id, plan.id)}
-                          className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left ${
-                            isActive
-                              ? 'bg-[#2563eb] text-white border-[#2563eb] shadow-sm'
-                              : 'bg-white text-slate-500 border-slate-200 hover:border-blue-300 hover:text-slate-700'
-                          }`}
-                        >
-                          {plan.label}
-                          <span className={`block text-[10px] mt-0.5 ${ isActive ? 'text-blue-100' : 'text-slate-400' }`}>
-                            {plan.id === 'none' ? 'Disabled' : `${plan.calls} · ${plan.price}`}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2.5 pt-1">
-                  <button
-                    onClick={() => { setDetailOpen(false); openEdit(selectedUser); }}
-                    className="flex-1 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 transition-all cursor-pointer"
-                  >
-                    Edit User
-                  </button>
-                  <button
-                    onClick={() => { setDetailOpen(false); handleToggleBlock(selectedUser.id, selectedUser.isActive); }}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-                      selectedUser.isActive
-                        ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
-                        : 'bg-blue-50 text-[#2563eb] border-blue-200 hover:bg-blue-100'
-                    }`}
-                  >
-                    {selectedUser.isActive ? 'Block User' : 'Unblock User'}
-                  </button>
-                </div>
+              {/* Sticky Footer Actions */}
+              <div className="flex-shrink-0 px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex gap-3">
+                <button
+                  onClick={() => { setDetailOpen(false); openEdit(selectedUser); }}
+                  className="flex-1 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 transition-all cursor-pointer"
+                >
+                  Edit User
+                </button>
+                <button
+                  onClick={() => { setDetailOpen(false); handleToggleBlock(selectedUser.id, selectedUser.isActive); }}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                    selectedUser.isActive
+                      ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
+                      : 'bg-blue-50 text-[#2563eb] border-blue-200 hover:bg-blue-100'
+                  }`}
+                >
+                  {selectedUser.isActive ? 'Block User' : 'Unblock User'}
+                </button>
               </div>
             </motion.div>
           </motion.div>
@@ -1189,7 +1216,7 @@ export function AdminUsers() {
         footer={
           <>
             <Button variant="ghost" onClick={() => setDeleteTarget(null)} className="text-[var(--text-secondary)] hover:text-[var(--text)]">Cancel</Button>
-            <Button variant="danger" onClick={confirmDelete} className="bg-[rgba(239,68,68,0.12)]0 hover:bg-rose-600 text-white">Delete</Button>
+            <Button variant="danger" onClick={confirmDelete} className="bg-rose-500 hover:bg-rose-600 text-white">Delete</Button>
           </>
         }
       >

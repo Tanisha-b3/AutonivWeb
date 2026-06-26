@@ -12,6 +12,8 @@ export interface User {
   minutesLimit: number;
   callsUsed: number;
   callsLimit: number;
+  chatUsed: number;
+  chatLimit: number;
   isActive: boolean;
   chatEnabled?: boolean;
   voiceEnabled?: boolean;

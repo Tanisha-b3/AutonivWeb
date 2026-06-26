@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Footer from './Footer';
 import { USPSlider } from './sections/USPSlider';
 import { PublicNavbar } from '../../components/PublicNavbar';
@@ -10,7 +10,7 @@ import { PublicNavbar } from '../../components/PublicNavbar';
 const chatPlans = [
   {
     name: 'Free', icon: '💬', iconBg: 'rgba(100,116,139,0.12)',
-    price: '₹0', period: 'forever', badge: 'ALWAYS FREE',
+    monthlyPrice: '₹0', yearlyPrice: '₹0', period: 'forever', badge: 'ALWAYS FREE',
     desc: 'For individuals & small projects testing the waters.',
     features: ['1 chatbot','100 conversations / month','Website embed','Basic FAQ & lead capture','WhatsApp not included','Branding visible'],
     cta: 'Get started free', popular: false, checkColor: '#64748b',
@@ -19,7 +19,7 @@ const chatPlans = [
   },
   {
     name: 'Starter', icon: '🚀', iconBg: 'rgba(37,99,235,0.10)',
-    price: '₹3,499', period: '/month', badge: null,
+    monthlyPrice: '₹3,499', yearlyPrice: '₹2,799', period: '/month', badge: null,
     desc: 'Freelancers & small businesses getting serious.',
     features: ['3 chatbots','1,000 conversations / month','WhatsApp + website','Hindi & Hinglish support','Remove branding','CRM integration'],
     cta: 'Start 14-day trial', popular: false, checkColor: '#2563EB',
@@ -28,7 +28,7 @@ const chatPlans = [
   },
   {
     name: 'Growth', icon: '📈', iconBg: 'rgba(16,185,129,0.10)',
-    price: '₹9,999', period: '/month', badge: 'MOST POPULAR',
+    monthlyPrice: '₹9,999', yearlyPrice: '₹7,999', period: '/month', badge: 'MOST POPULAR',
     desc: 'SMBs scaling support, sales & engagement.',
     features: ['10 chatbots','5,000 conversations / month','All channels incl. Instagram','10+ Indian languages','CRM & helpdesk integrations','Full analytics dashboard'],
     cta: 'Start 14-day trial', popular: true, checkColor: '#10B981',
@@ -37,10 +37,10 @@ const chatPlans = [
   },
   {
     name: 'Enterprise', icon: '🏢', iconBg: 'rgba(139,92,246,0.10)',
-    price: 'Custom', period: '', badge: 'CUSTOM',
+    monthlyPrice: 'Custom', yearlyPrice: 'Custom', period: '', badge: 'CUSTOM',
     desc: 'Large businesses, compliance & custom AI.',
     features: ['Unlimited chatbots','Unlimited conversations','Custom AI model training','DPDP Act 2023 compliance','India-region cloud hosting','Dedicated account manager'],
-    cta: 'Contact sales →', popular: false, checkColor: '#8b5cf6',
+    cta: 'Contact sales', popular: false, checkColor: '#8b5cf6',
     border: '1px solid rgba(37,99,235,0.08)', bg: '#ffffff',
     shadow: '0 4px 20px rgba(0,0,0,0.04)', hoverShadow: '0 8px 40px rgba(0,0,0,0.08)',
   },
@@ -49,7 +49,7 @@ const chatPlans = [
 const voicePlans = [
   {
     name: 'Free', icon: '🎙️', iconBg: 'rgba(100,116,139,0.12)',
-    price: '₹0', period: 'forever', badge: 'ALWAYS FREE',
+    monthlyPrice: '₹0', yearlyPrice: '₹0', period: 'forever', badge: 'ALWAYS FREE',
     desc: 'Try voice agents with basic capabilities.',
     features: ['1 voice agent','50 voice minutes / month','Website embed','Basic call routing','Call recording not included','Custom voice model not included'],
     cta: 'Get started free', popular: false, checkColor: '#64748b',
@@ -58,7 +58,7 @@ const voicePlans = [
   },
   {
     name: 'Starter', icon: '🎤', iconBg: 'rgba(37,99,235,0.10)',
-    price: '₹4,999', period: '/month', badge: null,
+    monthlyPrice: '₹4,999', yearlyPrice: '₹3,999', period: '/month', badge: null,
     desc: 'For businesses ready to automate phone support.',
     features: ['3 voice agents','500 voice minutes / month','Dedicated phone number','Hindi, English & Hinglish','Call recording & logs','CRM integration'],
     cta: 'Start 14-day trial', popular: false, checkColor: '#2563EB',
@@ -67,7 +67,7 @@ const voicePlans = [
   },
   {
     name: 'Growth', icon: '📞', iconBg: 'rgba(16,185,129,0.10)',
-    price: '₹12,999', period: '/month', badge: 'MOST POPULAR',
+    monthlyPrice: '₹12,999', yearlyPrice: '₹10,399', period: '/month', badge: 'MOST POPULAR',
     desc: 'For SMBs scaling phone support & outreach.',
     features: ['10 voice agents','3,000 voice minutes / month','Multiple phone numbers','10+ Indian languages','CRM & helpdesk integrations','Full analytics dashboard'],
     cta: 'Start 14-day trial', popular: true, checkColor: '#10B981',
@@ -76,10 +76,10 @@ const voicePlans = [
   },
   {
     name: 'Enterprise', icon: '🏢', iconBg: 'rgba(139,92,246,0.10)',
-    price: 'Custom', period: '', badge: 'CUSTOM',
+    monthlyPrice: 'Custom', yearlyPrice: 'Custom', period: '', badge: 'CUSTOM',
     desc: 'For large call centers & custom compliance needs.',
     features: ['Unlimited voice agents','Unlimited voice minutes','Custom voice AI training','DPDP Act 2023 compliance','India-region cloud hosting','Dedicated account manager'],
-    cta: 'Contact sales →', popular: false, checkColor: '#8b5cf6',
+    cta: 'Contact sales', popular: false, checkColor: '#8b5cf6',
     border: '1px solid rgba(37,99,235,0.08)', bg: '#ffffff',
     shadow: '0 4px 20px rgba(0,0,0,0.04)', hoverShadow: '0 8px 40px rgba(0,0,0,0.08)',
   },
@@ -288,6 +288,8 @@ function SocialProof() {
 
 /* ─── Main Export ─── */
 export function Pricing() {
+  const navigate = useNavigate();
+  const [pricingYearly, setPricingYearly] = useState(false);
   const [pricingMode, setPricingMode] = useState<'chat' | 'voice'>('chat');
   const plans = pricingMode === 'chat' ? chatPlans : voicePlans;
 
@@ -340,6 +342,25 @@ export function Pricing() {
             <br />
             Choose the plan that's right for you.
           </p>
+
+          {/* Monthly / Yearly Toggle */}
+          <div className="inline-flex items-center gap-0 bg-white border border-slate-200 rounded-full p-1 shadow-sm mt-6">
+            <button
+              onClick={() => setPricingYearly(false)}
+              className={`px-6 py-2 rounded-full text-sm font-semibold transition-all ${!pricingYearly ? 'bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 bg-transparent'}`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setPricingYearly(true)}
+              className={`px-6 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${pricingYearly ? 'bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 bg-transparent'}`}
+            >
+              Yearly
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${pricingYearly ? 'bg-white/20 text-white' : 'bg-gradient-to-r from-blue-600 to-emerald-500 text-white'}`}>
+                Save 20%
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Chat / Voice Toggle */}
@@ -403,12 +424,12 @@ export function Pricing() {
                   <span
                     className="font-black leading-none"
                     style={{
-                      fontSize: plan.price === 'Custom' ? '2.6rem' : '2.8rem',
+                      fontSize: plan.monthlyPrice === 'Custom' ? '2.6rem' : '2.8rem',
                       color: '#0a0a0a',
                       letterSpacing: '-0.03em',
                     }}
                   >
-                    {plan.price}
+                    {pricingYearly ? plan.yearlyPrice : plan.monthlyPrice}
                   </span>
                   <span className="text-sm" style={{ color: '#94a3b8' }}>
                     {plan.period}
@@ -445,6 +466,7 @@ export function Pricing() {
               </div>
 
               <button
+                onClick={() => navigate('/')}
                 className="w-full py-3.5 rounded-xl font-bold transition-all duration-200 cursor-pointer text-sm flex items-center justify-center gap-2"
                 style={{
                   background: plan.popular ? 'linear-gradient(135deg,#2563EB,#10B981)' : 'transparent',
