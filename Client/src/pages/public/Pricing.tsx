@@ -10,27 +10,30 @@ import { PublicNavbar } from '../../components/PublicNavbar';
 const chatPlans = [
   {
     name: 'Free', icon: '💬', iconBg: 'rgba(100,116,139,0.12)',
-    monthlyPrice: '₹0', yearlyPrice: '₹0', period: 'forever', badge: 'ALWAYS FREE',
-    desc: 'For individuals & small projects testing the waters.',
-    features: ['1 chatbot','100 conversations / month','Website embed','Basic FAQ & lead capture','WhatsApp not included','Branding visible'],
+    monthlyPrice: '$0', yearlyPrice: '$0', period: 'forever', badge: 'ALWAYS FREE',
+    monthlyPriceINR: '₹0', yearlyPriceINR: '₹0',
+    desc: 'For individuals & small side projects.',
+    features: ['1 chatbot','100 conversations / month','Website embed','Basic FAQ & lead capture','No CRM integration','Branding visible'],
     cta: 'Get started free', popular: false, checkColor: '#64748b',
     border: '1px solid rgba(37,99,235,0.08)', bg: '#ffffff',
     shadow: '0 4px 20px rgba(0,0,0,0.04)', hoverShadow: '0 8px 40px rgba(0,0,0,0.08)',
   },
   {
     name: 'Starter', icon: '🚀', iconBg: 'rgba(37,99,235,0.10)',
-    monthlyPrice: '₹3,499', yearlyPrice: '₹2,799', period: '/month', badge: null,
+    monthlyPrice: '$49', yearlyPrice: '$39', period: '/month', badge: null,
+    monthlyPriceINR: '₹3,499', yearlyPriceINR: '₹2,799',
     desc: 'Freelancers & small businesses getting serious.',
-    features: ['3 chatbots','1,000 conversations / month','WhatsApp + website','Hindi & Hinglish support','Remove branding','CRM integration'],
+    features: ['3 chatbots','1,000 conversations / month','Website + email channel','Remove branding','Email & chat support','No CRM integration'],
     cta: 'Start 14-day trial', popular: false, checkColor: '#2563EB',
     border: '1px solid rgba(37,99,235,0.12)', bg: '#ffffff',
     shadow: '0 4px 20px rgba(0,0,0,0.04)', hoverShadow: '0 8px 40px rgba(0,0,0,0.08)',
   },
   {
     name: 'Growth', icon: '📈', iconBg: 'rgba(16,185,129,0.10)',
-    monthlyPrice: '₹9,999', yearlyPrice: '₹7,999', period: '/month', badge: 'MOST POPULAR',
-    desc: 'SMBs scaling support, sales & engagement.',
-    features: ['10 chatbots','5,000 conversations / month','All channels incl. Instagram','10+ Indian languages','CRM & helpdesk integrations','Full analytics dashboard'],
+    monthlyPrice: '$149', yearlyPrice: '$119', period: '/month', badge: 'MOST POPULAR',
+    monthlyPriceINR: '₹9,999', yearlyPriceINR: '₹7,999',
+    desc: 'SMBs and mid-market teams scaling fast.',
+    features: ['10 chatbots','5,000 conversations / month','All channels + multi-language','CRM & helpdesk integrations','Full analytics dashboard','Priority support'],
     cta: 'Start 14-day trial', popular: true, checkColor: '#10B981',
     border: '2px solid #10B981', bg: '#ffffff',
     shadow: '0 8px 30px rgba(16,185,129,0.15)', hoverShadow: '0 12px 48px rgba(16,185,129,0.25)',
@@ -38,8 +41,9 @@ const chatPlans = [
   {
     name: 'Enterprise', icon: '🏢', iconBg: 'rgba(139,92,246,0.10)',
     monthlyPrice: 'Custom', yearlyPrice: 'Custom', period: '', badge: 'CUSTOM',
-    desc: 'Large businesses, compliance & custom AI.',
-    features: ['Unlimited chatbots','Unlimited conversations','Custom AI model training','DPDP Act 2023 compliance','India-region cloud hosting','Dedicated account manager'],
+    monthlyPriceINR: 'Custom', yearlyPriceINR: 'Custom',
+    desc: 'Large orgs with custom AI, compliance & SLAs.',
+    features: ['Unlimited chatbots','Unlimited conversations','Custom AI model training','GDPR / HIPAA / SOC 2','SLA + 99.9% uptime','Dedicated account manager'],
     cta: 'Contact sales', popular: false, checkColor: '#8b5cf6',
     border: '1px solid rgba(37,99,235,0.08)', bg: '#ffffff',
     shadow: '0 4px 20px rgba(0,0,0,0.04)', hoverShadow: '0 8px 40px rgba(0,0,0,0.08)',
@@ -48,40 +52,48 @@ const chatPlans = [
 
 const voicePlans = [
   {
-    name: 'Free', icon: '🎙️', iconBg: 'rgba(100,116,139,0.12)',
-    monthlyPrice: '₹0', yearlyPrice: '₹0', period: 'forever', badge: 'ALWAYS FREE',
-    desc: 'Try voice agents with basic capabilities.',
-    features: ['1 voice agent','50 voice minutes / month','Website embed','Basic call routing','Call recording not included','Custom voice model not included'],
-    cta: 'Get started free', popular: false, checkColor: '#64748b',
+    name: 'Trial', icon: '🎙️', iconBg: 'rgba(100,116,139,0.12)',
+    monthlyPrice: '$59', yearlyPrice: '$59', period: '/month', badge: 'TRIAL',
+    monthlyPriceINR: '₹4,999', yearlyPriceINR: '₹4,999',
+    desc: 'Test the system. See results in 30 days.',
+    features: ['1 AI Voice Assistant','30 calls / month','Lead capture & logging','WhatsApp delivery','30-day upgrade path'],
+    cta: 'Start Free Trial', popular: false, checkColor: '#64748b',
     border: '1px solid rgba(37,99,235,0.08)', bg: '#ffffff',
     shadow: '0 4px 20px rgba(0,0,0,0.04)', hoverShadow: '0 8px 40px rgba(0,0,0,0.08)',
+    setupFee: '$0', setupFeeINR: '₹0',
   },
   {
-    name: 'Starter', icon: '🎤', iconBg: 'rgba(37,99,235,0.10)',
-    monthlyPrice: '₹4,999', yearlyPrice: '₹3,999', period: '/month', badge: null,
-    desc: 'For businesses ready to automate phone support.',
-    features: ['3 voice agents','500 voice minutes / month','Dedicated phone number','Hindi, English & Hinglish','Call recording & logs','CRM integration'],
-    cta: 'Start 14-day trial', popular: false, checkColor: '#2563EB',
+    name: 'Foundation', icon: '🎤', iconBg: 'rgba(37,99,235,0.10)',
+    monthlyPrice: '$179', yearlyPrice: '$143', period: '/month', badge: null,
+    monthlyPriceINR: '₹14,999', yearlyPriceINR: '₹11,999',
+    desc: 'For businesses automating first conversations.',
+    features: ['1 AI Voice Assistant','120 calls / month','Lead capture & logging','WhatsApp data delivery','Basic analytics','Free demo call'],
+    cta: 'Book Demo Call', popular: false, checkColor: '#2563EB',
     border: '1px solid rgba(37,99,235,0.12)', bg: '#ffffff',
     shadow: '0 4px 20px rgba(0,0,0,0.04)', hoverShadow: '0 8px 40px rgba(0,0,0,0.08)',
+    setupFee: '$179', setupFeeINR: '₹14,999',
   },
   {
-    name: 'Growth', icon: '📞', iconBg: 'rgba(16,185,129,0.10)',
-    monthlyPrice: '₹12,999', yearlyPrice: '₹10,399', period: '/month', badge: 'MOST POPULAR',
-    desc: 'For SMBs scaling phone support & outreach.',
-    features: ['10 voice agents','3,000 voice minutes / month','Multiple phone numbers','10+ Indian languages','CRM & helpdesk integrations','Full analytics dashboard'],
-    cta: 'Start 14-day trial', popular: true, checkColor: '#10B981',
+    name: 'Scale', icon: '📞', iconBg: 'rgba(16,185,129,0.10)',
+    monthlyPrice: '$359', yearlyPrice: '$287', period: '/month', badge: 'MOST POPULAR',
+    monthlyPriceINR: '₹29,999', yearlyPriceINR: '₹23,999',
+    desc: 'For teams replacing a full calling function.',
+    features: ['Up to 3 AI Workflows','400 calls / month','Custom call scripts','CRM integration','Analytics dashboard','Priority support','Free demo call'],
+    cta: 'Book Demo Call →', popular: true, checkColor: '#10B981',
     border: '2px solid #10B981', bg: '#ffffff',
     shadow: '0 8px 30px rgba(16,185,129,0.15)', hoverShadow: '0 12px 48px rgba(16,185,129,0.25)',
+    setupFee: '$479', setupFeeINR: '₹39,999',
   },
   {
-    name: 'Enterprise', icon: '🏢', iconBg: 'rgba(139,92,246,0.10)',
-    monthlyPrice: 'Custom', yearlyPrice: 'Custom', period: '', badge: 'CUSTOM',
-    desc: 'For large call centers & custom compliance needs.',
-    features: ['Unlimited voice agents','Unlimited voice minutes','Custom voice AI training','DPDP Act 2023 compliance','India-region cloud hosting','Dedicated account manager'],
-    cta: 'Contact sales', popular: false, checkColor: '#8b5cf6',
+    name: 'Dominate', icon: '🏢', iconBg: 'rgba(139,92,246,0.10)',
+    monthlyPrice: '$899', yearlyPrice: '$719', period: '/month', badge: 'ENTERPRISE',
+    monthlyPriceINR: '₹74,999', yearlyPriceINR: '₹59,999',
+    desc: 'For high-volume operations that can\'t slow down.',
+    features: ['Unlimited Workflows','1,200 calls / month','Advanced automation','Full API & CRM integrations','Dedicated account manager','Custom reporting','White-label option'],
+    cta: 'Contact Sales', popular: false, checkColor: '#8b5cf6',
     border: '1px solid rgba(37,99,235,0.08)', bg: '#ffffff',
     shadow: '0 4px 20px rgba(0,0,0,0.04)', hoverShadow: '0 8px 40px rgba(0,0,0,0.08)',
+    setupFee: '$1,079', setupFeeINR: '₹89,999',
   },
 ];
 
@@ -435,6 +447,16 @@ export function Pricing() {
                     {plan.period}
                   </span>
                 </div>
+                {(plan.monthlyPriceINR || plan.yearlyPriceINR) && plan.monthlyPrice !== 'Custom' && (
+                  <div className="text-xs font-medium mb-4" style={{ color: '#94a3b8' }}>
+                    {pricingYearly ? plan.yearlyPriceINR : plan.monthlyPriceINR}/mo INR
+                  </div>
+                )}
+                {plan.setupFee && plan.setupFee !== '$0' && (
+                  <div className="text-xs font-medium mb-4" style={{ color: '#94a3b8' }}>
+                    One-time setup: {plan.setupFee} <span className="text-[10px]">({plan.setupFeeINR})</span>
+                  </div>
+                )}
 
                 <div className="mb-5" style={{ borderTop: '1px solid rgba(37,99,235,0.06)' }} />
 

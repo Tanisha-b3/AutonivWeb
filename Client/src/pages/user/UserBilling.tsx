@@ -10,54 +10,54 @@ import { checkAuth } from '../../store/slices/authSlice';
 const planCategories = {
   chat: [
     {
-      id: 'chat_free', name: 'Chat Free', tagline: 'For individuals & small projects testing the waters.',
-      price: 0, callsPerMonth: 100, minutesPerMonth: 0,
+      id: 'chat_free', name: 'Chat Free', tagline: 'For individuals & small side projects.',
+      price: 0, priceUSD: 0, callsPerMonth: 100, minutesPerMonth: 0,
       features: [
         { text: '1 chatbot', included: true },
         { text: '100 conversations / month', included: true },
         { text: 'Website embed', included: true },
         { text: 'Basic FAQ & lead capture', included: true },
-        { text: 'WhatsApp integration', included: false },
-        { text: 'Remove branding', included: false },
+        { text: 'No CRM integration', included: false },
+        { text: 'Branding visible', included: false },
       ],
       icon: '💬', style: 'dashed', accentColor: 'from-slate-400 to-slate-500'
     },
     {
       id: 'chat_starter', name: 'Chat Starter', tagline: 'Freelancers & small businesses getting serious.',
-      price: 3499, callsPerMonth: 1000, minutesPerMonth: 0,
+      price: 3499, priceUSD: 49, callsPerMonth: 1000, minutesPerMonth: 0,
       features: [
         { text: '3 chatbots', included: true },
         { text: '1,000 conversations / month', included: true },
-        { text: 'WhatsApp + website', included: true },
-        { text: 'Hindi & Hinglish support', included: true },
+        { text: 'Website + email channel', included: true },
         { text: 'Remove branding', included: true },
-        { text: 'CRM integration', included: true },
+        { text: 'Email & chat support', included: true },
+        { text: 'No CRM integration', included: false },
       ],
       icon: '🚀', style: 'solid', accentColor: 'from-blue-500 to-indigo-600'
     },
     {
-      id: 'chat_growth', name: 'Chat Growth', tagline: 'SMBs scaling support, sales & engagement.',
-      price: 9999, callsPerMonth: 5000, minutesPerMonth: 0,
+      id: 'chat_growth', name: 'Chat Growth', tagline: 'SMBs and mid-market teams scaling fast.',
+      price: 9999, priceUSD: 149, callsPerMonth: 5000, minutesPerMonth: 0,
       badge: 'Most Popular', icon: '📈', style: 'featured',
       features: [
         { text: '10 chatbots', included: true },
         { text: '5,000 conversations / month', included: true },
-        { text: 'All channels incl. Instagram', included: true },
-        { text: '10+ Indian languages', included: true },
+        { text: 'All channels + multi-language', included: true },
         { text: 'CRM & helpdesk integrations', included: true },
         { text: 'Full analytics dashboard', included: true },
+        { text: 'Priority support', included: true },
       ],
       accentColor: 'from-emerald-500 to-teal-600'
     },
     {
-      id: 'chat_enterprise', name: 'Chat Enterprise', tagline: 'Large businesses, compliance & custom AI.',
-      price: 0, callsPerMonth: 99999, minutesPerMonth: 0,
+      id: 'chat_enterprise', name: 'Chat Enterprise', tagline: 'Large orgs with custom AI, compliance & SLAs.',
+      price: 0, priceUSD: 0, callsPerMonth: 99999, minutesPerMonth: 0,
       features: [
         { text: 'Unlimited chatbots', included: true },
         { text: 'Unlimited conversations', included: true },
         { text: 'Custom AI model training', included: true },
-        { text: 'DPDP Act 2023 compliance', included: true },
-        { text: 'India-region cloud hosting', included: true },
+        { text: 'GDPR / HIPAA / SOC 2', included: true },
+        { text: 'SLA + 99.9% uptime', included: true },
         { text: 'Dedicated account manager', included: true },
       ],
       icon: '🏢', style: 'solid', accentColor: 'from-violet-500 to-purple-650'
@@ -65,108 +65,108 @@ const planCategories = {
   ],
   voice: [
     {
-      id: 'voice_free', name: 'Voice Free', tagline: 'Try voice agents with basic capabilities.',
-      price: 0, callsPerMonth: 0, minutesPerMonth: 50,
+      id: 'voice_free', name: 'Voice Trial', tagline: 'Test the system. See results in 30 days.',
+      price: 4999, priceUSD: 59, callsPerMonth: 30, minutesPerMonth: 0,
       features: [
-        { text: '1 voice agent', included: true },
-        { text: '50 voice minutes / month', included: true },
-        { text: 'Website embed', included: true },
-        { text: 'Basic call routing', included: true },
-        { text: 'Call recording', included: false },
-        { text: 'Custom voice model', included: false },
+        { text: '1 AI Voice Assistant', included: true },
+        { text: '30 calls / month', included: true },
+        { text: 'Lead capture & logging', included: true },
+        { text: 'WhatsApp delivery', included: true },
+        { text: '30-day upgrade path', included: true },
+        { text: 'CRM integration', included: false },
       ],
       icon: '🎙️', style: 'dashed', accentColor: 'from-slate-400 to-slate-500'
     },
     {
-      id: 'voice_starter', name: 'Voice Starter', tagline: 'For businesses ready to automate phone support.',
-      price: 4999, callsPerMonth: 0, minutesPerMonth: 500,
+      id: 'voice_starter', name: 'Voice Foundation', tagline: 'For businesses automating first conversations.',
+      price: 14999, priceUSD: 179, callsPerMonth: 120, minutesPerMonth: 0, setupFee: 14999, setupFeeUSD: 179,
       features: [
-        { text: '3 voice agents', included: true },
-        { text: '500 voice minutes / month', included: true },
-        { text: 'Dedicated phone number', included: true },
-        { text: 'Hindi, English & Hinglish', included: true },
-        { text: 'Call recording & logs', included: true },
-        { text: 'CRM integration', included: true },
+        { text: '1 AI Voice Assistant', included: true },
+        { text: '120 calls / month', included: true },
+        { text: 'Lead capture & logging', included: true },
+        { text: 'WhatsApp data delivery', included: true },
+        { text: 'Basic analytics', included: true },
+        { text: 'Free demo call', included: true },
       ],
       icon: '🎤', style: 'solid', accentColor: 'from-blue-500 to-indigo-600'
     },
     {
-      id: 'voice_growth', name: 'Voice Growth', tagline: 'For SMBs scaling phone support & outreach.',
-      price: 12999, callsPerMonth: 0, minutesPerMonth: 3000,
+      id: 'voice_growth', name: 'Voice Scale', tagline: 'For teams replacing a full calling function.',
+      price: 29999, priceUSD: 359, callsPerMonth: 400, minutesPerMonth: 0, setupFee: 39999, setupFeeUSD: 479,
       badge: 'Most Popular', icon: '📞', style: 'featured',
       features: [
-        { text: '10 voice agents', included: true },
-        { text: '3,000 voice minutes / month', included: true },
-        { text: 'Multiple phone numbers', included: true },
-        { text: '10+ Indian languages', included: true },
-        { text: 'CRM & helpdesk integrations', included: true },
-        { text: 'Full analytics dashboard', included: true },
+        { text: 'Up to 3 AI Workflows', included: true },
+        { text: '400 calls / month', included: true },
+        { text: 'Custom call scripts', included: true },
+        { text: 'CRM integration', included: true },
+        { text: 'Analytics dashboard', included: true },
+        { text: 'Priority support', included: true },
       ],
       accentColor: 'from-emerald-500 to-teal-600'
     },
     {
-      id: 'voice_enterprise', name: 'Voice Enterprise', tagline: 'For large call centers & compliance.',
-      price: 0, callsPerMonth: 0, minutesPerMonth: 999999,
+      id: 'voice_enterprise', name: 'Voice Dominate', tagline: 'For high-volume operations that can\'t slow down.',
+      price: 74999, priceUSD: 899, callsPerMonth: 1200, minutesPerMonth: 0, setupFee: 89999, setupFeeUSD: 1079,
       features: [
-        { text: 'Unlimited voice agents', included: true },
-        { text: 'Unlimited voice minutes', included: true },
-        { text: 'Custom voice AI training', included: true },
-        { text: 'DPDP Act 2023 compliance', included: true },
-        { text: 'India-region cloud hosting', included: true },
+        { text: 'Unlimited Workflows', included: true },
+        { text: '1,200 calls / month', included: true },
+        { text: 'Advanced automation', included: true },
+        { text: 'Full API & CRM integrations', included: true },
         { text: 'Dedicated account manager', included: true },
+        { text: 'Custom reporting', included: true },
       ],
       icon: '🏢', style: 'solid', accentColor: 'from-violet-500 to-purple-650'
     }
   ],
   both: [
     {
-      id: 'both_free', name: 'Chat + Voice Free', tagline: 'Test both chat and voice capabilities.',
-      price: 0, callsPerMonth: 100, minutesPerMonth: 50,
+      id: 'both_free', name: 'Chat + Voice Trial', tagline: 'Test both chat and voice capabilities.',
+      price: 4999, priceUSD: 59, callsPerMonth: 100, minutesPerMonth: 30,
       features: [
         { text: '1 chatbot & 1 voice agent', included: true },
-        { text: '100 conversations & 50 mins', included: true },
+        { text: '100 conversations & 30 calls', included: true },
         { text: 'Website embed', included: true },
-        { text: 'Basic FAQ & call routing', included: true },
-        { text: 'WhatsApp & call recording', included: false },
-        { text: 'Remove branding', included: false },
+        { text: 'Basic FAQ & lead capture', included: true },
+        { text: 'WhatsApp delivery', included: true },
+        { text: 'CRM integration', included: false },
       ],
       icon: '✨', style: 'dashed', accentColor: 'from-slate-400 to-slate-500'
     },
     {
-      id: 'both_starter', name: 'Chat + Voice Starter', tagline: 'Combined starter package for startups.',
-      price: 6999, callsPerMonth: 1000, minutesPerMonth: 500,
+      id: 'both_starter', name: 'Chat + Voice Foundation', tagline: 'Combined package for growing businesses.',
+      price: 18498, priceUSD: 228, callsPerMonth: 1000, minutesPerMonth: 120, setupFee: 14999, setupFeeUSD: 179,
       features: [
-        { text: '3 chatbots & 3 voice agents', included: true },
-        { text: '1,000 chats & 500 voice mins', included: true },
-        { text: 'Dedicated phone + WhatsApp', included: true },
-        { text: 'Remove branding', included: true },
-        { text: 'Call recording & logs', included: true },
-        { text: 'CRM integrations', included: true },
+        { text: '3 chatbots & 1 voice assistant', included: true },
+        { text: '1,000 chats & 120 calls', included: true },
+        { text: 'WhatsApp + website', included: true },
+        { text: 'Basic analytics', included: true },
+        { text: 'Free demo call', included: true },
+        { text: 'CRM integration', included: true },
       ],
       icon: '⚡', style: 'solid', accentColor: 'from-blue-500 to-indigo-600'
     },
     {
-      id: 'both_growth', name: 'Chat + Voice Growth', tagline: 'Omnichannel automation for scaling brands.',
-      price: 19999, callsPerMonth: 5000, minutesPerMonth: 3000,
+      id: 'both_growth', name: 'Chat + Voice Scale', tagline: 'Complete automation for scaling teams.',
+      price: 39998, priceUSD: 508, callsPerMonth: 5000, minutesPerMonth: 400, setupFee: 39999, setupFeeUSD: 479,
       badge: 'Best Value', icon: '🔥', style: 'featured',
       features: [
-        { text: '10 chatbots & 10 voice agents', included: true },
-        { text: '5,000 chats & 3,000 voice mins', included: true },
-        { text: 'All channels (Insta, WhatsApp)', included: true },
-        { text: 'Multi-lingual support (10+)', included: true },
+        { text: '10 chatbots & 3 AI workflows', included: true },
+        { text: '5,000 chats & 400 calls', included: true },
+        { text: 'All channels incl. Instagram', included: true },
+        { text: 'Custom call scripts', included: true },
         { text: 'CRM & helpdesk integrations', included: true },
-        { text: 'Full analytics dashboard', included: true },
+        { text: 'Priority support', included: true },
       ],
       accentColor: 'from-emerald-500 to-teal-600'
     },
     {
-      id: 'both_enterprise', name: 'Chat + Voice Enterprise', tagline: 'Complete customized AI architecture.',
-      price: 0, callsPerMonth: 99999, minutesPerMonth: 999999,
+      id: 'both_enterprise', name: 'Chat + Voice Dominate', tagline: 'Complete customized AI architecture.',
+      price: 74999, priceUSD: 899, callsPerMonth: 99999, minutesPerMonth: 1200, setupFee: 89999, setupFeeUSD: 1079,
       features: [
         { text: 'Unlimited chatbots & agents', included: true },
         { text: 'Unlimited chats & voice mins', included: true },
         { text: 'Custom voice & LLM training', included: true },
-        { text: 'DPDP Act 2023 compliance', included: true },
+        { text: 'GDPR / HIPAA / SOC 2', included: true },
         { text: 'Dedicated account manager', included: true },
         { text: 'Custom deployment node', included: true },
       ],
@@ -351,10 +351,15 @@ export function UserBilling() {
                 <p className="text-xs text-slate-500 mt-1.5 font-semibold leading-relaxed max-w-xs">{activePlanConfig.tagline}</p>
                 <div className="flex items-baseline gap-1.5 mt-5">
                   <span className="text-4xl font-black text-slate-800 tracking-tight">
-                    {activePlanConfig.id.endsWith('enterprise') ? 'Custom' : `₹${activePlanConfig.price.toLocaleString()}`}
+                    {activePlanConfig.id.endsWith('enterprise') ? 'Custom' : `$${(activePlanConfig.priceUSD || 0).toLocaleString()}`}
                   </span>
                   {!activePlanConfig.id.endsWith('enterprise') && <span className="text-slate-500 font-bold text-xs">/ month</span>}
                 </div>
+                {!activePlanConfig.id.endsWith('enterprise') && activePlanConfig.priceUSD !== 0 && (
+                  <div className="text-xs text-slate-400 font-medium mt-1">
+                    ₹{activePlanConfig.price.toLocaleString()}/mo INR
+                  </div>
+                )}
               </div>
             </div>
 
@@ -762,10 +767,15 @@ export function UserBilling() {
                             <div className="mt-4">
                               <div className="flex items-baseline gap-1">
                                 <span className="text-2xl font-black text-slate-800 tracking-tight">
-                                  {p.id.endsWith('enterprise') ? 'Custom' : `₹${p.price.toLocaleString()}`}
+                                  {p.id.endsWith('enterprise') ? 'Custom' : `$${(p.priceUSD || 0).toLocaleString()}`}
                                 </span>
                                 {!p.id.endsWith('enterprise') && <span className="text-[10px] text-slate-400 font-bold">/mo</span>}
                               </div>
+                              {!p.id.endsWith('enterprise') && p.priceUSD !== 0 && (
+                                <div className="text-[10px] text-slate-400 font-medium mt-0.5">
+                                  ₹{p.price.toLocaleString()}/mo INR
+                                </div>
+                              )}
                               <p className="text-[10px] mt-1 font-black text-blue-600">
                                 {p.callsPerMonth > 0 && `${p.callsPerMonth.toLocaleString()} chats / mo`}
                                 {p.callsPerMonth > 0 && p.minutesPerMonth > 0 && ' & '}
@@ -814,8 +824,8 @@ export function UserBilling() {
                             {getPlanConfig(selectedPlan).plan.name}
                           </span>
                           {' — '}
-                          <span className="font-extrabold text-blue-900">
-                            {selectedPlan.endsWith('enterprise') ? 'Custom pricing' : `₹${getPlanConfig(selectedPlan).plan.price.toLocaleString()}/mo`}
+                           <span className="font-extrabold text-blue-900">
+                            {selectedPlan.endsWith('enterprise') ? 'Custom pricing' : `$${(getPlanConfig(selectedPlan).plan.priceUSD || 0).toLocaleString()}/mo`}
                           </span>
                         </p>
                       </div>
