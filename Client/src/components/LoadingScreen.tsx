@@ -18,15 +18,15 @@ interface Particle {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const COLORS = {
-  bg: '#040B18',
-  blue: '#0077FF',
-  cyan: '#00D4FF',
-  emerald: '#00E5A0',
-  purple: '#6C63FF',
+  bg: '#030812',
+  blue: '#2563EB',
+  cyan: '#10B981',
+  emerald: '#10B981',
+  purple: '#8b5cf6',
   white: '#FFFFFF',
   secondary: '#94A3B8',
-  muted: '#334155',
-  dim: '#1e293b',
+  muted: '#475569',
+  dim: '#0f172a',
 } as const;
 
 const STATUS_ITEMS = [
@@ -144,8 +144,8 @@ function ParticleLayer({ particles }: { particles: Particle[] }) {
             borderRadius: '50%',
             background:
               p.color === 'cyan'
-                ? `rgba(0,212,255,${p.opacity})`
-                : `rgba(108,99,255,${p.opacity})`,
+                ? `rgba(16,185,129,${p.opacity})`
+                : `rgba(139,92,246,${p.opacity})`,
             left: `${p.left}%`,
             top: `${p.top}%`,
             pointerEvents: 'none',
@@ -161,16 +161,16 @@ function ParticleLayer({ particles }: { particles: Particle[] }) {
 
 function LogoSection() {
   return (
-    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
       {/* Halo */}
       <div
         style={{
           position: 'absolute',
-          width: 120,
-          height: 120,
+          width: 140,
+          height: 140,
           borderRadius: '50%',
-          background: `radial-gradient(circle, rgba(0,119,255,0.2) 0%, rgba(0,212,255,0.07) 50%, transparent 70%)`,
-          filter: 'blur(16px)',
+          background: `radial-gradient(circle, rgba(37,99,235,0.15) 0%, rgba(16,185,129,0.05) 50%, transparent 70%)`,
+          filter: 'blur(20px)',
           animation: 'autoniv-halo 3s ease-in-out infinite',
         }}
       />
@@ -181,37 +181,27 @@ function LogoSection() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 4,
+          gap: 6,
         }}
       >
-        <span
+        <img
+          src="/logo-autoniv.png"
+          alt="Autoniv"
           style={{
-            fontSize: 28,
-            fontWeight: 600,
-            letterSpacing: '-0.5px',
-            color: COLORS.white,
-            fontFamily: "'Inter', system-ui, sans-serif",
+            height: 70,
+            width: 'auto',
+            objectFit: 'contain',
+            filter: 'drop-shadow(0 4px 12px rgba(37,99,235,0.15))',
           }}
-        >
-          auto
-          <span
-            style={{
-              background: `linear-gradient(135deg, ${COLORS.cyan}, ${COLORS.blue})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
-          >
-            niv
-          </span>
-        </span>
+        />
         <span
           style={{
             fontSize: 10,
             fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-            letterSpacing: '0.25em',
-            color: 'rgba(0,212,255,0.45)',
-            textTransform: 'uppercase' as const,
+            letterSpacing: '0.3em',
+            color: 'rgba(16,185,129,0.7)',
+            textTransform: 'uppercase',
+            marginTop: 4,
           }}
         >
           Voice AI Platform
@@ -361,8 +351,8 @@ function ProgressBar({
             height: '100%',
             width: `${progress}%`,
             borderRadius: 999,
-            background: `linear-gradient(90deg, ${COLORS.blue} 0%, ${COLORS.cyan} 50%, ${COLORS.emerald} 100%)`,
-            boxShadow: `0 0 12px rgba(0,212,255,0.45)`,
+            background: `linear-gradient(90deg, ${COLORS.blue} 0%, ${COLORS.cyan} 100%)`,
+            boxShadow: `0 0 12px rgba(16,185,129,0.45)`,
             position: 'relative',
             overflow: 'hidden',
             transition: 'width 0.3s ease',
@@ -416,7 +406,7 @@ function StatusItem({
           height: 22,
           borderRadius: '50%',
           background: 'rgba(255,255,255,0.03)',
-          border: `1px solid rgba(0,229,160,0.22)`,
+          border: `1px solid rgba(16,185,129,0.30)`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -430,7 +420,7 @@ function StatusItem({
             position: 'absolute',
             inset: -4,
             borderRadius: '50%',
-            background: `radial-gradient(circle, rgba(0,229,160,0.07) 0%, transparent 70%)`,
+            background: `radial-gradient(circle, rgba(16,185,129,0.10) 0%, transparent 70%)`,
             pointerEvents: 'none',
           }}
         />
@@ -450,7 +440,7 @@ function StatusItem({
         style={{
           fontSize: 12,
           color: COLORS.secondary,
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
         }}
       >
         {label}
@@ -534,7 +524,7 @@ export default function AutonivLoadingScreen() {
           background: COLORS.bg,
           position: 'relative',
           overflow: 'hidden',
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
           padding: '24px 16px',
         }}
       >
@@ -545,8 +535,8 @@ export default function AutonivLoadingScreen() {
             position: 'absolute',
             inset: 0,
             backgroundImage: `
-              linear-gradient(rgba(0,119,255,0.025) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(0,119,255,0.025) 1px, transparent 1px)
+              linear-gradient(rgba(37,99,235,0.02) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(37,99,235,0.02) 1px, transparent 1px)
             `,
             backgroundSize: '40px 40px',
             pointerEvents: 'none',
@@ -557,7 +547,7 @@ export default function AutonivLoadingScreen() {
         <AuroraBlob
           style={{
             width: 500, height: 500,
-            background: `radial-gradient(circle, rgba(0,119,255,0.13) 0%, transparent 70%)`,
+            background: `radial-gradient(circle, rgba(37,99,235,0.15) 0%, transparent 70%)`,
             top: -120, left: -100,
           }}
           animDelay="0s"
@@ -565,7 +555,7 @@ export default function AutonivLoadingScreen() {
         <AuroraBlob
           style={{
             width: 380, height: 380,
-            background: `radial-gradient(circle, rgba(0,212,255,0.10) 0%, transparent 70%)`,
+            background: `radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)`,
             top: 40, right: -100,
           }}
           animDelay="-4s"
@@ -573,7 +563,7 @@ export default function AutonivLoadingScreen() {
         <AuroraBlob
           style={{
             width: 340, height: 340,
-            background: `radial-gradient(circle, rgba(108,99,255,0.09) 0%, transparent 70%)`,
+            background: `radial-gradient(circle, rgba(139,92,246,0.10) 0%, transparent 70%)`,
             bottom: -80, left: '30%',
           }}
           animDelay="-8s"
@@ -581,7 +571,7 @@ export default function AutonivLoadingScreen() {
         <AuroraBlob
           style={{
             width: 260, height: 260,
-            background: `radial-gradient(circle, rgba(0,229,160,0.06) 0%, transparent 70%)`,
+            background: `radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)`,
             bottom: 40, right: '8%',
           }}
           animDelay="-2s"
@@ -603,9 +593,9 @@ export default function AutonivLoadingScreen() {
             border: '1px solid rgba(255,255,255,0.08)',
             borderRadius: 32,
             boxShadow: `
-              0 0 0 1px rgba(0,119,255,0.08),
-              0 8px 32px rgba(0,0,0,0.4),
-              0 32px 80px rgba(0,0,0,0.3),
+              0 0 0 1px rgba(37,99,235,0.12),
+              0 8px 32px rgba(0,0,0,0.5),
+              0 32px 80px rgba(0,0,0,0.4),
               inset 0 1px 0 rgba(255,255,255,0.06)
             `,
             backdropFilter: 'blur(30px)',
@@ -693,7 +683,7 @@ export default function AutonivLoadingScreen() {
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: 9,
               letterSpacing: '0.2em',
-              color: 'rgba(255,255,255,0.07)',
+              color: 'rgba(214, 210, 210, 0.98)',
               textTransform: 'uppercase' as const,
             }}
           >

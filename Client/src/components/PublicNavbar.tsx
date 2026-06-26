@@ -74,7 +74,7 @@ export function PublicNavbar() {
     { label: 'News', href: '/news' },
     // { label: 'Add-Ons', href: '#addons', isHash: true },
     { label: 'Contact', href: '#contact', isHash: true },
-    { label: 'AboutUs', href: '/about' },
+    { label: 'About Us', href: '/about' },
   ];
 
   const [selectedLabel, setSelectedLabel] = useState<string | null>(() => {
