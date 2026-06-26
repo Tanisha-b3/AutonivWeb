@@ -3,28 +3,28 @@ import crypto from 'crypto';
 
 const PLAN_CONFIG = {
   // Chat-only plans
-  chat_free:       { name: 'Chat Free',       callsPerMonth: 100,    minutesPerMonth: 0,      setupFee: 0,    monthlyPrice: 0     },
-  chat_starter:    { name: 'Chat Starter',    callsPerMonth: 1000,   minutesPerMonth: 0,      setupFee: 0,    monthlyPrice: 3499  },
-  chat_growth:     { name: 'Chat Growth',     callsPerMonth: 5000,   minutesPerMonth: 0,      setupFee: 0,    monthlyPrice: 9999  },
-  chat_enterprise: { name: 'Chat Enterprise', callsPerMonth: 99999,  minutesPerMonth: 0,      setupFee: 0,    monthlyPrice: 0     },
+  chat_free:       { name: 'Chat Free',       callsPerMonth: 100,    minutesPerMonth: 0,      setupFee: 0,    monthlyPrice: 0,     monthlyPriceUSD: 0     },
+  chat_starter:    { name: 'Chat Starter',    callsPerMonth: 1000,   minutesPerMonth: 0,      setupFee: 0,    monthlyPrice: 3499,  monthlyPriceUSD: 49    },
+  chat_growth:     { name: 'Chat Growth',     callsPerMonth: 5000,   minutesPerMonth: 0,      setupFee: 0,    monthlyPrice: 9999,  monthlyPriceUSD: 149   },
+  chat_enterprise: { name: 'Chat Enterprise', callsPerMonth: 99999,  minutesPerMonth: 0,      setupFee: 0,    monthlyPrice: 0,     monthlyPriceUSD: 0     },
 
   // Voice-only plans
-  voice_free:       { name: 'Voice Free',       callsPerMonth: 0,      minutesPerMonth: 50,     setupFee: 0,    monthlyPrice: 0     },
-  voice_starter:    { name: 'Voice Starter',    callsPerMonth: 0,      minutesPerMonth: 500,    setupFee: 0,    monthlyPrice: 4999  },
-  voice_growth:     { name: 'Voice Growth',     callsPerMonth: 0,      minutesPerMonth: 3000,   setupFee: 0,    monthlyPrice: 12999 },
-  voice_enterprise: { name: 'Voice Enterprise', callsPerMonth: 0,      minutesPerMonth: 999999, setupFee: 0,    monthlyPrice: 0     },
+  voice_free:       { name: 'Voice Trial',       callsPerMonth: 30,     minutesPerMonth: 0,      setupFee: 0,    monthlyPrice: 4999,  monthlyPriceUSD: 59    },
+  voice_starter:    { name: 'Voice Foundation',   callsPerMonth: 120,    minutesPerMonth: 0,      setupFee: 14999,monthlyPrice: 14999, monthlyPriceUSD: 179   },
+  voice_growth:     { name: 'Voice Scale',        callsPerMonth: 400,    minutesPerMonth: 0,      setupFee: 39999,monthlyPrice: 29999, monthlyPriceUSD: 359   },
+  voice_enterprise: { name: 'Voice Dominate',     callsPerMonth: 1200,   minutesPerMonth: 0,      setupFee: 89999,monthlyPrice: 74999, monthlyPriceUSD: 899   },
 
   // Both plans (combined)
-  both_free:       { name: 'Chat + Voice Free',       callsPerMonth: 100,    minutesPerMonth: 50,     setupFee: 0,    monthlyPrice: 0     },
-  both_starter:    { name: 'Chat + Voice Starter',    callsPerMonth: 1000,   minutesPerMonth: 500,    setupFee: 0,    monthlyPrice: 6999  },
-  both_growth:     { name: 'Chat + Voice Growth',     callsPerMonth: 5000,   minutesPerMonth: 3000,   setupFee: 0,    monthlyPrice: 19999 },
-  both_enterprise: { name: 'Chat + Voice Enterprise', callsPerMonth: 99999,  minutesPerMonth: 999999, setupFee: 0,    monthlyPrice: 0     },
+  both_free:       { name: 'Chat + Voice Trial',       callsPerMonth: 100,    minutesPerMonth: 30,     setupFee: 0,    monthlyPrice: 4999,  monthlyPriceUSD: 59    },
+  both_starter:    { name: 'Chat + Voice Foundation',   callsPerMonth: 1000,   minutesPerMonth: 120,    setupFee: 14999,monthlyPrice: 18498, monthlyPriceUSD: 228   },
+  both_growth:     { name: 'Chat + Voice Scale',        callsPerMonth: 5000,   minutesPerMonth: 400,    setupFee: 39999,monthlyPrice: 39998, monthlyPriceUSD: 508   },
+  both_enterprise: { name: 'Chat + Voice Dominate',     callsPerMonth: 99999,  minutesPerMonth: 1200,   setupFee: 89999,monthlyPrice: 74999, monthlyPriceUSD: 899   },
 
   // Legacy fallback support
-  free:            { name: 'Free',            callsPerMonth: 100,    minutesPerMonth: 50,     setupFee: 0,    monthlyPrice: 0     },
-  starter:         { name: 'Starter',         callsPerMonth: 1000,   minutesPerMonth: 500,    setupFee: 0,    monthlyPrice: 3499  },
-  growth:          { name: 'Growth',          callsPerMonth: 5000,   minutesPerMonth: 3000,   setupFee: 0,    monthlyPrice: 9999  },
-  enterprise:      { name: 'Enterprise',      callsPerMonth: 99999,  minutesPerMonth: 999999, setupFee: 0,    monthlyPrice: 0     },
+  free:            { name: 'Trial',            callsPerMonth: 30,     minutesPerMonth: 0,      setupFee: 0,    monthlyPrice: 4999,  monthlyPriceUSD: 59    },
+  starter:         { name: 'Foundation',       callsPerMonth: 120,    minutesPerMonth: 0,      setupFee: 14999,monthlyPrice: 14999, monthlyPriceUSD: 179   },
+  growth:          { name: 'Scale',            callsPerMonth: 400,    minutesPerMonth: 0,      setupFee: 39999,monthlyPrice: 29999, monthlyPriceUSD: 359   },
+  enterprise:      { name: 'Dominate',         callsPerMonth: 1200,   minutesPerMonth: 0,      setupFee: 89999,monthlyPrice: 74999, monthlyPriceUSD: 899   },
 };
 
 const FEATURES = {

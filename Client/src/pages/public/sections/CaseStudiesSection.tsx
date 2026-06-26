@@ -81,10 +81,9 @@ export function CaseStudiesSection() {
           </h2>
           <p
             className="mx-auto leading-relaxed"
-            style={{ color: "rgba(255,255,255,0.45)", fontSize: 15, maxWidth: 520 }}
+            style={{ color: "rgba(255,255,255,0.45)", fontSize: 15, maxWidth: 680 }}
           >
-            See how Autoniv's AI Voice Agents are helping businesses save
-            time, convert more, and grow faster.
+            See how Autoniv's AI Voice Agents, Chatbots & CRM Automation are helping businesses save time, convert more, and grow faster.
           </p>
         </Reveal>
 
@@ -238,6 +237,24 @@ export function CaseStudiesSection() {
             </Reveal>
           ))}
         </div>
+
+        {/* View All Button */}
+        <Reveal className="text-center mt-12" delay={0.2}>
+          <Link
+            to="/case-studies"
+            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-bold text-white transition-all duration-300 bg-slate-900/40 border border-slate-800 backdrop-blur-md hover:border-emerald-500/40 hover:bg-slate-900/60"
+            style={{ 
+              textDecoration: "none",
+              boxShadow: "0 4px 20px -2px rgba(0,0,0,0.3)"
+            }}
+          >
+            View All Case Studies
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </Link>
+        </Reveal>
+          
       </div>
     </section>
   );

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Reveal } from "./utils";
+import { motion } from "framer-motion";
 
 const chatPlans = [
   {
@@ -61,7 +62,7 @@ const chatPlans = [
       { text: "SLA + 99.9% uptime", included: true },
       { text: "Dedicated account manager", included: true },
     ],
-    cta: "Contact sales →", highlight: false,
+    cta: "Contact sales", highlight: false,
   },
 ];
 
@@ -109,7 +110,7 @@ const voicePlans = [
       { text: "Analytics dashboard", included: true },
       { text: "Priority support", included: true },
     ],
-    cta: "Book Demo Call →", highlight: true,
+    cta: "Book Demo Call", highlight: true,
   },
   {
     name: "Dominate", icon: "🏢", monthlyPrice: "$899", yearlyPrice: "$719", period: "/month",
@@ -128,215 +129,297 @@ const voicePlans = [
   },
 ];
 
+const getPlanColor = (name: string) => {
+  switch (name) {
+    case 'Free':
+    case 'Trial':
+      return '#64748b';
+    case 'Starter':
+    case 'Foundation':
+      return '#2563EB';
+    case 'Growth':
+    case 'Scale':
+      return '#10B981';
+    case 'Enterprise':
+    case 'Dominate':
+      return '#8b5cf6';
+    default:
+      return '#10B981';
+  }
+};
+
 export function Pricing({ openAuth }: { openAuth: (m: "login" | "register") => void }) {
   const [pricingYearly, setPricingYearly] = useState(false);
   const [pricingMode, setPricingMode] = useState<"chat" | "voice">("chat");
+  const [currency, setCurrency] = useState<'usd' | 'inr'>('usd');
   const plans = pricingMode === "chat" ? chatPlans : voicePlans;
 
   return (
-    <section id="pricing" className="section-box black">
+    <section id="pricing" className="section-box black" style={{ background: '#030812', border: '1px solid rgba(255,255,255,0.05)' }}>
       <div className="section-pad relative overflow-hidden">
         {/* Background gradients */}
-        <div className="absolute top-10 left-5 w-[500px] h-[500px] pointer-events-none bg-gradient-radial from-blue-600/10 to-transparent" />
-        <div className="absolute bottom-10 right-5 w-[500px] h-[500px] pointer-events-none bg-gradient-radial from-emerald-500/8 to-transparent" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] pointer-events-none bg-gradient-ellipse from-emerald-500/4 to-transparent" />
+        <div className="absolute top-10 left-5 w-[500px] h-[500px] pointer-events-none bg-gradient-radial from-blue-600/5 to-transparent blur-[100px]" />
+        <div className="absolute bottom-10 right-5 w-[500px] h-[500px] pointer-events-none bg-gradient-radial from-emerald-500/5 to-transparent blur-[100px]" />
 
         {/* Header */}
-        <Reveal className="text-center mb-12 space-y-4">
-          <span className="inline-block px-4 py-1.5 rounded-full text-white text-sm font-semibold" style={{ background: "var(--gg)" }}>
+        <Reveal className="text-center mb-12 flex flex-col items-center">
+          <span className="inline-block px-4 py-1.5 rounded-full text-white text-xs font-bold uppercase tracking-widest" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", color: "#10B981" }}>
             Pricing Plans
           </span>
-          <h2 className="font-extrabold tracking-tight mt-4" style={{ fontSize: "clamp(28px, 4vw, 48px)", color: "#ffffff" }}>
+          <h2 className="font-black tracking-tight mt-5 text-white" style={{ fontSize: "clamp(28px, 4vw, 44px)" }}>
             Simple, transparent pricing.{" "}
-            <span className="gradient-text">No hidden costs.</span>
+            <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">No hidden costs.</span>
           </h2>
-          <p className="text-slate-400 text-sm max-w-md mx-auto">
+          <p className="text-slate-400 text-sm max-w-md mx-auto mt-3">
             Choose the plan that fits your business. Upgrade or cancel anytime.
           </p>
 
-          {/* Toggle */}
-          <div className="inline-flex items-center gap-0 bg-white/5 border border-white/10 rounded-full p-1 mt-2">
-            <button
-              onClick={() => setPricingYearly(false)}
-              className={`px-6 py-2 rounded-full text-sm font-semibold transition-all ${
-                !pricingYearly
-                  ? "bg-gradient-to-r from-blue-600 to-emerald-500 text-white"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setPricingYearly(true)}
-              className={`px-6 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
-                pricingYearly
-                  ? "bg-gradient-to-r from-blue-600 to-emerald-500 text-white"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Yearly
-              <span
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  pricingYearly
-                    ? "bg-white/20 text-white"
-                    : "bg-gradient-to-r from-blue-600 to-emerald-500 text-white"
-                }`}
-              >
-                Save 20%
-              </span>
-            </button>
+          {/* Toggles Panel */}
+          <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-10 mb-12 bg-slate-900/40 border border-slate-800/80 backdrop-blur-md px-6 py-4 rounded-3xl max-w-4xl mx-auto shadow-xl mt-8">
+            
+            {/* Billing Toggle */}
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-mono">Billing:</span>
+              <div className="relative inline-flex items-center bg-slate-950 border border-slate-800/60 rounded-full p-1 shadow-inner">
+                <button
+                  onClick={() => setPricingYearly(false)}
+                  className="relative px-5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer overflow-hidden"
+                >
+                  {!pricingYearly && (
+                    <motion.div
+                      layoutId="section-yearly-toggle"
+                      className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 shadow-md"
+                      style={{ zIndex: 0 }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10 transition-colors duration-200" style={{ color: !pricingYearly ? '#ffffff' : '#94a3b8' }}>
+                    Monthly
+                  </span>
+                </button>
+                <button
+                  onClick={() => setPricingYearly(true)}
+                  className="relative px-5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer overflow-hidden"
+                >
+                  {pricingYearly && (
+                    <motion.div
+                      layoutId="section-yearly-toggle"
+                      className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 shadow-md"
+                      style={{ zIndex: 0 }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10 transition-colors duration-200 flex items-center gap-1.5" style={{ color: pricingYearly ? '#ffffff' : '#94a3b8' }}>
+                    Yearly
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full transition-colors ${pricingYearly ? 'bg-white/20 text-white' : 'bg-emerald-500/10 text-emerald-400'}`}>
+                      Save 20%
+                    </span>
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Chat / Voice Toggle */}
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-mono">Channel:</span>
+              <div className="relative inline-flex items-center bg-slate-950 border border-slate-800/60 rounded-full p-1 shadow-inner">
+                <button
+                  onClick={() => setPricingMode('chat')}
+                  className="relative px-5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer overflow-hidden"
+                >
+                  {pricingMode === 'chat' && (
+                    <motion.div
+                      layoutId="section-mode-toggle"
+                      className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 shadow-md"
+                      style={{ zIndex: 0 }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10 transition-colors duration-200 flex items-center gap-1.5" style={{ color: pricingMode === 'chat' ? '#ffffff' : '#94a3b8' }}>
+                    <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                    Chat
+                  </span>
+                </button>
+                <button
+                  onClick={() => setPricingMode('voice')}
+                  className="relative px-5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer overflow-hidden"
+                >
+                  {pricingMode === 'voice' && (
+                    <motion.div
+                      layoutId="section-mode-toggle"
+                      className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 shadow-md"
+                      style={{ zIndex: 0 }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10 transition-colors duration-200 flex items-center gap-1.5" style={{ color: pricingMode === 'voice' ? '#ffffff' : '#94a3b8' }}>
+                    <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" /></svg>
+                    Voice
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Currency Toggle */}
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-mono">Currency:</span>
+              <div className="relative inline-flex items-center bg-slate-950 border border-slate-800/60 rounded-full p-1 shadow-inner">
+                <button
+                  onClick={() => setCurrency('usd')}
+                  className="relative px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer overflow-hidden"
+                >
+                  {currency === 'usd' && (
+                    <motion.div
+                      layoutId="section-currency-toggle"
+                      className="absolute inset-0 rounded-full bg-slate-800 shadow-md"
+                      style={{ zIndex: 0 }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10 transition-colors duration-200" style={{ color: currency === 'usd' ? '#ffffff' : '#94a3b8' }}>
+                    $ USD
+                  </span>
+                </button>
+                <button
+                  onClick={() => setCurrency('inr')}
+                  className="relative px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer overflow-hidden"
+                >
+                  {currency === 'inr' && (
+                    <motion.div
+                      layoutId="section-currency-toggle"
+                      className="absolute inset-0 rounded-full bg-slate-800 shadow-md"
+                      style={{ zIndex: 0 }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10 transition-colors duration-200" style={{ color: currency === 'inr' ? '#ffffff' : '#94a3b8' }}>
+                    ₹ INR
+                  </span>
+                </button>
+              </div>
+            </div>
+
           </div>
         </Reveal>
 
-        {/* Chat / Voice Toggle */}
-        <div className="flex justify-center mb-8">
-          <div className="inline-flex items-center gap-0 bg-white/5 border border-white/10 rounded-full p-1">
-            <button onClick={() => setPricingMode("chat")} className={`px-6 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${pricingMode === "chat" ? "bg-gradient-to-r from-blue-600 to-emerald-500 text-white" : "text-slate-400 hover:text-white"}`}>
-              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-              Chat
-            </button>
-            <button onClick={() => setPricingMode("voice")} className={`px-6 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${pricingMode === "voice" ? "bg-gradient-to-r from-blue-600 to-emerald-500 text-white" : "text-slate-400 hover:text-white"}`}>
-              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" /></svg>
-              Voice
-            </button>
-          </div>
-        </div>
-
         {/* Pricing Cards */}
-        <div key={pricingMode} className="animate-fade-up grid gap-6 max-w-6xl mx-auto grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
-          {plans.map((plan, i) => (
-            <Reveal key={i} delay={i * 0.08}>
-              <div
-                className={`relative flex flex-col h-full rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] ${
-                  plan.highlight
-                    ? "bg-gradient-to-br from-blue-600/15 to-emerald-500/15 border-2 border-emerald-400/40 shadow-2xl shadow-emerald-500/10 -translate-y-2"
-                    : "bg-white/5 border border-white/10 hover:border-white/20"
-                }`}
-              >
-                {/* Highlight bar */}
-                {plan.highlight && (
-                  <div className="h-1 bg-gradient-to-r from-blue-600 to-emerald-500 flex-shrink-0" />
-                )}
-
-                {/* Badge */}
-                {plan.badge && (
-                  <div className="absolute top-4 right-4">
-                    <span
-                      className={`text-[10px] font-bold px-3 py-1 rounded-full ${
-                        plan.highlight
-                          ? "bg-gradient-to-r from-blue-600 to-emerald-500 text-white"
-                          : "bg-slate-700 text-slate-300"
-                      }`}
+        <div key={pricingMode} className="grid gap-6 max-w-6xl mx-auto grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-stretch mt-12">
+          {plans.map((plan, i) => {
+            const planColor = getPlanColor(plan.name);
+            return (
+              <Reveal key={i} delay={i * 0.08}>
+                <div
+                  className="relative flex flex-col h-full rounded-3xl overflow-hidden transition-all duration-300 bg-slate-950/40 backdrop-blur-md border cursor-default group"
+                  style={{
+                    borderColor: plan.highlight ? `${planColor}` : 'rgba(255, 255, 255, 0.06)',
+                    boxShadow: plan.highlight ? `0 10px 30px -10px ${planColor}45` : 'none',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = `${planColor}40`;
+                    e.currentTarget.style.boxShadow = plan.highlight 
+                      ? `0 20px 45px -10px ${planColor}60, 0 0 0 1px ${planColor}30` 
+                      : `0 20px 40px -10px rgba(0,0,0,0.4), 0 0 0 1px ${planColor}30`;
+                    e.currentTarget.style.transform = 'translateY(-6px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = plan.highlight ? `${planColor}` : 'rgba(255, 255, 255, 0.06)';
+                    e.currentTarget.style.boxShadow = plan.highlight 
+                      ? `0 10px 30px -10px ${planColor}45` 
+                      : 'none';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  {/* Badge */}
+                  {plan.badge && (
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 px-5 py-1 rounded-b-xl text-[10px] font-bold text-white uppercase tracking-widest"
+                      style={{ background: plan.highlight ? 'linear-gradient(135deg,#2563EB,#10B981)' : 'rgba(255,255,255,0.08)' }}
                     >
                       {plan.badge}
-                    </span>
-                  </div>
-                )}
-
-                {/* Content */}
-                <div className="p-6 flex-1">
-                  <div className="mb-4">
-                    <div className="text-3xl mb-2">{plan.icon}</div>
-                    <h3 className="text-lg font-bold text-white mb-1">{plan.name}</h3>
-                    <p className="text-xs text-slate-500 leading-relaxed">{plan.desc}</p>
-                  </div>
-
-                  {/* Price */}
-                  <div className="py-3 border-y border-white/5 mb-4">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-bold text-white font-mono tracking-tight">
-                        {pricingYearly ? plan.yearlyPrice : plan.monthlyPrice}
-                      </span>
-                      {plan.period && (
-                        <span className="text-sm text-slate-500 font-medium">
-                          {plan.period}
-                        </span>
-                      )}
                     </div>
+                  )}
+
+                  {/* Content */}
+                  <div className={`p-6 flex-1 ${plan.badge ? 'pt-10' : ''}`}>
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[-5deg]"
+                        style={{
+                          background: plan.highlight ? `${planColor}1c` : 'rgba(255,255,255,0.03)',
+                          border: `1.5px solid ${planColor}25`
+                        }}
+                      >
+                        {plan.icon}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-white leading-tight">{plan.name}</h3>
+                        <p className="text-[11px] text-slate-400 leading-snug mt-0.5">{plan.desc}</p>
+                      </div>
+                    </div>
+
+                    {/* Price */}
+                    <div className="py-4 border-y border-slate-800/60 mb-5">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-3xl font-black bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent font-mono tracking-tight">
+                          {pricingYearly
+                            ? (currency === 'inr' ? plan.yearlyPriceINR : plan.yearlyPrice)
+                            : (currency === 'inr' ? plan.monthlyPriceINR : plan.monthlyPrice)}
+                        </span>
+                        {plan.period && (
+                          <span className="text-xs text-slate-500 font-medium">
+                            {plan.period}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Features */}
+                    <ul className="space-y-3">
+                      {plan.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5 text-xs">
+                          <div
+                            className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                              feature.included
+                                ? "bg-emerald-500/10 border border-emerald-500/20"
+                                : "bg-slate-700/10 border border-slate-700/20"
+                            }`}
+                          >
+                            {feature.included ? (
+                              <svg className="w-2.5 h-2.5 text-emerald-400" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <svg className="w-2.5 h-2.5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            )}
+                          </div>
+                          <span className={feature.included ? "text-slate-300" : "text-slate-600"}>
+                            {feature.text}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
 
-                  {/* Features */}
-                  <ul className="space-y-2">
-                    {plan.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center gap-2">
-                        <div
-                          className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                            feature.included
-                              ? "bg-emerald-500/10 border border-emerald-500/20"
-                              : "bg-slate-700/10 border border-slate-700/20"
-                          }`}
-                        >
-                          {feature.included ? (
-                            <svg
-                              className="w-3 h-3 text-emerald-500"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.5"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
-                          ) : (
-                            <svg
-                              className="w-3 h-3 text-slate-600"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.5"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                          )}
-                        </div>
-                        <span
-                          className={`text-xs ${
-                            feature.included ? "text-slate-300" : "text-slate-600"
-                          }`}
-                        >
-                          {feature.text}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* CTA */}
-                <div className="p-6 pt-0 mt-auto">
-                  <button
-                    onClick={() => openAuth("register")}
-                    className={`w-full font-bold text-sm py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 ${
-                      plan.highlight
-                        ? "bg-gradient-to-r from-blue-600 to-emerald-500 text-white hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.02] active:scale-[0.98]"
-                        : "bg-transparent text-emerald-500 border border-emerald-500/30 hover:bg-emerald-500/10 hover:border-emerald-500/50"
-                    }`}
-                  >
-                    {plan.cta}
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      viewBox="0 0 24 24"
+                  {/* CTA */}
+                  <div className="p-6 pt-0 mt-auto">
+                    <button
+                      onClick={() => openAuth("register")}
+                      className={`w-full font-bold text-xs py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                        plan.highlight
+                          ? "bg-gradient-to-r from-blue-600 to-emerald-500 text-white hover:shadow-lg hover:shadow-emerald-500/25 active:scale-[0.98]"
+                          : "bg-transparent text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/10 hover:border-emerald-500/50"
+                      }`}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
-                      />
-                    </svg>
-                  </button>
+                      {plan.cta}
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </Reveal>
-          ))}
+              </Reveal>
+            );
+          })}
         </div>
 
         {/* Trust Badges */}
@@ -350,16 +433,16 @@ export function Pricing({ openAuth }: { openAuth: (m: "login" | "register") => v
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-2">
                 <span className="text-base">{item.icon}</span>
-                <span className="text-xs text-slate-500 font-medium">{item.text}</span>
+                <span className="text-xs text-slate-400 font-medium">{item.text}</span>
               </div>
             ))}
           </div>
         </Reveal>
 
         {/* Footer Link */}
-        <p className="text-center text-xs mt-8 text-slate-700">
+        <p className="text-center text-xs mt-8 text-slate-500">
           All plans include 99.9% uptime SLA and zero setup fees.{" "}
-          <Link to="/pricing" className="font-semibold text-emerald-500 hover:text-emerald-400 transition-colors">
+          <Link to="/pricing" className="font-semibold text-emerald-400 hover:text-emerald-300 transition-colors">
             View full pricing →
           </Link>
         </p>

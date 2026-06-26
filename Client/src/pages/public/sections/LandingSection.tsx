@@ -14,7 +14,6 @@ const Services = lazy(() => import("./ServicesSection").then(m => ({ default: m.
 const HowItWorks = lazy(() => import("./HowItWorks").then(m => ({ default: m.HowItWorks })));
 const Comparison = lazy(() => import("./Comparison").then(m => ({ default: m.Comparison })));
 const Industry = lazy(() => import("./Industry").then(m => ({ default: m.Industry })));
-const AddOns = lazy(() => import("./AddOns").then(m => ({ default: m.AddOns })));
 const Testimonials = lazy(() => import("./Testimonials").then(m => ({ default: m.Testimonials })));
 const CaseStudiesSection = lazy(() => import("./CaseStudiesSection").then(m => ({ default: m.CaseStudiesSection })));
 const CTABanner = lazy(() => import("./CTABanner").then(m => ({ default: m.CTABanner })));
@@ -50,14 +49,14 @@ export function LandingSection() {
             <Services openAuth={openAuth} />
             <Comparison />
            
-            
-            <Industry activeUseCase={activeUseCase} setActiveUseCase={setActiveUseCase} openAuth={openAuth} />
-           <div id="how-it-works">
+             <div id="how-it-works">
               <HowItWorks openAuth={openAuth} />
             </div>
+            <Industry activeUseCase={activeUseCase} setActiveUseCase={setActiveUseCase} openAuth={openAuth} />
+          
           
 
-            <AddOns />
+            {/* <AddOns /> */}
 
              
            

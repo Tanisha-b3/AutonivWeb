@@ -72,7 +72,7 @@ export function PublicNavbar() {
     { label: 'Case Studies', href: '/case-studies' },
     { label: 'Pricing', href: '/pricing' },
     { label: 'News', href: '/news' },
-    { label: 'Add-Ons', href: '#addons', isHash: true },
+    // { label: 'Add-Ons', href: '#addons', isHash: true },
     { label: 'Contact', href: '#contact', isHash: true },
     { label: 'AboutUs', href: '/about' },
   ];

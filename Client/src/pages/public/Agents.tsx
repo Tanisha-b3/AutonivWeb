@@ -4,6 +4,8 @@ import Footer from "./Footer";
 import { PublicNavbar } from "../../components/PublicNavbar";
 import { USPSlider } from "./sections/USPSlider";
 import { BRAND, INK, SLATE, MUTE, HAIRLINE, SURFACE, TINT, MONO, SANS, Reveal, SectionLabel, GradientText, StatCard, CTADecorations } from './design';
+import { motion } from "framer-motion";
+import { Pricing as PricingSection } from "./sections/Pricing";
 
 const HERO_STATS = [
   { value: "24/7", label: "Always On", desc: "99.9% uptime guaranteed" },
@@ -76,8 +78,8 @@ const SERVICES = [
 /* ─── Hero ─── */
 function Hero() {
   return (
-    <div style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%)', borderBottom: `1px solid ${HAIRLINE}`, padding: '76px 24px 0', position: 'relative', overflow: 'hidden' }}>
-      <div className="max-w-6xl mx-auto flex flex-col items-center justify-center text-center" style={{ paddingBottom: 64, position: 'relative', zIndex: 1 }}>
+    <section className="section-box tint">
+      <div className="max-w-6xl mx-auto flex flex-col items-center justify-center text-center section-pad" style={{ position: 'relative', zIndex: 1 }}>
         <Reveal>
           <SectionLabel text="AI Services · Powered by Autoniv" />
           <h1 style={{ fontSize: 'clamp(28px,4vw,48px)', fontWeight: 900, letterSpacing: '-0.03em', color: INK, lineHeight: 1.15, margin: '0 0 14px' }}>
@@ -104,115 +106,142 @@ function Hero() {
           </div>
         </Reveal>
       </div>
-    </div>
+    </section>
   );
 }
 
 /* ─── Service Card ─── */
-function ServiceCard({ service  }: { service: typeof SERVICES[0]}) {
+function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: number }) {
   const [isHovered, setIsHovered] = useState(false);
   
   return (
-    <div 
-      className="rounded-2xl p-8 h-full flex flex-col transition-all duration-500"
+    <motion.div 
+      initial={{ opacity: 0, y: 35 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.6, delay: index * 0.15, ease: [0.22, 1, 0.36, 1] }}
+      className="rounded-3xl p-8 h-full flex flex-col justify-between border relative overflow-hidden transition-all duration-500 bg-slate-950/40 backdrop-blur-md cursor-default group"
       style={{ 
-        background: SURFACE, 
-        border: `2px solid ${isHovered ? service.color : HAIRLINE}`,
-        boxShadow: isHovered ? `0 20px 60px -12px ${service.color}25` : '0 4px 12px rgba(0,0,0,0.04)',
-        transform: isHovered ? 'translateY(-4px)' : 'translateY(0)'
+        borderColor: isHovered ? `${service.color}40` : 'rgba(255,255,255,0.06)',
+        boxShadow: isHovered ? `0 24px 60px -12px ${service.color}25, 0 0 0 1px ${service.color}30` : 'none',
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 transition-all duration-300"
-          style={{ 
-            background: `${service.color}12`, 
-            border: `2px solid ${service.color}25`,
-            transform: isHovered ? 'scale(1.05) rotate(-3deg)' : 'scale(1) rotate(0)'
-          }}>
-          {service.icon}
-        </div>
-        <div>
-          <h3 className="text-xl font-bold" style={{ color: INK }}>{service.title}</h3>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs font-mono" style={{ color: service.color }}>●</span>
-            <span className="text-xs" style={{ color: MUTE }}>{service.features.length} capabilities</span>
+      {/* Dynamic glow corner */}
+      <div 
+        className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[45px] pointer-events-none transition-opacity duration-500" 
+        style={{
+          background: `radial-gradient(circle, ${service.color}25 0%, transparent 70%)`,
+          opacity: isHovered ? 1 : 0.4
+        }}
+      />
+
+      <div>
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-6 relative z-10">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 transition-all duration-300"
+            style={{ 
+              background: `${service.color}15`, 
+              border: `1.5px solid ${service.color}30`,
+              boxShadow: isHovered ? `0 0 20px ${service.color}30` : 'none',
+              transform: isHovered ? 'scale(1.08) rotate(-5deg)' : 'scale(1) rotate(0)'
+            }}>
+            {service.icon}
+          </div>
+          <div>
+            <h3 className="text-xl font-extrabold text-white">{service.title}</h3>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-[10px] font-mono uppercase tracking-widest font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
+                {service.features.length} caps
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Description */}
-      <p className="text-sm leading-relaxed mb-6" style={{ color: SLATE }}>
-        {service.description}
-      </p>
+        {/* Description */}
+        <p className="text-sm leading-relaxed mb-6 text-slate-300 relative z-10">
+          {service.description}
+        </p>
 
-      {/* Metrics */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        {service.metrics.map((metric) => (
-          <div key={metric.label} className="text-center p-3 rounded-xl" style={{ background: `${service.color}06`, border: `1px solid ${service.color}12` }}>
-            <div className="text-lg font-bold" style={{ color: service.color }}>{metric.value}</div>
-            <div className="text-[10px] font-medium" style={{ color: MUTE }}>{metric.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Features */}
-      <div className="mb-6">
-        <div className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: MUTE, fontFamily: MONO }}>
-          Key Features
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {service.features.map((f) => (
-            <span key={f} className="px-3 py-1.5 rounded-full text-[11px] font-medium transition-all duration-300"
+        {/* Metrics */}
+        <div className="grid grid-cols-3 gap-3 mb-6 relative z-10">
+          {service.metrics.map((metric) => (
+            <div 
+              key={metric.label} 
+              className="text-center p-3 rounded-2xl transition-all duration-300" 
               style={{ 
-                background: `${service.color}08`, 
-                border: `1px solid ${service.color}15`, 
-                color: service.color,
-                transform: isHovered ? 'scale(1.02)' : 'scale(1)'
-              }}>
-              ✓ {f}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Use Cases */}
-      <div className="mb-6">
-        <div className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: MUTE, fontFamily: MONO }}>
-          Use Cases
-        </div>
-        <div className="space-y-2">
-          {service.useCases.map((useCase) => (
-            <div key={useCase.title} className="flex items-start gap-2 p-2 rounded-lg transition-all duration-300"
-              style={{ background: isHovered ? `${service.color}04` : 'transparent' }}>
-              <span className="text-base flex-shrink-0 mt-0.5">{useCase.icon}</span>
-              <div>
-                <div className="text-xs font-semibold" style={{ color: INK }}>{useCase.title}</div>
-                <div className="text-[11px]" style={{ color: SLATE }}>{useCase.desc}</div>
-              </div>
+                background: isHovered ? `${service.color}0c` : 'rgba(255,255,255,0.02)', 
+                border: `1px solid ${isHovered ? `${service.color}20` : 'rgba(255,255,255,0.05)'}` 
+              }}
+            >
+              <div className="text-lg font-black font-mono tracking-tight" style={{ color: service.color }}>{metric.value}</div>
+              <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">{metric.label}</div>
             </div>
           ))}
         </div>
+
+        {/* Features */}
+        <div className="mb-6 relative z-10">
+          <div className="text-[9px] font-bold uppercase tracking-widest mb-3 text-slate-500 font-mono">
+            Key Features
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {service.features.map((f) => (
+              <span 
+                key={f} 
+                className="px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all duration-300 flex items-center gap-1 bg-slate-900/60 text-slate-200 border border-slate-800"
+                style={{ 
+                  borderColor: isHovered ? `${service.color}15` : 'rgba(255,255,255,0.04)',
+                }}
+              >
+                <span style={{ color: service.color }}>✓</span> {f}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Use Cases */}
+        <div className="mb-8 relative z-10">
+          <div className="text-[9px] font-bold uppercase tracking-widest mb-3 text-slate-500 font-mono">
+            Target Scenarios
+          </div>
+          <div className="space-y-2.5">
+            {service.useCases.map((useCase) => (
+              <div 
+                key={useCase.title} 
+                className="flex items-start gap-3 p-2.5 rounded-xl transition-all duration-300 border border-transparent"
+                style={{ 
+                  background: isHovered ? 'rgba(255,255,255,0.02)' : 'transparent',
+                  borderColor: isHovered ? 'rgba(255,255,255,0.03)' : 'transparent'
+                }}
+              >
+                <span className="text-base p-1.5 rounded-lg bg-slate-900 flex-shrink-0 mt-0.5 border border-slate-800">{useCase.icon}</span>
+                <div>
+                  <div className="text-xs font-bold text-slate-200">{useCase.title}</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5 leading-snug">{useCase.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="h-px mb-5" style={{ background: HAIRLINE }} />
+      <div className="h-px mb-5 bg-slate-900/60" />
       
       {/* CTA */}
       <Link to="/register" 
-        className="text-sm font-semibold flex items-center justify-center gap-2 py-3 px-6 rounded-xl transition-all duration-300 no-underline"
+        className="text-sm font-bold flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl transition-all duration-300 no-underline shadow-sm cursor-pointer"
         style={{ 
-          background: `${service.color}08`,
-          border: `1px solid ${service.color}20`,
-          color: service.color,
-          transform: isHovered ? 'scale(1.02)' : 'scale(1)'
+          background: isHovered ? service.color : 'rgba(255,255,255,0.03)',
+          border: `1.5px solid ${isHovered ? 'transparent' : 'rgba(255,255,255,0.08)'}`,
+          color: isHovered ? 'white' : 'rgba(255,255,255,0.6)',
+          boxShadow: isHovered ? `0 12px 24px -6px ${service.color}40` : 'none'
         }}
-        onMouseEnter={e => { e.currentTarget.style.background = service.color; e.currentTarget.style.color = 'white'; }}
-        onMouseLeave={e => { e.currentTarget.style.background = `${service.color}08`; e.currentTarget.style.color = service.color; }}>
+      >
         Get Started <span className="transition-transform group-hover:translate-x-1">→</span>
       </Link>
-    </div>
+    </motion.div>
   );
 }
 
@@ -221,25 +250,23 @@ function ServicesSection() {
   return (
     <div className="max-w-6xl mx-auto">
       <Reveal>
-        <div className="text-center">
+        <div className="text-center mb-14">
           <SectionLabel text="Our Services" />
-          <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: '0 0 10px' }}>
+          <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight text-white mb-4">
             Chat & Voice <GradientText>AI Solutions</GradientText>
           </h2>
-          <p style={{ fontSize: 14, color: SLATE, marginBottom: 36, maxWidth: 540, marginLeft: 'auto', marginRight: 'auto' }}>
+          <p className="text-sm sm:text-base text-slate-400 max-w-lg mx-auto leading-relaxed">
             Choose the right AI assistant for your business needs or combine both for 
             omnichannel customer engagement.
           </p>
         </div>
       </Reveal>
 
-      <Reveal delay={80}>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {SERVICES.map((service) => (
-            <ServiceCard key={service.id} service={service} />
-          ))}
-        </div>
-      </Reveal>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {SERVICES.map((service, index) => (
+          <ServiceCard key={service.id} service={service} index={index} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -300,38 +327,71 @@ function ComparisonSection() {
 /* ─── How It Works ─── */
 function HowItWorks() {
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto relative">
       <Reveal>
-        <div className="text-center">
+        <div className="text-center mb-16">
           <SectionLabel text="How It Works" />
-          <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: '0 0 10px' }}>
+          <h2 style={{ fontSize: 'clamp(24px,3.5vw,38px)', fontWeight: 900, letterSpacing: '-0.03em', color: INK, margin: '0 0 10px' }}>
             Deploy in <GradientText>3 Simple Steps</GradientText>
           </h2>
-          <p style={{ fontSize: 14, color: SLATE, marginBottom: 36 }}>
-            From setup to launch in under 48 hours.
+          <p className="text-sm sm:text-base max-w-md mx-auto" style={{ color: SLATE }}>
+            Get your custom AI agent trained and live on your channels in under 48 hours.
           </p>
         </div>
       </Reveal>
-      <Reveal delay={80}>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      
+      <div className="relative">
+        {/* Connection line for desktop */}
+        <div className="hidden md:block absolute top-[52px] left-[15%] right-[15%] h-0.5 border-t-2 border-dashed border-slate-200/60 z-0 pointer-events-none" />
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
           {[
             { step: "01", title: "Connect Your Channels", desc: "Link your website, WhatsApp, or phone number in under 2 minutes.", icon: "🔗", color: "#2563EB" },
             { step: "02", title: "Train Your AI", desc: "Upload your knowledge base, FAQs, and scripts. The AI learns instantly.", icon: "🧠", color: "#10B981" },
             { step: "03", title: "Go Live & Scale", desc: "Launch your AI assistant and scale to thousands of conversations.", icon: "🚀", color: "#f97316" },
-          ].map((step) => (
-            <div key={step.step} className="rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:-translate-y-1" style={{ background: SURFACE, border: `1px solid ${HAIRLINE}` }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = step.color; e.currentTarget.style.boxShadow = `0 12px 32px -8px ${step.color}15`; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = HAIRLINE; e.currentTarget.style.boxShadow = 'none'; }}>
-              <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl mb-4" style={{ background: `${step.color}10`, border: `1px solid ${step.color}20` }}>
-                {step.icon}
+          ].map((item, index) => (
+            <motion.div 
+              initial={{ opacity: 0, y: 25 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.5, delay: index * 0.12 }}
+              key={item.step} 
+              className="rounded-3xl p-8 transition-all duration-300 hover:-translate-y-1.5 bg-white border border-slate-200/50 flex flex-col items-center text-center group cursor-default" 
+              style={{ 
+                boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
+              }}
+              onMouseEnter={e => { 
+                e.currentTarget.style.borderColor = item.color; 
+                e.currentTarget.style.boxShadow = `0 20px 40px -10px ${item.color}15`; 
+              }}
+              onMouseLeave={e => { 
+                e.currentTarget.style.borderColor = 'rgba(226, 232, 240, 0.5)'; 
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.02)'; 
+              }}
+            >
+              {/* Step number badge & icon */}
+              <div 
+                className="w-20 h-20 rounded-full flex items-center justify-center text-3xl mb-6 relative z-10 transition-transform duration-300 group-hover:scale-105"
+                style={{ 
+                  background: `${item.color}0c`, 
+                  border: `2.5px solid ${item.color}25` 
+                }}
+              >
+                {item.icon}
+                <div 
+                  className="absolute -top-1 -right-1 w-6 h-6 rounded-full text-[9px] font-black text-white flex items-center justify-center font-mono"
+                  style={{ background: item.color }}
+                >
+                  {item.step}
+                </div>
               </div>
-              <div className="text-[10px] font-semibold mb-1 tracking-wider" style={{ color: step.color, fontFamily: MONO }}>STEP {step.step}</div>
-              <h3 className="text-base font-bold mb-2" style={{ color: INK }}>{step.title}</h3>
-              <p className="text-sm leading-relaxed" style={{ color: SLATE }}>{step.desc}</p>
-            </div>
+
+              <h3 className="text-base font-extrabold mb-2 text-slate-900 group-hover:text-slate-950 transition-colors">{item.title}</h3>
+              <p className="text-xs sm:text-sm leading-relaxed text-slate-500 max-w-[240px]">{item.desc}</p>
+            </motion.div>
           ))}
         </div>
-      </Reveal>
+      </div>
     </div>
   );
 }
@@ -360,6 +420,61 @@ function TrustedSection() {
           ))}
         </div>
       </Reveal>
+    </div>
+  );
+}
+
+/* ─── Integrations Wall ─── */
+function IntegrationsSection() {
+  const integrations = [
+    { name: "Azure", icon: "☁️" }, { name: "Gemini", icon: "💎" }, { name: "Anthropic", icon: "🧠" }, { name: "Groq", icon: "⚡" },
+    { name: "Cartesia", icon: "🎙️" }, { name: "Make", icon: "🔄" }, { name: "n8n", icon: "🔗" }, { name: "Google Calendar", icon: "📅" },
+    { name: "WhatsApp", icon: "💬" }, { name: "Discord", icon: "💜" }, { name: "Instagram", icon: "📸" }, { name: "Facebook", icon: "👤" },
+    { name: "Telegram", icon: "✈️" }, { name: "Google Docs", icon: "📄" }, { name: "Microsoft", icon: "🪟" }, { name: "Twilio", icon: "📞" },
+  ];
+
+  return (
+    <div className="max-w-6xl mx-auto text-center overflow-hidden">
+      <Reveal>
+        <div className="mb-6">
+          <SectionLabel text="Integrations" />
+        </div>
+        <h2 className="text-2xl sm:text-4xl font-extrabold text-[#0a0a0a] mb-3">
+          Seamlessly plugs into <GradientText>your tech stack</GradientText>
+        </h2>
+        <p className="text-sm text-slate-500 max-w-md mx-auto mb-10">
+          Autoniv connects directly with the platforms, CRMs, and LLMs you already use.
+        </p>
+      </Reveal>
+
+      {/* Marquee Row */}
+      <div className="relative flex overflow-x-hidden py-4 mask-image:linear-gradient(to_right,transparent,black_20%,black_80%,transparent)">
+        <div className="flex gap-4 animate-marquee whitespace-nowrap min-w-full">
+          {integrations.concat(integrations).map((item, i) => (
+            <div 
+              key={i} 
+              className="inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-white border border-slate-200/60 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-500/20"
+            >
+              <span className="text-xl">{item.icon}</span>
+              <span className="text-sm font-semibold text-slate-700">{item.name}</span>
+            </div>
+          ))}
+        </div>
+        
+        {/* Style block for keyframe animation inside the component */}
+        <style>{`
+          @keyframes marquee {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-50%); }
+          }
+          .animate-marquee {
+            animation: marquee 25s linear infinite;
+          }
+          .animate-marquee:hover {
+            animation-play-state: paused;
+          }
+        `}</style>
+      </div>
     </div>
   );
 }
@@ -403,12 +518,8 @@ function GlobalStats() {
 /* ─── CTA ─── */
 function CTASection() {
   return (
-    <Reveal>
-      <div className="rounded-3xl p-12 sm:p-16 text-center relative overflow-hidden" style={{
-        background: 'linear-gradient(135deg,#eff6ff 0%,#f0fdf9 100%)',
-        border: '1.5px solid rgba(37,99,235,0.14)',
-        boxShadow: '0 20px 56px -16px rgba(37,99,235,0.14)',
-      }}>
+    <section className="section-box white" style={{ background: 'linear-gradient(135deg,#eff6ff 0%,#f0fdf9 100%)', border: '1.5px solid rgba(37,99,235,0.14)', boxShadow: '0 20px 56px -16px rgba(37,99,235,0.14)' }}>
+      <div className="section-pad text-center relative overflow-hidden">
         <CTADecorations />
         <div className="relative z-10">
           <h2 style={{ fontSize: 'clamp(24px,4vw,44px)', fontWeight: 900, letterSpacing: '-0.03em', color: INK, margin: '0 0 16px', lineHeight: 1.15 }}>
@@ -434,7 +545,7 @@ function CTASection() {
           </div>
         </div>
       </div>
-    </Reveal>
+    </section>
   );
 }
 
@@ -444,56 +555,77 @@ export function Agents() {
     <div style={{ minHeight: '100vh', background: TINT, fontFamily: SANS, color: INK }}>
       <USPSlider />
       <PublicNavbar />
-      <div style={{ paddingTop: 130 }}>
-        <Hero />
+      
+      <div className="page-bg" style={{ paddingTop: 130, paddingBottom: 8 }}>
+        <div className="box-wrap">
+          <Hero />
 
-        {/* ── Stats ── */}
-        <div style={{ padding: '64px 24px' }}>
-          <div className="max-w-6xl mx-auto">
-            <Reveal>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {HERO_STATS.map((s) => (
-                  <StatCard key={s.label} value={s.value} label={s.label} description={s.desc} />
-                ))}
-              </div>
-            </Reveal>
-          </div>
+          {/* ── Stats ── */}
+          <section className="section-box white">
+            <div className="section-pad max-w-6xl mx-auto">
+              <Reveal>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {HERO_STATS.map((s) => (
+                    <StatCard key={s.label} value={s.value} label={s.label} description={s.desc} />
+                  ))}
+                </div>
+              </Reveal>
+            </div>
+          </section>
+
+          {/* ── Services Section ── */}
+          <section className="section-box black" style={{ background: '#030812' }}>
+            {/* Ambient background glow blur blobs */}
+            <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-500/5 blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-emerald-500/5 blur-[120px] pointer-events-none" />
+            
+            <div className="section-pad max-w-6xl mx-auto relative z-10">
+              <ServicesSection />
+            </div>
+          </section>
+
+          {/* ── Comparison Section ── */}
+          <section className="section-box tint">
+            <div className="section-pad max-w-6xl mx-auto">
+              <ComparisonSection />
+            </div>
+          </section>
+
+          {/* ── How It Works ── */}
+          <section className="section-box white">
+            <div className="section-pad max-w-6xl mx-auto">
+              <HowItWorks />
+            </div>
+          </section>
+
+          {/* ── Pricing Section ── */}
+          <PricingSection openAuth={() => window.location.href = '/register'} />
+
+          {/* ── Trusted Brands ── */}
+          <section className="section-box white">
+            <div className="section-pad max-w-6xl mx-auto">
+              <TrustedSection />
+            </div>
+          </section>
+
+          {/* ── Integrations Section ── */}
+          <section className="section-box tint">
+            <div className="section-pad max-w-6xl mx-auto">
+              <IntegrationsSection />
+            </div>
+          </section>
+
+          {/* ── Global Stats ── */}
+          <section className="section-box white">
+            <div className="section-pad max-w-6xl mx-auto">
+              <GlobalStats />
+            </div>
+          </section>
+
+          {/* ── CTA ── */}
+          <CTASection />
+
         </div>
-
-        {/* ── Services Section ── */}
-        <div style={{ padding: '64px 24px', background: SURFACE, borderTop: `1px solid ${HAIRLINE}` }}>
-          <ServicesSection />
-        </div>
-
-        {/* ── Comparison Section ── */}
-        <div style={{ padding: '64px 24px' }}>
-          <ComparisonSection />
-        </div>
-
-        {/* ── How It Works ── */}
-        <div style={{ padding: '64px 24px', background: SURFACE, borderTop: `1px solid ${HAIRLINE}` }}>
-          <HowItWorks />
-        </div>
-
-        {/* ── Trusted Brands ── */}
-        <div style={{ padding: '64px 24px' }}>
-          <TrustedSection />
-        </div>
-
-        {/* ── Global Stats ── */}
-        <div style={{ padding: '64px 24px', background: SURFACE, borderTop: `1px solid ${HAIRLINE}` }}>
-          <div className="max-w-6xl mx-auto">
-            <GlobalStats />
-          </div>
-        </div>
-
-        {/* ── CTA ── */}
-        <div style={{ padding: '0 24px 80px' }}>
-          <div className="max-w-6xl mx-auto">
-            <CTASection />
-          </div>
-        </div>
-
       </div>
       <Footer />
     </div>

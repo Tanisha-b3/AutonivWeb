@@ -112,252 +112,245 @@ export function News() {
       <USPSlider />
       <PublicNavbar />
 
-      <div style={{ paddingTop: 130 }}>
+      <div className="page-bg" style={{ paddingTop: 130, paddingBottom: 80 }}>
+        <div className="box-wrap">
 
-        {/* ── Hero ── */}
-        <div style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%)', borderBottom: `1px solid ${HAIRLINE}`, padding: '76px 24px 0', position: 'relative', overflow: 'hidden' }}>
-          {/* <HeroWaveform /> */}
-          <div
-  className="max-w-6xl mx-auto flex flex-col items-center justify-center text-center"
-  style={{ paddingBottom: 64, position: 'relative', zIndex: 1 }}
->
-            <Reveal>
-              <SectionLabel text="News & Updates" />
-              <h1 style={{ fontSize: 'clamp(28px,4vw,48px)', fontWeight: 900, letterSpacing: '-0.03em', color: INK, lineHeight: 1.15, margin: '0 0 14px' }}>
-                Autoniv <GradientText>News & Updates</GradientText>
-              </h1>
-              <p style={{ fontSize: 15, color: SLATE, maxWidth: 520, lineHeight: 1.6, margin: 0 }}>
-                Stay up to date with the latest voice AI features, guides, security audits, and success stories.
-              </p>
-            </Reveal>
-          </div>
-        </div>
+          {/* ── Hero ── */}
+          <section className="section-box tint">
+            <div
+              className="max-w-6xl mx-auto flex flex-col items-center justify-center text-center section-pad"
+              style={{ position: 'relative', zIndex: 1 }}
+            >
+              <Reveal>
+                <SectionLabel text="News & Updates" />
+                <h1 style={{ fontSize: 'clamp(28px,4vw,48px)', fontWeight: 900, letterSpacing: '-0.03em', color: INK, lineHeight: 1.15, margin: '0 0 14px' }}>
+                  Autoniv <GradientText>News & Updates</GradientText>
+                </h1>
+                <p style={{ fontSize: 15, color: SLATE, maxWidth: 520, lineHeight: 1.6, margin: 0 }}>
+                  Stay up to date with the latest voice AI features, guides, security audits, and success stories.
+                </p>
+              </Reveal>
+            </div>
+          </section>
 
-        {/* ── Stats ── */}
-        <div style={{ padding: '64px 24px' }}>
-          <div className="max-w-6xl mx-auto">
-            <Reveal>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {STATS_DATA.map((s) => (
-                  <StatCard key={s.label} value={s.value} label={s.label} description={s.desc} />
-                ))}
-              </div>
-            </Reveal>
-          </div>
-        </div>
-
-        {/* ── Featured Article ── */}
-        <div style={{ padding: '64px 24px', background: SURFACE, borderTop: `1px solid ${HAIRLINE}`, borderBottom: `1px solid ${HAIRLINE}` }}>
-          <div className="max-w-6xl mx-auto">
-            <Reveal>
-              <div className="text-center">
-                <SectionLabel text="Featured" />
-                <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: '0 0 28px' }}>
-                  This Month's <GradientText>Highlight</GradientText>
-                </h2>
-              </div>
-            </Reveal>
-            {NEWS_ARTICLES.filter(a => a.featured).map((art) => (
-              <Reveal key={art.title} delay={80}>
-                <div className="group rounded-2xl overflow-hidden cursor-pointer transition-all duration-500" style={{ background: SURFACE, border: `1px solid ${HAIRLINE}`, boxShadow: '0 1px 2px rgba(15,23,42,0.04)' }}
-                  onClick={() => setSelectedArticle(art)}
-                  onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 24px 48px -12px rgba(15,23,42,0.12)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 2px rgba(15,23,42,0.04)'; }}>
-                  <div className="grid grid-cols-1 md:grid-cols-2">
-                    <div className="h-40 sm:h-56 md:h-auto flex items-center justify-center p-8 border-b md:border-b-0 md:border-r" style={{ background: TINT, borderColor: HAIRLINE }}>
-                      <span className="text-5xl sm:text-7xl md:text-8xl transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">{art.emoji}</span>
-                    </div>
-                    <div className="p-6 sm:p-8 flex flex-col justify-center">
-                      <div className="flex flex-wrap items-center gap-3 mb-3">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(37,99,235,0.08)', color: '#2563EB' }}>{art.category}</span>
-                        <span className="text-xs font-medium" style={{ color: MUTE }}>{art.date}</span>
-                      </div>
-                      <h3 className="text-xl sm:text-2xl font-bold mb-3 leading-snug" style={{ color: INK }}>{art.title}</h3>
-                      <p className="text-sm leading-relaxed mb-5" style={{ color: SLATE }}>{art.desc}</p>
-                      <div className="flex items-center justify-between pt-4" style={{ borderTop: `1px solid ${HAIRLINE}` }}>
-                        <span className="text-xs font-medium" style={{ color: MUTE }}>{art.readTime}</span>
-                        <span className="inline-flex items-center gap-2 text-sm font-bold transition-all group-hover:gap-3" style={{ color: '#2563EB' }}>
-                          Read More
-                          <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+          {/* ── Stats ── */}
+          <section className="section-box white">
+            <div className="section-pad max-w-6xl mx-auto">
+              <Reveal>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {STATS_DATA.map((s) => (
+                    <StatCard key={s.label} value={s.value} label={s.label} description={s.desc} />
+                  ))}
                 </div>
               </Reveal>
-            ))}
-          </div>
-        </div>
+            </div>
+          </section>
 
-        {/* ── All Articles ── */}
-        <div style={{ padding: '64px 24px' }}>
-          <div className="max-w-6xl mx-auto">
-            <Reveal>
-              <div className="text-center">
-                <SectionLabel text="Articles" />
-                <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: '0 0 28px' }}>
-                  All <GradientText>Articles</GradientText>
-                </h2>
-              </div>
-            </Reveal>
-            <Reveal delay={80}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {NEWS_ARTICLES.filter(a => !a.featured).map((art) => (
-                  <div key={art.title} className="group rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1" style={{ background: SURFACE, border: `1px solid ${HAIRLINE}`, boxShadow: '0 1px 2px rgba(15,23,42,0.04)' }}
-                    onClick={() => setSelectedArticle(art)}
-                    onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 12px 32px -8px rgba(15,23,42,0.10)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 2px rgba(15,23,42,0.04)'; }}>
-                    <div className="h-28 sm:h-40 flex items-center justify-center" style={{ background: TINT, borderBottom: `1px solid ${HAIRLINE}` }}>
-                      <span className="text-4xl sm:text-5xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">{art.emoji}</span>
-                    </div>
-                    <div className="p-5 sm:p-6">
-                      <div className="flex flex-wrap items-center gap-2 mb-3">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ background: 'rgba(37,99,235,0.08)', color: '#2563EB' }}>{art.category}</span>
-                        <span className="text-[10px] font-medium" style={{ color: MUTE }}>{art.date}</span>
-                      </div>
-                      <h3 className="text-sm font-bold mb-2 leading-snug line-clamp-2" style={{ color: INK }}>{art.title}</h3>
-                      <p className="text-xs leading-relaxed mb-4 line-clamp-2" style={{ color: SLATE }}>{art.desc}</p>
-                      <div className="flex items-center justify-between pt-3" style={{ borderTop: `1px solid ${HAIRLINE}` }}>
-                        <span className="text-[10px] font-medium" style={{ color: MUTE }}>{art.readTime}</span>
-                        <span className="text-sm font-medium transition-all group-hover:translate-x-1" style={{ color: '#2563EB' }}>Read More →</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Reveal>
-          </div>
-        </div>
-
-        {/* ── Categories ── */}
-        <div style={{ padding: '64px 24px', background: SURFACE, borderTop: `1px solid ${HAIRLINE}` }}>
-          <div className="max-w-6xl mx-auto">
-            <Reveal>
-              <div className="text-center">
-                <SectionLabel text="Topics" />
-                <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: '0 0 28px' }}>
-                  Browse by <GradientText>Topic</GradientText>
-                </h2>
-              </div>
-            </Reveal>
-            <Reveal delay={80}>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {CATEGORIES.map((cat) => (
-                  <div key={cat.name} className="group rounded-2xl p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-                    style={{ background: SURFACE, border: `1px solid ${HAIRLINE}` }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(37,99,235,0.18)'; e.currentTarget.style.boxShadow = '0 8px 24px -8px rgba(37,99,235,0.12)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = HAIRLINE; e.currentTarget.style.boxShadow = 'none'; }}>
-                    <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">{cat.icon}</div>
-                    <div className="text-sm font-bold mb-1" style={{ color: INK }}>{cat.name}</div>
-                    <div className="text-xs" style={{ color: MUTE }}>{cat.count} articles</div>
-                  </div>
-                ))}
-              </div>
-            </Reveal>
-          </div>
-        </div>
-
-        {/* ── Timeline ── */}
-        <div style={{ padding: '64px 24px' }}>
-          <div className="max-w-6xl mx-auto">
-            <Reveal>
-              <div className="text-center">
-                <SectionLabel text="Milestones" />
-                <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: '0 0 28px' }}>
-                  Product <GradientText>Timeline</GradientText>
-                </h2>
-              </div>
-            </Reveal>
-            <Reveal delay={80}>
-              <div className="max-w-3xl mx-auto" style={{ background: SURFACE, border: `1px solid ${HAIRLINE}`, borderRadius: 16, padding: '32px 24px' }}>
-                {TIMELINE.map((item, i) => (
-                  <div key={i} className="flex gap-4 sm:gap-6" style={{ marginBottom: i < TIMELINE.length - 1 ? 24 : 0 }}>
-                    <div className="flex flex-col items-center">
-                      <div style={{ width: 14, height: 14, borderRadius: '50%', flexShrink: 0, background: BRAND, boxShadow: '0 0 0 3px rgba(37,99,235,0.12)' }} />
-                      {i < TIMELINE.length - 1 && <div className="w-px flex-1 mt-2" style={{ background: HAIRLINE }} />}
-                    </div>
-                    <div style={{ paddingBottom: i < TIMELINE.length - 1 ? 24 : 0 }}>
-                      <div className="text-xs font-bold tracking-wider mb-1" style={{ color: '#2563EB', fontFamily: MONO }}>{item.date}</div>
-                      <div className="text-sm font-bold mb-1" style={{ color: INK }}>{item.title}</div>
-                      <div className="text-xs" style={{ color: SLATE }}>{item.desc}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Reveal>
-          </div>
-        </div>
-
-        {/* ── Newsletter ── */}
-        <div style={{ padding: '64px 24px', background: SURFACE, borderTop: `1px solid ${HAIRLINE}` }}>
-          <div className="max-w-6xl mx-auto">
-            <Reveal>
-              <div className="max-w-lg mx-auto text-center">
-                <SectionLabel text="Stay Connected" />
-                <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: '0 0 10px' }}>
-                  Subscribe to our <GradientText>Newsletter</GradientText>
-                </h2>
-                <p style={{ fontSize: 14, color: SLATE, marginBottom: 28 }}>
-                  Get product announcements, tips, and voice AI insights sent straight to your inbox.
-                </p>
-                <form onSubmit={e => { e.preventDefault(); alert('Thank you for subscribing!'); }} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                  <input type="email" required placeholder="Enter your work email"
-                    className="flex-1 px-5 py-3.5 rounded-xl text-sm outline-none transition-all"
-                    style={{ background: TINT, border: `1px solid ${HAIRLINE}`, color: INK }}
-                    onFocus={e => { e.currentTarget.style.borderColor = '#2563EB'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.1)'; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = HAIRLINE; e.currentTarget.style.boxShadow = 'none'; }}
-                  />
-                  <button type="submit" className="px-8 py-3.5 rounded-xl text-sm font-bold text-white cursor-pointer transition-all duration-200"
-                    style={{ background: BRAND, border: 'none' }}
-                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(16,185,129,0.35)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
-                    Subscribe
-                  </button>
-                </form>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-
-        {/* ── CTA ── */}
-        <div style={{ padding: '0 24px 80px', background: SURFACE }}>
-          <div className="max-w-6xl mx-auto">
-            <Reveal>
-              <div className="rounded-3xl p-12 sm:p-16 text-center relative overflow-hidden" style={{
-                background: 'linear-gradient(135deg,#eff6ff 0%,#f0fdf9 100%)',
-                border: '1.5px solid rgba(37,99,235,0.14)',
-                boxShadow: '0 20px 56px -16px rgba(37,99,235,0.14)',
-              }}>
-                <CTADecorations />
-                <div className="relative z-10">
-                  <h2 style={{ fontSize: 'clamp(24px,4vw,44px)', fontWeight: 900, letterSpacing: '-0.03em', color: INK, margin: '0 0 16px', lineHeight: 1.15 }}>
-                    Ready to Grow with <GradientText>AI?</GradientText>
+          {/* ── Featured Article ── */}
+          <section className="section-box tint">
+            <div className="section-pad max-w-6xl mx-auto">
+              <Reveal>
+                <div className="text-center mb-10">
+                  <SectionLabel text="Featured" />
+                  <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: 0 }}>
+                    This Month's <GradientText>Highlight</GradientText>
                   </h2>
-                  <p style={{ fontSize: 15, color: SLATE, maxWidth: 480, margin: '0 auto 32px', lineHeight: 1.7 }}>
-                    Join 500+ businesses using Autoniv AI Voice Agents to capture more leads and serve customers 24/7.
-                  </p>
-                  <div className="flex flex-col sm:flex-row justify-center gap-3">
-                    <Link to="/register"
-                      className="px-8 py-4 rounded-full text-sm font-bold text-white no-underline inline-block text-center transition-all duration-200"
-                      style={{ background: BRAND, boxShadow: '0 8px 26px -4px rgba(16,185,129,0.34)' }}
-                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 32px -4px rgba(16,185,129,0.44)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 26px -4px rgba(16,185,129,0.34)'; }}>
-                      Start Free Trial →
-                    </Link>
-                    <Link to="/agents"
-                      className="px-8 py-4 rounded-full text-sm font-bold no-underline inline-block text-center transition-all duration-200"
-                      style={{ background: SURFACE, border: '1.5px solid rgba(15,23,42,0.10)', color: '#475569' }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(37,99,235,0.32)'; e.currentTarget.style.color = '#2563EB'; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(15,23,42,0.10)'; e.currentTarget.style.color = '#475569'; }}>
-                      Explore AI Agents
-                    </Link>
+                </div>
+              </Reveal>
+              {NEWS_ARTICLES.filter(a => a.featured).map((art) => (
+                <Reveal key={art.title} delay={80}>
+                  <div className="group rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 bg-white border" style={{ borderColor: HAIRLINE, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}
+                    onClick={() => setSelectedArticle(art)}
+                    onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 24px 48px -12px rgba(15,23,42,0.12)'; e.currentTarget.style.borderColor = 'rgba(37,99,235,0.2)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.02)'; e.currentTarget.style.borderColor = HAIRLINE; }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2">
+                      <div className="h-40 sm:h-56 md:h-auto flex items-center justify-center p-8 border-b md:border-b-0 md:border-r" style={{ background: TINT, borderColor: HAIRLINE }}>
+                        <span className="text-5xl sm:text-7xl md:text-8xl transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">{art.emoji}</span>
+                      </div>
+                      <div className="p-6 sm:p-8 flex flex-col justify-center">
+                        <div className="flex flex-wrap items-center gap-3 mb-3">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(37,99,235,0.08)', color: '#2563EB' }}>{art.category}</span>
+                          <span className="text-xs font-medium" style={{ color: MUTE }}>{art.date}</span>
+                        </div>
+                        <h3 className="text-xl sm:text-2xl font-bold mb-3 leading-snug" style={{ color: INK }}>{art.title}</h3>
+                        <p className="text-sm leading-relaxed mb-5" style={{ color: SLATE }}>{art.desc}</p>
+                        <div className="flex items-center justify-between pt-4" style={{ borderTop: `1px solid ${HAIRLINE}` }}>
+                          <span className="text-xs font-medium" style={{ color: MUTE }}>{art.readTime}</span>
+                          <span className="inline-flex items-center gap-2 text-sm font-bold transition-all group-hover:gap-3" style={{ color: '#2563EB' }}>
+                            Read More
+                            <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+                </Reveal>
+              ))}
+            </div>
+          </section>
+
+          {/* ── All Articles ── */}
+          <section className="section-box white">
+            <div className="section-pad max-w-6xl mx-auto">
+              <Reveal>
+                <div className="text-center mb-10">
+                  <SectionLabel text="Articles" />
+                  <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: 0 }}>
+                    All <GradientText>Articles</GradientText>
+                  </h2>
+                </div>
+              </Reveal>
+              <Reveal delay={80}>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {NEWS_ARTICLES.filter(a => !a.featured).map((art) => (
+                    <div key={art.title} className="group rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 bg-white border" style={{ borderColor: HAIRLINE, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}
+                      onClick={() => setSelectedArticle(art)}
+                      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 12px 32px -8px rgba(15,23,42,0.10)'; e.currentTarget.style.borderColor = 'rgba(37,99,235,0.2)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.02)'; e.currentTarget.style.borderColor = HAIRLINE; }}>
+                      <div className="h-28 sm:h-40 flex items-center justify-center" style={{ background: TINT, borderBottom: `1px solid ${HAIRLINE}` }}>
+                        <span className="text-4xl sm:text-5xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">{art.emoji}</span>
+                      </div>
+                      <div className="p-5 sm:p-6">
+                        <div className="flex flex-wrap items-center gap-2 mb-3">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ background: 'rgba(37,99,235,0.08)', color: '#2563EB' }}>{art.category}</span>
+                          <span className="text-[10px] font-medium" style={{ color: MUTE }}>{art.date}</span>
+                        </div>
+                        <h3 className="text-sm font-bold mb-2 leading-snug line-clamp-2" style={{ color: INK }}>{art.title}</h3>
+                        <p className="text-xs leading-relaxed mb-4 line-clamp-2" style={{ color: SLATE }}>{art.desc}</p>
+                        <div className="flex items-center justify-between pt-3" style={{ borderTop: `1px solid ${HAIRLINE}` }}>
+                          <span className="text-[10px] font-medium" style={{ color: MUTE }}>{art.readTime}</span>
+                          <span className="text-sm font-medium transition-all group-hover:translate-x-1" style={{ color: '#2563EB' }}>Read More →</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Reveal>
+            </div>
+          </section>
+
+          {/* ── Categories ── */}
+          <section className="section-box tint">
+            <div className="section-pad max-w-6xl mx-auto">
+              <Reveal>
+                <div className="text-center mb-10">
+                  <SectionLabel text="Topics" />
+                  <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: 0 }}>
+                    Browse by <GradientText>Topic</GradientText>
+                  </h2>
+                </div>
+              </Reveal>
+              <Reveal delay={80}>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {CATEGORIES.map((cat) => (
+                    <div key={cat.name} className="group rounded-2xl p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1 bg-white border cursor-pointer"
+                      style={{ borderColor: HAIRLINE }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(37,99,235,0.18)'; e.currentTarget.style.boxShadow = '0 8px 24px -8px rgba(37,99,235,0.12)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = HAIRLINE; e.currentTarget.style.boxShadow = 'none'; }}>
+                      <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">{cat.icon}</div>
+                      <div className="text-sm font-bold mb-1" style={{ color: INK }}>{cat.name}</div>
+                      <div className="text-xs" style={{ color: MUTE }}>{cat.count} articles</div>
+                    </div>
+                  ))}
+                </div>
+              </Reveal>
+            </div>
+          </section>
+
+          {/* ── Timeline ── */}
+          <section className="section-box white">
+            <div className="section-pad max-w-6xl mx-auto">
+              <Reveal>
+                <div className="text-center mb-10">
+                  <SectionLabel text="Milestones" />
+                  <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: 0 }}>
+                    Product <GradientText>Timeline</GradientText>
+                  </h2>
+                </div>
+              </Reveal>
+              <Reveal delay={80}>
+                <div className="max-w-3xl mx-auto bg-slate-50/50 border border-slate-100/80 rounded-2xl p-6 sm:p-8">
+                  {TIMELINE.map((item, i) => (
+                    <div key={i} className="flex gap-4 sm:gap-6" style={{ marginBottom: i < TIMELINE.length - 1 ? 24 : 0 }}>
+                      <div className="flex flex-col items-center">
+                        <div style={{ width: 14, height: 14, borderRadius: '50%', flexShrink: 0, background: BRAND, boxShadow: '0 0 0 3px rgba(37,99,235,0.12)' }} />
+                        {i < TIMELINE.length - 1 && <div className="w-px flex-1 mt-2" style={{ background: HAIRLINE }} />}
+                      </div>
+                      <div style={{ paddingBottom: i < TIMELINE.length - 1 ? 24 : 0 }}>
+                        <div className="text-xs font-bold tracking-wider mb-1" style={{ color: '#2563EB', fontFamily: MONO }}>{item.date}</div>
+                        <div className="text-sm font-bold mb-1" style={{ color: INK }}>{item.title}</div>
+                        <div className="text-xs" style={{ color: SLATE }}>{item.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Reveal>
+            </div>
+          </section>
+
+          {/* ── Newsletter ── */}
+          <section className="section-box tint">
+            <div className="section-pad max-w-6xl mx-auto">
+              <Reveal>
+                <div className="max-w-lg mx-auto text-center">
+                  <SectionLabel text="Stay Connected" />
+                  <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: '0 0 10px' }}>
+                    Subscribe to our <GradientText>Newsletter</GradientText>
+                  </h2>
+                  <p style={{ fontSize: 14, color: SLATE, marginBottom: 28 }}>
+                    Get product announcements, tips, and voice AI insights sent straight to your inbox.
+                  </p>
+                  <form onSubmit={e => { e.preventDefault(); alert('Thank you for subscribing!'); }} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                    <input type="email" required placeholder="Enter your work email"
+                      className="flex-1 px-5 py-3.5 rounded-xl text-sm outline-none transition-all"
+                      style={{ background: 'white', border: `1px solid ${HAIRLINE}`, color: INK }}
+                      onFocus={e => { e.currentTarget.style.borderColor = '#2563EB'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.1)'; }}
+                      onBlur={e => { e.currentTarget.style.borderColor = HAIRLINE; e.currentTarget.style.boxShadow = 'none'; }}
+                    />
+                    <button type="submit" className="px-8 py-3.5 rounded-xl text-sm font-bold text-white cursor-pointer transition-all duration-200"
+                      style={{ background: BRAND, border: 'none' }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(16,185,129,0.35)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
+                      Subscribe
+                    </button>
+                  </form>
+                </div>
+              </Reveal>
+            </div>
+          </section>
+
+          {/* ── CTA ── */}
+          <section className="section-box white" style={{ background: 'linear-gradient(135deg,#eff6ff 0%,#f0fdf9 100%)', border: '1.5px solid rgba(37,99,235,0.14)', boxShadow: '0 20px 56px -16px rgba(37,99,235,0.14)' }}>
+            <div className="section-pad max-w-6xl mx-auto text-center relative overflow-hidden">
+              <CTADecorations />
+              <div className="relative z-10">
+                <h2 style={{ fontSize: 'clamp(24px,4vw,44px)', fontWeight: 900, letterSpacing: '-0.03em', color: INK, margin: '0 0 16px', lineHeight: 1.15 }}>
+                  Ready to Grow with <GradientText>AI?</GradientText>
+                </h2>
+                <p style={{ fontSize: 15, color: SLATE, maxWidth: 480, margin: '0 auto 32px', lineHeight: 1.7 }}>
+                  Join 500+ businesses using Autoniv AI Voice Agents to capture more leads and serve customers 24/7.
+                </p>
+                <div className="flex flex-col sm:flex-row justify-center gap-3">
+                  <Link to="/register"
+                    className="px-8 py-4 rounded-full text-sm font-bold text-white no-underline inline-block text-center transition-all duration-200"
+                    style={{ background: BRAND, boxShadow: '0 8px 26px -4px rgba(16,185,129,0.34)' }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 32px -4px rgba(16,185,129,0.44)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 26px -4px rgba(16,185,129,0.34)'; }}>
+                    Start Free Trial →
+                  </Link>
+                  <Link to="/agents"
+                    className="px-8 py-4 rounded-full text-sm font-bold no-underline inline-block text-center transition-all duration-200"
+                    style={{ background: SURFACE, border: '1.5px solid rgba(15,23,42,0.10)', color: '#475569' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(37,99,235,0.32)'; e.currentTarget.style.color = '#2563EB'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(15,23,42,0.10)'; e.currentTarget.style.color = '#475569'; }}>
+                    Explore AI Agents
+                  </Link>
                 </div>
               </div>
-            </Reveal>
-          </div>
-        </div>
+            </div>
+          </section>
 
+        </div>
       </div>
 
       {selectedArticle && (

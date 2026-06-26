@@ -253,6 +253,7 @@ export function UserBilling() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [upgrading, setUpgrading] = useState(false);
   const [modalTab, setModalTab] = useState<'chat' | 'voice' | 'both'>('chat');
+  const [currency, setCurrency] = useState<'usd' | 'inr'>('usd');
 
   useEffect(() => {
     dispatch(fetchMyUpgradeRequests());
@@ -320,11 +321,35 @@ export function UserBilling() {
             <p className="mt-1.5 text-xs sm:text-sm text-slate-500 font-semibold">Manage plan levels, monitor usage quotas, and check invoices</p>
           </div>
 
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200 shadow-sm w-fit">
-            <span className="w-2 h-2 rounded-full animate-pulse bg-emerald-500" />
-            <span className="text-xs text-slate-700 font-bold">
-              {activePlanConfig.name} Plan Active
-            </span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+              <button
+                onClick={() => setCurrency('usd')}
+                className={`px-3.5 py-2 text-xs font-bold transition-all cursor-pointer border-none ${
+                  currency === 'usd'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-slate-500 hover:bg-slate-50'
+                }`}
+              >
+                USD
+              </button>
+              <button
+                onClick={() => setCurrency('inr')}
+                className={`px-3.5 py-2 text-xs font-bold transition-all cursor-pointer border-none ${
+                  currency === 'inr'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-slate-500 hover:bg-slate-50'
+                }`}
+              >
+                INR
+              </button>
+            </div>
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200 shadow-sm w-fit">
+              <span className="w-2 h-2 rounded-full animate-pulse bg-emerald-500" />
+              <span className="text-xs text-slate-700 font-bold">
+                {activePlanConfig.name} Plan Active
+              </span>
+            </div>
           </div>
         </motion.div>
 
@@ -351,15 +376,10 @@ export function UserBilling() {
                 <p className="text-xs text-slate-500 mt-1.5 font-semibold leading-relaxed max-w-xs">{activePlanConfig.tagline}</p>
                 <div className="flex items-baseline gap-1.5 mt-5">
                   <span className="text-4xl font-black text-slate-800 tracking-tight">
-                    {activePlanConfig.id.endsWith('enterprise') ? 'Custom' : `$${(activePlanConfig.priceUSD || 0).toLocaleString()}`}
+                    {activePlanConfig.id.endsWith('enterprise') ? 'Custom' : currency === 'usd' ? `$${(activePlanConfig.priceUSD || 0).toLocaleString()}` : `₹${activePlanConfig.price.toLocaleString()}`}
                   </span>
                   {!activePlanConfig.id.endsWith('enterprise') && <span className="text-slate-500 font-bold text-xs">/ month</span>}
                 </div>
-                {!activePlanConfig.id.endsWith('enterprise') && activePlanConfig.priceUSD !== 0 && (
-                  <div className="text-xs text-slate-400 font-medium mt-1">
-                    ₹{activePlanConfig.price.toLocaleString()}/mo INR
-                  </div>
-                )}
               </div>
             </div>
 
@@ -444,7 +464,7 @@ export function UserBilling() {
                 {[
                   { label: 'Billing Period', value: 'Monthly recurring' },
                   { label: 'Next Renewal', value: '1st of next month' },
-                  { label: 'Setup Fee', value: 'Waived (₹0)' },
+                  { label: 'Setup Fee', value: `Waived (${currency === 'usd' ? '$0' : '₹0'})` },
                 ].map((item) => (
                   <div key={item.label} className="flex justify-between items-center text-xs">
                     <span className="text-slate-400 font-bold">{item.label}</span>
@@ -767,15 +787,10 @@ export function UserBilling() {
                             <div className="mt-4">
                               <div className="flex items-baseline gap-1">
                                 <span className="text-2xl font-black text-slate-800 tracking-tight">
-                                  {p.id.endsWith('enterprise') ? 'Custom' : `$${(p.priceUSD || 0).toLocaleString()}`}
+                                  {p.id.endsWith('enterprise') ? 'Custom' : currency === 'usd' ? `$${(p.priceUSD || 0).toLocaleString()}` : `₹${p.price.toLocaleString()}`}
                                 </span>
                                 {!p.id.endsWith('enterprise') && <span className="text-[10px] text-slate-400 font-bold">/mo</span>}
                               </div>
-                              {!p.id.endsWith('enterprise') && p.priceUSD !== 0 && (
-                                <div className="text-[10px] text-slate-400 font-medium mt-0.5">
-                                  ₹{p.price.toLocaleString()}/mo INR
-                                </div>
-                              )}
                               <p className="text-[10px] mt-1 font-black text-blue-600">
                                 {p.callsPerMonth > 0 && `${p.callsPerMonth.toLocaleString()} chats / mo`}
                                 {p.callsPerMonth > 0 && p.minutesPerMonth > 0 && ' & '}
@@ -825,7 +840,7 @@ export function UserBilling() {
                           </span>
                           {' — '}
                            <span className="font-extrabold text-blue-900">
-                            {selectedPlan.endsWith('enterprise') ? 'Custom pricing' : `$${(getPlanConfig(selectedPlan).plan.priceUSD || 0).toLocaleString()}/mo`}
+                            {selectedPlan.endsWith('enterprise') ? 'Custom pricing' : currency === 'usd' ? `$${(getPlanConfig(selectedPlan).plan.priceUSD || 0).toLocaleString()}/mo` : `₹${getPlanConfig(selectedPlan).plan.price.toLocaleString()}/mo`}
                           </span>
                         </p>
                       </div>
