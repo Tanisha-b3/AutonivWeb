@@ -4,13 +4,13 @@ import Footer from "../Footer";
 import { USPSlider } from "./USPSlider";
 import { Hero } from "./Hero";
 import { Demo } from "./Demo";
+import { Features } from "./Features";
+import { Services } from "./ServicesSection";
 
 const AuthDialog = lazy(() =>
   import("../AuthDialog").then((m) => ({ default: m.AuthDialog }))
 );
 
-const Features = lazy(() => import("./Features").then(m => ({ default: m.Features })));
-const Services = lazy(() => import("./ServicesSection").then(m => ({ default: m.Services })));
 const HowItWorks = lazy(() => import("./HowItWorks").then(m => ({ default: m.HowItWorks })));
 const Comparison = lazy(() => import("./Comparison").then(m => ({ default: m.Comparison })));
 const Industry = lazy(() => import("./Industry").then(m => ({ default: m.Industry })));
@@ -42,34 +42,40 @@ export function LandingSection() {
           <USPSlider />
           <Hero openAuth={openAuth} />
           <Demo />
-          <Suspense fallback={null}>
             <div id="features">
               <Features />
             </div>
             <Services openAuth={openAuth} />
+          <Suspense fallback={null}>
             <Comparison />
-           
-             <div id="how-it-works">
+          </Suspense>
+          <Suspense fallback={null}>
+            <div id="how-it-works">
               <HowItWorks openAuth={openAuth} />
             </div>
+          </Suspense>
+          <Suspense fallback={null}>
             <Industry activeUseCase={activeUseCase} setActiveUseCase={setActiveUseCase} openAuth={openAuth} />
-          
-          
-
-            {/* <AddOns /> */}
-
-             
-           
-            
-            
-             <CaseStudiesSection />
+          </Suspense>
+          <Suspense fallback={null}>
+            <CaseStudiesSection />
+          </Suspense>
+          <Suspense fallback={null}>
             <Blog />
-            
+          </Suspense>
+          <Suspense fallback={null}>
             <Pricing openAuth={openAuth} />
+          </Suspense>
+          <Suspense fallback={null}>
             <Contact />
+          </Suspense>
+          <Suspense fallback={null}>
             <CTABanner openAuth={openAuth} />
-
-              <Testimonials />
+          </Suspense>
+          <Suspense fallback={null}>
+            <Testimonials />
+          </Suspense>
+          <Suspense fallback={null}>
             <FAQ />
           </Suspense>
         </div>

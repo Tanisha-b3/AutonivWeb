@@ -61,241 +61,249 @@ router.get('/widget.js', (req, res) => {
     return;
   }
 
-  // Create styles
-  const style = document.createElement('style');
-  style.textContent = \`
-    .autoniv-widget-bubble {
-      position: fixed;
-      \${POSITION.includes('right') ? 'right: 20px' : 'left: 20px'};
-      \${POSITION.includes('bottom') ? 'bottom: 20px' : 'top: 20px'};
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #2563eb, #0891b2);
-      color: white;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 4px 20px rgba(37,99,235,0.4);
-      z-index: 99999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .autoniv-widget-bubble:hover {
-      transform: scale(1.1);
-      box-shadow: 0 6px 24px rgba(37,99,235,0.5);
-    }
-    .autoniv-widget-bubble svg {
-      width: 28px;
-      height: 28px;
-    }
-    .autoniv-widget-container {
-      position: fixed;
-      \${POSITION.includes('right') ? 'right: 20px' : 'left: 20px'};
-      \${POSITION.includes('bottom') ? 'bottom: 90px' : 'top: 90px'};
-      width: 380px;
-      max-height: 520px;
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.15);
-      z-index: 99998;
-      display: none;
-      flex-direction: column;
-      overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    .autoniv-widget-container.open {
-      display: flex;
-    }
-    .autoniv-widget-header {
-      background: linear-gradient(135deg, #2563eb, #0891b2);
-      color: white;
-      padding: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .autoniv-widget-header h3 {
-      margin: 0;
-      font-size: 15px;
-      font-weight: 600;
-    }
-    .autoniv-widget-close {
-      background: none;
-      border: none;
-      color: white;
-      cursor: pointer;
-      padding: 4px;
-      opacity: 0.8;
-    }
-    .autoniv-widget-close:hover {
-      opacity: 1;
-    }
-    .autoniv-widget-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      min-height: 280px;
-      max-height: 340px;
-    }
-    .autoniv-widget-message {
-      max-width: 80%;
-      padding: 10px 14px;
-      border-radius: 12px;
-      font-size: 13px;
-      line-height: 1.5;
-      word-wrap: break-word;
-    }
-    .autoniv-widget-message.user {
-      align-self: flex-end;
-      background: #2563eb;
-      color: white;
-      border-bottom-right-radius: 4px;
-    }
-    .autoniv-widget-message.bot {
-      align-self: flex-start;
-      background: #f1f5f9;
-      color: #1e293b;
-      border-bottom-left-radius: 4px;
-    }
-    .autoniv-widget-input-area {
-      padding: 12px;
-      border-top: 1px solid #e2e8f0;
-      display: flex;
-      gap: 8px;
-    }
-    .autoniv-widget-input {
-      flex: 1;
-      padding: 10px 14px;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      font-size: 13px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .autoniv-widget-input:focus {
-      border-color: #2563eb;
-    }
-    .autoniv-widget-send {
-      background: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 16px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      transition: background 0.2s;
-    }
-    .autoniv-widget-send:hover {
-      background: #1d4ed8;
-    }
-    .autoniv-widget-send:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    @media (max-width: 440px) {
+  function init() {
+    // Create styles
+    const style = document.createElement('style');
+    style.textContent = \`
+      .autoniv-widget-bubble {
+        position: fixed;
+        \${POSITION.includes('right') ? 'right: 20px' : 'left: 20px'};
+        \${POSITION.includes('bottom') ? 'bottom: 20px' : 'top: 20px'};
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #2563eb, #0891b2);
+        color: white;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 20px rgba(37,99,235,0.4);
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .autoniv-widget-bubble:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 24px rgba(37,99,235,0.5);
+      }
+      .autoniv-widget-bubble svg {
+        width: 28px;
+        height: 28px;
+      }
       .autoniv-widget-container {
-        width: calc(100vw - 32px);
-        right: 16px !important;
-        left: 16px !important;
-        bottom: 80px !important;
+        position: fixed;
+        \${POSITION.includes('right') ? 'right: 20px' : 'left: 20px'};
+        \${POSITION.includes('bottom') ? 'bottom: 90px' : 'top: 90px'};
+        width: 380px;
+        max-height: 520px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+        z-index: 99998;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      .autoniv-widget-container.open {
+        display: flex;
+      }
+      .autoniv-widget-header {
+        background: linear-gradient(135deg, #2563eb, #0891b2);
+        color: white;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .autoniv-widget-header h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .autoniv-widget-close {
+        background: none;
+        border: none;
+        color: white;
+        cursor: pointer;
+        padding: 4px;
+        opacity: 0.8;
+      }
+      .autoniv-widget-close:hover {
+        opacity: 1;
+      }
+      .autoniv-widget-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 280px;
+        max-height: 340px;
+      }
+      .autoniv-widget-message {
+        max-width: 80%;
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 13px;
+        line-height: 1.5;
+        word-wrap: break-word;
+      }
+      .autoniv-widget-message.user {
+        align-self: flex-end;
+        background: #2563eb;
+        color: white;
+        border-bottom-right-radius: 4px;
+      }
+      .autoniv-widget-message.bot {
+        align-self: flex-start;
+        background: #f1f5f9;
+        color: #1e293b;
+        border-bottom-left-radius: 4px;
+      }
+      .autoniv-widget-input-area {
+        padding: 12px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        gap: 8px;
+      }
+      .autoniv-widget-input {
+        flex: 1;
+        padding: 10px 14px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 13px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .autoniv-widget-input:focus {
+        border-color: #2563eb;
+      }
+      .autoniv-widget-send {
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 16px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: background 0.2s;
+      }
+      .autoniv-widget-send:hover {
+        background: #1d4ed8;
+      }
+      .autoniv-widget-send:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      @media (max-width: 440px) {
+        .autoniv-widget-container {
+          width: calc(100vw - 32px);
+          right: 16px !important;
+          left: 16px !important;
+          bottom: 80px !important;
+        }
+      }
+    \`;
+    document.head.appendChild(style);
+
+    // Create bubble button
+    const bubble = document.createElement('button');
+    bubble.className = 'autoniv-widget-bubble';
+    bubble.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+    document.body.appendChild(bubble);
+
+    // Create chat container
+    const container = document.createElement('div');
+    container.className = 'autoniv-widget-container';
+    container.innerHTML = \`
+      <div class="autoniv-widget-header">
+        <h3>Chat with us</h3>
+        <button class="autoniv-widget-close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="autoniv-widget-messages"></div>
+      <div class="autoniv-widget-input-area">
+        <input type="text" class="autoniv-widget-input" placeholder="Type your message..." />
+        <button class="autoniv-widget-send">Send</button>
+      </div>
+    \`;
+    document.body.appendChild(container);
+
+    const messagesEl = container.querySelector('.autoniv-widget-messages');
+    const inputEl = container.querySelector('.autoniv-widget-input');
+    const sendBtn = container.querySelector('.autoniv-widget-send');
+    const closeBtn = container.querySelector('.autoniv-widget-close');
+    let history = [];
+    let isOpen = false;
+
+    function addMessage(text, role) {
+      const div = document.createElement('div');
+      div.className = 'autoniv-widget-message ' + role;
+      div.textContent = text;
+      messagesEl.appendChild(div);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function toggleWidget() {
+      isOpen = !isOpen;
+      container.classList.toggle('open', isOpen);
+      if (isOpen && messagesEl.children.length === 0) {
+        addMessage('Hi! How can I help you today?', 'bot');
       }
     }
-  \`;
-  document.head.appendChild(style);
 
-  // Create bubble button
-  const bubble = document.createElement('button');
-  bubble.className = 'autoniv-widget-bubble';
-  bubble.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
-  document.body.appendChild(bubble);
+    async function sendMessage() {
+      const text = inputEl.value.trim();
+      if (!text) return;
 
-  // Create chat container
-  const container = document.createElement('div');
-  container.className = 'autoniv-widget-container';
-  container.innerHTML = \`
-    <div class="autoniv-widget-header">
-      <h3>Chat with us</h3>
-      <button class="autoniv-widget-close">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="autoniv-widget-messages"></div>
-    <div class="autoniv-widget-input-area">
-      <input type="text" class="autoniv-widget-input" placeholder="Type your message..." />
-      <button class="autoniv-widget-send">Send</button>
-    </div>
-  \`;
-  document.body.appendChild(container);
+      addMessage(text, 'user');
+      inputEl.value = '';
+      sendBtn.disabled = true;
 
-  const messagesEl = container.querySelector('.autoniv-widget-messages');
-  const inputEl = container.querySelector('.autoniv-widget-input');
-  const sendBtn = container.querySelector('.autoniv-widget-send');
-  const closeBtn = container.querySelector('.autoniv-widget-close');
-  let history = [];
-  let isOpen = false;
+      history.push({ role: 'user', text });
 
-  function addMessage(text, role) {
-    const div = document.createElement('div');
-    div.className = 'autoniv-widget-message ' + role;
-    div.textContent = text;
-    messagesEl.appendChild(div);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+      try {
+        const res = await fetch(API_BASE + '/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': API_KEY,
+          },
+          body: JSON.stringify({ message: text, history }),
+        });
+
+        const data = await res.json();
+        addMessage(data.response || 'Sorry, something went wrong.', 'bot');
+        history.push({ role: 'assistant', text: data.response });
+      } catch (err) {
+        addMessage('Connection error. Please try again.', 'bot');
+      } finally {
+        sendBtn.disabled = false;
+        inputEl.focus();
+      }
+    }
+
+    bubble.addEventListener('click', toggleWidget);
+    closeBtn.addEventListener('click', toggleWidget);
+    sendBtn.addEventListener('click', sendMessage);
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
   }
 
-  function toggleWidget() {
-    isOpen = !isOpen;
-    container.classList.toggle('open', isOpen);
-    if (isOpen && messagesEl.children.length === 0) {
-      addMessage('Hi! How can I help you today?', 'bot');
-    }
+  if (document.body) {
+    init();
+  } else {
+    document.addEventListener('DOMContentLoaded', init);
   }
-
-  async function sendMessage() {
-    const text = inputEl.value.trim();
-    if (!text) return;
-
-    addMessage(text, 'user');
-    inputEl.value = '';
-    sendBtn.disabled = true;
-
-    history.push({ role: 'user', text });
-
-    try {
-      const res = await fetch(API_BASE + '/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': API_KEY,
-        },
-        body: JSON.stringify({ message: text, history }),
-      });
-
-      const data = await res.json();
-      addMessage(data.response || 'Sorry, something went wrong.', 'bot');
-      history.push({ role: 'assistant', text: data.response });
-    } catch (err) {
-      addMessage('Connection error. Please try again.', 'bot');
-    } finally {
-      sendBtn.disabled = false;
-      inputEl.focus();
-    }
-  }
-
-  bubble.addEventListener('click', toggleWidget);
-  closeBtn.addEventListener('click', toggleWidget);
-  sendBtn.addEventListener('click', sendMessage);
-  inputEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  });
 })();
 `);
 });

@@ -1676,12 +1676,13 @@ export function UserDashboard() {
               ) : widgetApiKey ? (
                 <>
                   <div className="bg-slate-900 rounded-xl p-4 font-mono text-[11px] text-green-400 overflow-x-auto">
-                    <code>{`<script src="${window.location.protocol}//${window.location.host}/api/widget/widget.js"\n  data-api-key="${widgetApiKey}"\n  data-position="bottom-right">\n</script>`}</code>
+                    <code>{`<script src="${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/widget/widget.js"\n  data-api-key="${widgetApiKey}"\n  data-position="bottom-right">\n</script>`}</code>
                   </div>
                   <div className="flex items-center gap-2 mt-3">
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText(`<script src="${window.location.protocol}//${window.location.host}/api/widget/widget.js" data-api-key="${widgetApiKey}" data-position="bottom-right"></script>`);
+                        const scriptUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/widget/widget.js`;
+                        navigator.clipboard.writeText(`<script src="${scriptUrl}" data-api-key="${widgetApiKey}" data-position="bottom-right"></script>`);
                         addToast('Embed code copied to clipboard', 'success');
                       }}
                       className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-[var(--primary-blue)] text-white hover:opacity-90 transition-all cursor-pointer border-none"
