@@ -183,7 +183,7 @@ function AppRoutes() {
         <Route path="/careers" element={<Careers />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/press" element={<Press />} />
-        <Route path="/agents" element={<Agents />} />
+        <Route path="/services" element={<Agents />} />
         <Route path="/case-studies" element={<CaseStudies />} />
         <Route path="/case-studies/:id" element={<CaseStudyDetail />} />
         <Route path="/pricing" element={<Pricing />} />

@@ -68,7 +68,7 @@ export function PublicNavbar() {
   const navItems = [
      { label: 'How It Works', href: '#how-it-works', isHash: true },
     { label: 'Features', href: '#features', isHash: true },
-    { label: 'Services', href: '/agents' },
+    { label: 'Services', href: '/services' },
     { label: 'Case Studies', href: '/case-studies' },
     { label: 'Pricing', href: '/pricing' },
     { label: 'News', href: '/news' },
@@ -212,7 +212,7 @@ export function PublicNavbar() {
           </div>
 
           {/* Desktop CTA buttons */}
-          <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+          <div className=" hidden sm:flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => openAuth('login')}
               className="min-h-[44px] px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-150 whitespace-nowrap"
