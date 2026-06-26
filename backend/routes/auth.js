@@ -703,6 +703,8 @@ router.get('/me', authenticate, async (req, res) => {
         minutesLimit: user.minutesLimit,
         callsUsed: user.callsUsed || 0,
         callsLimit: user.callsLimit,
+        chatUsed: user.chatUsed || 0,
+        chatLimit: user.chatLimit || 0,
         isActive: user.isActive,
         chatEnabled: chatPlan !== 'none',
         voiceEnabled: voicePlan !== 'none',
