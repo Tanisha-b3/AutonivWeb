@@ -326,7 +326,7 @@ router.put('/:id/plan', async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    if (plan) {
+    if (plan && chatPlan === undefined && voicePlan === undefined) {
       if (plan.startsWith('chat_')) {
         chatPlan = plan;
       } else if (plan.startsWith('voice_')) {
