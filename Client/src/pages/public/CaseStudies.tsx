@@ -245,10 +245,10 @@ function StudyCard({ study, index }: { study: any; index: number }) {
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
-      className="rounded-3xl p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden bg-slate-950/40 backdrop-blur-md border transition-all duration-300 hover:-translate-y-1.5 cursor-default group"
+      className="rounded-3xl p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden bg-white/90 backdrop-blur-md border transition-all duration-300 hover:-translate-y-1.5 cursor-default group shadow-lg"
       style={{
-        borderColor: isHovered ? `${study.badgeColor}40` : 'rgba(255,255,255,0.06)',
-        boxShadow: isHovered ? `0 24px 60px -12px ${study.badgeColor}25, 0 0 0 1px ${study.badgeColor}30` : 'none',
+        borderColor: isHovered ? `${study.badgeColor}40` : 'rgba(59, 130, 246, 0.15)',
+        boxShadow: isHovered ? `0 24px 60px -12px ${study.badgeColor}30, 0 0 0 1px ${study.badgeColor}20` : '0 4px 20px rgba(0, 0, 0, 0.06)',
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -258,17 +258,17 @@ function StudyCard({ study, index }: { study: any; index: number }) {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div 
-              className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl transition-transform duration-300 group-hover:scale-108 group-hover:rotate-[-5deg]"
+              className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl transition-transform duration-300 group-hover:scale-108 group-hover:rotate-[-5deg] bg-blue-50"
               style={{
                 background: `${study.badgeColor}12`,
-                border: `1.5px solid ${study.badgeColor}25`,
+                border: `1.5px solid ${study.badgeColor}20`,
               }}
             >
               {study.icon}
             </div>
             <div>
-              <h3 className="text-sm font-extrabold text-white">{study.category}</h3>
-              <p className="text-[10px] font-bold tracking-wider text-slate-500 font-mono mt-0.5 uppercase">{study.subcategory}</p>
+              <h3 className="text-sm font-extrabold text-slate-800">{study.category}</h3>
+              <p className="text-[10px] font-bold tracking-wider text-blue-600 font-mono mt-0.5 uppercase">{study.subcategory}</p>
             </div>
           </div>
 
@@ -280,7 +280,7 @@ function StudyCard({ study, index }: { study: any; index: number }) {
                 cx="32"
                 cy="32"
                 r={radius}
-                className="stroke-slate-800"
+                className="stroke-blue-100"
                 strokeWidth="4"
                 fill="transparent"
               />
@@ -301,25 +301,25 @@ function StudyCard({ study, index }: { study: any; index: number }) {
             </svg>
             <div className="absolute flex flex-col items-center justify-center leading-none">
               <span className="text-xs font-black" style={{ color: study.badgeColor }}>{study.metric}</span>
-              <span className="text-[6px] font-bold text-slate-400 text-center scale-90 w-[45px] leading-tight mt-0.5">{study.metricLabel.split(' ')[0]}</span>
+              <span className="text-[6px] font-bold text-slate-500 text-center scale-90 w-[45px] leading-tight mt-0.5">{study.metricLabel.split(' ')[0]}</span>
             </div>
           </div>
         </div>
 
         {/* Challenge Section */}
         <div className="mb-5">
-          <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">Challenge</div>
-          <p className="text-sm text-slate-300 leading-relaxed font-medium">{study.challenge}</p>
+          <div className="text-[9px] font-bold uppercase tracking-wider text-blue-600 font-mono mb-1">Challenge</div>
+          <p className="text-sm text-slate-700 leading-relaxed font-medium">{study.challenge}</p>
         </div>
 
         {/* Solutions Section */}
         <div className="mb-5">
-          <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500 font-mono mb-2">Deployed Solutions</div>
+          <div className="text-[9px] font-bold uppercase tracking-wider text-blue-600 font-mono mb-2">Deployed Solutions</div>
           <div className="flex flex-wrap gap-2">
             {study.solutions.map((s: any) => (
               <span 
                 key={s.label} 
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 bg-slate-900 border border-slate-800"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 bg-blue-50 border border-blue-200"
               >
                 <span>{s.icon}</span>
                 <span>{s.label}</span>
@@ -328,23 +328,23 @@ function StudyCard({ study, index }: { study: any; index: number }) {
           </div>
         </div>
 
-        <div className="h-px bg-slate-800/60 my-5" />
+        <div className="h-px bg-blue-200/60 my-5" />
 
         {/* Results Section */}
         <div className="mb-6">
-          <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500 font-mono mb-3">Key Results</div>
+          <div className="text-[9px] font-bold uppercase tracking-wider text-blue-600 font-mono mb-3">Key Results</div>
           <div className="grid grid-cols-3 gap-3 text-center">
             {study.results.map((r: any) => (
               <div 
                 key={r.label} 
-                className="p-2 rounded-xl border transition-all duration-300"
+                className="p-2 rounded-xl border transition-all duration-300 bg-white"
                 style={{
-                  background: isHovered ? `${r.color}07` : 'rgba(255, 255, 255, 0.02)',
-                  borderColor: isHovered ? `${r.color}15` : 'rgba(255,255,255,0.04)'
+                  background: isHovered ? `${r.color}10` : 'white',
+                  borderColor: isHovered ? `${r.color}25` : 'rgba(59, 130, 246, 0.12)'
                 }}
               >
                 <div className="text-base font-black font-mono tracking-tight" style={{ color: r.color }}>{r.value}</div>
-                <div className="text-[9px] font-semibold text-slate-400 mt-0.5 leading-tight">{r.label}</div>
+                <div className="text-[9px] font-semibold text-slate-500 mt-0.5 leading-tight">{r.label}</div>
               </div>
             ))}
           </div>
@@ -353,11 +353,10 @@ function StudyCard({ study, index }: { study: any; index: number }) {
 
       <Link 
         to={`/case-studies/${index}`} 
-        className="w-full py-3.5 rounded-xl font-bold transition-all duration-200 flex items-center justify-center gap-2 text-sm cursor-pointer border"
+        className="w-full py-3.5 rounded-xl font-bold transition-all duration-200 flex items-center justify-center gap-2 text-sm cursor-pointer border bg-blue-600 text-white hover:bg-blue-700"
         style={{
-          borderColor: isHovered ? `${study.badgeColor}40` : 'rgba(255, 255, 255, 0.08)',
-          color: study.badgeColor,
-          background: isHovered ? `${study.badgeColor}12` : 'transparent',
+          borderColor: isHovered ? `${study.badgeColor}50` : 'rgba(59, 130, 246, 0.2)',
+          background: isHovered ? study.badgeColor : '#2563EB',
         }}
       >
         View Full Case Study →

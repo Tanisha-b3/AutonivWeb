@@ -86,7 +86,7 @@ function Hero() {
             Chat & Voice <GradientText>AI Solutions</GradientText>
           </h1>
           <p style={{ fontSize: 15, color: SLATE, maxWidth: 560, lineHeight: 1.6, margin: '0 0 32px' }}>
-            Deploy intelligent chat and voice assistants that work 24/7 to engage customers, 
+            Deploy intelligent chat and voice assistants that work 24/7 to engage customers,
             qualify leads, and drive conversions — across every channel.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -112,55 +112,60 @@ function Hero() {
 
 /* ─── Service Card ─── */
 function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: number }) {
-  const [isHovered, setIsHovered] = useState(false);
-  
   return (
     <motion.div 
       initial={{ opacity: 0, y: 35 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.6, delay: index * 0.15, ease: [0.22, 1, 0.36, 1] }}
-      className="rounded-3xl p-8 h-full flex flex-col justify-between border relative overflow-hidden transition-all duration-500 bg-slate-950/40 backdrop-blur-md cursor-default group"
+      className="rounded-2xl p-8 h-full flex flex-col justify-between border relative overflow-hidden bg-white"
       style={{ 
-        borderColor: isHovered ? `${service.color}40` : 'rgba(255,255,255,0.06)',
-        boxShadow: isHovered ? `0 24px 60px -12px ${service.color}25, 0 0 0 1px ${service.color}30` : 'none',
+        borderColor: '#e2e8f0',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)',
       }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Dynamic glow corner */}
+      {/* Subtle blue decoration */}
       <div 
-        className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[45px] pointer-events-none transition-opacity duration-500" 
+        className="absolute -top-32 -right-32 w-96 h-96 rounded-full blur-[100px] pointer-events-none opacity-30"
         style={{
-          background: `radial-gradient(circle, ${service.color}25 0%, transparent 70%)`,
-          opacity: isHovered ? 1 : 0.4
+          background: `radial-gradient(circle, ${service.color}10 0%, rgba(37,99,235,0.04) 50%, transparent 70%)`,
+        }}
+      />
+
+      {/* Left accent bar */}
+      <div 
+        className="absolute top-12 bottom-12 left-0 w-1 rounded-r-full"
+        style={{
+          background: `linear-gradient(180deg, ${service.color}, rgba(37,99,235,0.3))`,
+          opacity: 0.4
         }}
       />
 
       <div>
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6 relative z-10">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 transition-all duration-300"
+        <div className="flex items-start gap-4 mb-6 relative z-10">
+          <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
             style={{ 
-              background: `${service.color}15`, 
-              border: `1.5px solid ${service.color}30`,
-              boxShadow: isHovered ? `0 0 20px ${service.color}30` : 'none',
-              transform: isHovered ? 'scale(1.08) rotate(-5deg)' : 'scale(1) rotate(0)'
+              background: '#f8faff', 
+              border: '1px solid #e2e8f0',
             }}>
             {service.icon}
           </div>
-          <div>
-            <h3 className="text-xl font-extrabold text-white">{service.title}</h3>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] font-mono uppercase tracking-widest font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
-                {service.features.length} caps
+          <div className="flex-1">
+            <h3 className="text-lg font-bold text-gray-900 leading-tight">{service.title}</h3>
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
+                {service.features.length} features
+              </span>
+              <span className="text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-gray-50 text-gray-500 border border-gray-100">
+                {service.useCases.length} use cases
               </span>
             </div>
           </div>
         </div>
 
         {/* Description */}
-        <p className="text-sm leading-relaxed mb-6 text-slate-300 relative z-10">
+        <p className="text-sm leading-relaxed mb-6 text-gray-600 relative z-10">
           {service.description}
         </p>
 
@@ -169,33 +174,35 @@ function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: n
           {service.metrics.map((metric) => (
             <div 
               key={metric.label} 
-              className="text-center p-3 rounded-2xl transition-all duration-300" 
+              className="text-center p-3 rounded-xl border"
               style={{ 
-                background: isHovered ? `${service.color}0c` : 'rgba(255,255,255,0.02)', 
-                border: `1px solid ${isHovered ? `${service.color}20` : 'rgba(255,255,255,0.05)'}` 
+                background: '#fafcff', 
+                borderColor: '#eef2f6'
               }}
             >
-              <div className="text-lg font-black font-mono tracking-tight" style={{ color: service.color }}>{metric.value}</div>
-              <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">{metric.label}</div>
+              <div className="text-lg font-bold font-mono tracking-tight" style={{ color: service.color }}>{metric.value}</div>
+              <div className="text-[9px] font-medium uppercase tracking-wider text-gray-400 mt-0.5">{metric.label}</div>
             </div>
           ))}
         </div>
 
         {/* Features */}
         <div className="mb-6 relative z-10">
-          <div className="text-[9px] font-bold uppercase tracking-widest mb-3 text-slate-500 font-mono">
-            Key Features
+          <div className="text-[10px] font-semibold uppercase tracking-wider mb-2.5 text-blue-500">
+            What's included
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {service.features.map((f) => (
               <span 
                 key={f} 
-                className="px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all duration-300 flex items-center gap-1 bg-slate-900/60 text-slate-200 border border-slate-800"
+                className="px-3 py-1.5 rounded-lg text-[11px] font-medium border flex items-center gap-1.5"
                 style={{ 
-                  borderColor: isHovered ? `${service.color}15` : 'rgba(255,255,255,0.04)',
+                  background: '#fafcff',
+                  borderColor: '#eef2f6',
+                  color: '#4a5568',
                 }}
               >
-                <span style={{ color: service.color }}>✓</span> {f}
+                <span style={{ color: service.color, fontSize: 8 }}>●</span> {f}
               </span>
             ))}
           </div>
@@ -203,23 +210,23 @@ function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: n
 
         {/* Use Cases */}
         <div className="mb-8 relative z-10">
-          <div className="text-[9px] font-bold uppercase tracking-widest mb-3 text-slate-500 font-mono">
-            Target Scenarios
+          <div className="text-[10px] font-semibold uppercase tracking-wider mb-2.5 text-blue-500">
+            Best for
           </div>
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             {service.useCases.map((useCase) => (
               <div 
                 key={useCase.title} 
-                className="flex items-start gap-3 p-2.5 rounded-xl transition-all duration-300 border border-transparent"
+                className="flex items-start gap-3 p-2.5 rounded-xl border"
                 style={{ 
-                  background: isHovered ? 'rgba(255,255,255,0.02)' : 'transparent',
-                  borderColor: isHovered ? 'rgba(255,255,255,0.03)' : 'transparent'
+                  background: 'transparent',
+                  borderColor: 'transparent'
                 }}
               >
-                <span className="text-base p-1.5 rounded-lg bg-slate-900 flex-shrink-0 mt-0.5 border border-slate-800">{useCase.icon}</span>
+                <span className="text-sm p-1.5 rounded-lg bg-blue-50/60 flex-shrink-0 mt-0.5 border border-blue-100/30">{useCase.icon}</span>
                 <div>
-                  <div className="text-xs font-bold text-slate-200">{useCase.title}</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5 leading-snug">{useCase.desc}</div>
+                  <div className="text-xs font-semibold text-gray-800">{useCase.title}</div>
+                  <div className="text-[11px] text-gray-500 mt-0.5 leading-snug">{useCase.desc}</div>
                 </div>
               </div>
             ))}
@@ -227,19 +234,23 @@ function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: n
         </div>
       </div>
 
-      <div className="h-px mb-5 bg-slate-900/60" />
+      <div className="h-px mb-5 bg-gradient-to-r from-blue-200/40 via-blue-300/20 to-transparent" />
       
       {/* CTA */}
       <Link to="/register" 
-        className="text-sm font-bold flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl transition-all duration-300 no-underline shadow-sm cursor-pointer"
+        className="text-sm font-semibold flex items-center justify-center gap-2 py-3 px-6 rounded-xl no-underline cursor-pointer"
         style={{ 
-          background: isHovered ? service.color : 'rgba(255,255,255,0.03)',
-          border: `1.5px solid ${isHovered ? 'transparent' : 'rgba(255,255,255,0.08)'}`,
-          color: isHovered ? 'white' : 'rgba(255,255,255,0.6)',
-          boxShadow: isHovered ? `0 12px 24px -6px ${service.color}40` : 'none'
+          background: '#f8faff',
+          border: '1.5px solid #e2e8f0',
+          color: '#2563EB',
         }}
       >
-        Get Started <span className="transition-transform group-hover:translate-x-1">→</span>
+        <span className="flex items-center gap-2">
+          Get Started 
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </span>
       </Link>
     </motion.div>
   );
@@ -256,7 +267,7 @@ function ServicesSection() {
             Chat & Voice <GradientText>AI Solutions</GradientText>
           </h2>
           <p className="text-sm sm:text-base text-slate-400 max-w-lg mx-auto leading-relaxed">
-            Choose the right AI assistant for your business needs or combine both for 
+            Choose the right AI assistant for your business needs or combine both for
             omnichannel customer engagement.
           </p>
         </div>
@@ -339,7 +350,7 @@ function HowItWorks() {
           </p>
         </div>
       </Reveal>
-      
+
       <div className="relative">
         {/* Connection line for desktop */}
         <div className="hidden md:block absolute top-[52px] left-[15%] right-[15%] h-0.5 border-t-2 border-dashed border-slate-200/60 z-0 pointer-events-none" />
@@ -350,35 +361,35 @@ function HowItWorks() {
             { step: "02", title: "Train Your AI", desc: "Upload your knowledge base, FAQs, and scripts. The AI learns instantly.", icon: "🧠", color: "#10B981" },
             { step: "03", title: "Go Live & Scale", desc: "Launch your AI assistant and scale to thousands of conversations.", icon: "🚀", color: "#f97316" },
           ].map((item, index) => (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 25 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.5, delay: index * 0.12 }}
-              key={item.step} 
-              className="rounded-3xl p-8 transition-all duration-300 hover:-translate-y-1.5 bg-white border border-slate-200/50 flex flex-col items-center text-center group cursor-default" 
-              style={{ 
+              key={item.step}
+              className="rounded-3xl p-8 transition-all duration-300 hover:-translate-y-1.5 bg-white border border-slate-200/50 flex flex-col items-center text-center group cursor-default"
+              style={{
                 boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
               }}
-              onMouseEnter={e => { 
-                e.currentTarget.style.borderColor = item.color; 
-                e.currentTarget.style.boxShadow = `0 20px 40px -10px ${item.color}15`; 
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = item.color;
+                e.currentTarget.style.boxShadow = `0 20px 40px -10px ${item.color}15`;
               }}
-              onMouseLeave={e => { 
-                e.currentTarget.style.borderColor = 'rgba(226, 232, 240, 0.5)'; 
-                e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.02)'; 
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = 'rgba(226, 232, 240, 0.5)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.02)';
               }}
             >
               {/* Step number badge & icon */}
-              <div 
+              <div
                 className="w-20 h-20 rounded-full flex items-center justify-center text-3xl mb-6 relative z-10 transition-transform duration-300 group-hover:scale-105"
-                style={{ 
-                  background: `${item.color}0c`, 
-                  border: `2.5px solid ${item.color}25` 
+                style={{
+                  background: `${item.color}0c`,
+                  border: `2.5px solid ${item.color}25`
                 }}
               >
                 {item.icon}
-                <div 
+                <div
                   className="absolute -top-1 -right-1 w-6 h-6 rounded-full text-[9px] font-black text-white flex items-center justify-center font-mono"
                   style={{ background: item.color }}
                 >
@@ -402,7 +413,7 @@ function TrustedSection() {
     "RealtyMax", "Care+ Clinics", "LearnUp", "The Skin Lounge",
     "EduSphere", "FitNation", "UrbanCart", "FinTrack",
   ];
-  
+
   return (
     <div className="max-w-6xl mx-auto" style={{ textAlign: 'center' }}>
       <Reveal>
@@ -451,8 +462,8 @@ function IntegrationsSection() {
       <div className="relative flex overflow-x-hidden py-4 mask-image:linear-gradient(to_right,transparent,black_20%,black_80%,transparent)">
         <div className="flex gap-4 animate-marquee whitespace-nowrap min-w-full">
           {integrations.concat(integrations).map((item, i) => (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className="inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-white border border-slate-200/60 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-500/20"
             >
               <span className="text-xl">{item.icon}</span>
@@ -460,7 +471,7 @@ function IntegrationsSection() {
             </div>
           ))}
         </div>
-        
+
         {/* Style block for keyframe animation inside the component */}
         <style>{`
           @keyframes marquee {
@@ -555,7 +566,7 @@ export function Agents() {
     <div style={{ minHeight: '100vh', background: TINT, fontFamily: SANS, color: INK }}>
       <USPSlider />
       <PublicNavbar />
-      
+
       <div className="page-bg" style={{ paddingTop: 130, paddingBottom: 8 }}>
         <div className="box-wrap">
           <Hero />
@@ -578,7 +589,7 @@ export function Agents() {
             {/* Ambient background glow blur blobs */}
             <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-500/5 blur-[120px] pointer-events-none" />
             <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-emerald-500/5 blur-[120px] pointer-events-none" />
-            
+
             <div className="section-pad max-w-6xl mx-auto relative z-10">
               <ServicesSection />
             </div>

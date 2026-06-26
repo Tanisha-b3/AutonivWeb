@@ -68,7 +68,7 @@ export function CaseStudiesSection() {
         <Reveal className="text-center mb-14 space-y-4">
           <span
             className="tag px-4 py-1.5 rounded-full inline-block"
-            style={{ color: "#ffffff", background: "var(--gg)" }}
+            style={{ color: "#ffffff", background: "var(--gg)", border: "none" }}
           >
             Case Studies
           </span>
@@ -90,15 +90,22 @@ export function CaseStudiesSection() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
           {STUDIES.map((s, i) => (
             <Reveal key={i} delay={i * 0.1}>
-              <div className="feature-card group p-5 sm:p-6 rounded-2xl h-full flex flex-col" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div 
+                className="feature-card group p-5 sm:p-6 rounded-2xl h-full flex flex-col transition-all duration-300 hover:shadow-2xl hover:-translate-y-1.5" 
+                style={{ 
+                  background: "linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(239,246,255,0.96) 100%)", 
+                  border: "1px solid rgba(37,99,235,0.18)",
+                  boxShadow: "0 20px 40px -15px rgba(0,0,0,0.25), 0 0 40px rgba(37,99,235,0.06)"
+                }}
+              >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div
                       className="w-11 h-11 rounded-xl flex items-center justify-center text-xl"
                       style={{
-                        background: `${s.badgeColor}18`,
-                        border: `1px solid ${s.badgeColor}30`,
+                        background: `${s.badgeColor}12`,
+                        border: `1px solid ${s.badgeColor}25`,
                       }}
                     >
                       {s.icon}
@@ -106,13 +113,13 @@ export function CaseStudiesSection() {
                     <div>
                       <div
                         className="text-sm font-bold"
-                        style={{ color: "#ffffff" }}
+                        style={{ color: "#0f172a" }}
                       >
                         {s.category}
                       </div>
                       <div
                         className="text-[11px]"
-                        style={{ color: "rgba(255,255,255,0.45)" }}
+                        style={{ color: "#64748b" }}
                       >
                         {s.subcategory}
                       </div>
@@ -121,11 +128,11 @@ export function CaseStudiesSection() {
                   <div
                     className="w-16 h-16 rounded-full flex-shrink-0 flex flex-col items-center justify-center relative"
                     style={{
-                      background: `conic-gradient(${s.badgeColor} 0deg,${s.badgeColor}88 180deg,rgba(255,255,255,0.08) 180deg)`,
-                      boxShadow: `0 0 20px ${s.badgeColor}25`,
+                      background: `conic-gradient(${s.badgeColor} 0deg,${s.badgeColor}88 180deg,rgba(37,99,235,0.1) 180deg)`,
+                      boxShadow: `0 0 20px ${s.badgeColor}18`,
                     }}
                   >
-                    <div className="absolute w-[58px] h-[58px] rounded-full flex flex-col items-center justify-center" style={{ background: "#050d1a" }}>
+                    <div className="absolute w-[58px] h-[58px] rounded-full flex flex-col items-center justify-center" style={{ background: "#ffffff" }}>
                       <div
                         className="text-xs font-black leading-none"
                         style={{ color: s.badgeColor }}
@@ -134,7 +141,7 @@ export function CaseStudiesSection() {
                       </div>
                       <div
                         className="text-[7px] font-bold text-center leading-tight mt-0.5"
-                        style={{ color: "rgba(255,255,255,0.45)" }}
+                        style={{ color: "#64748b" }}
                       >
                         {s.metricLabel}
                       </div>
@@ -146,13 +153,13 @@ export function CaseStudiesSection() {
                 <div className="mb-4">
                   <div
                     className="text-[10px] font-bold uppercase tracking-widest mb-1.5"
-                    style={{ color: "rgba(255,255,255,0.4)" }}
+                    style={{ color: "#64748b" }}
                   >
                     Challenge
                   </div>
                   <p
                     className="text-[13px] leading-relaxed"
-                    style={{ color: "rgba(255,255,255,0.6)" }}
+                    style={{ color: "#334155" }}
                   >
                     {s.challenge}
                   </p>
@@ -162,7 +169,7 @@ export function CaseStudiesSection() {
                 <div className="mb-4">
                   <div
                     className="text-[10px] font-bold uppercase tracking-widest mb-2"
-                    style={{ color: "rgba(255,255,255,0.4)" }}
+                    style={{ color: "#64748b" }}
                   >
                     Our Solution
                   </div>
@@ -172,9 +179,9 @@ export function CaseStudiesSection() {
                         key={sol.label}
                         className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"
                         style={{
-                          color: "rgba(255,255,255,0.7)",
-                          background: "rgba(255,255,255,0.06)",
-                          border: "1px solid rgba(255,255,255,0.1)",
+                          color: "#334155",
+                          background: "rgba(37,99,235,0.05)",
+                          border: "1px solid rgba(37,99,235,0.12)",
                         }}
                       >
                         <span>{sol.icon}</span>
@@ -188,7 +195,7 @@ export function CaseStudiesSection() {
                 <div
                   className="h-px my-3"
                   style={{
-                    background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent)",
+                    background: "linear-gradient(90deg,transparent,#e2e8f0,transparent)",
                   }}
                 />
 
@@ -204,7 +211,7 @@ export function CaseStudiesSection() {
                       </div>
                       <div
                         className="text-[9px] leading-tight mt-0.5"
-                        style={{ color: "rgba(255,255,255,0.4)" }}
+                        style={{ color: "#64748b" }}
                       >
                         {r.label}
                       </div>
@@ -218,17 +225,17 @@ export function CaseStudiesSection() {
                   className="flex items-center justify-center gap-2 text-xs font-bold py-2.5 rounded-xl transition-all mt-auto"
                   style={{
                     color: s.badgeColor,
-                    background: `${s.badgeColor}12`,
-                    border: `1px solid ${s.badgeColor}25`,
+                    background: `${s.badgeColor}0d`,
+                    border: `1px solid ${s.badgeColor}20`,
                     textDecoration: "none",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = `${s.badgeColor}20`;
-                    e.currentTarget.style.borderColor = `${s.badgeColor}40`;
+                    e.currentTarget.style.background = `${s.badgeColor}18`;
+                    e.currentTarget.style.borderColor = `${s.badgeColor}35`;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = `${s.badgeColor}12`;
-                    e.currentTarget.style.borderColor = `${s.badgeColor}25`;
+                    e.currentTarget.style.background = `${s.badgeColor}0d`;
+                    e.currentTarget.style.borderColor = `${s.badgeColor}20`;
                   }}
                 >
                   View Full Case Study →

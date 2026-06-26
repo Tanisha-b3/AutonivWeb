@@ -68,12 +68,6 @@ function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
   );
 }
 
-/* ───────────────────────────────────────────────────────────
-   Signature element — ambient waveform behind the hero.
-   A literal nod to "voice" rather than a generic gradient
-   blob; sits quiet and low-opacity, doesn't compete with type.
-─────────────────────────────────────────────────────────────── */
-
 /* ─── FAQ Item ─── */
 function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
@@ -382,8 +376,6 @@ export function AboutUS() {
               </div>
             </Reveal>
           </div>
-          {/* Signature ambient waveform — literal nod to "voice" */}
-          {/* <HeroWaveform /> */}
         </div>
 
         {/* ── Stats ── */}
@@ -401,98 +393,249 @@ export function AboutUS() {
         </div>
 
         {/* ── Mission ── */}
-        <div style={{ padding: '0 24px 64px', background: TINT }}>
-          <div className="max-w-6xl mx-auto">
-            <Reveal>
+  <div style={{ padding: '0 24px 64px', background: TINT }}>
+  <div className="max-w-6xl mx-auto">
+    <Reveal>
+      <div
+        className="rounded-3xl overflow-hidden"
+        style={{
+          background: SURFACE,
+          border: `1px solid ${HAIRLINE}`,
+          boxShadow: '0 1px 2px rgba(15,23,42,0.04), 0 20px 48px -20px rgba(15,23,42,0.10)',
+        }}
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2">
+          <div style={{ padding: '52px 48px' }}>
+            <SectionLabel text="Our Mission" />
+            <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: '0 0 18px', lineHeight: 1.2 }}>
+              Automation that<br />
+              <GradientText>actually sounds human</GradientText>
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <p style={{ fontSize: 14, color: SLATE, lineHeight: 1.75, margin: 0 }}>
+                Every missed call is a missed opportunity. Every hold queue erodes trust. Every understaffed customer service moment costs you a customer you worked hard to earn.
+              </p>
+              <p style={{ fontSize: 14, color: SLATE, lineHeight: 1.75, margin: 0 }}>
+                At Autoniv, we're on a mission to eliminate those moments forever — for businesses of every size, in every industry. We believe the future of business communication isn't more people answering phones. It's smarter AI voice agents that sound natural, respond instantly, and never have a bad day.
+              </p>
+            </div>
+          </div>
+          
+          {/* Quote panel with Extra Large Founder Image */}
+          <div
+            style={{
+              padding: '52px 48px',
+              background: 'linear-gradient(135deg,rgba(37,99,235,0.05),rgba(16,185,129,0.05))',
+              borderLeft: `1px solid ${HAIRLINE}`,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              position: 'relative',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                bottom: 0,
+                width: 3,
+                background: BRAND,
+              }}
+            />
+            
+            {/* Extra Large Founder Image */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+              {/* Glow behind image */}
               <div
-                className="rounded-3xl overflow-hidden"
                 style={{
-                  background: SURFACE,
-                  border: `1px solid ${HAIRLINE}`,
-                  boxShadow: '0 1px 2px rgba(15,23,42,0.04), 0 20px 48px -20px rgba(15,23,42,0.10)',
+                  position: 'relative',
+                  display: 'inline-block',
                 }}
               >
-                <div className="grid grid-cols-1 lg:grid-cols-2">
-                  <div style={{ padding: '52px 48px' }}>
-                    <SectionLabel text="Our Mission" />
-                    <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: '0 0 18px', lineHeight: 1.2 }}>
-                      Automation that<br />
-                      <GradientText>actually sounds human</GradientText>
-                    </h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      <p style={{ fontSize: 14, color: SLATE, lineHeight: 1.75, margin: 0 }}>
-                        Every missed call is a missed opportunity. Every hold queue erodes trust. Every understaffed customer service moment costs you a customer you worked hard to earn.
-                      </p>
-                      <p style={{ fontSize: 14, color: SLATE, lineHeight: 1.75, margin: 0 }}>
-                        At Autoniv, we're on a mission to eliminate those moments forever — for businesses of every size, in every industry. We believe the future of business communication isn't more people answering phones. It's smarter AI voice agents that sound natural, respond instantly, and never have a bad day.
-                      </p>
-                    </div>
-                  </div>
-                  {/* Quote panel */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: '-20px',
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(37,99,235,0.15), transparent 70%)',
+                    animation: 'pulseGlow 3s ease-in-out infinite',
+                  }}
+                />
+                
+                <div
+                  style={{
+                    width: 200,
+                    height: 200,
+                    borderRadius: '50%',
+                    flexShrink: 0,
+                    overflow: 'hidden',
+                    border: '4px solid rgba(37,99,235,0.25)',
+                    boxShadow: '0 12px 48px rgba(37,99,235,0.25), 0 4px 16px rgba(0,0,0,0.08)',
+                    background: 'linear-gradient(135deg, #2563EB, #10B981)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  }}
+                  className="founder-image-container"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.03)';
+                    e.currentTarget.style.boxShadow = '0 16px 56px rgba(37,99,235,0.35), 0 4px 16px rgba(0,0,0,0.08)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = '0 12px 48px rgba(37,99,235,0.25), 0 4px 16px rgba(0,0,0,0.08)';
+                  }}
+                >
+                  {/* Decorative gradient ring */}
                   <div
                     style={{
-                      padding: '52px 48px',
-                      background: 'linear-gradient(135deg,rgba(37,99,235,0.05),rgba(16,185,129,0.05))',
-                      borderLeft: `1px solid ${HAIRLINE}`,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      position: 'relative',
+                      position: 'absolute',
+                      inset: -6,
+                      borderRadius: '50%',
+                      border: '3px solid transparent',
+                      background: 'linear-gradient(135deg, #2563EB, #10B981, #2563EB) border-box',
+                      WebkitMask: 'linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)',
+                      WebkitMaskComposite: 'destination-out',
+                      maskComposite: 'exclude',
+                      pointerEvents: 'none',
+                      animation: 'spinRing 8s linear infinite',
                     }}
+                  />
+                  
+                  <img 
+                    src="/Rajneshyadav.png" 
+                    alt="Rajnesh Yadav - Founder & CEO of Autoniv" 
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'cover',
+                    }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                  
+                  {/* Fallback initials if image fails to load */}
+                  <span 
+                    style={{ 
+                      fontSize: 64, 
+                      fontWeight: 800, 
+                      color: '#fff',
+                      display: 'none',
+                      fontFamily: MONO,
+                      textShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    }}
+                    className="fallback-initials"
                   >
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        bottom: 0,
-                        width: 3,
-                        background: BRAND,
-                      }}
-                    />
-                    <div
-                      style={{
-                        fontSize: 64,
-                        lineHeight: 1,
-                        color: 'rgba(37,99,235,0.14)',
-                        fontFamily: 'Georgia, serif',
-                        marginBottom: 4,
-                      }}
-                    >
-                      "
-                    </div>
-                    <p style={{ fontSize: 17, color: INK, lineHeight: 1.7, fontStyle: 'italic', fontWeight: 500, margin: '0 0 28px' }}>
-                      Your business doesn't sleep. Your phone system shouldn't either. We built Autoniv so every call gets the best possible answer — every single time.
-                    </p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div
-                        style={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: '50%',
-                          background: BRAND,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 13,
-                          fontWeight: 800,
-                          color: '#fff',
-                          flexShrink: 0,
-                        }}
-                      >
-                        RY
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: INK }}>Rajnesh Yadav</div>
-                        <div style={{ fontSize: 12, color: MUTE, fontFamily: MONO }}>Founder &amp; CEO, Autoniv</div>
-                      </div>
-                    </div>
-                  </div>
+                    RY
+                  </span>
                 </div>
               </div>
-            </Reveal>
+              
+              {/* Name and Title */}
+              <div style={{ textAlign: 'center', marginTop: 24 }}>
+                <div style={{ 
+                  fontSize: 22, 
+                  fontWeight: 800, 
+                  color: INK,
+                  letterSpacing: '-0.02em',
+                }}>
+                  Rajnesh Yadav
+                </div>
+                <div style={{ 
+                  fontSize: 14, 
+                  color: MUTE, 
+                  fontFamily: MONO, 
+                  marginTop: 4,
+                  letterSpacing: '0.02em',
+                }}>
+                  Founder &amp; CEO, Autoniv
+                </div>
+                
+                {/* Social/Trust badges */}
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  gap: 12, 
+                  marginTop: 12,
+                }}>
+                  <span style={{ 
+                    fontSize: 11, 
+                    padding: '4px 12px', 
+                    borderRadius: 99,
+                    background: 'rgba(37,99,235,0.08)',
+                    color: '#2563EB',
+                    fontFamily: MONO,
+                    fontWeight: 600,
+                  }}>
+                    ✦ 10+ Years
+                  </span>
+                  <span style={{ 
+                    fontSize: 11, 
+                    padding: '4px 12px', 
+                    borderRadius: 99,
+                    background: 'rgba(16,185,129,0.08)',
+                    color: '#10B981',
+                    fontFamily: MONO,
+                    fontWeight: 600,
+                  }}>
+                    ✦ AI Expert
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quote */}
+            <div style={{ marginTop: 28, textAlign: 'center', maxWidth: 420 }}>
+              <div
+                style={{
+                  fontSize: 56,
+                  lineHeight: 0.8,
+                  color: 'rgba(37,99,235,0.08)',
+                  fontFamily: 'Georgia, serif',
+                  marginBottom: 4,
+                }}
+              >
+                "
+              </div>
+              <p style={{ 
+                fontSize: 17, 
+                color: INK, 
+                lineHeight: 1.7, 
+                fontStyle: 'italic', 
+                fontWeight: 500, 
+                margin: 0,
+              }}>
+                Your business doesn't sleep. Your phone system shouldn't either. We built Autoniv so every call gets the best possible answer — every single time.
+              </p>
+            </div>
           </div>
         </div>
+      </div>
+    </Reveal>
+  </div>
+  
+  {/* Add animations */}
+  <style>{`
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.1); opacity: 1; }
+    }
+    
+    @keyframes spinRing {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .founder-image-container {
+      will-change: transform, box-shadow;
+    }
+  `}</style>
+</div>
 
         {/* ── Founder pillars ── */}
         <div style={{ padding: '0 24px 64px', background: TINT }}>
@@ -742,9 +885,6 @@ export function AboutUS() {
             </Reveal>
           </div>
         </div>
-
-        {/* ── Footer strip ── */}
-     
       </div>
 
       <ScrollToTop />

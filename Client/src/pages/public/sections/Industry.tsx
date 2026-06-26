@@ -1,174 +1,744 @@
-import { useState } from "react";
+import { useState, useCallback,  useRef } from "react";
 import { useCases, integrationsRow1, integrationsRow2 } from "./data";
-import { Reveal } from "./utils";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 
-export function Industry({ activeUseCase, setActiveUseCase, openAuth }: {
-  activeUseCase: number; setActiveUseCase: (i: number) => void; openAuth: (m: "login" | "register") => void;
-}) {
-  const [mode, setMode] = useState<"chat" | "voice">("chat");
-  const uc = useCases[activeUseCase];
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type AuthMode = "login" | "register";
+type DisplayMode = "chat" | "voice";
+
+interface OutcomeItem {
+  label: string;
+  value: string;
+}
+
+interface ModeVariant {
+  desc: string;
+  stat: string;
+  outcomes: OutcomeItem[];
+  features: string[];
+  cta: string;
+}
+
+interface UseCase {
+  icon: string;
+  title: string;
+  chat: ModeVariant;
+  voice: ModeVariant;
+}
+
+interface IntegrationItem {
+  icon: string;
+  name: string;
+}
+
+interface IndustryProps {
+  activeUseCase: number;
+  setActiveUseCase: (i: number) => void;
+  openAuth: (m: AuthMode) => void;
+}
+
+// ─── Style constants ──────────────────────────────────────────────────────────
+
+const BRAND_BLUE = "#2563EB";
+const BRAND_GREEN = "#10B981";
+const TEXT_DARK = "#0a0a0a";
+const TEXT_MID = "#475569";
+const TEXT_LIGHT = "#94A3B8";
+const GRADIENT_LINEAR = "linear-gradient(135deg,#2563EB,#10B981)";
+
+// ─── Enhanced Sub-components ─────────────────────────────────────────────────
+
+interface UseCaseCardProps {
+  uc: UseCase;
+  index: number;
+  isActive: boolean;
+  mode: DisplayMode;
+  onClick: () => void;
+}
+
+function UseCaseCard({ uc, index, isActive, mode, onClick }: UseCaseCardProps) {
   const variant = uc[mode];
+  const cardRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(cardRef, { once: true, margin: "-50px" });
 
   return (
-    <section className="section-box white">
-      <div className="section-pad">
-        <Reveal className="text-center mb-12 sm:mb-16 space-y-4">
-          <span className="tag px-3 sm:px-4 py-1 sm:py-1.5 rounded-full inline-block text-xs sm:text-sm" style={{ color: "#ffffff", background: "var(--gg)" }}>Industry Solutions</span>
-          <h2 className="font-extrabold tracking-tight mt-3 sm:mt-4" style={{ fontSize: "clamp(24px,6vw,48px)", color: "#0a0a0a" }}>
-            Built for <span className="gradient-text">Every Industry</span>
-          </h2>
-          <p className="text-sm sm:text-base max-w-2xl mx-auto" style={{ color: "#475569" }}>
-            Plug into the tools your team already uses — connects with your existing CRM, telephony, and automation tools instantly.
-          </p>
-        </Reveal>
+    <motion.div
+      ref={cardRef}
+      initial={{ opacity: 0, y: 40 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+      transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
+      whileHover={{ y: -8, transition: { duration: 0.3 } }}
+      className="relative"
+    >
+      <div
+        role="button"
+        tabIndex={0}
+        aria-pressed={isActive}
+        aria-label={`Select ${uc.title} use case`}
+        onClick={onClick}
+        onKeyDown={(e) => e.key === "Enter" && onClick()}
+        className="relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300"
+        style={{
+          background: isActive 
+            ? "linear-gradient(135deg, rgba(37,99,235,0.08), rgba(16,185,129,0.08))"
+            : "rgba(255,255,255,0.6)",
+          backdropFilter: isActive ? "blur(10px)" : "blur(0px)",
+          border: isActive 
+            ? "2px solid rgba(16,185,129,0.3)"
+            : "1px solid rgba(37,99,235,0.08)",
+          boxShadow: isActive
+            ? "0 20px 60px rgba(16,185,129,0.12), 0 0 0 1px rgba(16,185,129,0.1)"
+            : "0 2px 12px rgba(0,0,0,0.04)",
+          transform: isActive ? "scale(1.02)" : "scale(1)",
+        }}
+      >
+        {isActive && (
+          <>
+            <motion.div
+              layoutId="activeGlow"
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: "radial-gradient(circle at 30% 20%, rgba(16,185,129,0.15), transparent 70%)",
+              }}
+            />
+            <div
+              className="absolute top-0 left-0 right-0"
+              style={{ height: 3, background: GRADIENT_LINEAR }}
+            />
+          </>
+        )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-          {useCases.map((uc, i) => (
-            <Reveal key={i} delay={i * 0.08}>
-                  <div onClick={() => setActiveUseCase(i)} className="relative rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300" style={{
-                    background: activeUseCase === i ? "linear-gradient(135deg, rgba(37,99,235,0.07), rgba(16,185,129,0.07))" : "#ffffff",
-                    border: activeUseCase === i ? "2px solid rgba(16,185,129,0.35)" : "1px solid rgba(37,99,235,0.10)",
-                    boxShadow: activeUseCase === i ? "0 16px 48px rgba(16,185,129,0.10)" : "0 4px 16px rgba(0,0,0,0.03)",
-                    transform: activeUseCase === i ? "translateY(-4px)" : "translateY(0)",
-                  }}>
-                    {activeUseCase === i && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg,#2563EB,#10B981)" }} />}
-                    <div style={{ padding: "28px 24px 24px" }}>
-                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
-                        <div style={{ width: 52, height: 52, borderRadius: 14, background: activeUseCase === i ? "linear-gradient(135deg, rgba(37,99,235,0.12), rgba(16,185,129,0.12))" : "rgba(37,99,235,0.06)", border: activeUseCase === i ? "1px solid rgba(16,185,129,0.25)" : "1px solid rgba(37,99,235,0.10)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, transition: "all 0.3s" }}>{uc.icon}</div>
-                        <span style={{ fontSize: 10, fontWeight: 600, padding: "4px 10px", borderRadius: 99, background: activeUseCase === i ? "rgba(16,185,129,0.10)" : "rgba(37,99,235,0.06)", color: activeUseCase === i ? "#10B981" : "#2563EB", border: activeUseCase === i ? "1px solid rgba(16,185,129,0.22)" : "1px solid rgba(37,99,235,0.14)", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.06em", transition: "all 0.3s" }}>
-                      {uc.title}
-                    </span>
-                  </div>
-                  <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0a0a0a", marginBottom: 8 }}>{uc.title}</h3>
-                  <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.65, marginBottom: 18 }}>{variant.desc}</p>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 99, background: activeUseCase === i ? "linear-gradient(135deg, rgba(37,99,235,0.10), rgba(16,185,129,0.10))" : "rgba(37,99,235,0.04)", border: activeUseCase === i ? "1px solid rgba(16,185,129,0.25)" : "1px solid rgba(37,99,235,0.10)" }}>
-                    <svg width="14" height="14" fill="none" stroke={activeUseCase === i ? "#10B981" : "#2563EB"} strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: activeUseCase === i ? "#10B981" : "#2563EB" }}>{variant.stat}</span>
-                  </div>
-                </div>
-                {activeUseCase === i && (
-                  <div style={{ height: 2, background: "rgba(16,185,129,0.08)", overflow: "hidden" }}>
-                    <div key={`pb-${activeUseCase}`} style={{ height: "100%", borderRadius: 99, background: "linear-gradient(90deg,#2563EB,#10B981)", animation: "progressFill 3.5s linear forwards" }} />
-                  </div>
-                )}
-              </div>
-            </Reveal>
+        <div className="p-6 sm:p-7 relative z-10">
+          <div className="flex items-start justify-between mb-5">
+            <motion.div
+              whileHover={{ rotate: [0, -5, 5, 0], scale: 1.1 }}
+              transition={{ duration: 0.4 }}
+              className="relative"
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                background: isActive
+                  ? "linear-gradient(135deg, rgba(37,99,235,0.15), rgba(16,185,129,0.15))"
+                  : "rgba(37,99,235,0.06)",
+                border: isActive
+                  ? "1px solid rgba(16,185,129,0.2)"
+                  : "1px solid rgba(37,99,235,0.08)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 26,
+                transition: "all 0.3s",
+              }}
+            >
+              {uc.icon}
+              {isActive && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-1 -right-1 w-3 h-3 rounded-full"
+                  style={{ background: BRAND_GREEN }}
+                />
+              )}
+            </motion.div>
+
+            <motion.span
+              initial={false}
+              animate={isActive ? { scale: 1.05 } : { scale: 1 }}
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                padding: "5px 14px",
+                borderRadius: 99,
+                background: isActive 
+                  ? "linear-gradient(135deg, rgba(37,99,235,0.12), rgba(16,185,129,0.12))"
+                  : "rgba(37,99,235,0.06)",
+                color: isActive ? BRAND_GREEN : BRAND_BLUE,
+                border: isActive
+                  ? "1px solid rgba(16,185,129,0.2)"
+                  : "1px solid rgba(37,99,235,0.08)",
+                fontFamily: "'JetBrains Mono', monospace",
+                letterSpacing: "0.08em",
+              }}
+            >
+              {uc.title}
+            </motion.span>
+          </div>
+
+          <h3 
+            className="text-lg font-bold mb-2"
+            style={{ 
+              color: TEXT_DARK,
+              background: isActive ? GRADIENT_LINEAR : "none",
+              WebkitBackgroundClip: isActive ? "text" : "none",
+              WebkitTextFillColor: isActive ? "transparent" : TEXT_DARK,
+            }}
+          >
+            {uc.title}
+          </h3>
+          
+          <p className="text-sm leading-relaxed mb-5" style={{ color: TEXT_MID }}>
+            {variant.desc}
+          </p>
+
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full"
+            style={{
+              background: isActive
+                ? "linear-gradient(135deg, rgba(37,99,235,0.1), rgba(16,185,129,0.1))"
+                : "rgba(37,99,235,0.04)",
+              border: isActive
+                ? "1px solid rgba(16,185,129,0.2)"
+                : "1px solid rgba(37,99,235,0.06)",
+            }}
+          >
+            <motion.svg
+              animate={isActive ? { x: [0, 4, 0] } : {}}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+              width="14"
+              height="14"
+              fill="none"
+              stroke={isActive ? BRAND_GREEN : BRAND_BLUE}
+              strokeWidth="2.5"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </motion.svg>
+            <span 
+              className="text-xs font-bold"
+              style={{ color: isActive ? BRAND_GREEN : BRAND_BLUE }}
+            >
+              {variant.stat}
+            </span>
+          </motion.div>
+        </div>
+
+        {isActive && (
+          <motion.div
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="h-1"
+            style={{ 
+              background: GRADIENT_LINEAR,
+              transformOrigin: "left",
+            }}
+          />
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ModeToggleProps {
+  mode: DisplayMode;
+  onModeChange: (m: DisplayMode) => void;
+}
+
+function ModeToggle({ mode, onModeChange }: ModeToggleProps) {
+  return (
+    <div 
+      className="relative flex p-1 rounded-2xl"
+      style={{ 
+        background: "rgba(37,99,235,0.04)",
+        border: "1px solid rgba(37,99,235,0.06)",
+      }}
+    >
+      {(["chat", "voice"] as DisplayMode[]).map((m) => {
+        const isActive = mode === m;
+        const Icon = m === "chat" ? ChatIcon : VoiceIcon;
+
+        return (
+          <motion.button
+            key={m}
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => onModeChange(m)}
+            className="relative flex-1 px-6 py-3 rounded-xl text-sm font-semibold transition-all z-10"
+            style={{
+              border: "none",
+              background: "transparent",
+              color: isActive ? "#ffffff" : TEXT_MID,
+              cursor: "pointer",
+            }}
+          >
+            {isActive && (
+              <motion.div
+                layoutId="activeModeBg"
+                className="absolute inset-0 rounded-xl"
+                style={{ background: GRADIENT_LINEAR }}
+                transition={{ type: "spring", duration: 0.5 }}
+              />
+            )}
+            <span className="relative flex items-center justify-center gap-2.5">
+              <Icon className="w-4 h-4" />
+              {m === "chat" ? "Chat Interface" : "Voice Agent"}
+            </span>
+          </motion.button>
+        );
+      })}
+    </div>
+  );
+}
+
+const ChatIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+  </svg>
+);
+
+const VoiceIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+  </svg>
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface OutcomesPanelProps {
+  outcomes: OutcomeItem[];
+  accentColor: string;
+}
+
+function OutcomesPanel({ outcomes, accentColor }: OutcomesPanelProps) {
+  return (
+    <div className="p-8 md:p-10">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-0.5 h-6 rounded-full" style={{ background: accentColor }} />
+        <p className="text-xs font-bold tracking-widest uppercase" style={{ color: accentColor }}>
+          Key Performance Metrics
+        </p>
+      </div>
+      
+      <div className="grid gap-3">
+        {outcomes.map((item, j) => (
+          <motion.div
+            key={j}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: j * 0.05 }}
+            whileHover={{ scale: 1.02, x: 4 }}
+            className="group relative overflow-hidden rounded-xl p-4"
+            style={{
+              background: "rgba(255,255,255,0.7)",
+              border: "1px solid rgba(37,99,235,0.06)",
+              backdropFilter: "blur(10px)",
+            }}
+          >
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" 
+              style={{ background: `linear-gradient(135deg, ${accentColor}08, transparent)` }} 
+            />
+            <div className="relative flex items-center justify-between">
+              <span className="text-sm font-medium" style={{ color: TEXT_MID }}>
+                {item.label}
+              </span>
+              <span 
+                className="text-xl font-bold font-mono"
+                style={{ color: TEXT_DARK }}
+              >
+                {item.value}
+              </span>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface FeaturesPanelProps {
+  features: string[];
+  cta: string;
+  accentColor: string;
+  onRegister: () => void;
+  onContactSales: () => void;
+}
+
+function FeaturesPanel({ features, cta, accentColor, onRegister, onContactSales }: FeaturesPanelProps) {
+  return (
+    <div className="p-8 md:p-10" style={{ borderTop: "1px solid rgba(37,99,235,0.06)" }}>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-0.5 h-6 rounded-full" style={{ background: accentColor }} />
+        <p className="text-xs font-bold tracking-widest uppercase" style={{ color: accentColor }}>
+          Capabilities
+        </p>
+      </div>
+
+      <div className="grid gap-3">
+        {features.map((feat, j) => (
+          <motion.div
+            key={j}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: j * 0.05 }}
+            className="flex items-start gap-4 p-3 rounded-xl transition-all"
+            style={{
+              background: "rgba(255,255,255,0.5)",
+              border: "1px solid rgba(37,99,235,0.04)",
+            }}
+          >
+            <div 
+              className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center mt-0.5"
+              style={{
+                background: `linear-gradient(135deg, ${accentColor}15, ${accentColor}10)`,
+                border: `1px solid ${accentColor}20`,
+              }}
+            >
+              <svg width="12" height="12" fill="none" stroke={accentColor} strokeWidth="3" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <span className="text-sm leading-relaxed" style={{ color: TEXT_MID }}>
+              {feat}
+            </span>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="mt-8 pt-6 flex flex-col sm:flex-row gap-3" style={{ borderTop: "1px solid rgba(37,99,235,0.06)" }}>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onRegister}
+          className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-white transition-shadow"
+          style={{
+            background: GRADIENT_LINEAR,
+            boxShadow: "0 4px 20px rgba(16,185,129,0.3)",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          {cta}
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </motion.button>
+        
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onContactSales}
+          className="flex-1 px-6 py-3 rounded-xl font-semibold transition-all"
+          style={{
+            background: "rgba(255,255,255,0.6)",
+            border: "1px solid rgba(37,99,235,0.1)",
+            color: TEXT_MID,
+            cursor: "pointer",
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          Contact Sales
+        </motion.button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface IntegrationRowProps {
+  items: IntegrationItem[];
+  direction?: "normal" | "reverse";
+}
+
+function IntegrationRow({ items, direction = "normal" }: IntegrationRowProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  
+  return (
+    <div 
+      className="relative overflow-hidden rounded-2xl"
+      style={{
+        background: direction === "normal" 
+          ? "linear-gradient(135deg, rgba(37,99,235,0.03), rgba(37,99,235,0.01))"
+          : "linear-gradient(135deg, rgba(16,185,129,0.03), rgba(16,185,129,0.01))",
+        border: "1px solid rgba(37,99,235,0.06)",
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="absolute inset-y-0 left-0 w-24 z-10 pointer-events-none" style={{ background: "linear-gradient(90deg, #ffffff, transparent)" }} />
+      <div className="absolute inset-y-0 right-0 w-24 z-10 pointer-events-none" style={{ background: "linear-gradient(270deg, #ffffff, transparent)" }} />
+      
+      <motion.div
+        className="flex gap-4 py-5 px-2"
+        style={{ width: "max-content" }}
+        animate={{
+          x: direction === "normal" 
+            ? (isHovered ? "-50%" : "0%")
+            : (isHovered ? "0%" : "-50%"),
+        }}
+        transition={{ duration: 20, ease: "linear" }}
+      >
+        {[...items, ...items, ...items].map((item, i) => (
+          <motion.div
+            key={i}
+            whileHover={{ scale: 1.1, rotate: [-2, 2, 0] }}
+            className="flex items-center gap-3 px-6 py-3 rounded-xl flex-shrink-0 transition-all"
+            style={{
+              background: "rgba(255,255,255,0.8)",
+              border: "1px solid rgba(37,99,235,0.06)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
+              backdropFilter: "blur(10px)",
+            }}
+          >
+            <span className="text-2xl">{item.icon}</span>
+            <span className="text-sm font-medium" style={{ color: TEXT_MID }}>
+              {item.name}
+            </span>
+          </motion.div>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+const INTEGRATION_STATS = [
+  { n: "40+", l: "Pre-built integrations" },
+  { n: "∞", l: "Custom API possibilities" },
+  { n: "5 min", l: "Average setup time" },
+] as const;
+
+export function Industry({ activeUseCase, setActiveUseCase, openAuth }: IndustryProps) {
+  const [mode, setMode] = useState<DisplayMode>("chat");
+  const sectionRef = useRef<HTMLElement>(null);
+  const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+
+  const uc = useCases[activeUseCase] as UseCase;
+  const variant = uc[mode];
+  const accentColor = mode === "chat" ? BRAND_BLUE : BRAND_GREEN;
+
+  const scrollToContact = useCallback(() => {
+    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  const handleRegister = useCallback(() => openAuth("register"), [openAuth]);
+
+  return (
+    <section ref={sectionRef} className="relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full opacity-[0.03]"
+          style={{ background: "radial-gradient(circle, #2563EB, transparent 70%)" }} 
+        />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full opacity-[0.03]"
+          style={{ background: "radial-gradient(circle, #10B981, transparent 70%)" }} 
+        />
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+        {/* ── Header ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.6 }}
+          className="text-center max-w-3xl mx-auto mb-16"
+        >
+          <motion.span
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+            transition={{ delay: 0.2 }}
+            className="inline-block px-4 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase"
+            style={{ color: "#ffffff", background: "var(--gg)" }}
+          >
+            ✦ Industry Solutions
+          </motion.span>
+          
+          <h2 className="mt-6 font-extrabold leading-tight tracking-tight"
+            style={{ fontSize: "clamp(32px, 5vw, 52px)" }}
+          >
+            Built for{" "}
+            <span className="relative">
+              <span className="gradient-text">every industry</span>
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={isInView ? { scaleX: 1 } : { scaleX: 0 }}
+                transition={{ delay: 0.8, duration: 0.8 }}
+                className="absolute -bottom-2 left-0 right-0 h-1.5 rounded-full"
+                style={{ background: GRADIENT_LINEAR, transformOrigin: "left" }}
+              />
+            </span>
+          </h2>
+          
+          <p className="mt-4 text-base sm:text-lg" style={{ color: TEXT_MID }}>
+            Plug into the tools your team already uses — connects with your existing 
+            CRM, telephony, and automation tools instantly.
+          </p>
+        </motion.div>
+
+        {/* ── Use case cards ── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {(useCases as UseCase[]).map((uc, i) => (
+            <UseCaseCard
+              key={i}
+              uc={uc}
+              index={i}
+              isActive={activeUseCase === i}
+              mode={mode}
+              onClick={() => setActiveUseCase(i)}
+            />
           ))}
         </div>
 
-        <Reveal>
-          <div key={`${activeUseCase}-${mode}`} className="animate-fade-up rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.04), rgba(16,185,129,0.03))", border: "1px solid rgba(16,185,129,0.14)", marginBottom: 48 }}>
-            {/* Chat / Voice Toggle */}
-            <div style={{ display: "flex", borderBottom: "1px solid rgba(37,99,235,0.08)" }}>
-              <button onClick={() => setMode("chat")} style={{ flex: 1, padding: "14px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", border: "none", background: mode === "chat" ? "rgba(37,99,235,0.06)" : "transparent", color: mode === "chat" ? "#2563EB" : "#475569", borderBottom: mode === "chat" ? "2px solid #2563EB" : "2px solid transparent", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                Chat Box
-              </button>
-              <button onClick={() => setMode("voice")} style={{ flex: 1, padding: "14px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", border: "none", background: mode === "voice" ? "rgba(16,185,129,0.06)" : "transparent", color: mode === "voice" ? "#10B981" : "#475569", borderBottom: mode === "voice" ? "2px solid #10B981" : "2px solid transparent", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" /></svg>
-                Voice Agent
-              </button>
-            </div>
+        {/* ── Detail panel ── */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${activeUseCase}-${mode}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+            className="relative rounded-3xl overflow-hidden mb-16"
+            style={{
+              background: "linear-gradient(135deg, rgba(37,99,235,0.04), rgba(16,185,129,0.02))",
+              border: "1px solid rgba(16,185,129,0.08)",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.04)",
+            }}
+          >
+            <ModeToggle mode={mode} onModeChange={setMode} />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-              <div style={{ padding: "32px 36px", borderRight: "1px solid rgba(37,99,235,0.08)" }}>
-                <p style={{ fontSize: 11, fontWeight: 600, color: mode === "chat" ? "#2563EB" : "#10B981", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "'JetBrains Mono',monospace", marginBottom: 12 }}>Key outcomes</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {variant.outcomes.map((item: { label: string; value: string }, j: number) => (
-                    <div key={j} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.65)", border: "1px solid rgba(37,99,235,0.08)" }}>
-                      <span style={{ fontSize: 13, color: "#475569" }}>{item.label}</span>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: "#0a0a0a", fontFamily: "'JetBrains Mono',monospace" }}>{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div style={{ padding: "32px 36px" }}>
-                <p style={{ fontSize: 11, fontWeight: 600, color: mode === "chat" ? "#2563EB" : "#10B981", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "'JetBrains Mono',monospace", marginBottom: 12 }}>What Autoniv does</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {variant.features.map((feat: string, j: number) => (
-                    <div key={j} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                      <div style={{ width: 20, height: 20, borderRadius: "50%", flexShrink: 0, marginTop: 1, background: mode === "chat" ? "rgba(37,99,235,0.10)" : "rgba(16,185,129,0.10)", border: mode === "chat" ? "1px solid rgba(37,99,235,0.22)" : "1px solid rgba(16,185,129,0.22)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <svg width="10" height="10" fill="none" stroke={mode === "chat" ? "#2563EB" : "#10B981"} strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                      </div>
-                      <span style={{ fontSize: 13, color: "#475569", lineHeight: 1.55 }}>{feat}</span>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ marginTop: 20, paddingTop: 18, borderTop: "1px solid rgba(37,99,235,0.08)", display: "flex", gap: 10 }}>
-                  <button onClick={() => openAuth("register")} className="font-bold text-white flex items-center gap-2" style={{ padding: "9px 18px", borderRadius: 10, fontSize: 13, background: "linear-gradient(135deg,#2563EB,#10B981)", boxShadow: "0 4px 14px rgba(16,185,129,0.20)", border: "none", cursor: "pointer" }}>
-                    {variant.cta}
-                    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-                  </button>
-                  <button onClick={() => { const el = document.getElementById('contact'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} style={{ padding: "9px 18px", borderRadius: 10, fontSize: 13, fontWeight: 600, border: "1px solid rgba(37,99,235,0.2)", background: "transparent", color: "#475569", cursor: "pointer" }}>
-                    Contact Sales
-                  </button>
-                </div>
-              </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+              <OutcomesPanel outcomes={variant.outcomes} accentColor={accentColor} />
+              <FeaturesPanel
+                features={variant.features}
+                cta={variant.cta}
+                accentColor={accentColor}
+                onRegister={handleRegister}
+                onContactSales={scrollToContact}
+              />
             </div>
-          </div>
-        </Reveal>
+          </motion.div>
+        </AnimatePresence>
 
-        <div>
-          <Reveal className="text-center mb-8">
-            <h3 className="text-xl sm:text-2xl font-extrabold" style={{ color: "#0a0a0a" }}>Integrations</h3>
-            <p className="text-sm mt-2" style={{ color: "#475569" }}>Connect Your Favorite Tools & Platforms</p>
-          </Reveal>
-          <div className="space-y-3">
-            <Reveal>
-              <div className="relative overflow-hidden rounded-2xl" style={{ background: "rgba(37,99,235,0.03)", border: "1px solid rgba(37,99,235,0.08)" }}>
-                <div className="absolute inset-y-0 left-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(90deg, #ffffff, transparent)" }} />
-                <div className="absolute inset-y-0 right-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(270deg, #ffffff, transparent)" }} />
-                <div className="flex gap-4 animate-marquee py-4" style={{ width: "max-content" }}>
-                  {[...integrationsRow1, ...integrationsRow1, ...integrationsRow1].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 px-5 py-2 rounded-xl flex-shrink-0 transition-all duration-300 hover:scale-105"
-                      style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(37,99,235,0.08)" }}>
-                      <span className="text-xl">{item.icon}</span>
-                      <span className="text-sm font-medium" style={{ color: "#475569" }}>{item.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Reveal>
-            <Reveal from="right">
-              <div className="relative overflow-hidden rounded-2xl" style={{ background: "rgba(16,185,129,0.03)", border: "1px solid rgba(16,185,129,0.08)" }}>
-                <div className="absolute inset-y-0 left-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(90deg, #ffffff, transparent)" }} />
-                <div className="absolute inset-y-0 right-0 w-20 z-10 pointer-events-none" style={{ background: "linear-gradient(270deg, #ffffff, transparent)" }} />
-                <div className="flex gap-4 py-4" style={{ width: "max-content", animation: "marquee 30s linear infinite reverse" }}>
-                  {[...integrationsRow2, ...integrationsRow2, ...integrationsRow2].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 px-5 py-2 rounded-xl flex-shrink-0 transition-all duration-300 hover:scale-105"
-                      style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(16,185,129,0.08)" }}>
-                      <span className="text-xl">{item.icon}</span>
-                      <span className="text-sm font-medium" style={{ color: "#475569" }}>{item.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Reveal>
-          </div>
-          <Reveal className="mt-8">
-            <div className="grid grid-cols-3 gap-4">
-              {[{ n: "40+", l: "Pre-built integrations" }, { n: "∞", l: "Custom API possibilities" }, { n: "5 min", l: "Average setup time" }].map((s, i) => (
-                <div key={i} className="rounded-2xl p-4 sm:p-6 text-center" style={{ background: "rgba(37,99,235,0.03)", border: "1px solid rgba(37,99,235,0.08)" }}>
-                  <div className="text-2xl sm:text-3xl font-bold mb-1 gradient-text">{s.n}</div>
-                  <div className="text-xs" style={{ color: "#475569" }}>{s.l}</div>
-                </div>
-              ))}
+        {/* ── Integrations ── */}
+        <div className="mt-20">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ delay: 0.6 }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full mb-4"
+              style={{ background: "rgba(37,99,235,0.04)", border: "1px solid rgba(37,99,235,0.06)" }}
+            >
+              <span className="text-xl">🔌</span>
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: TEXT_MID }}>
+                Seamless Integrations
+              </span>
             </div>
-          </Reveal>
-          <Reveal className="mt-6">
-            <div className="rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4" style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.04), rgba(16,185,129,0.04))", border: "1px solid rgba(37,99,235,0.12)" }}>
+            <h3 className="text-2xl sm:text-3xl font-extrabold" style={{ color: TEXT_DARK }}>
+              Connect your favorite tools
+            </h3>
+            <p className="text-sm mt-2" style={{ color: TEXT_MID }}>
+              Native integrations with the platforms you already use
+            </p>
+          </motion.div>
+
+          <div className="space-y-4">
+            <IntegrationRow
+              items={integrationsRow1 as IntegrationItem[]}
+              direction="normal"
+            />
+            <IntegrationRow
+              items={integrationsRow2 as IntegrationItem[]}
+              direction="reverse"
+            />
+          </div>
+
+          {/* Stats */}
+          <motion.dl
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ delay: 0.8 }}
+            className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10"
+          >
+            {INTEGRATION_STATS.map(({ n, l }, i) => (
+              <div
+                key={i}
+                className="relative rounded-2xl p-6 text-center transition-all hover:shadow-lg"
+                style={{
+                  background: "rgba(255,255,255,0.6)",
+                  border: "1px solid rgba(37,99,235,0.06)",
+                  backdropFilter: "blur(10px)",
+                }}
+              >
+                <dt className="text-xs font-medium uppercase tracking-wider" style={{ color: TEXT_LIGHT }}>
+                  {l}
+                </dt>
+                <motion.dd
+                  initial={{ scale: 0.8 }}
+                  animate={isInView ? { scale: 1 } : { scale: 0.8 }}
+                  transition={{ delay: 1 + i * 0.1, type: "spring" }}
+                  className="text-3xl sm:text-4xl font-bold mt-2 gradient-text"
+                >
+                  {n}
+                </motion.dd>
+              </div>
+            ))}
+          </motion.dl>
+
+          {/* CTA Banner */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ delay: 1 }}
+            className="mt-8 relative rounded-3xl p-6 sm:p-8 overflow-hidden"
+            style={{
+              background: "linear-gradient(135deg, rgba(37,99,235,0.05), rgba(16,185,129,0.05))",
+              border: "1px solid rgba(37,99,235,0.08)",
+            }}
+          >
+            <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10"
+              style={{ background: "radial-gradient(circle, #10B981, transparent 70%)" }}
+            />
+            <div className="relative flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
-                <h4 className="text-base font-bold" style={{ color: "#0a0a0a" }}>Need a custom integration?</h4>
-                <p className="text-xs mt-1" style={{ color: "#475569" }}>Our API supports webhooks, real-time events, and everything in between.</p>
+                <h4 className="text-lg font-bold" style={{ color: TEXT_DARK }}>
+                  Need a custom integration?
+                </h4>
+                <p className="text-sm mt-1" style={{ color: TEXT_MID }}>
+                  Our API supports webhooks, real-time events, and everything in between.
+                </p>
               </div>
-              <div className="flex gap-3">
-                <button onClick={() => { const el = document.getElementById('contact'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="px-4 py-2 rounded-xl text-xs font-semibold text-white" style={{ background: "var(--gg)", boxShadow: "0 4px 16px rgba(16,185,129,0.2)", border: 'none', cursor: 'pointer' }}>Contact Support</button>
-              </div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={scrollToContact}
+                className="px-6 py-3 rounded-xl text-sm font-bold text-white whitespace-nowrap"
+                style={{
+                  background: "var(--gg)",
+                  boxShadow: "0 4px 20px rgba(16,185,129,0.25)",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Contact Support →
+              </motion.button>
             </div>
-          </Reveal>
+          </motion.div>
         </div>
       </div>
-      <style>{`@keyframes progressFill { from { width: 0%; } to { width: 100%; } }`}</style>
+
+      <style>{`
+        .gradient-text {
+          background: linear-gradient(135deg, #2563EB, #10B981);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+      `}</style>
     </section>
   );
 }
