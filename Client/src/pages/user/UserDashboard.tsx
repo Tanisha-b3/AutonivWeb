@@ -1085,34 +1085,7 @@ const callStatus: Record<string, { label: string; color: string; dotColor: strin
   failed:    { label: 'Failed',    color: '#ef4444', dotColor: '#ef4444', bg: 'bg-rose-50' },
 };
 
-const dummyTrendData = [
-  { name: 'Mon', 'Calls Volume': 12, 'Minutes Used': 1.5 },
-  { name: 'Tue', 'Calls Volume': 19, 'Minutes Used': 2.4 },
-  { name: 'Wed', 'Calls Volume': 15, 'Minutes Used': 1.8 },
-  { name: 'Thu', 'Calls Volume': 29, 'Minutes Used': 3.6 },
-  { name: 'Fri', 'Calls Volume': 22, 'Minutes Used': 2.8 },
-  { name: 'Sat', 'Calls Volume': 35, 'Minutes Used': 4.2 },
-  { name: 'Sun', 'Calls Volume': 40, 'Minutes Used': 4.8 },
-];
-
 // ─── Main Dashboard Component ─────────────────────────────────────────
-function LockedSectionOverlay({ title, desc }: { title: string; desc: string }) {
-  return (
-    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm rounded-2xl text-center select-none border border-white/5 animate-fadeIn">
-      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center text-white mb-4 shadow-lg animate-pulse">
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-        </svg>
-      </div>
-      <h3 className="text-sm font-extrabold text-white tracking-tight">{title}</h3>
-      <p className="text-[11px] text-slate-300 max-w-xs mt-1.5 font-semibold leading-relaxed">{desc}</p>
-      <Link to="/dashboard/billing" className="mt-4 inline-flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 transition-all hover:scale-[1.02] shadow-md hover:shadow-indigo-500/10">
-        Upgrade Subscription
-      </Link>
-    </div>
-  );
-}
-
 export function UserDashboard() {
   const dispatch   = useAppDispatch();
   const stats      = useAppSelector((state) => state.analytics.myStats);
@@ -1295,14 +1268,14 @@ export function UserDashboard() {
     if (isChatOnly || isBoth) {
       list.push({
         label: 'Chat Conversations',
-        value: user?.callsUsed || 0,
+        value: user?.chatUsed || 0,
         accentColor: '37,99,235',
         icon: (
           <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
         ),
-        delta: `Limit: ${user?.callsLimit || 100} / mo`,
+        delta: `Limit: ${user?.chatLimit || 0} / mo`,
         colorHex: '#2563EB',
       });
     }
@@ -1338,7 +1311,7 @@ export function UserDashboard() {
     if (isChatOnly) {
       list.push({
         label: 'Chats Remaining',
-        value: Math.max(0, (user?.callsLimit || 100) - (user?.callsUsed || 0)),
+        value: Math.max(0, (user?.chatLimit || 0) - (user?.chatUsed || 0)),
         accentColor: '0,212,255',
         icon: (
           <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -1367,9 +1340,9 @@ export function UserDashboard() {
   const hasNoData  = !loading && s.agentCount === 0 && s.callCount === 0 && myAgents.length === 0;
   const showEmptyGuide = hasNoData && !showOnboarding && isVoice;
 
-  const hasCallData    = callBreakdown.total > 0 || !isVoice; // Show trend section so it can render lock screen
-  const hasAgents      = myAgents.length > 0 || !isVoice;     // Show agents section so it can render lock screen
-  const hasRecentCalls = recentCalls.length > 0 || !isVoice;   // Show recent calls so it can render lock screen
+  const hasCallData    = callBreakdown.total > 0 && isVoice;
+  const hasAgents      = myAgents.length > 0 && isVoice;
+  const hasRecentCalls = recentCalls.length > 0 && isVoice;
 
   // Custom Chart Tooltip styling
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -1662,20 +1635,124 @@ export function UserDashboard() {
           ))}
         </div>
 
+        {/* ── Chat Widget Embed Section ── */}
+        {isChat && (
+          <motion.div variants={fadeUp} className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md" style={{ borderColor: 'var(--slate-border)' }}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">CHAT WIDGET</p>
+                <h2 className="text-sm font-extrabold text-slate-800 mt-0.5">Embed Chat on Your Website</h2>
+              </div>
+              <Link to="/dashboard/chat" className="text-[10px] font-bold uppercase tracking-wider text-[var(--primary-blue)] hover:text-[var(--primary-blue-dark)] transition-colors">
+                Open Chat →
+              </Link>
+            </div>
+            <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Embed Code</p>
+              <div className="bg-slate-900 rounded-xl p-4 font-mono text-[11px] text-green-400 overflow-x-auto">
+                <code>{`<script src="https://cdn.autoniv.com/widget.js"\n  data-api-key="YOUR_API_KEY"\n  data-position="bottom-right">\n</script>`}</code>
+              </div>
+              <div className="flex items-center gap-2 mt-3">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`<script src="https://cdn.autoniv.com/widget.js" data-api-key="YOUR_API_KEY" data-position="bottom-right"></script>`);
+                    addToast('Embed code copied to clipboard', 'success');
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-[var(--primary-blue)] text-white hover:opacity-90 transition-all cursor-pointer border-none"
+                >
+                  Copy Code
+                </button>
+                <span className="text-[10px] text-slate-400 font-medium">Add this to your website's &lt;head&gt; tag</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── Chat Usage Breakdown ── */}
+        {isChat && (
+          <motion.div variants={fadeUp} className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md" style={{ borderColor: 'var(--slate-border)' }}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">CONVERSATION INSIGHTS</p>
+                <h2 className="text-sm font-extrabold text-slate-800 mt-0.5">Chat Usage</h2>
+              </div>
+              <Link to="/dashboard/billing" className="text-[10px] font-bold uppercase tracking-wider text-[var(--primary-blue)] hover:text-[var(--primary-blue-dark)] transition-colors">
+                View Plan →
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { label: 'Conversations Used', value: user?.chatUsed || 0, color: 'text-blue-600', bg: 'bg-blue-50/50' },
+                { label: 'Monthly Limit', value: user?.chatLimit || 0, color: 'text-[var(--primary-blue)]', bg: 'bg-[var(--primary-blue-soft)]/20' },
+                { label: 'Remaining', value: Math.max(0, (user?.chatLimit || 0) - (user?.chatUsed || 0)), color: 'text-green-600', bg: 'bg-green-50/50' },
+                { label: 'Usage Rate', value: user?.chatLimit ? Math.round(((user?.chatUsed || 0) / user.chatLimit) * 100) : 0, color: 'text-amber-600', bg: 'bg-amber-50/50', suffix: '%' },
+              ].map(item => (
+                <div key={item.label} className={`rounded-xl p-3.5 border border-slate-100 ${item.bg}`}>
+                  <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">{item.label}</p>
+                  <p className={`text-xl font-extrabold ${item.color}`}>
+                    <AnimatedCounter value={item.value} />{item.suffix || ''}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/30 p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <span className="text-[10px] font-semibold text-slate-500">Need more conversations? Upgrade your chat plan for higher limits.</span>
+              </div>
+              <Link to="/dashboard/billing" className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-white border border-slate-200 text-slate-600 hover:border-[var(--primary-blue)] hover:text-[var(--primary-blue)] transition-all">
+                Upgrade
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── Quick Actions for Chat ── */}
+        {isChat && !isVoice && (
+          <motion.div variants={fadeUp} className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md" style={{ borderColor: 'var(--slate-border)' }}>
+            <div className="mb-4">
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">QUICK ACTIONS</p>
+              <h2 className="text-sm font-extrabold text-slate-800 mt-0.5">Get Started with Chat</h2>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {[
+                { to: '/dashboard/chat', title: 'Open Chat', desc: 'Start a conversation', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>, color: '#2563EB', bg: 'bg-blue-50/50' },
+                { to: '/dashboard/billing', title: 'Upgrade Plan', desc: 'Get more conversations', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>, color: '#10B981', bg: 'bg-green-50/50' },
+                { to: '/dashboard/leads', title: 'View Leads', desc: 'Review captured data', icon: <UsersIcon />, color: '#14B8A6', bg: 'bg-teal-50/50' },
+              ].map((action, i) => (
+                <Link key={action.title} to={action.to} className="block">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.04 }}
+                    whileHover={{ y: -2, borderColor: 'rgba(37,99,235,0.25)' }}
+                    className="flex flex-col p-3.5 rounded-xl border border-slate-100 bg-white hover:bg-slate-50/40 cursor-pointer h-full justify-between transition-all shadow-sm"
+                  >
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${action.bg}`} style={{ color: action.color }}>
+                      {action.icon}
+                    </div>
+                    <div className="mt-3">
+                      <p className="text-xs font-bold text-slate-700 leading-tight">{action.title}</p>
+                      <p className="text-[10px] text-slate-400 mt-1">{action.desc}</p>
+                    </div>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* ── Performance Analytics Trends Section ── */}
-        {hasCallData && (
-        <motion.div
-          variants={fadeUp}
-          className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md relative overflow-hidden"
-          style={{ borderColor: 'var(--slate-border)' }}
-        >
-          {!isVoice && (
-            <LockedSectionOverlay
-              title="Call Performance Trends"
-              desc="Deploy automated voice assistants to map call volume metrics and minutes consumed."
-            />
-          )}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4.5" style={{ filter: !isVoice ? 'blur(4px)' : 'none', pointerEvents: !isVoice ? 'none' : 'auto' }}>
+        {isVoice && (
+          <motion.div
+            variants={fadeUp}
+            className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md"
+            style={{ borderColor: 'var(--slate-border)' }}
+          >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4.5">
             <div>
               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">ANALYTICS ENGINE</p>
               <h2 className="text-sm font-extrabold text-slate-800 mt-0.5">Performance Trends</h2>
@@ -1704,9 +1781,9 @@ export function UserDashboard() {
             </div>
           </div>
 
-          <div className="h-64 w-full" style={{ filter: !isVoice ? 'blur(4px)' : 'none', pointerEvents: !isVoice ? 'none' : 'auto' }}>
+          <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={!isVoice ? dummyTrendData : performanceTrendData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
+              <AreaChart data={performanceTrendData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
                 <defs>
                   <linearGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--primary-blue)" stopOpacity={0.20} />
@@ -1744,15 +1821,10 @@ export function UserDashboard() {
         {/* ── Breakdown & Billing Row ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           
-          {/* Call status breakdown */}
-          <motion.div variants={fadeUp} className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md relative overflow-hidden" style={{ borderColor: 'var(--slate-border)' }}>
-            {!isVoice && (
-              <LockedSectionOverlay
-                title="Call Status Breakdown"
-                desc="Upgrade your plan to see voice agent answer rates and connection statistics."
-              />
-            )}
-            <div style={{ filter: !isVoice ? 'blur(4px)' : 'none', pointerEvents: !isVoice ? 'none' : 'auto' }}>
+          {/* Call status breakdown — voice only */}
+          {isVoice && (
+          <motion.div variants={fadeUp} className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md" style={{ borderColor: 'var(--slate-border)' }}>
+            <div>
               <div className="flex items-center justify-between mb-1.5">
                 <h2 className="text-sm font-bold text-slate-800">Call Breakdown</h2>
                 <Link to="/dashboard/calls" className="text-[10px] font-bold uppercase tracking-wider text-[var(--primary-blue)] hover:text-[var(--primary-blue-dark)] transition-colors">
@@ -1802,6 +1874,7 @@ export function UserDashboard() {
               )}
             </div>
           </motion.div>
+          )}
 
           {/* Usage limit card */}
           <motion.div variants={fadeUp} className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md" style={{ borderColor: 'var(--slate-border)' }}>
@@ -1810,23 +1883,23 @@ export function UserDashboard() {
             <div className="rounded-xl p-4 mb-4 bg-slate-50/70 border border-slate-100">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-slate-600 font-bold">{isVoice ? 'Billing Minutes' : 'Chat Conversations'}</span>
-                <span className={`text-xs font-extrabold ${(isVoice ? usagePercent : ((user?.callsUsed || 0) / (user?.callsLimit || 100)) * 100) > 80 ? 'text-rose-600' : 'text-slate-800'}`}>
-                  <AnimatedCounter value={isVoice ? minutesUsed : (user?.callsUsed || 0)} />
+                <span className={`text-xs font-extrabold ${(isVoice ? usagePercent : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100) > 80 ? 'text-rose-600' : 'text-slate-800'}`}>
+                  <AnimatedCounter value={isVoice ? minutesUsed : (user?.chatUsed || 0)} />
                   {isVoice ? (
                     minutesLimit > 0 && <span className="text-slate-400 font-semibold"> / {minutesLimit.toLocaleString()} mins</span>
                   ) : (
-                    user?.callsLimit && <span className="text-slate-400 font-semibold"> / {user.callsLimit.toLocaleString()} chats</span>
+                    user?.chatLimit ? <span className="text-slate-400 font-semibold"> / {user.chatLimit.toLocaleString()} chats</span> : null
                   )}
                 </span>
               </div>
               <div className="h-2 rounded-full overflow-hidden bg-slate-200">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${isVoice ? usagePercent : ((user?.callsUsed || 0) / (user?.callsLimit || 100)) * 100}%` }}
+                <motion.div initial={{ width: 0 }} animate={{ width: `${isVoice ? usagePercent : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100}%` }}
                   transition={{ delay: 0.2, duration: 0.75, ease: 'easeOut' }}
-                  className={`h-full rounded-full ${(isVoice ? usagePercent : ((user?.callsUsed || 0) / (user?.callsLimit || 100)) * 100) > 80 ? 'bg-gradient-to-r from-rose-500 to-amber-500' : 'bg-gradient-to-r from-[var(--primary-blue)] to-[#10B981]'}`} />
+                  className={`h-full rounded-full ${(isVoice ? usagePercent : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100) > 80 ? 'bg-gradient-to-r from-rose-500 to-amber-500' : 'bg-gradient-to-r from-[var(--primary-blue)] to-[#10B981]'}`} />
               </div>
               <div className="flex items-center justify-between mt-1.5">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{Math.round(isVoice ? usagePercent : ((user?.callsUsed || 0) / (user?.callsLimit || 100)) * 100)}% metrics consumed</span>
-                {(isVoice ? usagePercent : ((user?.callsUsed || 0) / (user?.callsLimit || 100)) * 100) > 80 && (
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{Math.round(isVoice ? usagePercent : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100)}% metrics consumed</span>
+                {(isVoice ? usagePercent : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100) > 80 && (
                   <span className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 text-rose-500">
                     ⚠ quota critical
                   </span>
@@ -1841,9 +1914,9 @@ export function UserDashboard() {
                 { label: 'All Agents Count', value: myAgentStats.total,     color: 'text-[var(--primary-blue)]', bg: 'bg-[var(--primary-blue-soft)]/20' },
                 { label: 'Captured Leads',  value: s.leadCount || 0,       color: 'text-amber-600', bg: 'bg-amber-50/30', to: '/dashboard/leads' },
               ] : [
-                { label: 'Chats Used',      value: user?.callsUsed || 0,   color: 'text-blue-600', bg: 'bg-blue-50/30' },
-                { label: 'Chats Available', value: Math.max(0, (user?.callsLimit || 100) - (user?.callsUsed || 0)), color: 'text-green-600', bg: 'bg-green-50/30' },
-                { label: 'Monthly Quota',   value: user?.callsLimit || 100, color: 'text-[var(--primary-blue)]', bg: 'bg-[var(--primary-blue-soft)]/20' },
+                { label: 'Chats Used',      value: user?.chatUsed || 0,   color: 'text-blue-600', bg: 'bg-blue-50/30' },
+                { label: 'Chats Available', value: Math.max(0, (user?.chatLimit || 0) - (user?.chatUsed || 0)), color: 'text-green-600', bg: 'bg-green-50/30' },
+                { label: 'Monthly Quota',   value: user?.chatLimit || 0, color: 'text-[var(--primary-blue)]', bg: 'bg-[var(--primary-blue-soft)]/20' },
                 { label: 'Captured Leads',  value: s.leadCount || 0,       color: 'text-amber-600', bg: 'bg-amber-50/30', to: '/dashboard/leads' },
               ]).map(item => {
                 const inner = (
@@ -1864,14 +1937,8 @@ export function UserDashboard() {
 
         {/* ── My Agents Grid ── */}
         {hasAgents ? (
-          <motion.div variants={fadeUp} className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md relative overflow-hidden" style={{ borderColor: 'var(--slate-border)' }}>
-            {!isVoice && (
-              <LockedSectionOverlay
-                title="My Agents"
-                desc="Upgrade your plan to build, test, and manage custom voice AI receptionists."
-              />
-            )}
-            <div style={{ filter: !isVoice ? 'blur(4px)' : 'none', pointerEvents: !isVoice ? 'none' : 'auto' }}>
+          <motion.div variants={fadeUp} className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md" style={{ borderColor: 'var(--slate-border)' }}>
+            <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">AGENT FACTORY</p>
@@ -1882,17 +1949,13 @@ export function UserDashboard() {
                 </Link>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {(!isVoice && myAgents.length === 0 ? [
-                  { id: 'mock-1', name: 'Alisha (Front Desk)', type: 'receptionist', isActive: true },
-                  { id: 'mock-2', name: 'Rohan (Bookings)', type: 'appointment', isActive: true },
-                  { id: 'mock-3', name: 'FAQ Bot', type: 'faq', isActive: false }
-                ] : myAgents).map((agent, i) => (
+                {myAgents.map((agent, i) => (
                   <AgentCard key={agent.id} agent={agent} index={i} onWebCall={handleWebCall} onCallMe={(a) => setCallTarget(a)} />
                 ))}
               </div>
             </div>
           </motion.div>
-        ) : !loading && (
+        ) : !loading && isVoice && (
           <motion.div variants={fadeUp} className="rounded-2xl border bg-white/70 p-4 shadow-sm backdrop-blur-md" style={{ borderColor: 'var(--slate-border)' }}>
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-slate-50 border border-slate-200">
@@ -1909,17 +1972,12 @@ export function UserDashboard() {
         )}
 
         {/* ── Recent Activity & Quick Actions ── */}
+        {isVoice && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
           {/* Recent call list */}
-          <motion.div variants={fadeUp} className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md relative overflow-hidden" style={{ borderColor: 'var(--slate-border)' }}>
-            {!isVoice && (
-              <LockedSectionOverlay
-                title="Recent Call Logs"
-                desc="Upgrade your plan to see real-time inbound & outbound agent conversation logs."
-              />
-            )}
-            <div style={{ filter: !isVoice ? 'blur(4px)' : 'none', pointerEvents: !isVoice ? 'none' : 'auto' }}>
+          <motion.div variants={fadeUp} className="rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur-md" style={{ borderColor: 'var(--slate-border)' }}>
+            <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">ACTIVITY LOGS</p>
@@ -1932,11 +1990,7 @@ export function UserDashboard() {
 
               {hasRecentCalls ? (
                 <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-                  {(!isVoice && recentCalls.length === 0 ? [
-                    { id: 'mock-c1', agentName: 'Alisha (Front Desk)', status: 'completed', callerNumber: '+91 98765 43210', startedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(), duration: 120 },
-                    { id: 'mock-c2', agentName: 'Rohan (Bookings)', status: 'missed', callerNumber: '+91 87654 32109', startedAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(), duration: 0 },
-                    { id: 'mock-c3', agentName: 'FAQ Bot', status: 'completed', callerNumber: '+91 76543 21098', startedAt: new Date(Date.now() - 120 * 60 * 1000).toISOString(), duration: 45 }
-                  ] : recentCalls).map((call, i) => {
+                  {recentCalls.map((call, i) => {
                     const dur = formatDur(getCallDurSec(call));
                     const st  = callStatus[call.status] ?? callStatus.failed;
                     return (
@@ -2028,6 +2082,7 @@ export function UserDashboard() {
             </button>
           </motion.div>
         </div>
+        )}
       </motion.div>
 
       {/* Embedded CSS animation waveforms */}

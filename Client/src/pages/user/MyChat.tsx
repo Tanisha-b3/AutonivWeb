@@ -446,8 +446,8 @@ export function MyChat() {
 
       {/* ── Chat usage bar ── */}
       {(() => {
-        const used = user?.callsUsed ?? 0;
-        const limit = user?.callsLimit ?? 100;
+        const used = user?.chatUsed ?? 0;
+        const limit = user?.chatLimit ?? 0;
         const pct = Math.min((used / (limit || 1)) * 100, 100);
         const over = used >= limit;
         return (
