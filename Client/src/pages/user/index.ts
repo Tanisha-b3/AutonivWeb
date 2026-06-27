@@ -4,3 +4,4 @@ export { MyCalls } from './MyCalls';
 export { MyLeads } from './MyLeads';
 export { UserBilling } from './UserBilling';
 export { MyAppointments } from './MyAppointments';
+export { CustomWebCall } from './CustomWebCall';
