@@ -24,6 +24,7 @@ import { EmptyStateGuide } from '../../components/EmptyStateGuide';
 import VapiModule from '@vapi-ai/web';
 import { callService, apiKeyService } from '../../services/api';
 import type { MyStats } from '../../types';
+import { isChatPlan, isVoicePlan, getPlanColor, getPlanDisplayName } from '../../utils/plan';
 
 const Vapi = (typeof VapiModule === 'function' ? VapiModule : (VapiModule as any).default) as new (key: string) => any;
 
@@ -1061,12 +1062,6 @@ function getGreeting() {
   const h = new Date().getHours();
   return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 }
-function getPlanColor(plan: string) {
-  return plan === 'enterprise' ? { bg: 'bg-indigo-50', border: 'border-indigo-200', text: 'text-indigo-600' }
-    : plan === 'growth'       ? { bg: 'bg-[var(--primary-soft)]', border: 'border-[var(--border)]', text: 'text-[var(--primary)]' }
-    : plan === 'starter'      ? { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-600' }
-    : { bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-600' };
-}
 function getCallDurSec(call: { startedAt?: string | null; endedAt?: string | null; duration?: number }): number {
   if (call.startedAt && call.endedAt) {
     const d = new Date(call.endedAt).getTime() - new Date(call.startedAt).getTime();
@@ -1095,8 +1090,8 @@ export function UserDashboard() {
   const error      = useAppSelector((state) => state.analytics.error);
   const user       = useAppSelector((state) => state.auth.user);
   const myAgents   = useAppSelector((state) => state.agents.myAgents);
-  const isChat = user?.role === 'admin' || (user?.chatPlan ? user.chatPlan !== 'none' : (user?.chatEnabled !== undefined ? user.chatEnabled : true));
-  const isVoice = user?.role === 'admin' || (user?.voicePlan ? user.voicePlan !== 'none' : (user?.voiceEnabled !== undefined ? user.voiceEnabled : false));
+  const isChat = user ? isChatPlan(user) : true;
+  const isVoice = user ? isVoicePlan(user) : false;
   
   const { toasts, add: addToast, remove: removeToast } = useToast();
   
@@ -1583,7 +1578,7 @@ export function UserDashboard() {
 
           <div className="flex items-center gap-2 flex-wrap">
             <div className={`px-3 py-1.5 rounded-full border text-[9px] font-bold uppercase tracking-wider ${planColors.bg} ${planColors.border} ${planColors.text}`}>
-              {user?.plan ? user.plan.charAt(0).toUpperCase() + user.plan.slice(1) : 'Free'} Plan
+              {getPlanDisplayName(user?.plan)} Plan
             </div>
 
             {/* Time filters switch */}

@@ -10,6 +10,7 @@ import { VOICE_OPTIONS } from '../../config/voices';
 import { callService } from '../../services/api';
 import VapiModule from '@vapi-ai/web';
 import type { Agent } from '../../types';
+import { getMaxChatbots, isVoicePlan } from '../../utils/plan';
 
 const Vapi = (typeof VapiModule === 'function' ? VapiModule : (VapiModule as any).default) as new (key: string) => any;
 
@@ -104,8 +105,6 @@ const AGENT_TEMPLATES = [
     borderClass: 'border-l-purple-500 hover:border-purple-300',
   },
 ];
-
-const PLAN_LIMITS: Record<string, number> = { free: 1, starter: 3, growth: 10, enterprise: Infinity };
 
 const DEFAULT_FORM_DATA = {
   name: '', type: 'receptionist', prompt: '', language: 'en', voiceId: VOICE_OPTIONS[0].value,
@@ -1048,15 +1047,13 @@ export function MyAgents() {
     dispatch(fetchMyAgents({ page, limit: 20 }));
   }, [dispatch, page]);
 
-  const plan = user?.plan || 'free';
-  const tier = plan.replace(/^(chat_|voice_|both_)/, '');
-  const maxAgents = PLAN_LIMITS[tier] || PLAN_LIMITS[plan] || 3;
-  const atLimit = maxAgents ? agents.length >= maxAgents : false;
+  const maxAgents = user ? getMaxChatbots(user) : 3;
+  const atLimit = maxAgents !== -1 ? agents.length >= maxAgents : false;
 
   const openCreate = () => {
     if (atLimit) {
       addToast(
-        `Your ${plan} plan allows ${maxAgents} agent${maxAgents > 1 ? 's' : ''}. Upgrade to create more.`,
+        `Your plan allows ${maxAgents} agent${maxAgents > 1 ? 's' : ''}. Upgrade to create more.`,
         'error',
         { label: 'Upgrade', onClick: () => navigate('/dashboard/billing') }
       );
@@ -1068,7 +1065,7 @@ export function MyAgents() {
   const handleApplyTemplate = (tpl: typeof AGENT_TEMPLATES[0]) => {
     if (atLimit) {
       addToast(
-        `Your ${plan} plan allows ${maxAgents} agent${maxAgents > 1 ? 's' : ''}. Upgrade to create more.`,
+        `Your plan allows ${maxAgents} agent${maxAgents > 1 ? 's' : ''}. Upgrade to create more.`,
         'error',
         { label: 'Upgrade', onClick: () => navigate('/dashboard/billing') }
       );
@@ -1347,7 +1344,7 @@ export function MyAgents() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             <p className="text-xs leading-relaxed flex-1 font-semibold" style={{ color: '#92400e' }}>
-              You have reached your {maxAgents}-agent limit on the <span className="font-bold capitalize">{plan}</span> plan.{' '}
+              You have reached your {maxAgents}-agent limit on your current plan.{' '}
               <button type="button" onClick={() => navigate('/dashboard/billing')} className="underline underline-offset-2 transition-colors font-bold cursor-pointer" style={{ color: '#92400e' }}>Upgrade plan to unlock more slots.</button>
             </p>
           </motion.div>
@@ -1359,7 +1356,7 @@ export function MyAgents() {
           const minutesLimit = user?.minutesLimit ?? 0;
           // -1 = unlimited (enterprise). 0 = no voice plan / chat-only.
           const isUnlimited = minutesLimit === -1;
-          const hasVoicePlan = isUnlimited || minutesLimit > 0 || (user?.voicePlan && user.voicePlan !== 'none');
+          const hasVoicePlan = isUnlimited || minutesLimit > 0 || (user ? isVoicePlan(user) : false);
           const isAtLimit = !isUnlimited && hasVoicePlan && minutesUsed >= minutesLimit;
           const pct = isUnlimited ? 100 : hasVoicePlan ? Math.min((minutesUsed / minutesLimit) * 100, 100) : 0;
           const barColor = isUnlimited ? '#10b981' : isAtLimit ? '#ef4444' : '#10b981';

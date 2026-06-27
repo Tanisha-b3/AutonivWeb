@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/useStore';
 import { createUpgradeRequest, fetchMyUpgradeRequests } from '../../store/slices/upgradeRequestsSlice';
 import { fetchMyAgents } from '../../store/slices/agentsSlice';
-import { checkAuth } from '../../store/slices/authSlice';
+import { isChatPlan, isVoicePlan, getPlanConfigByKey } from '../../utils/plan';
 
 // ─── Plan Configurations ────────────────────────────────────────────────
 const planCategories = {
@@ -66,7 +66,7 @@ const planCategories = {
   voice: [
     {
       id: 'voice_free', name: 'Voice Trial', tagline: 'Test the system. See results in 30 days.',
-      price: 4999, priceUSD: 59, callsPerMonth: 30, minutesPerMonth: 0,
+      price: 4999, priceUSD: 59, callsPerMonth: 30, minutesPerMonth: 30,
       features: [
         { text: '1 AI Voice Assistant', included: true },
         { text: '30 calls / month', included: true },
@@ -79,7 +79,7 @@ const planCategories = {
     },
     {
       id: 'voice_starter', name: 'Voice Foundation', tagline: 'For businesses automating first conversations.',
-      price: 14999, priceUSD: 179, callsPerMonth: 120, minutesPerMonth: 0, setupFee: 14999, setupFeeUSD: 179,
+      price: 14999, priceUSD: 179, callsPerMonth: 120, minutesPerMonth: 120, setupFee: 14999, setupFeeUSD: 179,
       features: [
         { text: '1 AI Voice Assistant', included: true },
         { text: '120 calls / month', included: true },
@@ -92,7 +92,7 @@ const planCategories = {
     },
     {
       id: 'voice_growth', name: 'Voice Scale', tagline: 'For teams replacing a full calling function.',
-      price: 29999, priceUSD: 359, callsPerMonth: 400, minutesPerMonth: 0, setupFee: 39999, setupFeeUSD: 479,
+      price: 29999, priceUSD: 359, callsPerMonth: 400, minutesPerMonth: 400, setupFee: 39999, setupFeeUSD: 479,
       badge: 'Most Popular', icon: '📞', style: 'featured',
       features: [
         { text: 'Up to 3 AI Workflows', included: true },
@@ -106,7 +106,7 @@ const planCategories = {
     },
     {
       id: 'voice_enterprise', name: 'Voice Dominate', tagline: 'For high-volume operations that can\'t slow down.',
-      price: 74999, priceUSD: 899, callsPerMonth: 1200, minutesPerMonth: 0, setupFee: 89999, setupFeeUSD: 1079,
+      price: 74999, priceUSD: 899, callsPerMonth: 1200, minutesPerMonth: -1, setupFee: 89999, setupFeeUSD: 1079,
       features: [
         { text: 'Unlimited Workflows', included: true },
         { text: '1,200 calls / month', included: true },
@@ -136,12 +136,12 @@ const planCategories = {
       id: 'both_starter', name: 'Chat + Voice Foundation', tagline: 'Combined package for growing businesses.',
       price: 18498, priceUSD: 228, callsPerMonth: 1000, minutesPerMonth: 120, setupFee: 14999, setupFeeUSD: 179,
       features: [
-        { text: '3 chatbots & 1 voice assistant', included: true },
+        { text: '1 chatbot & 3 voice agents', included: true },
         { text: '1,000 chats & 120 calls', included: true },
         { text: 'WhatsApp + website', included: true },
         { text: 'Basic analytics', included: true },
         { text: 'Free demo call', included: true },
-        { text: 'CRM integration', included: true },
+        { text: 'No CRM integration', included: false },
       ],
       icon: '⚡', style: 'solid', accentColor: 'from-blue-500 to-indigo-600'
     },
@@ -161,7 +161,7 @@ const planCategories = {
     },
     {
       id: 'both_enterprise', name: 'Chat + Voice Dominate', tagline: 'Complete customized AI architecture.',
-      price: 74999, priceUSD: 899, callsPerMonth: 99999, minutesPerMonth: 1200, setupFee: 89999, setupFeeUSD: 1079,
+      price: 74999, priceUSD: 899, callsPerMonth: 99999, minutesPerMonth: -1, setupFee: 89999, setupFeeUSD: 1079,
       features: [
         { text: 'Unlimited chatbots & agents', included: true },
         { text: 'Unlimited chats & voice mins', included: true },
@@ -258,11 +258,10 @@ export function UserBilling() {
   useEffect(() => {
     dispatch(fetchMyUpgradeRequests());
     dispatch(fetchMyAgents({ page: 1, limit: 50 }));
-    dispatch(checkAuth());
   }, [dispatch]);
 
-  const isChat = user?.role === 'admin' || (user?.chatPlan ? user.chatPlan !== 'none' : (user?.chatEnabled !== undefined ? user.chatEnabled : true));
-  const isVoice = user?.role === 'admin' || (user?.voicePlan ? user.voicePlan !== 'none' : (user?.voiceEnabled !== undefined ? user.voiceEnabled : false));
+  const isChat = user ? isChatPlan(user) : true;
+  const isVoice = user ? isVoicePlan(user) : false;
 
   const { plan: activePlanConfig, type: activePlanType } = getPlanConfig(user?.plan);
 
@@ -274,15 +273,22 @@ export function UserBilling() {
     }
   }, [showUpgrade, activePlanType]);
 
-  const callsLimit = user?.callsLimit || activePlanConfig.callsPerMonth || 100;
+  const chatLimit = user?.chatLimit || activePlanConfig.callsPerMonth || 100;
   const rawMinutesLimit = user?.minutesLimit ?? activePlanConfig.minutesPerMonth ?? 0;
   const isUnlimitedMinutes = rawMinutesLimit === -1;
   const minutesLimit = isUnlimitedMinutes ? 0 : rawMinutesLimit || 50;
 
-  const chatUsagePct = callsLimit > 0 ? ((user?.callsUsed || 0) / callsLimit) * 100 : 0;
+  const planCfg = user?.plan ? getPlanConfigByKey(user.plan) : null;
+  const voiceCallsLimit = user?.callsLimit || planCfg?.limits.calls || 0;
+  const voiceCallsUsed = user?.callsUsed || 0;
+  const isUnlimitedCalls = voiceCallsLimit === -1;
+  const voiceCallsPct = isUnlimitedCalls ? 0 : voiceCallsLimit > 0 ? (voiceCallsUsed / voiceCallsLimit) * 100 : 0;
+  const voiceCallsRemaining = isUnlimitedCalls ? Infinity : voiceCallsLimit - voiceCallsUsed;
+
+  const chatUsagePct = chatLimit > 0 ? ((user?.chatUsed || 0) / chatLimit) * 100 : 0;
   const voiceUsagePct = isUnlimitedMinutes ? 0 : minutesLimit > 0 ? ((user?.minutesUsed || 0) / minutesLimit) * 100 : 0;
 
-  const chatRemaining = callsLimit - (user?.callsUsed || 0);
+  const chatRemaining = chatLimit - (user?.chatUsed || 0);
   const voiceRemaining = isUnlimitedMinutes ? Infinity : minutesLimit - (user?.minutesUsed || 0);
 
   const handleUpgrade = async () => {
@@ -516,9 +522,9 @@ export function UserBilling() {
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-xs font-black text-slate-400 uppercase tracking-wider">Conversations used</span>
                   <span className="text-xs font-extrabold text-slate-700 tabular-nums">
-                    {user?.callsUsed || 0}
+                    {user?.chatUsed || 0}
                     <span className="text-slate-400 font-medium">
-                      {activePlanConfig.id.endsWith('enterprise') ? ' / ∞' : ` / ${callsLimit}`}
+                      {activePlanConfig.id.endsWith('enterprise') ? ' / ∞' : ` / ${chatLimit}`}
                     </span>
                   </span>
                 </div>
@@ -542,9 +548,9 @@ export function UserBilling() {
 
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { label: 'Chats Used', value: user?.callsUsed || 0, bg: 'bg-blue-50 border-blue-100 text-blue-600' },
+                  { label: 'Chats Used', value: user?.chatUsed || 0, bg: 'bg-blue-50 border-blue-100 text-blue-600' },
                   { label: 'Available', value: activePlanConfig.id.endsWith('enterprise') ? '∞' : Math.max(0, chatRemaining), bg: 'bg-emerald-50 border-emerald-100 text-emerald-600' },
-                  { label: 'Monthly Limit', value: activePlanConfig.id.endsWith('enterprise') ? '∞' : callsLimit, bg: 'bg-slate-50 border-slate-200 text-slate-700' },
+                  { label: 'Monthly Limit', value: activePlanConfig.id.endsWith('enterprise') ? '∞' : chatLimit, bg: 'bg-slate-50 border-slate-200 text-slate-700' },
                 ].map((stat, i) => (
                   <motion.div
                     key={stat.label}
@@ -584,7 +590,7 @@ export function UserBilling() {
               <div>
                 <p className="text-[9px] font-black tracking-[0.25em] uppercase text-emerald-600 mb-1">MY AGENTS</p>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">Voice Agents</h2>
-                <p className="mt-1 text-xs font-semibold text-slate-500">Voice minutes usage according to your current active subscription</p>
+                <p className="mt-1 text-xs font-semibold text-slate-500">Voice usage according to your current active subscription</p>
               </div>
               <Link
                 to="/dashboard/agents"
@@ -595,6 +601,35 @@ export function UserBilling() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </Link>
+            </div>
+
+            {/* Voice calls usage */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-xs font-black text-slate-400 uppercase tracking-wider">Voice calls used</span>
+                <span className="text-xs font-extrabold text-slate-700 tabular-nums">
+                  {voiceCallsUsed}
+                  <span className="text-slate-400 font-medium">
+                    {activePlanConfig.id.endsWith('enterprise') ? ' / ∞' : voiceCallsLimit > 0 ? ` / ${voiceCallsLimit}` : ' / —'}
+                  </span>
+                </span>
+              </div>
+              <div className="h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/50">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(voiceCallsPct, 100)}%` }}
+                  transition={{ delay: 0.35, duration: 0.95, ease }}
+                  className={`h-full rounded-full bg-gradient-to-r ${getUsageBarColor(voiceCallsPct)} relative`}
+                >
+                  <span className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse-glow" />
+                </motion.div>
+              </div>
+              <div className="flex justify-between text-[11px] text-slate-500 mt-2.5 font-bold">
+                <span>{voiceCallsPct.toFixed(1)}% of monthly limit</span>
+                <span className="text-emerald-600">
+                  {activePlanConfig.id.endsWith('enterprise') ? 'Unlimited' : isUnlimitedCalls ? 'Unlimited' : voiceCallsLimit > 0 ? `${Math.max(0, voiceCallsRemaining).toLocaleString()} calls remaining` : 'No call limit set'}
+                </span>
+              </div>
             </div>
 
             {/* Voice minutes usage */}

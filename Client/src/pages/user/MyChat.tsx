@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAppSelector } from '../../hooks/useStore';
+import { useAppSelector, useAppDispatch } from '../../hooks/useStore';
 import { userChatService, chatHistoryService } from '../../services/api';
+import { updateChatUsed } from '../../store/slices/authSlice';
 import type { ChatSessionSummary, ChatMessage } from '../../services/api';
 
 interface Message {
@@ -221,6 +222,7 @@ const UserAvatar = () => (
 
 export function MyChat() {
   const user = useAppSelector((state) => state.auth.user);
+  const dispatch = useAppDispatch();
   const [messages, setMessages]   = useState<Message[]>(() => loadMessages() ?? [WELCOME_MESSAGE]);
   const [input, setInput]         = useState('');
   const [loading, setLoading]     = useState(false);
@@ -355,6 +357,11 @@ export function MyChat() {
       addMessage('bot', botText);
       setContext({ step: (data.step as ChatStep) || 'idle', data: data.data || {} });
 
+      // Update chatUsed from response instead of calling checkAuth (which could log user out)
+      if (data.chatUsed !== undefined) {
+        dispatch(updateChatUsed({ chatUsed: data.chatUsed, chatLimit: data.chatLimit }));
+      }
+
       // Save to backend after bot reply
       setTimeout(() => {
         setMessages(prev => {
@@ -369,7 +376,7 @@ export function MyChat() {
       setLoading(false);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [input, loading, context, addMessage, saveToBackend]);
+  }, [input, loading, context, addMessage, saveToBackend, dispatch]);
 
   const handleReset = useCallback(() => {
     const welcome = { ...WELCOME_MESSAGE, id: `welcome-${Date.now()}`, timestamp: new Date() };

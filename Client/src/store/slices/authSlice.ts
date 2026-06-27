@@ -188,6 +188,15 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    updateChatUsed: (state, action: PayloadAction<{ chatUsed: number; chatLimit?: number }>) => {
+      if (state.user) {
+        state.user.chatUsed = action.payload.chatUsed;
+        if (action.payload.chatLimit !== undefined) {
+          state.user.chatLimit = action.payload.chatLimit;
+        }
+        sessionStorage.setItem('user', JSON.stringify(state.user));
+      }
+    },
     logout: (state) => {
       authService.logout(); // async — clears cookies/sessionStorage and calls /auth/logout
       state.user = null;
@@ -353,5 +362,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { logout, clearError, updateChatUsed } = authSlice.actions;
 export default authSlice.reducer;

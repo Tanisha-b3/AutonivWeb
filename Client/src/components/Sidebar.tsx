@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Modal } from './Modal';
 import { userService, authService } from '../services/api';
 import type { User } from '../types';
+import { isChatPlan, isVoicePlan } from '../utils/plan';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface NavItem {
@@ -736,8 +737,8 @@ export function Sidebar() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [toggleSidebar]);
 
-  const isChat = user?.role === 'admin' || (user?.chatPlan ? user.chatPlan !== 'none' : (user?.chatEnabled !== undefined ? user.chatEnabled : true));
-  const isVoice = user?.role === 'admin' || (user?.voicePlan ? user.voicePlan !== 'none' : (user?.voiceEnabled !== undefined ? user.voiceEnabled : false));
+  const isChat = user ? isChatPlan(user) : true;
+  const isVoice = user ? isVoicePlan(user) : false;
 
   const navItems = isAdmin
     ? adminNavItems

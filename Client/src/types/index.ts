@@ -18,10 +18,12 @@ export interface User {
   chatEnabled?: boolean;
   voiceEnabled?: boolean;
   features?: {
-    appointments: Record<string, boolean>;
-    leads: Record<string, boolean>;
-    chat: Record<string, boolean>;
-    agents: Record<string, boolean>;
+    chat: Record<string, boolean | number>;
+    voice: Record<string, boolean | number>;
+    // Legacy compat — these may be present from older API responses
+    agents?: Record<string, boolean>;
+    appointments?: Record<string, boolean>;
+    leads?: Record<string, boolean>;
   };
   createdAt?: string;
   updatedAt?: string;
