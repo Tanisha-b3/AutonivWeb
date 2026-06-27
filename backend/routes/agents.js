@@ -216,18 +216,8 @@ router.post('/', contentFilter('name', 'prompt'), async (req, res) => {
       }
     }
 
-    let vapiId = null;
-    try {
-      const vapiAssistant = await createVapiAssistant({
-        name, type, prompt, language, voiceId,
-        userId: req.user.userId,
-        serverUrl: process.env.WEBHOOK_URL || process.env.SERVER_URL,
-      });
-      vapiId = vapiAssistant?.id ?? null;
-    } catch (vapiErr) {
-      log.error('vapi_create_agent_failed', { error: vapiErr.message, userId: req.user?.userId });
-      return res.status(502).json({ message: `Voice agent creation failed: ${vapiErr.message}` });
-    }
+    // Bypassed Vapi assistant creation to run purely on the custom self-hosted orchestrator
+    const vapiId = null;
 
     const agent = await Agent.create({
       userId: user._id,

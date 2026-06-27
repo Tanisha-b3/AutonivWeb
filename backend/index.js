@@ -26,6 +26,7 @@ import contactRoutes from './routes/contact.js';
 import reportRoutes from './routes/reports.js';
 import chatHistoryRoutes from './routes/chatHistory.js';
 import widgetRoutes from './routes/widget.js';
+import { initOrchestrator } from './services/orchestrator.js';
 
 import {
   buildCors,
@@ -144,6 +145,7 @@ app.use(errorHandler);
     const server = app.listen(PORT, () => {
       log.info('server_started', { port: PORT, env: process.env.NODE_ENV || 'development' });
     });
+    initOrchestrator(server);
 
     function shutdown(signal) {
       log.info('shutdown', { signal });

@@ -265,4 +265,58 @@ router.get('/test', (req, res) => {
   });
 });
 
+router.post('/incoming-call', async (req, res) => {
+  const to = req.body.To || '';
+  const from = req.body.From || 'Unknown';
+  const callSid = req.body.CallSid;
+
+  log.info('twilio_incoming_call', { from, to, callSid });
+
+  try {
+    let agent = null;
+    if (to) {
+      agent = await Agent.findOne({
+        $or: [
+          { phoneNumber: to },
+          { phoneNumber: to.replace('+', '') },
+          { phoneNumber: new RegExp(to.slice(-10) + '$') }
+        ]
+      });
+    }
+
+    if (!agent) {
+      log.warn('twilio_incoming_call_no_agent_resolved', { to });
+      agent = await Agent.findOne({ type: 'receptionist' });
+    }
+
+    if (agent) {
+      await Call.create({
+        _id: callSid,
+        agentId: agent._id,
+        userId: agent.userId,
+        vapiCallId: callSid,
+        callerNumber: from,
+        status: 'in-progress',
+        startedAt: new Date(),
+      });
+      log.info('twilio_incoming_call_initialized_db', { callSid, agentId: agent._id });
+    }
+  } catch (err) {
+    log.error('twilio_incoming_call_db_failed', { error: err.message, callSid });
+  }
+
+  const host = req.headers.host;
+  const protocol = req.headers['x-forwarded-proto'] || 'ws';
+  const wsProtocol = protocol === 'https' ? 'wss' : 'ws';
+  const wsUrl = `${wsProtocol}://${host}/media-stream`;
+
+  res.type('text/xml');
+  res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Connect>
+        <Stream url="${wsUrl}" />
+    </Connect>
+</Response>`);
+});
+
 export default router;
