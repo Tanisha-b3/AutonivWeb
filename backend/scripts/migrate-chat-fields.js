@@ -49,18 +49,23 @@ async function migrate() {
       if (chatConfig) {
         if (user.chatLimit === undefined || user.chatLimit === null || user.chatLimit === 0) {
           user.chatLimit = chatConfig.callsPerMonth;
-          user.callsLimit = chatConfig.callsPerMonth;
           needsUpdate = true;
         }
       }
     }
 
-    // Set minutesLimit from plan config
+    // Set callsLimit and minutesLimit from voice plan config
     if (user.voicePlan && user.voicePlan !== 'none') {
       const voiceConfig = User.PLAN_CONFIG[user.voicePlan];
-      if (voiceConfig && (user.minutesLimit === undefined || user.minutesLimit === null || user.minutesLimit === 0)) {
-        user.minutesLimit = voiceConfig.minutesPerMonth;
-        needsUpdate = true;
+      if (voiceConfig) {
+        if (user.minutesLimit === undefined || user.minutesLimit === null || user.minutesLimit === 0) {
+          user.minutesLimit = voiceConfig.minutesPerMonth;
+          needsUpdate = true;
+        }
+        if (user.callsLimit === undefined || user.callsLimit === null || user.callsLimit === 0) {
+          user.callsLimit = voiceConfig.callsPerMonth;
+          needsUpdate = true;
+        }
       }
     }
 

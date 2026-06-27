@@ -214,8 +214,6 @@ router.post('/register', registerLimiter, contentFilter('name', 'company'), asyn
       voicePlan: 'none',
       chatEnabled: true,
       voiceEnabled: false,
-      minutesLimit: 0,
-      callsLimit: User.PLAN_CONFIG.chat_free.callsPerMonth,
       isVerified: false,
       otpCode: otp,
       otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
@@ -276,8 +274,6 @@ router.post('/register-admin', registerLimiter, contentFilter('name', 'company')
       voicePlan: 'voice_enterprise',
       chatEnabled: true,
       voiceEnabled: true,
-      minutesLimit: User.PLAN_CONFIG.voice_enterprise.minutesPerMonth,
-      callsLimit: User.PLAN_CONFIG.chat_enterprise.callsPerMonth,
       passwordChangedAt: new Date(),
     });
 
@@ -445,8 +441,6 @@ router.post('/google', authLimiter, loginLimiter, async (req, res) => {
         voicePlan: 'none',
         chatEnabled: true,
         voiceEnabled: false,
-        minutesLimit: 0,
-        callsLimit: User.PLAN_CONFIG.chat_free.callsPerMonth,
         isVerified: true, // Google already verified this email
         passwordChangedAt: new Date(),
       });
@@ -647,11 +641,11 @@ router.get('/me', authenticate, async (req, res) => {
 
     let chatPlan = user.chatPlan;
     let voicePlan = user.voicePlan;
-    if (!chatPlan && !voicePlan) {
+    if (!chatPlan || chatPlan === 'none') {
       const plan = user.plan || 'chat_free';
       if (plan.startsWith('chat_')) {
         chatPlan = plan;
-        voicePlan = 'none';
+        voicePlan = voicePlan || 'none';
       } else if (plan.startsWith('voice_')) {
         chatPlan = 'none';
         voicePlan = plan;
@@ -662,6 +656,12 @@ router.get('/me', authenticate, async (req, res) => {
         chatPlan = `chat_${plan}`;
         voicePlan = `voice_${plan}`;
       }
+    }
+    if (!voicePlan || voicePlan === 'none') {
+      const plan = user.plan || 'chat_free';
+      if (plan.startsWith('voice_')) voicePlan = plan;
+      else if (plan.startsWith('both_')) voicePlan = plan.replace('both_', 'voice_');
+      else voicePlan = `voice_${plan}`;
     }
     chatPlan = chatPlan || 'none';
     voicePlan = voicePlan || 'none';
@@ -700,11 +700,11 @@ router.get('/me', authenticate, async (req, res) => {
         chatPlan,
         voicePlan,
         minutesUsed: user.minutesUsed,
-        minutesLimit: user.minutesLimit,
+        minutesLimit: voicePlan !== 'none' && User.PLAN_CONFIG[voicePlan] ? User.PLAN_CONFIG[voicePlan].limits.minutes : user.minutesLimit,
         callsUsed: user.callsUsed || 0,
-        callsLimit: user.callsLimit,
+        callsLimit: voicePlan !== 'none' && User.PLAN_CONFIG[voicePlan] ? User.PLAN_CONFIG[voicePlan].limits.calls : user.callsLimit,
         chatUsed: user.chatUsed || 0,
-        chatLimit: user.chatLimit || 0,
+        chatLimit: chatPlan !== 'none' && User.PLAN_CONFIG[chatPlan] ? User.PLAN_CONFIG[chatPlan].limits.conversations : (user.chatLimit || 0),
         isActive: user.isActive,
         chatEnabled: chatPlan !== 'none',
         voiceEnabled: voicePlan !== 'none',

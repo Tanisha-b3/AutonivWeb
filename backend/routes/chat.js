@@ -121,7 +121,7 @@ async function handleCreateUser(message) {
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
-  await User.create({ email, password: hashedPassword, name, company: company || '', plan, minutesLimit: PLAN_LIMITS[plan], callsLimit: CALLS_LIMITS[plan] });
+  await User.create({ email, password: hashedPassword, name, company: company || '', plan });
 
   return { text: `✅ User **${escapeHtml(name)}** created successfully!\n- Email: ${escapeHtml(email)}\n- Plan: ${plan}\n- Company: ${escapeHtml(company || 'N/A')}\n- Minutes Limit: ${PLAN_LIMITS[plan]}`, type: 'success' };
 }
