@@ -1,4 +1,5 @@
 import express from 'express';
+import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import User from '../db/models/User.js';
 import Agent from '../db/models/Agent.js';
@@ -175,7 +176,7 @@ router.post('/register', registerLimiter, contentFilter('name', 'company'), asyn
       }
 
       const hashedPassword = await bcrypt.hash(password, BCRYPT_COST);
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otp = crypto.randomInt(100000, 999999).toString();
       existing.name = name;
       existing.password = hashedPassword;
       existing.phoneNumber = phoneNumber;
@@ -197,7 +198,7 @@ router.post('/register', registerLimiter, contentFilter('name', 'company'), asyn
     }
 
     const hashedPassword = await bcrypt.hash(password, BCRYPT_COST);
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = crypto.randomInt(100000, 999999).toString();
     const user = await User.create({
       email,
       password: hashedPassword,
@@ -332,7 +333,7 @@ router.post('/login', authLimiter, loginLimiter, async (req, res) => {
       return res.json(tokenResponse({ user, accessToken, refreshToken }));
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = crypto.randomInt(100000, 999999).toString();
 
     await User.updateOne(
       { _id: user._id },
@@ -405,15 +406,12 @@ router.post('/google', authLimiter, loginLimiter, async (req, res) => {
       return res.status(400).json({ message: 'Email not provided in Google profile' });
     }
 
-    // Optional: verify audience (aud) matches GOOGLE_CLIENT_ID if it is set in .env and is an ID Token
+    // Verify audience (aud) matches GOOGLE_CLIENT_ID if it is set in .env and is an ID Token
     if (!isAccessToken) {
       const envClientId = process.env.GOOGLE_CLIENT_ID;
       if (envClientId && payload.aud !== envClientId) {
-        // Allow placeholder check in case of misconfigured dev env
-        if (!envClientId.includes('placeholder')) {
-          log.warn('google_audience_mismatch', { aud: payload.aud, expected: envClientId });
-          return res.status(401).json({ message: 'Google client ID mismatch' });
-        }
+        log.warn('google_audience_mismatch', { aud: payload.aud, expected: envClientId });
+        return res.status(401).json({ message: 'Google client ID mismatch' });
       }
     }
 
@@ -424,7 +422,7 @@ router.post('/google', authLimiter, loginLimiter, async (req, res) => {
     if (!user) {
       isNewUser = true;
       // Generate a random secure password placeholder
-      const randomPassword = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+      const randomPassword = crypto.randomBytes(24).toString('base64url');
       const hashedPassword = await bcrypt.hash(randomPassword, BCRYPT_COST);
 
       user = await User.create({
@@ -694,7 +692,7 @@ router.post('/forgot-password', authLimiter, async (req, res) => {
       return res.json({ message: 'If an account exists with that email, a reset code has been sent.' });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = crypto.randomInt(100000, 999999).toString();
     user.otpCode = otp;
     user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     user.otpPurpose = 'reset_password';
@@ -731,7 +729,7 @@ router.post('/reset-password', authLimiter, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    if (!user.otpCode || user.otpPurpose !== 'reset_password' || user.otpExpiresAt < new Date() || user.otpCode !== otp) {
+    if (!user.otpCode || user.otpPurpose !== 'reset_password' || user.otpExpiresAt < new Date() || !constantTimeStringEqual(user.otpCode, otp)) {
       return res.status(400).json({ message: 'Invalid or expired verification code' });
     }
 
@@ -817,7 +815,7 @@ router.post('/verify-otp', authLimiter, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    if (!user.otpCode || user.otpPurpose !== purpose || user.otpExpiresAt < new Date() || user.otpCode !== otp) {
+    if (!user.otpCode || user.otpPurpose !== purpose || user.otpExpiresAt < new Date() || !constantTimeStringEqual(user.otpCode, otp)) {
       return res.status(400).json({ message: 'Invalid or expired verification code' });
     }
 
@@ -868,7 +866,7 @@ router.post('/resend-otp', authLimiter, async (req, res) => {
       return res.status(400).json({ message: 'Account is already verified' });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = crypto.randomInt(100000, 999999).toString();
     await User.updateOne(
       { _id: user._id },
       {

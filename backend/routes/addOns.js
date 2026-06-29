@@ -2,6 +2,7 @@ import express from 'express';
 import UserAddOn from '../db/models/UserAddOn.js';
 import AddOn from '../db/models/AddOn.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
+import { requireValidObjectId } from '../middleware/validators.js';
 import { contentFilter } from '../services/contentModeration.js';
 import { log } from '../services/logger.js';
 import { parsePage, paginatedResponse } from '../services/pagination.js';
@@ -135,7 +136,7 @@ router.post('/', contentFilter('notes'), async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireValidObjectId('id'), async (req, res) => {
   try {
     const item = await UserAddOn.findById(req.params.id);
     if (!item) return res.status(404).json({ message: 'Add-on request not found' });
@@ -179,7 +180,7 @@ router.get('/', requireAdmin, async (req, res) => {
   }
 });
 
-router.put('/:id', requireAdmin, async (req, res) => {
+router.put('/:id', requireValidObjectId('id'), requireAdmin, async (req, res) => {
   try {
     const { status } = req.body;
     if (!['approved', 'rejected'].includes(status)) {

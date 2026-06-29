@@ -1,6 +1,7 @@
 import express from 'express';
 import Appointment from '../db/models/Appointment.js';
 import { authenticate, requireAdmin, requireFeature } from '../middleware/auth.js';
+import { requireValidObjectId } from '../middleware/validators.js';
 import { contentFilter } from '../services/contentModeration.js';
 import { log } from '../services/logger.js';
 import { sendAppointmentConfirmation } from '../services/whatsappService.js';
@@ -67,7 +68,7 @@ router.get('/my', async (req, res) => {
   }
 });
 
-router.post('/:id/notify-whatsapp', async (req, res) => {
+router.post('/:id/notify-whatsapp', requireValidObjectId('id'), async (req, res) => {
   try {
     const { id } = req.params;
     const appointment = await Appointment.findById(id).lean();
@@ -88,7 +89,7 @@ router.post('/:id/notify-whatsapp', async (req, res) => {
   }
 });
 
-router.put('/:id', contentFilter('name', 'service'), async (req, res) => {
+router.put('/:id', requireValidObjectId('id'), contentFilter('name', 'service'), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, phone, email, service, preferredDate, preferredTime, status } = req.body;
