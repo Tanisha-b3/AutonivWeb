@@ -3,6 +3,7 @@ import express from 'express';
 import Lead from '../db/models/Lead.js';
 import Agent from '../db/models/Agent.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
+import { requireValidObjectId } from '../middleware/validators.js';
 import { contentFilter } from '../services/contentModeration.js';
 import { log } from '../services/logger.js';
 import { parsePage, paginatedResponse } from '../services/pagination.js';
@@ -176,7 +177,7 @@ router.post('/', contentFilter('name', 'purpose', 'notes'), async (req, res) => 
   }
 });
 
-router.put('/:id', contentFilter('notes'), async (req, res) => {
+router.put('/:id', requireValidObjectId('id'), contentFilter('notes'), async (req, res) => {
   // unchanged
   try {
     const { id } = req.params;

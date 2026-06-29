@@ -321,9 +321,14 @@ router.post('/incoming-call', async (req, res) => {
 
   // Route to custom orchestrator if agent uses custom engine
   const host = req.headers.host;
-  const protocol = req.headers['x-forwarded-proto'] || 'ws';
-  const wsProtocol = protocol === 'https' ? 'wss' : 'ws';
-  const wsUrl = `${wsProtocol}://${host}/media-stream`;
+  // Validate host header to prevent injection (must be hostname:port or hostname only)
+  const VALID_HOST_REGEX = /^[a-zA-Z0-9._-]+(:\d{1,5})?$/;
+  if (!host || !VALID_HOST_REGEX.test(host)) {
+    log.warn('twilio_invalid_host_header', { host });
+    return res.status(400).type('text/xml').send(`<?xml version="1.0" encoding="UTF-8"?><Response></Response>`);
+  }
+  const protocol = req.headers['x-forwarded-proto'] === 'https' ? 'wss' : 'ws';
+  const wsUrl = `${protocol}://${host}/media-stream`;
 
   res.type('text/xml');
   res.send(`<?xml version="1.0" encoding="UTF-8"?>

@@ -8,6 +8,7 @@ import Lead from '../db/models/Lead.js';
 import Appointment from '../db/models/Appointment.js';
 import UpgradeRequest from '../db/models/UpgradeRequest.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
+import { requireValidObjectId } from '../middleware/validators.js';
 import { contentFilter } from '../services/contentModeration.js';
 import { log, securityEvent } from '../services/logger.js';
 import { parsePage, paginatedResponse } from '../services/pagination.js';
@@ -180,7 +181,7 @@ router.post('/', requireAdmin, contentFilter('name', 'company'), async (req, res
   }
 });
 
-router.put('/:id', contentFilter('name', 'company'), async (req, res) => {
+router.put('/:id', requireValidObjectId('id'), contentFilter('name', 'company'), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, company, password, oldPassword, phoneNumber, chatPlan, voicePlan } = req.body;
@@ -277,7 +278,7 @@ router.put('/:id', contentFilter('name', 'company'), async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireValidObjectId('id'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -317,7 +318,7 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-router.put('/:id/block', requireAdmin, async (req, res) => {
+router.put('/:id/block', requireValidObjectId('id'), requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { isActive } = req.body;
@@ -329,7 +330,7 @@ router.put('/:id/block', requireAdmin, async (req, res) => {
   }
 });
 
-router.put('/:id/plan', async (req, res) => {
+router.put('/:id/plan', requireValidObjectId('id'), async (req, res) => {
   try {
     const { id } = req.params;
     let { plan, chatPlan, voicePlan } = req.body;
