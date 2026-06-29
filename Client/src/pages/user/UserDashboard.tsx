@@ -1592,14 +1592,14 @@ export function UserDashboard() {
                   <div className="bg-slate-900 rounded-xl p-4 font-mono text-[11px] text-slate-500 overflow-x-auto">
                     No API key generated yet.
                   </div>
-                  <button
+                   <button
                     onClick={async () => {
                       try {
                         const { data } = await apiKeyService.regenerate();
                         setWidgetApiKey(data.apiKey);
                         setHasApiKey(true);
                         addToast('API key generated successfully. Save it now - it won\'t be shown again!', 'success');
-                      } catch (err) {
+                      } catch {
                         addToast('Failed to generate API key', 'error');
                       }
                     }}
@@ -1633,7 +1633,7 @@ export function UserDashboard() {
                           const { data } = await apiKeyService.regenerate();
                           setWidgetApiKey(data.apiKey);
                           addToast('API key regenerated. Save it now - it won\'t be shown again!', 'success');
-                        } catch (err) {
+                        } catch {
                           addToast('Failed to regenerate API key', 'error');
                         }
                       }}
@@ -1665,7 +1665,7 @@ export function UserDashboard() {
                           const { data } = await apiKeyService.regenerate();
                           setWidgetApiKey(data.apiKey);
                           addToast('API key regenerated. Save it now - it won\'t be shown again!', 'success');
-                        } catch (err) {
+                        } catch {
                           addToast('Failed to regenerate API key', 'error');
                         }
                       }}
