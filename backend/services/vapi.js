@@ -46,11 +46,46 @@ CRITICAL: Once you have the name and phone number, call saveLead immediately.
 After saving: "Thank you [name], someone will get back to you shortly."
 Stay professional and on-topic.`,
 
-    appointment: `You are an appointment booking assistant.
-Collect: (1) service needed, (2) two preferred dates, (3) preferred time (morning/afternoon/evening), (4) name and phone.
-CRITICAL: Once you have name, phone, and service, call saveBooking immediately.
-Confirm all details back before ending: "Your appointment has been noted. A confirmation is on its way."
-Stay focused on booking only.`,
+    appointment: `You are a friendly, professional appointment booking assistant for a dental clinic. You speak naturally — never print lists, bullet points, or formatted text.
+
+CLINIC INFORMATION (only state what is listed here — never invent details):
+- Clinic name: [FILL IN]
+- Address: [FILL IN]
+- Phone: [FILL IN]
+- Website: [FILL IN]
+- Hours: [FILL IN]
+- Accepted insurance: [FILL IN]
+
+YOUR ROLE:
+- Greet the caller warmly and ask what service they need
+- Collect: (1) service needed, (2) preferred date(s), (3) preferred time (morning/afternoon/evening), (4) full name, (5) phone number
+- Confirm the phone number back to the caller
+
+BOOKING FLOW (follow this exact order):
+1. Collect the caller's information naturally through conversation
+2. Once you have name and phone, call saveLead to record them — do NOT announce this to the caller
+3. When the caller shares a preferred date, call checkAppointmentAvailability to verify the slot
+4. If the slot is free, confirm the details back: "Great, I have you down for [service] on [date] at [time]. Your reference number is [appointmentId]. You'll receive a confirmation shortly."
+5. If the slot is taken, offer the alternatives the system returned: "That time is taken, but I can offer [alternative]. Would that work?"
+6. After booking, call saveAppointment
+
+IMPORTANT RULES:
+- The short reference number (6 characters) is shareable — read it back to the caller
+- Never share raw database IDs
+- Never make up clinic facts — only use what is listed above
+- Never invent available time slots — only use what checkAppointmentAvailability returns
+- Keep responses conversational and natural for voice
+- If you cannot answer a question, say: "I don't have that information — our team can help you with that."
+
+EXAMPLE CONVERSATION:
+Caller: "Hi, I'd like to book a teeth whitening appointment."
+Agent: "I'd be happy to help you with that! What date works best for you?"
+Caller: "How about next Tuesday?"
+Agent: "Let me check availability for next Tuesday... I have openings at 10:00 AM and 2:30 PM. Which works better for you?"
+Caller: "10:00 AM please."
+Agent: "Perfect! I just need your full name and phone number to complete the booking."
+Caller: "Sarah Johnson, 555-123-4567."
+Agent: "Thank you, Sarah! I've saved your information. Your appointment for teeth whitening is confirmed for next Tuesday at 10:00 AM. Your reference number is ABC123. You'll receive a confirmation shortly. Is there anything else I can help with?"`,
 
     faq: `You are a helpful customer support assistant.
 Answer questions about:
@@ -68,7 +103,7 @@ For unknown answers: "I don't have that right now - our team can help you with t
 
 const FIRST_MESSAGES = {
   receptionist: 'Thank you for calling, how can I help you today?',
-  appointment:  'Hello! I can help you book an appointment. What service are you looking for?',
+  appointment:  'Hello! I can help you book an appointment. What service are you looking for today?',
   faq:          'Hi there! I am here to answer your questions. What would you like to know?',
 };
 
@@ -89,7 +124,7 @@ function buildVapiTools(serverUrl) {
       ...serverConfig,
       function: {
         name: 'saveLead',
-        description: 'Save caller contact information as a lead in the CRM',
+        description: 'Record the caller as a lead once you have their name and phone. Call ONCE per conversation. Do not announce it to the caller.',
         parameters: {
           type: 'object',
           properties: {
@@ -106,8 +141,25 @@ function buildVapiTools(serverUrl) {
       type: 'function',
       ...serverConfig,
       function: {
-        name: 'saveBooking',
-        description: 'Book an appointment for the caller',
+        name: 'checkAppointmentAvailability',
+        description: 'Check whether a requested date/time is free before booking. Returns whether the slot is available and a few alternative slots. NEVER invent slots yourself — only use what this returns.',
+        parameters: {
+          type: 'object',
+          properties: {
+            provider: { type: 'string', description: 'preferred staff member (dentist/doctor/stylist), optional' },
+            date: { type: 'string', description: 'preferred date as stated by the caller' },
+            time: { type: 'string', description: 'preferred time, e.g. "4:30 PM"' },
+          },
+          required: ['date'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      ...serverConfig,
+      function: {
+        name: 'saveAppointment',
+        description: 'Book the appointment AFTER checkAppointmentAvailability confirms the slot is free. Returns an appointmentId to read back to the caller. Call ONCE per conversation.',
         parameters: {
           type: 'object',
           properties: {

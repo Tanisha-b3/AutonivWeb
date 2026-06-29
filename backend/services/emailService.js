@@ -49,6 +49,12 @@ export async function sendOtpEmail({ to, otp, purpose }) {
       ? 'sign in'
       : 'reset your password';
 
+  console.log(`\n\x1b[36m╔══════════════════════════════════════════╗\x1b[0m`);
+  console.log(`\x1b[36m║\x1b[0m  \x1b[1mOTP Code\x1b[0m: \x1b[33m${otp}\x1b[0m`);
+  console.log(`\x1b[36m║\x1b[0m  \x1b[1mEmail\x1b[0m:   ${to}`);
+  console.log(`\x1b[36m║\x1b[0m  \x1b[1mPurpose\x1b[0m: ${purpose}`);
+  console.log(`\x1b[36m╚══════════════════════════════════════════╝\x1b[0m\n`);
+
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #080d17; border-radius: 12px; border: 1px solid rgba(0,119,255,0.15); color: #ffffff;">
       <div style="text-align: center; margin-bottom: 24px;">

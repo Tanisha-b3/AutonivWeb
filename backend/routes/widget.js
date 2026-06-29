@@ -1,6 +1,7 @@
 import express from 'express';
 import OpenAI from 'openai';
 import User from '../db/models/User.js';
+import Agent from '../db/models/Agent.js';
 import Lead from '../db/models/Lead.js';
 import Appointment from '../db/models/Appointment.js';
 import { containsAbuse } from '../services/contentModeration.js';
@@ -318,6 +319,27 @@ router.post('/chat', authenticateApiKey, async (req, res) => {
       return res.status(400).json({ response: 'Please send a message.', step: 'idle' });
     }
 
+    // Check conversation limit
+    const PLAN_CONFIG = User.PLAN_CONFIG;
+    let chatPlan = user.chatPlan || 'chat_free';
+    if (!chatPlan || chatPlan === 'none' || !PLAN_CONFIG[chatPlan]) {
+      const p = user.plan || 'chat_free';
+      if (p.startsWith('chat_')) chatPlan = p;
+      else if (p.startsWith('both_')) chatPlan = p.replace('both_', 'chat_');
+      else chatPlan = `chat_${p}`;
+    }
+    const chatCfg = PLAN_CONFIG[chatPlan];
+    if (chatCfg) {
+      const convLimit = chatCfg.limits.conversations;
+      if (convLimit !== -1 && (user.chatUsed || 0) >= convLimit) {
+        return res.status(403).json({
+          response: 'Monthly conversation limit reached. Please upgrade your plan.',
+          step: 'idle',
+          code: 'CHAT_LIMIT_EXCEEDED',
+        });
+      }
+    }
+
     const trimmed = message.trim();
 
     if (containsAbuse(trimmed)) {
@@ -437,6 +459,11 @@ You MUST respond in valid JSON only:
         log.error('widget_appointment_save_error', { error: error.message, userId: user._id });
       }
     }
+
+    // Increment chatUsed before sending response
+    try {
+      await User.findByIdAndUpdate(user._id, { $inc: { chatUsed: 1 } });
+    } catch (_) {}
 
     res.json({ response: reply, step: nextStep });
   } catch (error) {

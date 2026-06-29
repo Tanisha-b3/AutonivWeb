@@ -88,11 +88,11 @@ export function hashRefreshToken(token) {
 export function tokenResponse({ user, dashboardStats, accessToken, refreshToken }) {
   let chatPlan = user.chatPlan;
   let voicePlan = user.voicePlan;
-  if (!chatPlan && !voicePlan) {
+  if (!chatPlan || chatPlan === 'none') {
     const plan = user.plan || 'chat_free';
     if (plan.startsWith('chat_')) {
       chatPlan = plan;
-      voicePlan = 'none';
+      voicePlan = voicePlan || 'none';
     } else if (plan.startsWith('voice_')) {
       chatPlan = 'none';
       voicePlan = plan;
@@ -103,6 +103,12 @@ export function tokenResponse({ user, dashboardStats, accessToken, refreshToken 
       chatPlan = `chat_${plan}`;
       voicePlan = `voice_${plan}`;
     }
+  }
+  if (!voicePlan || voicePlan === 'none') {
+    const plan = user.plan || 'chat_free';
+    if (plan.startsWith('voice_')) voicePlan = plan;
+    else if (plan.startsWith('both_')) voicePlan = plan.replace('both_', 'voice_');
+    else voicePlan = `voice_${plan}`;
   }
   chatPlan = chatPlan || 'none';
   voicePlan = voicePlan || 'none';
@@ -118,14 +124,21 @@ export function tokenResponse({ user, dashboardStats, accessToken, refreshToken 
   const chatTier = getTier(chatPlan);
   const voiceTier = getTier(voicePlan);
 
-  const tierOrder = { free: 0, starter: 1, growth: 2, enterprise: 3 };
-  const sharedTier = tierOrder[chatTier] >= tierOrder[voiceTier] ? chatTier : voiceTier;
+  // Build features from PLAN_CONFIG
+  const PLAN_CONFIG = User.PLAN_CONFIG;
+  const features = { chat: {}, voice: {} };
 
-  const features = { appointments: {}, leads: {}, chat: {}, agents: {} };
-  for (const [key, val] of Object.entries(User.FEATURES.appointments)) features.appointments[key] = val[sharedTier];
-  for (const [key, val] of Object.entries(User.FEATURES.leads)) features.leads[key] = val[sharedTier];
-  for (const [key, val] of Object.entries(User.FEATURES.chat)) features.chat[key] = val[chatTier];
-  for (const [key, val] of Object.entries(User.FEATURES.agents)) features.agents[key] = val[voiceTier];
+  if (chatPlan !== 'none' && PLAN_CONFIG[chatPlan]) {
+    features.chat = { ...PLAN_CONFIG[chatPlan].features };
+    features.chat.conversations = PLAN_CONFIG[chatPlan].limits.conversations;
+    features.chat.chatbots = PLAN_CONFIG[chatPlan].limits.chatbots;
+  }
+
+  if (voicePlan !== 'none' && PLAN_CONFIG[voicePlan]) {
+    features.voice = { ...PLAN_CONFIG[voicePlan].features };
+    features.voice.calls = PLAN_CONFIG[voicePlan].limits.calls;
+    features.voice.minutes = PLAN_CONFIG[voicePlan].limits.minutes;
+  }
 
   const plan = user.plan || (chatPlan !== 'none' ? chatPlan : voicePlan);
 
@@ -143,11 +156,11 @@ export function tokenResponse({ user, dashboardStats, accessToken, refreshToken 
       chatPlan,
       voicePlan,
       minutesUsed: user.minutesUsed,
-      minutesLimit: user.minutesLimit,
+      minutesLimit: voicePlan !== 'none' && PLAN_CONFIG[voicePlan] ? PLAN_CONFIG[voicePlan].limits.minutes : user.minutesLimit,
       callsUsed: user.callsUsed || 0,
-      callsLimit: user.callsLimit,
+      callsLimit: voicePlan !== 'none' && PLAN_CONFIG[voicePlan] ? PLAN_CONFIG[voicePlan].limits.calls : user.callsLimit,
       chatUsed: user.chatUsed || 0,
-      chatLimit: user.chatLimit || 0,
+      chatLimit: chatPlan !== 'none' && PLAN_CONFIG[chatPlan] ? PLAN_CONFIG[chatPlan].limits.conversations : (user.chatLimit || 0),
       isActive: user.isActive,
       chatEnabled: chatPlan !== 'none',
       voiceEnabled: voicePlan !== 'none',

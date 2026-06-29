@@ -11,6 +11,7 @@ import User from '../db/models/User.js';
 
 import { translateText, LANGUAGE_NAMES } from './translate.js';
 import { containsAbuse, sanitizeText } from './contentModeration.js';
+import { getToolDefinitions, executeTool } from './appointmentTools.js';
 
 let groq = null;
 let openaiClient = null;
@@ -294,11 +295,46 @@ CRITICAL: Once you have the name and phone number, call saveLead immediately.
 After saving: "Thank you [name], someone will get back to you shortly."
 Stay professional and on-topic.`,
 
-    appointment: `You are an appointment booking assistant.
-Collect: (1) service needed, (2) two preferred dates, (3) preferred time (morning/afternoon/evening), (4) name and phone.
-CRITICAL: Once you have name, phone, and service, call saveBooking immediately.
-Confirm all details back before ending: "Your appointment has been noted. A confirmation is on its way."
-Stay focused on booking only.`,
+    appointment: `You are a friendly, professional appointment booking assistant. You speak naturally — never print lists, bullet points, or formatted text.
+
+CLINIC INFORMATION (only state what is listed here — never invent details):
+- Clinic name: [FILL IN]
+- Address: [FILL IN]
+- Phone: [FILL IN]
+- Website: [FILL IN]
+- Hours: [FILL IN]
+- Accepted insurance: [FILL IN]
+
+YOUR ROLE:
+- Greet the caller warmly and ask what service they need
+- Collect: (1) service needed, (2) preferred date(s), (3) preferred time (morning/afternoon/evening), (4) full name, (5) phone number
+- Confirm the phone number back to the caller
+
+BOOKING FLOW (follow this exact order):
+1. Collect the caller's information naturally through conversation
+2. Once you have name and phone, call saveLead to record them — do NOT announce this to the caller
+3. When the caller shares a preferred date, call checkAppointmentAvailability to verify the slot
+4. If the slot is free, confirm the details back: "Great, I have you down for [service] on [date] at [time]. Your reference number is [appointmentId]. You'll receive a confirmation shortly."
+5. If the slot is taken, offer the alternatives the system returned: "That time is taken, but I can offer [alternative]. Would that work?"
+6. After booking, call saveAppointment
+
+IMPORTANT RULES:
+- The short reference number (6 characters) is shareable — read it back to the caller
+- Never share raw database IDs
+- Never make up clinic facts — only use what is listed above
+- Never invent available time slots — only use what checkAppointmentAvailability returns
+- Keep responses conversational and natural for voice
+- If you cannot answer a question, say: "I don't have that information — our team can help you with that."
+
+EXAMPLE CONVERSATION:
+Caller: "Hi, I'd like to book a teeth whitening appointment."
+Agent: "I'd be happy to help you with that! What date works best for you?"
+Caller: "How about next Tuesday?"
+Agent: "Let me check availability for next Tuesday... I have openings at 10:00 AM and 2:30 PM. Which works better for you?"
+Caller: "10:00 AM please."
+Agent: "Perfect! I just need your full name and phone number to complete the booking."
+Caller: "Sarah Johnson, 555-123-4567."
+Agent: "Thank you, Sarah! I've saved your information. Your appointment for teeth whitening is confirmed for next Tuesday at 10:00 AM. Your reference number is ABC123. You'll receive a confirmation shortly. Is there anything else I can help with?"`,
 
     faq: `You are a helpful customer support assistant.
 Answer questions about:
@@ -353,14 +389,17 @@ function handleTwilioStream(twilioWs) {
   let streamSid = null;
   let callSid = null;
   let agentObj = null;
-  
+
   let conversationHistory = [];
   let fullTranscript = '';
   let callStartTime = new Date();
-  
+
   let deepgramWs = null;
   let isInterrupted = false;
   let currentResponsePromise = null;
+  let isProcessing = false;
+  let lastProcessedTranscript = '';
+  let toolAlreadyExecuted = { saveAppointment: false, saveLead: false };
 
   const initDeepgramSTT = () => {
     const deepgramKey = process.env.DEEPGRAM_API_KEY;
@@ -398,6 +437,11 @@ function handleTwilioStream(twilioWs) {
 
         if (transcript && transcript.trim().length > 0) {
           if (isFinal) {
+            if (transcript === lastProcessedTranscript) {
+              console.log(`[Deepgram STT] Duplicate final ignored: "${transcript}"`);
+              return;
+            }
+            lastProcessedTranscript = transcript;
             console.log(`[Deepgram STT Final] ${transcript}`);
             fullTranscript += `Caller: ${transcript}\n`;
             handleUserUtterance(transcript);
@@ -436,49 +480,17 @@ function handleTwilioStream(twilioWs) {
   };
 
   const executeCompletionFlow = async () => {
-    try {
-      const tools = [];
-      if (agentObj?.type === 'appointment') {
-        tools.push({
-          type: 'function',
-          function: {
-            name: 'saveBooking',
-            description: 'Save appointment details when scheduling is requested.',
-            parameters: {
-              type: 'object',
-              properties: {
-                name:          { type: 'string' },
-                phone:         { type: 'string' },
-                service:       { type: 'string' },
-                preferredDate: { type: 'string' },
-                preferredTime: { type: 'string' },
-              },
-              required: ['name', 'phone'],
-            }
-          }
-        });
-      } else if (agentObj?.type === 'receptionist' || agentObj?.type === 'faq') {
-        tools.push({
-          type: 'function',
-          function: {
-            name: 'saveLead',
-            description: 'Record lead contact details in the database.',
-            parameters: {
-              type: 'object',
-              properties: {
-                name:    { type: 'string' },
-                phone:   { type: 'string' },
-                email:   { type: 'string' },
-                purpose: { type: 'string' },
-              },
-              required: ['name', 'phone'],
-            }
-          }
-        });
-      }
+    if (isProcessing) {
+      console.log('[Twilio LLM] Already processing, skipping duplicate request');
+      return;
+    }
+    isProcessing = true;
 
-      let client = openaiClient || groq;
-      let modelName = openaiClient ? 'gpt-4o-mini' : 'llama-3.3-70b-versatile';
+    try {
+      const tools = getToolDefinitions(agentObj?.type);
+
+      let client = groq || openaiClient;
+      let modelName = groq ? 'llama-3.3-70b-versatile' : 'gpt-4o-mini';
       
       console.log(`[LLM Completion] Using ${modelName}...`);
       let stream;
@@ -489,11 +501,11 @@ function handleTwilioStream(twilioWs) {
           stream: true,
           ...(tools.length > 0 ? { tools, tool_choice: 'auto' } : {}),
         });
-      } catch (openaiErr) {
-        if (openaiClient && groq) {
-          console.warn('[LLM Completion] OpenAI failed, falling back to Groq:', openaiErr.message);
-          client = groq;
-          modelName = 'llama-3.3-70b-versatile';
+      } catch (groqErr) {
+        if (groq && openaiClient) {
+          console.warn('[LLM Completion] Groq failed, falling back to OpenAI:', groqErr.message);
+          client = openaiClient;
+          modelName = 'gpt-4o-mini';
           stream = await client.chat.completions.create({
             model: modelName,
             messages: conversationHistory,
@@ -501,7 +513,7 @@ function handleTwilioStream(twilioWs) {
             ...(tools.length > 0 ? { tools, tool_choice: 'auto' } : {}),
           });
         } else {
-          throw openaiErr;
+          throw groqErr;
         }
       }
 
@@ -555,64 +567,18 @@ function handleTwilioStream(twilioWs) {
       if (toolCalls.length > 0 && !isInterrupted) {
         for (const tc of toolCalls) {
           const name = tc.name;
-          const rawArgs = tc.arguments;
-          console.log(`[Tool Execute] Executing ${name} with arguments ${rawArgs}`);
-
           let args = {};
           try {
-            args = JSON.parse(rawArgs);
+            args = JSON.parse(tc.arguments);
           } catch {
             console.warn('[Tool] Parsing arguments failed.');
           }
+          console.log(`[Tool Execute] ${name}`, args);
 
-          let result = { success: false, error: 'Unknown function' };
-
-          if (name === 'saveLead') {
-            const { name: leadName, phone, email, purpose } = args;
-            const sanitizedName = leadName ? sanitizeText(safeString(leadName, 200)) : null;
-            const sanitizedPurpose = purpose ? sanitizeText(safeString(purpose, 500)) : 'inquiry';
-            const safePhone = phone ? safeString(phone, 30) : null;
-            const safeEmail = email ? safeString(email, 254) : null;
-
-            if ((leadName && containsAbuse(leadName)) || (purpose && containsAbuse(purpose))) {
-              result = { success: false, error: 'Content policy violation' };
-            } else {
-              const leadObj = await Lead.create({
-                agentId: agentObj._id,
-                callId: callSid,
-                userId: agentObj.userId,
-                name: sanitizedName,
-                phone: safePhone,
-                email: safeEmail,
-                purpose: sanitizedPurpose,
-              });
-              result = { success: true, leadId: leadObj._id, name: sanitizedName, phone: safePhone };
-            }
-          } else if (name === 'saveBooking') {
-            const { name: customerName, phone, service, preferredDate, preferredTime } = args;
-            const sanitizedName = customerName ? sanitizeText(safeString(customerName, 200)) : null;
-            const sanitizedService = service ? sanitizeText(safeString(service, 200)) : null;
-            const safePhone = phone ? safeString(phone, 30) : null;
-            const safeDate = preferredDate ? safeString(preferredDate, 30) : null;
-            const safeTime = preferredTime ? safeString(preferredTime, 30) : null;
-
-            if ((customerName && containsAbuse(customerName)) || (service && containsAbuse(service))) {
-              result = { success: false, error: 'Content policy violation' };
-            } else {
-              const appt = await Appointment.create({
-                agentId: agentObj._id,
-                callId: callSid,
-                userId: agentObj.userId,
-                name: sanitizedName,
-                phone: safePhone,
-                service: sanitizedService,
-                preferredDate: safeDate,
-                preferredTime: safeTime,
-                status: 'pending',
-              });
-              result = { success: true, bookingId: appt._id, name: sanitizedName, service: sanitizedService };
-            }
-          }
+          const result = await executeTool(name, args, {
+            agentObj,
+            toolState: toolAlreadyExecuted,
+          });
 
           conversationHistory.push({
             role: 'tool',
@@ -621,11 +587,16 @@ function handleTwilioStream(twilioWs) {
           });
         }
 
-        executeCompletionFlow();
+        // release the lock so the follow-up call (model speaks the tool result) can run
+        isProcessing = false;
+        await executeCompletionFlow();
+        return;
       }
 
     } catch (err) {
-      console.error('[Completion Flow Error]', err.message);
+      console.error('[Twilio Completion Flow Error]', err.message);
+    } finally {
+      isProcessing = false;
     }
   };
 
@@ -672,8 +643,8 @@ function handleTwilioStream(twilioWs) {
     let greetingText = FIRST_MESSAGES[agentObj?.type || 'receptionist'] || FIRST_MESSAGES.receptionist;
 
     // Generate dynamic greeting if custom prompt is present
-    let generator = openaiClient || groq;
-    let greetingModel = openaiClient ? 'gpt-4o-mini' : 'llama-3.3-70b-versatile';
+    let generator = groq || openaiClient;
+    let greetingModel = groq ? 'llama-3.3-70b-versatile' : 'gpt-4o-mini';
     if (agentObj?.prompt && agentObj.prompt.trim().length > 20 && generator) {
       try {
         console.log('[LLM Greeting] Generating custom greeting...');
@@ -690,11 +661,11 @@ function handleTwilioStream(twilioWs) {
             max_tokens: 60,
             temperature: 0.7,
           });
-        } catch (openaiErr) {
-          if (openaiClient && groq) {
-            console.warn('[LLM Greeting] OpenAI failed, falling back to Groq:', openaiErr.message);
-            generator = groq;
-            greetingModel = 'llama-3.3-70b-versatile';
+        } catch (groqErr) {
+          if (groq && openaiClient) {
+            console.warn('[LLM Greeting] Groq failed, falling back to OpenAI:', groqErr.message);
+            generator = openaiClient;
+            greetingModel = 'gpt-4o-mini';
             completion = await generator.chat.completions.create({
               model: greetingModel,
               messages: [
@@ -705,7 +676,7 @@ function handleTwilioStream(twilioWs) {
               temperature: 0.7,
             });
           } else {
-            throw openaiErr;
+            throw groqErr;
           }
         }
 
@@ -833,6 +804,9 @@ async function handleWebCall(clientWs, req) {
   let deepgramWs = null;
   let isInterrupted = false;
   let chunkCount = 0;
+  let isProcessing = false;
+  let lastProcessedTranscript = '';
+  let toolAlreadyExecuted = { saveAppointment: false, saveLead: false };
 
   try {
     agentObj = await Agent.findById(agentId);
@@ -896,9 +870,14 @@ async function handleWebCall(clientWs, req) {
 
         if (transcript && transcript.trim().length > 0) {
           if (isFinal) {
+            if (transcript === lastProcessedTranscript) {
+              console.log(`[Web Deepgram STT] Duplicate final ignored: "${transcript}"`);
+              return;
+            }
+            lastProcessedTranscript = transcript;
             console.log(`[Web Deepgram STT Final] ${transcript}`);
             fullTranscript += `Caller: ${transcript}\n`;
-            
+
             if (clientWs.readyState === WebSocket.OPEN) {
               clientWs.send(JSON.stringify({ event: 'transcript', role: 'caller', text: transcript }));
             }
@@ -936,49 +915,17 @@ async function handleWebCall(clientWs, req) {
   };
 
   const executeCompletionFlow = async () => {
-    try {
-      const tools = [];
-      if (agentObj.type === 'appointment') {
-        tools.push({
-          type: 'function',
-          function: {
-            name: 'saveBooking',
-            description: 'Save appointment details in the database CRM.',
-            parameters: {
-              type: 'object',
-              properties: {
-                name:          { type: 'string' },
-                phone:         { type: 'string' },
-                service:       { type: 'string' },
-                preferredDate: { type: 'string' },
-                preferredTime: { type: 'string' },
-              },
-              required: ['name', 'phone'],
-            }
-          }
-        });
-      } else if (agentObj.type === 'receptionist' || agentObj.type === 'faq') {
-        tools.push({
-          type: 'function',
-          function: {
-            name: 'saveLead',
-            description: 'Record lead contacts details in the CRM.',
-            parameters: {
-              type: 'object',
-              properties: {
-                name:    { type: 'string' },
-                phone:   { type: 'string' },
-                email:   { type: 'string' },
-                purpose: { type: 'string' },
-              },
-              required: ['name', 'phone'],
-            }
-          }
-        });
-      }
+    if (isProcessing) {
+      console.log('[Web LLM] Already processing, skipping duplicate request');
+      return;
+    }
+    isProcessing = true;
 
-      let client = openaiClient || groq;
-      let modelName = openaiClient ? 'gpt-4o-mini' : 'llama-3.3-70b-versatile';
+    try {
+      const tools = getToolDefinitions(agentObj.type);
+
+      let client = groq || openaiClient;
+      let modelName = groq ? 'llama-3.3-70b-versatile' : 'gpt-4o-mini';
 
       console.log(`[Web LLM Completion] Using ${modelName}...`);
       let stream;
@@ -1055,62 +1002,18 @@ async function handleWebCall(clientWs, req) {
       if (toolCalls.length > 0 && !isInterrupted) {
         for (const tc of toolCalls) {
           const name = tc.name;
-          const rawArgs = tc.arguments;
           let args = {};
           try {
-            args = JSON.parse(rawArgs);
+            args = JSON.parse(tc.arguments);
           } catch {
             console.warn('[Tool Web] Fail JSON parse.');
           }
+          console.log(`[Web Tool Execute] ${name}`, args);
 
-          let result = { success: false, error: 'Unknown function' };
-
-          if (name === 'saveLead') {
-            const { name: leadName, phone, email, purpose } = args;
-            const sanitizedName = leadName ? sanitizeText(safeString(leadName, 200)) : null;
-            const sanitizedPurpose = purpose ? sanitizeText(safeString(purpose, 500)) : 'inquiry';
-            const safePhone = phone ? safeString(phone, 30) : null;
-            const safeEmail = email ? safeString(email, 254) : null;
-
-            if ((leadName && containsAbuse(leadName)) || (purpose && containsAbuse(purpose))) {
-              result = { success: false, error: 'Content policy violation' };
-            } else {
-              const leadObj = await Lead.create({
-                agentId: agentObj._id,
-                callId: callSid,
-                userId: agentObj.userId,
-                name: sanitizedName,
-                phone: safePhone,
-                email: safeEmail,
-                purpose: sanitizedPurpose,
-              });
-              result = { success: true, leadId: leadObj._id, name: sanitizedName, phone: safePhone };
-            }
-          } else if (name === 'saveBooking') {
-            const { name: customerName, phone, service, preferredDate, preferredTime } = args;
-            const sanitizedName = customerName ? sanitizeText(safeString(customerName, 200)) : null;
-            const sanitizedService = service ? sanitizeText(safeString(service, 200)) : null;
-            const safePhone = phone ? safeString(phone, 30) : null;
-            const safeDate = preferredDate ? safeString(preferredDate, 30) : null;
-            const safeTime = preferredTime ? safeString(preferredTime, 30) : null;
-
-            if ((customerName && containsAbuse(customerName)) || (service && containsAbuse(service))) {
-              result = { success: false, error: 'Content policy violation' };
-            } else {
-              const appt = await Appointment.create({
-                agentId: agentObj._id,
-                callId: callSid,
-                userId: agentObj.userId,
-                name: sanitizedName,
-                phone: safePhone,
-                service: sanitizedService,
-                preferredDate: safeDate,
-                preferredTime: safeTime,
-                status: 'pending',
-              });
-              result = { success: true, bookingId: appt._id, name: sanitizedName, service: sanitizedService };
-            }
-          }
+          const result = await executeTool(name, args, {
+            agentObj,
+            toolState: toolAlreadyExecuted,
+          });
 
           conversationHistory.push({
             role: 'tool',
@@ -1119,11 +1022,16 @@ async function handleWebCall(clientWs, req) {
           });
         }
 
-        executeCompletionFlow();
+        // release the lock so the follow-up call (model speaks the tool result) can run
+        isProcessing = false;
+        await executeCompletionFlow();
+        return;
       }
 
     } catch (err) {
       console.error('[Web Completions Error]', err.message);
+    } finally {
+      isProcessing = false;
     }
   };
 
@@ -1148,8 +1056,8 @@ async function handleWebCall(clientWs, req) {
     let greetingText = FIRST_MESSAGES[agentObj.type] || FIRST_MESSAGES.receptionist;
 
     // Generate dynamic greeting if custom prompt is present
-    let generator = openaiClient || groq;
-    let greetingModel = openaiClient ? 'gpt-4o-mini' : 'llama-3.3-70b-versatile';
+    let generator = groq || openaiClient;
+    let greetingModel = groq ? 'llama-3.3-70b-versatile' : 'gpt-4o-mini';
     if (agentObj.prompt && agentObj.prompt.trim().length > 20 && generator) {
       try {
         console.log('[Web LLM Greeting] Generating custom greeting...');
@@ -1166,11 +1074,11 @@ async function handleWebCall(clientWs, req) {
             max_tokens: 60,
             temperature: 0.7,
           });
-        } catch (openaiErr) {
-          if (openaiClient && groq) {
-            console.warn('[Web LLM Greeting] OpenAI failed, falling back to Groq:', openaiErr.message);
-            generator = groq;
-            greetingModel = 'llama-3.3-70b-versatile';
+        } catch (groqErr) {
+          if (groq && openaiClient) {
+            console.warn('[Web LLM Greeting] Groq failed, falling back to OpenAI:', groqErr.message);
+            generator = openaiClient;
+            greetingModel = 'gpt-4o-mini';
             completion = await generator.chat.completions.create({
               model: greetingModel,
               messages: [
@@ -1181,7 +1089,7 @@ async function handleWebCall(clientWs, req) {
               temperature: 0.7,
             });
           } else {
-            throw openaiErr;
+            throw groqErr;
           }
         }
 

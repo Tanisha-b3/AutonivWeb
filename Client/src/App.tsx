@@ -6,6 +6,8 @@ import { Sidebar } from './components/Sidebar';
 import { Breadcrumbs } from './components/Breadcrumbs';
 import ScrollToTop from './components/ScrollToTop';
 import LoadingScreen from './components/LoadingScreen';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { isChatPlan, isVoicePlan } from './utils/plan';
 // import AIAssistantChat from './components/AIAssistantChat';
 
 const Landing = lazy(() => import('./pages/public').then(m => ({ default: m.Landing })));
@@ -115,14 +117,12 @@ function ProtectedRoute({
 
   if (feature && !isAdmin) {
     if (feature === 'chat') {
-      const isChat = user.chatPlan ? user.chatPlan !== 'none' : (user.chatEnabled !== undefined ? user.chatEnabled : true);
-      if (!isChat) {
+      if (!isChatPlan(user)) {
         return <Navigate to="/dashboard?error=chat_restricted" replace />;
       }
     }
     if (feature === 'voice') {
-      const isVoice = user.voicePlan ? user.voicePlan !== 'none' : (user.voiceEnabled !== undefined ? user.voiceEnabled : false);
-      if (!isVoice) {
+      if (!isVoicePlan(user)) {
         return <Navigate to="/dashboard?error=voice_restricted" replace />;
       }
     }
@@ -221,8 +221,9 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppRoutes />
-      {/* <AIAssistantChat />  */}
+      <ErrorBoundary>
+        <AppRoutes />
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }

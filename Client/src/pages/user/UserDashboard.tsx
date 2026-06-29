@@ -23,7 +23,11 @@ import { OnboardingTour } from '../../components/OnboardingTour';
 import { EmptyStateGuide } from '../../components/EmptyStateGuide';
 import VapiModule from '@vapi-ai/web';
 import { callService, apiKeyService } from '../../services/api';
+import { COUNTRY_CODES } from '../../config/constants';
+import { useToast } from '../../hooks/useToast';
+import { ToastContainer } from '../../components/ToastContainer';
 import type { MyStats } from '../../types';
+import { isChatPlan, isVoicePlan, getPlanColor, getPlanDisplayName } from '../../utils/plan';
 
 const Vapi = (typeof VapiModule === 'function' ? VapiModule : (VapiModule as any).default) as new (key: string) => any;
 
@@ -54,56 +58,6 @@ const staggerContainer = {
   hidden: {},
   show:   { transition: { staggerChildren: 0.055 } },
 };
-
-// ─── Toast system ─────────────────────────────────────────────────────
-type ToastType = 'success' | 'error' | 'info' | 'warning';
-interface Toast { id: number; message: string; type: ToastType }
-
-function ToastContainer({ toasts, remove }: { toasts: Toast[]; remove: (id: number) => void }) {
-  return (
-    <div className="fixed top-5 right-5 z-[100] flex flex-col gap-2 pointer-events-none">
-      <AnimatePresence>
-        {toasts.map(t => {
-          const colors = {
-            success: { bg: '#10B981', border: 'rgba(16,185,129,0.3)' },
-            error: { bg: '#ef4444', border: 'rgba(239,68,68,0.3)' },
-            warning: { bg: '#f59e0b', border: 'rgba(245,158,11,0.3)' },
-            info: { bg: '#2563eb', border: 'rgba(37,99,235,0.3)' },
-          };
-          return (
-            <motion.div
-              key={t.id}
-              initial={{ opacity: 0, x: 60, scale: 0.92 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 60, scale: 0.88 }}
-              transition={spring}
-              onClick={() => remove(t.id)}
-              className="pointer-events-auto flex items-center gap-3 px-5 py-3.5 rounded-xl border cursor-pointer select-none shadow-md backdrop-blur-md bg-white/95"
-              style={{
-                borderColor: colors[t.type].border,
-                boxShadow: `0 8px 32px rgba(37,99,235,0.06), 0 0 0 1px ${colors[t.type].border}`,
-              }}
-            >
-              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: colors[t.type].bg }} />
-              <span className="text-xs font-semibold text-slate-700">{t.message}</span>
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function useToast() {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const add = useCallback((message: string, type: ToastType = 'info') => {
-    const id = Date.now();
-    setToasts(p => [...p, { id, message, type }]);
-    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 3500);
-  }, []);
-  const remove = useCallback((id: number) => setToasts(p => p.filter(t => t.id !== id)), []);
-  return { toasts, add, remove };
-}
 
 // ─── Tooltip wrapper ──────────────────────────────────────────────────
 function Tip({ text, children }: { text: string; children: React.ReactNode }) {
@@ -538,43 +492,6 @@ const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
     </AnimatePresence>
   );
 };
-
-const COUNTRY_CODES = [
-  { code: '+1', country: 'US', flag: '🇺🇸', name: 'United States' },
-  { code: '+1', country: 'CA', flag: '🇨🇦', name: 'Canada' },
-  { code: '+44', country: 'GB', flag: '🇬🇧', name: 'United Kingdom' },
-  { code: '+91', country: 'IN', flag: '🇮🇳', name: 'India' },
-  { code: '+61', country: 'AU', flag: '🇦🇺', name: 'Australia' },
-  { code: '+49', country: 'DE', flag: '🇩🇪', name: 'Germany' },
-  { code: '+33', country: 'FR', flag: '🇫🇷', name: 'France' },
-  { code: '+81', country: 'JP', flag: '🇯🇵', name: 'Japan' },
-  { code: '+86', country: 'CN', flag: '🇨🇳', name: 'China' },
-  { code: '+55', country: 'BR', flag: '🇧🇷', name: 'Brazil' },
-  { code: '+52', country: 'MX', flag: '🇲🇽', name: 'Mexico' },
-  { code: '+82', country: 'KR', flag: '🇰🇷', name: 'South Korea' },
-  { code: '+39', country: 'IT', flag: '🇮🇹', name: 'Italy' },
-  { code: '+34', country: 'ES', flag: '🇪🇸', name: 'Spain' },
-  { code: '+31', country: 'NL', flag: '🇳🇱', name: 'Netherlands' },
-  { code: '+46', country: 'SE', flag: '🇸🇪', name: 'Sweden' },
-  { code: '+47', country: 'NO', flag: '🇳🇴', name: 'Norway' },
-  { code: '+41', country: 'CH', flag: '🇨🇭', name: 'Switzerland' },
-  { code: '+65', country: 'SG', flag: '🇸🇬', name: 'Singapore' },
-  { code: '+971', country: 'AE', flag: '🇦🇪', name: 'UAE' },
-  { code: '+966', country: 'SA', flag: '🇸🇦', name: 'Saudi Arabia' },
-  { code: '+27', country: 'ZA', flag: '🇿🇦', name: 'South Africa' },
-  { code: '+234', country: 'NG', flag: '🇳🇬', name: 'Nigeria' },
-  { code: '+254', country: 'KE', flag: '🇰🇪', name: 'Kenya' },
-  { code: '+64', country: 'NZ', flag: '🇳🇿', name: 'New Zealand' },
-  { code: '+63', country: 'PH', flag: '🇵🇭', name: 'Philippines' },
-  { code: '+66', country: 'TH', flag: '🇹🇭', name: 'Thailand' },
-  { code: '+60', country: 'MY', flag: '🇲🇾', name: 'Malaysia' },
-  { code: '+62', country: 'ID', flag: '🇮🇩', name: 'Indonesia' },
-  { code: '+84', country: 'VN', flag: '🇻🇳', name: 'Vietnam' },
-  { code: '+92', country: 'PK', flag: '🇵🇰', name: 'Pakistan' },
-  { code: '+880', country: 'BD', flag: '🇧🇩', name: 'Bangladesh' },
-  { code: '+94', country: 'LK', flag: '🇱🇰', name: 'Sri Lanka' },
-  { code: '+977', country: 'NP', flag: '🇳🇵', name: 'Nepal' },
-];
 
 function WebCallDialog({
   open,
@@ -1061,12 +978,6 @@ function getGreeting() {
   const h = new Date().getHours();
   return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 }
-function getPlanColor(plan: string) {
-  return plan === 'enterprise' ? { bg: 'bg-indigo-50', border: 'border-indigo-200', text: 'text-indigo-600' }
-    : plan === 'growth'       ? { bg: 'bg-[var(--primary-soft)]', border: 'border-[var(--border)]', text: 'text-[var(--primary)]' }
-    : plan === 'starter'      ? { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-600' }
-    : { bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-600' };
-}
 function getCallDurSec(call: { startedAt?: string | null; endedAt?: string | null; duration?: number }): number {
   if (call.startedAt && call.endedAt) {
     const d = new Date(call.endedAt).getTime() - new Date(call.startedAt).getTime();
@@ -1095,8 +1006,8 @@ export function UserDashboard() {
   const error      = useAppSelector((state) => state.analytics.error);
   const user       = useAppSelector((state) => state.auth.user);
   const myAgents   = useAppSelector((state) => state.agents.myAgents);
-  const isChat = user?.role === 'admin' || (user?.chatPlan ? user.chatPlan !== 'none' : (user?.chatEnabled !== undefined ? user.chatEnabled : true));
-  const isVoice = user?.role === 'admin' || (user?.voicePlan ? user.voicePlan !== 'none' : (user?.voiceEnabled !== undefined ? user.voiceEnabled : false));
+  const isChat = user ? isChatPlan(user) : true;
+  const isVoice = user ? isVoicePlan(user) : false;
   
   const { toasts, add: addToast, remove: removeToast } = useToast();
   
@@ -1583,7 +1494,7 @@ export function UserDashboard() {
 
           <div className="flex items-center gap-2 flex-wrap">
             <div className={`px-3 py-1.5 rounded-full border text-[9px] font-bold uppercase tracking-wider ${planColors.bg} ${planColors.border} ${planColors.text}`}>
-              {user?.plan ? user.plan.charAt(0).toUpperCase() + user.plan.slice(1) : 'Free'} Plan
+              {getPlanDisplayName(user?.plan)} Plan
             </div>
 
             {/* Time filters switch */}

@@ -1,6 +1,7 @@
 import { verifyAccessToken, authSecurityEvent } from '../services/tokenService.js';
 import { extractTokenFromCookie } from '../services/cookieService.js';
 import User from '../db/models/User.js';
+import { resolvePlans, PLAN_CONFIG } from '../services/planResolver.js';
 
 function extractToken(req) {
   const authHeader = req.headers.authorization;
@@ -94,26 +95,7 @@ export function requireFeature(feature) {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      let chatPlan = user.chatPlan;
-      let voicePlan = user.voicePlan;
-      if (!chatPlan && !voicePlan) {
-        const plan = user.plan || 'chat_free';
-        if (plan.startsWith('chat_')) {
-          chatPlan = plan;
-          voicePlan = 'none';
-        } else if (plan.startsWith('voice_')) {
-          chatPlan = 'none';
-          voicePlan = plan;
-        } else if (plan.startsWith('both_')) {
-          chatPlan = plan.replace('both_', 'chat_');
-          voicePlan = plan.replace('both_', 'voice_');
-        } else {
-          chatPlan = `chat_${plan}`;
-          voicePlan = `voice_${plan}`;
-        }
-      }
-      chatPlan = chatPlan || 'none';
-      voicePlan = voicePlan || 'none';
+      const { chatPlan, voicePlan } = resolvePlans(user);
 
       if (feature === 'chat') {
         if (chatPlan !== 'none') {
@@ -138,6 +120,114 @@ export function requireFeature(feature) {
       return next();
     } catch (err) {
       return next(err);
+    }
+  };
+}
+
+// ─── Limit enforcement middleware ──────────────────────────────────────────────
+
+// Check if user has exceeded their chat conversation limit
+export function checkChatLimit() {
+  return async (req, res, next) => {
+    try {
+      if (req.user.role === 'admin') return next();
+
+      const user = await User.findById(req.user.userId).lean();
+      if (!user) return res.status(404).json({ message: 'User not found' });
+
+      const { chatPlan } = resolvePlans(user);
+      const cfg = PLAN_CONFIG[chatPlan];
+      if (!cfg) return res.status(403).json({ message: 'Invalid chat plan', code: 'INVALID_PLAN' });
+
+      const limit = cfg.limits.conversations;
+      if (limit === -1) return next();
+
+      if (user.chatUsed >= limit) {
+        return res.status(403).json({
+          message: `Monthly conversation limit reached (${limit}). Please upgrade your plan.`,
+          code: 'CHAT_LIMIT_EXCEEDED',
+          used: user.chatUsed,
+          limit,
+        });
+      }
+
+      next();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+// Check if user has exceeded their voice call limit
+export function checkVoiceLimit() {
+  return async (req, res, next) => {
+    try {
+      if (req.user.role === 'admin') return next();
+
+      const user = await User.findById(req.user.userId).lean();
+      if (!user) return res.status(404).json({ message: 'User not found' });
+
+      const { voicePlan } = resolvePlans(user);
+      const cfg = PLAN_CONFIG[voicePlan];
+      if (!cfg) return res.status(403).json({ message: 'Invalid voice plan', code: 'INVALID_PLAN' });
+
+      const callLimit = cfg.limits.calls;
+      if (callLimit !== -1 && user.callsUsed >= callLimit) {
+        return res.status(403).json({
+          message: `Monthly call limit reached (${callLimit}). Please upgrade your plan.`,
+          code: 'VOICE_CALL_LIMIT_EXCEEDED',
+          used: user.callsUsed,
+          limit: callLimit,
+        });
+      }
+
+      const minuteLimit = cfg.limits.minutes;
+      if (minuteLimit !== -1 && user.minutesUsed >= minuteLimit) {
+        return res.status(403).json({
+          message: `Monthly minute limit reached (${minuteLimit}). Please upgrade your plan.`,
+          code: 'VOICE_MINUTE_LIMIT_EXCEEDED',
+          used: user.minutesUsed,
+          limit: minuteLimit,
+        });
+      }
+
+      next();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+// Check a specific named feature against the user's plan
+export function checkPlanFeature(featureName) {
+  return async (req, res, next) => {
+    try {
+      if (req.user.role === 'admin') return next();
+
+      const user = await User.findById(req.user.userId).lean();
+      if (!user) return res.status(404).json({ message: 'User not found' });
+
+      const { chatPlan, voicePlan } = resolvePlans(user);
+
+      // Check chat plan features
+      if (chatPlan !== 'none') {
+        const cfg = PLAN_CONFIG[chatPlan];
+        if (cfg && cfg.features && cfg.features[featureName] === true) return next();
+      }
+
+      // Check voice plan features
+      if (voicePlan !== 'none') {
+        const cfg = PLAN_CONFIG[voicePlan];
+        if (cfg && cfg.features && cfg.features[featureName] === true) return next();
+      }
+
+      return res.status(403).json({
+        message: `This feature requires a higher plan. Please upgrade to access ${featureName}.`,
+        code: 'FEATURE_NOT_AVAILABLE',
+        feature: featureName,
+      });
+    } catch (err) {
+      next(err);
     }
   };
 }

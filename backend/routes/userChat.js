@@ -1,8 +1,9 @@
 import express from 'express';
 import OpenAI from 'openai';
-import { authenticate, requireFeature } from '../middleware/auth.js';
+import { authenticate, requireFeature, checkChatLimit } from '../middleware/auth.js';
 import { containsAbuse } from '../services/contentModeration.js';
 import { log } from '../services/logger.js';
+import User from '../db/models/User.js';
 import Lead from '../db/models/Lead.js';
 import Appointment from '../db/models/Appointment.js';
 
@@ -112,7 +113,7 @@ You MUST respond in valid JSON only (no markdown fences, no extra text):
 - Never make up information. If unsure, say so and ask for clarification.
 - Use the [Recent Records] section to answer list/show/view requests.`;
 
-router.post('/', async (req, res) => {
+router.post('/', checkChatLimit(), async (req, res) => {
   try {
     const { message, context, history } = req.body;
 
@@ -224,7 +225,13 @@ router.post('/', async (req, res) => {
       }
     }
 
-    res.json({ response: reply, step: nextStep, data: {} });
+    // Increment chatUsed before sending response
+    try {
+      await User.findByIdAndUpdate(userId, { $inc: { chatUsed: 1 } });
+    } catch (_) {}
+
+    const updatedUser = await User.findById(userId).lean();
+    res.json({ response: reply, step: nextStep, data: {}, chatUsed: updatedUser?.chatUsed || 0, chatLimit: updatedUser?.chatLimit || 0 });
   } catch (error) {
     log.error('user_chat_ai_error', { error: error.message, userId: req.user?.userId });
     res.status(500).json({ response: 'Sorry, something went wrong. Please try again.', step: 'idle', data: {} });

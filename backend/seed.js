@@ -3,6 +3,7 @@ dotenv.config();
 
 import { connectDb, closeDb } from './db/connection.js';
 import AddOn from './db/models/AddOn.js';
+import User from './db/models/User.js';
 
 const ADDONS = [
   { id: 'whatsapp-channel',   icon: '💬', title: 'WhatsApp Channel',   price: '₹2,499 / month', category: 'recurring', description: 'Native WhatsApp Business API with template support.', type: 'chat' },
@@ -17,9 +18,101 @@ const ADDONS = [
   { id: 'white-label-reseller', icon: '🏷️', title: 'White-Label Reseller', price: '₹49,999 setup + revenue share', category: 'one-time', description: 'Agencies and consultants: resell Autoniv under your brand with full support.', type: 'voice' }
 ];
 
-async function seedAddOns() {
-  await connectDb();
+const USERS = [
+  {
+    email: 'user@autoniv.ai',
+    password: '$2a$12$hyy/4PQn/LPfgaChXlT6fuL6JJG8y6n6y3MXvCpz7TCgDxFmGmqPm',
+    name: 'User',
+    phoneNumber: '8921001100',
+    role: 'user',
+    company: 'user',
+    plan: 'both_starter',
+    isActive: true,
+    isVerified: false,
+    chatEnabled: true,
+    chatPlan: 'chat_starter',
+    voiceEnabled: true,
+    voicePlan: 'voice_starter',
+    apiKey: 'ak_de0080bc576599ec6a05d54fb82f6b7905a8adc3c8f9b817',
+  },
+  {
+    email: 'admin@autoniv.ai',
+    password: '$2a$12$XQ3Oj.C7NWuHjdF1DcTYLOYi0GwOn/WPCVUH0qMbr9Xs5CVy3dC0y',
+    name: 'Admin',
+    phoneNumber: '',
+    role: 'admin',
+    company: 'My Company',
+    plan: 'both_free',
+    isActive: true,
+    isVerified: false,
+    chatEnabled: true,
+    chatPlan: 'chat_free',
+    voiceEnabled: true,
+    voicePlan: 'voice_free',
+  },
+  {
+    email: 'bhanupratap7530@gmail.com',
+    password: '$2a$10$2DcaEhH8hnrdhHTf7qjSZOF3QSCOV3hagY6ZY7miU2OAfXrqp0Zwm',
+    name: 'test01',
+    phoneNumber: '7987656754',
+    role: 'user',
+    company: 'test01.com',
+    plan: 'voice_free',
+    isActive: true,
+    isVerified: true,
+    chatEnabled: false,
+    chatPlan: 'chat_free',
+    voiceEnabled: true,
+    voicePlan: 'voice_free',
+  },
+  {
+    email: 'tanu@gmail.com',
+    password: '$2a$10$.jFOPrG/Rwq0jJa8Y9EAver3v3ThEBy6aDeEMHdprQ.r5djYPO6xS',
+    name: 'tanu',
+    phoneNumber: '7451211212',
+    role: 'user',
+    company: 'new',
+    plan: 'free',
+    isActive: true,
+    isVerified: true,
+    chatEnabled: true,
+    chatPlan: 'chat_free',
+    voiceEnabled: true,
+    voicePlan: 'voice_free',
+  },
+  {
+    email: 'tanishaborana970@gmail.com',
+    password: '$2a$10$EgKlNkjYFfWmJZzkTZW6YeFdxVNVof40tLDe/Gz7LIpKgeXjJp2HS',
+    name: 'tanu',
+    phoneNumber: '7894554554',
+    role: 'user',
+    company: '',
+    plan: 'free',
+    isActive: true,
+    isVerified: true,
+    chatEnabled: true,
+    chatPlan: 'chat_free',
+    voiceEnabled: true,
+    voicePlan: 'voice_free',
+  },
+  {
+    email: 'vikasprasad2903@gmail.com',
+    password: '$2a$10$NPZFwq.xP6gAvtav.jqn7u.zutYOTm33.TUDXQQIU5vZfMto5Cc8G',
+    name: 'Vikas',
+    phoneNumber: '7048922570',
+    role: 'user',
+    company: 'vikas',
+    plan: 'chat_free',
+    isActive: true,
+    isVerified: false,
+    chatEnabled: true,
+    chatPlan: 'chat_free',
+    voiceEnabled: false,
+    voicePlan: 'none',
+  }
+];
 
+async function seedAddOns() {
   console.log('🌱 Clearing existing add-ons...');
   await AddOn.deleteMany({});
   console.log('🌱 Seeding add-ons...');
@@ -53,12 +146,31 @@ async function seedAddOns() {
   }
 
   const total = await AddOn.countDocuments();
-  console.log(`\n✅ Done. Inserted: ${inserted}, Updated: ${updated}, Unchanged: ${skipped}, Total in DB: ${total}`);
+  console.log(`\n✅ AddOns done. Inserted: ${inserted}, Updated: ${updated}, Unchanged: ${skipped}, Total in DB: ${total}`);
+}
 
+async function seedUsers() {
+  console.log('\n👤 Clearing existing users...');
+  await User.deleteMany({});
+  console.log('👤 Seeding users...');
+
+  for (const user of USERS) {
+    await User.create(user);
+    console.log(`  ➕ inserted: ${user.email}`);
+  }
+
+  const total = await User.countDocuments();
+  console.log(`\n✅ Users done. Total in DB: ${total}`);
+}
+
+async function main() {
+  await connectDb();
+  await seedAddOns();
+  await seedUsers();
   await closeDb();
 }
 
-seedAddOns()
+main()
   .then(() => process.exit(0))
   .catch(async (err) => {
     console.error('❌ Seed failed:', err);

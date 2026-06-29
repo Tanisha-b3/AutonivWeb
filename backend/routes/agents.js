@@ -205,14 +205,29 @@ router.post('/', contentFilter('name', 'prompt'), async (req, res) => {
       return res.status(401).json({ message: 'User not found. Please log in again.' });
     }
 
-    const LIMITS = { free: 1, starter: 3, growth: 10 };
-    const maxAgents = LIMITS[user.plan];
-    if (maxAgents) {
-      const count = await Agent.countDocuments({ userId: user._id });
-      if (count >= maxAgents) {
-        return res.status(403).json({
-          message: `Your ${user.plan} plan allows a maximum of ${maxAgents} agent${maxAgents > 1 ? 's' : ''}. Please upgrade to add more.`,
-        });
+    // Check chatbot limit from plan config
+    const PLAN_CONFIG = User.PLAN_CONFIG;
+    let chatPlan = user.chatPlan || 'chat_free';
+    // Resolve chatPlan from user.plan if current chatPlan is invalid/none
+    if (!chatPlan || chatPlan === 'none' || !PLAN_CONFIG[chatPlan]) {
+      const p = user.plan || 'chat_free';
+      if (p.startsWith('chat_')) chatPlan = p;
+      else if (p.startsWith('both_')) chatPlan = p.replace('both_', 'chat_');
+      else chatPlan = `chat_${p}`;
+    }
+    const chatCfg = PLAN_CONFIG[chatPlan];
+    if (chatCfg) {
+      const maxChatbots = chatCfg.limits.chatbots;
+      if (maxChatbots !== -1) {
+        const count = await Agent.countDocuments({ userId: user._id });
+        if (count >= maxChatbots) {
+          return res.status(403).json({
+            message: `Your plan allows a maximum of ${maxChatbots} chatbot${maxChatbots > 1 ? 's' : ''}. Please upgrade to add more.`,
+            code: 'CHATBOT_LIMIT_EXCEEDED',
+            used: count,
+            limit: maxChatbots,
+          });
+        }
       }
     }
 
