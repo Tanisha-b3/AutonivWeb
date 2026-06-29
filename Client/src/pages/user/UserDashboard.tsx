@@ -1018,6 +1018,7 @@ export function UserDashboard() {
   
   // API Key state for widget embed
   const [widgetApiKey, setWidgetApiKey] = useState<string | null>(null);
+  const [hasApiKey, setHasApiKey] = useState(false);
   const [apiKeyLoading, setApiKeyLoading] = useState(false);
   
   // Chart active tab
@@ -1066,6 +1067,7 @@ export function UserDashboard() {
       try {
         const { data } = await apiKeyService.get();
         setWidgetApiKey(data.apiKey || null);
+        setHasApiKey(data.hasKey || false);
       } catch (err) {
         console.error('Failed to fetch API key:', err);
       } finally {
@@ -1585,12 +1587,36 @@ export function UserDashboard() {
                 <div className="bg-slate-900 rounded-xl p-4 font-mono text-[11px] text-slate-500 overflow-x-auto">
                   Loading API key...
                 </div>
-              ) : widgetApiKey ? (
-                <>
+              ) : !hasApiKey && !widgetApiKey ? (
+                <div className="space-y-3">
+                  <div className="bg-slate-900 rounded-xl p-4 font-mono text-[11px] text-slate-500 overflow-x-auto">
+                    No API key generated yet.
+                  </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const { data } = await apiKeyService.regenerate();
+                        setWidgetApiKey(data.apiKey);
+                        setHasApiKey(true);
+                        addToast('API key generated successfully. Save it now - it won\'t be shown again!', 'success');
+                      } catch (err) {
+                        addToast('Failed to generate API key', 'error');
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-[var(--primary-blue)] text-white hover:opacity-90 transition-all cursor-pointer border-none"
+                  >
+                    Generate API Key
+                  </button>
+                </div>
+              ) : widgetApiKey && !widgetApiKey.startsWith('ak_••••') ? (
+                <div className="space-y-3">
+                  <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-3 text-[11px] text-amber-400">
+                    ⚠️ Save this key now. It won't be shown again after you leave this page.
+                  </div>
                   <div className="bg-slate-900 rounded-xl p-4 font-mono text-[11px] text-green-400 overflow-x-auto">
                     <code>{`<script src="${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/widget/widget.js"\n  data-api-key="${widgetApiKey}"\n  data-position="bottom-right">\n</script>`}</code>
                   </div>
-                  <div className="flex items-center gap-2 mt-3">
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={() => {
                         const scriptUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/widget/widget.js`;
@@ -1606,7 +1632,39 @@ export function UserDashboard() {
                         try {
                           const { data } = await apiKeyService.regenerate();
                           setWidgetApiKey(data.apiKey);
-                          addToast('API key regenerated successfully', 'success');
+                          addToast('API key regenerated. Save it now - it won\'t be shown again!', 'success');
+                        } catch (err) {
+                          addToast('Failed to regenerate API key', 'error');
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-slate-200 text-slate-600 hover:bg-slate-300 transition-all cursor-pointer border-none"
+                    >
+                      Regenerate Key
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="bg-slate-900 rounded-xl p-4 font-mono text-[11px] text-green-400 overflow-x-auto">
+                    <code>{`<script src="${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/widget/widget.js"\n  data-api-key="${widgetApiKey}"\n  data-position="bottom-right">\n</script>`}</code>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        const scriptUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/widget/widget.js`;
+                        navigator.clipboard.writeText(`<script src="${scriptUrl}" data-api-key="${widgetApiKey}" data-position="bottom-right"></script>`);
+                        addToast('Embed code copied to clipboard', 'success');
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-[var(--primary-blue)] text-white hover:opacity-90 transition-all cursor-pointer border-none"
+                    >
+                      Copy Code
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const { data } = await apiKeyService.regenerate();
+                          setWidgetApiKey(data.apiKey);
+                          addToast('API key regenerated. Save it now - it won\'t be shown again!', 'success');
                         } catch (err) {
                           addToast('Failed to regenerate API key', 'error');
                         }
@@ -1617,10 +1675,6 @@ export function UserDashboard() {
                     </button>
                     <span className="text-[10px] text-slate-400 font-medium">Add this to your website's &lt;head&gt; tag</span>
                   </div>
-                </>
-              ) : (
-                <div className="bg-slate-900 rounded-xl p-4 font-mono text-[11px] text-slate-500 overflow-x-auto">
-                  No API key available. Please contact support.
                 </div>
               )}
             </div>
