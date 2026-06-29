@@ -1,4 +1,8 @@
 export function TermsConditions() {
+  const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || 'hello@autoniv.com';
+  const CONTACT_PHONE = import.meta.env.VITE_CONTACT_PHONE || '+917065990307';
+  const CONTACT_WEBSITE = import.meta.env.VITE_CONTACT_WEBSITE || 'Autoniv.com';
+
   return (
     <div className="min-h-screen" style={{ background: '#050d1a' }}>
       <div className="max-w-6xl mx-auto px-5 sm:px-8 py-16">
@@ -23,7 +27,7 @@ export function TermsConditions() {
               <li><strong>Service</strong> refers to the Website.</li>
               <li><strong>Terms and Conditions</strong> (also referred to as "Terms") means these Terms and Conditions, including any documents expressly incorporated by reference, which govern Your access to and use of the Service and form the entire agreement between You and the Company regarding the Service.</li>
               <li><strong>Third-Party Social Media Service</strong> means any services or content (including data, information, products or services) provided by a third party that is displayed, included, made available, or linked to through the Service.</li>
-              <li><strong>Website</strong> refers to Autoniv, accessible from Autoniv.com</li>
+              <li><strong>Website</strong> refers to Autoniv, accessible from {CONTACT_WEBSITE}</li>
               <li><strong>You</strong> means the individual accessing or using the Service, or the company, or other legal entity on behalf of which such individual is accessing or using the Service, as applicable.</li>
             </ul>
           </section>
@@ -113,9 +117,9 @@ export function TermsConditions() {
             <h2 style={{ color: '#e8f8ff', fontSize: 20, fontWeight: 600, marginBottom: 12 }}>Contact Us</h2>
             <p style={{ marginBottom: 8 }}>If you have any questions about these Terms and Conditions, You can contact us:</p>
             <ul style={{ paddingLeft: 20, marginBottom: 12 }}>
-              <li>By email: <span style={{ color: '#0077ff' }}>hello@autoniv.com</span></li>
-              <li>By visiting this page on our website: <span style={{ color: '#0077ff' }}>Autoniv.com</span></li>
-              <li>By phone: <span style={{ color: '#0077ff' }}>+91 7065990307</span></li>
+              <li>By email: <span style={{ color: '#0077ff' }}>{CONTACT_EMAIL}</span></li>
+              <li>By visiting this page on our website: <span style={{ color: '#0077ff' }}>{CONTACT_WEBSITE}</span></li>
+              <li>By phone: <span style={{ color: '#0077ff' }}>{CONTACT_PHONE}</span></li>
             </ul>
           </section>
 
