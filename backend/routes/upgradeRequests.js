@@ -132,8 +132,8 @@ router.put('/:id', requireAdmin, async (req, res) => {
           voicePlan = `voice_${plan}`;
         }
 
-        const chatConfig = User.PLAN_CONFIG[chatPlan] || { callsPerMonth: 0 };
-        const voiceConfig = User.PLAN_CONFIG[voicePlan] || { minutesPerMonth: 0 };
+        const chatConfig = (chatPlan !== 'none' && User.PLAN_CONFIG[chatPlan]) ? User.PLAN_CONFIG[chatPlan] : null;
+        const voiceConfig = (voicePlan !== 'none' && User.PLAN_CONFIG[voicePlan]) ? User.PLAN_CONFIG[voicePlan] : null;
 
         let planLegacy = plan;
         if (chatPlan !== 'none' && voicePlan !== 'none') {
@@ -152,8 +152,9 @@ router.put('/:id', requireAdmin, async (req, res) => {
           voicePlan,
           chatEnabled: chatPlan !== 'none',
           voiceEnabled: voicePlan !== 'none',
-          callsLimit: chatConfig.callsPerMonth,
-          minutesLimit: voiceConfig.minutesPerMonth,
+          callsLimit: voiceConfig ? voiceConfig.limits.calls : 0,
+          minutesLimit: voiceConfig ? voiceConfig.limits.minutes : 0,
+          chatLimit: chatConfig ? chatConfig.limits.conversations : 0,
         });
       }
     }

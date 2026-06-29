@@ -3,7 +3,7 @@ import express from 'express';
 import Call from '../db/models/Call.js';
 import Agent from '../db/models/Agent.js';
 import User from '../db/models/User.js';
-import { authenticate, requireAdmin, requireFeature } from '../middleware/auth.js';
+import { authenticate, requireAdmin, requireFeature, checkVoiceLimit } from '../middleware/auth.js';
 import { log } from '../services/logger.js';
 import { getVapiCalls, extractVapiCallData, createVapiOutboundCall } from '../services/vapi.js';
 import { parsePage, paginatedResponse } from '../services/pagination.js';
@@ -302,7 +302,7 @@ router.post('/sync-my', async (req, res) => {
 });
 
 // POST /calls/outbound — initiate outbound call via Vapi
-router.post('/outbound', async (req, res) => {
+router.post('/outbound', checkVoiceLimit(), async (req, res) => {
   try {
     const { agentId, phoneNumber } = req.body;
 

@@ -17,6 +17,7 @@ import {
   NAME_MAX_LENGTH,
   COMPANY_MAX_LENGTH,
 } from '../services/validators.js';
+import { resolvePlans, getPlanTier, PLAN_CONFIG } from '../services/planResolver.js';
 import {
   isAccountLocked,
   getLockRemainingMs,
@@ -85,16 +86,12 @@ async function performLoginAttempt(req, email, password) {
   }
 
   if (isAccountLocked(user)) {
-    const remainingMin = Math.ceil(getLockRemainingMs(user) / 60000);
-    return {
-      ok: false,
-      status: 423,
-      message: `Account temporarily locked. Try again in ${remainingMin} minute${remainingMin === 1 ? '' : 's'}.`,
-    };
+    log.warn('login_attempt_locked_account', { userId: String(user._id), ip: getClientIp(req) });
+    return { ok: false, status: 401, message: 'Invalid email or password' };
   }
 
   if (user.isActive === false) {
-    return { ok: false, status: 403, message: 'Account is disabled. Contact support.' };
+    return { ok: false, status: 401, message: 'Invalid email or password' };
   }
 
   const valid = await bcrypt.compare(password, user.password);
@@ -179,7 +176,7 @@ router.post('/register', registerLimiter, contentFilter('name', 'company'), asyn
 
       const hashedPassword = await bcrypt.hash(password, BCRYPT_COST);
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
+console.log(otp);
       existing.name = name;
       existing.password = hashedPassword;
       existing.phoneNumber = phoneNumber;
@@ -214,8 +211,6 @@ router.post('/register', registerLimiter, contentFilter('name', 'company'), asyn
       voicePlan: 'none',
       chatEnabled: true,
       voiceEnabled: false,
-      minutesLimit: 0,
-      callsLimit: User.PLAN_CONFIG.chat_free.callsPerMonth,
       isVerified: false,
       otpCode: otp,
       otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
@@ -276,8 +271,6 @@ router.post('/register-admin', registerLimiter, contentFilter('name', 'company')
       voicePlan: 'voice_enterprise',
       chatEnabled: true,
       voiceEnabled: true,
-      minutesLimit: User.PLAN_CONFIG.voice_enterprise.minutesPerMonth,
-      callsLimit: User.PLAN_CONFIG.chat_enterprise.callsPerMonth,
       passwordChangedAt: new Date(),
     });
 
@@ -310,14 +303,14 @@ router.post('/login', authLimiter, loginLimiter, async (req, res) => {
     }
 
     if (isAccountLocked(user)) {
-      const remainingMin = Math.ceil(getLockRemainingMs(user) / 60000);
-      return res.status(423).json({
-        message: `Account temporarily locked. Try again in ${remainingMin} minute${remainingMin === 1 ? '' : 's'}.`,
+      log.warn('login_attempt_locked_account', { userId: String(user._id), ip: getClientIp(req) });
+      return res.status(401).json({
+        message: 'Invalid email or password',
       });
     }
 
     if (user.isActive === false) {
-      return res.status(403).json({ message: 'Account is disabled. Contact support.' });
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     const valid = await bcrypt.compare(password, user.password);
@@ -445,8 +438,6 @@ router.post('/google', authLimiter, loginLimiter, async (req, res) => {
         voicePlan: 'none',
         chatEnabled: true,
         voiceEnabled: false,
-        minutesLimit: 0,
-        callsLimit: User.PLAN_CONFIG.chat_free.callsPerMonth,
         isVerified: true, // Google already verified this email
         passwordChangedAt: new Date(),
       });
@@ -645,37 +636,10 @@ router.get('/me', authenticate, async (req, res) => {
     const user = await User.findById(req.user.userId).lean();
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    let chatPlan = user.chatPlan;
-    let voicePlan = user.voicePlan;
-    if (!chatPlan && !voicePlan) {
-      const plan = user.plan || 'chat_free';
-      if (plan.startsWith('chat_')) {
-        chatPlan = plan;
-        voicePlan = 'none';
-      } else if (plan.startsWith('voice_')) {
-        chatPlan = 'none';
-        voicePlan = plan;
-      } else if (plan.startsWith('both_')) {
-        chatPlan = plan.replace('both_', 'chat_');
-        voicePlan = plan.replace('both_', 'voice_');
-      } else {
-        chatPlan = `chat_${plan}`;
-        voicePlan = `voice_${plan}`;
-      }
-    }
-    chatPlan = chatPlan || 'none';
-    voicePlan = voicePlan || 'none';
+    const { chatPlan, voicePlan } = resolvePlans(user);
 
-    const getTier = (planName) => {
-      if (!planName || planName === 'none') return 'free';
-      if (planName.includes('starter')) return 'starter';
-      if (planName.includes('growth')) return 'growth';
-      if (planName.includes('enterprise')) return 'enterprise';
-      return 'free';
-    };
-
-    const chatTier = getTier(chatPlan);
-    const voiceTier = getTier(voicePlan);
+    const chatTier = getPlanTier(chatPlan);
+    const voiceTier = getPlanTier(voicePlan);
 
     const tierOrder = { free: 0, starter: 1, growth: 2, enterprise: 3 };
     const sharedTier = tierOrder[chatTier] >= tierOrder[voiceTier] ? chatTier : voiceTier;
@@ -700,11 +664,11 @@ router.get('/me', authenticate, async (req, res) => {
         chatPlan,
         voicePlan,
         minutesUsed: user.minutesUsed,
-        minutesLimit: user.minutesLimit,
+        minutesLimit: voicePlan !== 'none' && PLAN_CONFIG[voicePlan] ? PLAN_CONFIG[voicePlan].limits.minutes : user.minutesLimit,
         callsUsed: user.callsUsed || 0,
-        callsLimit: user.callsLimit,
+        callsLimit: voicePlan !== 'none' && PLAN_CONFIG[voicePlan] ? PLAN_CONFIG[voicePlan].limits.calls : user.callsLimit,
         chatUsed: user.chatUsed || 0,
-        chatLimit: user.chatLimit || 0,
+        chatLimit: chatPlan !== 'none' && PLAN_CONFIG[chatPlan] ? PLAN_CONFIG[chatPlan].limits.conversations : (user.chatLimit || 0),
         isActive: user.isActive,
         chatEnabled: chatPlan !== 'none',
         voiceEnabled: voicePlan !== 'none',

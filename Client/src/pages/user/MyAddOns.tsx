@@ -11,6 +11,7 @@ import { fetchAddOnCatalog, fetchMyAddOns, requestAddOn, cancelAddOn } from '../
 import { Modal } from '../../components/Modal';
 import { getCookie } from '../../services/cookies';
 import type { AddOnCatalogEntry, UserAddOn } from '../../types';
+import { isChatPlan, isVoicePlan } from '../../utils/plan';
 
 // ── Design tokens ──────────────────────────────────────────────────────────
 const T = {
@@ -242,8 +243,8 @@ export function MyAddOns() {
   const loading    = useAppSelector((s) => s.addOns.loading);
   const user       = useAppSelector((s) => s.auth.user);
 
-  const isChat = user?.role === 'admin' || (user?.chatPlan ? user.chatPlan !== 'none' : (user?.chatEnabled !== undefined ? user.chatEnabled : true));
-  const isVoice = user?.role === 'admin' || (user?.voicePlan ? user.voicePlan !== 'none' : (user?.voiceEnabled !== undefined ? user.voiceEnabled : false));
+  const isChat = user ? isChatPlan(user) : true;
+  const isVoice = user ? isVoicePlan(user) : false;
 
   const [filter, setFilter] = useState<string>('all');
   const [selectedAddon, setSelectedAddon] = useState<AddOnCatalogEntry | null>(null);

@@ -33,8 +33,6 @@ const GLOBAL_STATS = [
   { value: '₹50Cr+', label: 'Revenue Generated', desc: 'For clients' },
 ];
 
-
-
 import { USPSlider } from './sections/USPSlider';
 
 /* ─── Nav ─── */
@@ -134,7 +132,6 @@ export function Nav({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boo
         </div>
       </nav>
 
-      {/* Backdrop overlay */}
       <div
         onClick={() => setMobileMenuOpen(false)}
         className="md:hidden fixed inset-0 z-[55] transition-opacity duration-300"
@@ -146,7 +143,6 @@ export function Nav({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boo
         aria-hidden={!mobileMenuOpen}
       />
 
-      {/* Slide-in side drawer */}
       <div
         ref={drawerRef}
         className="md:hidden fixed top-0 right-0 h-full z-[100] flex flex-col"
@@ -230,96 +226,67 @@ export function Nav({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boo
   );
 }
 
-  /* ─── Case Study Card ─── */
+/* ─── Case Study Card ─── */
 function StudyCard({ study, index }: { study: any; index: number }) {
-  const [isHovered, setIsHovered] = useState(false);
-  const percentage = parseInt(study.metric.replace(/[^0-9]/g, '')) || 40;
-  
-  // Calculate SVG circle dashoffset
-  const radius = 30;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  const [hovered, setHovered] = useState(false);
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
-      className="rounded-3xl p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden bg-white/90 backdrop-blur-md border transition-all duration-300 hover:-translate-y-1.5 cursor-default group shadow-lg"
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: index * 0.08 }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="rounded-2xl overflow-hidden flex flex-col border transition-all duration-300"
       style={{
-        borderColor: isHovered ? `${study.badgeColor}40` : 'rgba(59, 130, 246, 0.15)',
-        boxShadow: isHovered ? `0 24px 60px -12px ${study.badgeColor}30, 0 0 0 1px ${study.badgeColor}20` : '0 4px 20px rgba(0, 0, 0, 0.06)',
+        background: 'rgba(255,255,255,0.95)',
+        borderColor: hovered ? `${study.badgeColor}30` : 'rgba(37,99,235,0.10)',
+        boxShadow: hovered
+          ? `0 20px 50px -12px ${study.badgeColor}18, 0 0 0 1px ${study.badgeColor}12`
+          : '0 4px 20px rgba(0,0,0,0.04)',
+        transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
       }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
-      <div>
-        {/* Card Header */}
-        <div className="flex items-center justify-between mb-6">
+      {/* Top accent bar */}
+      <div style={{ height: 3, background: `linear-gradient(90deg, ${study.badgeColor}, ${study.badgeColor}44)` }} />
+
+      <div className="p-6 sm:p-7 flex flex-col flex-1">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div 
-              className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl transition-transform duration-300 group-hover:scale-108 group-hover:rotate-[-5deg] bg-blue-50"
-              style={{
-                background: `${study.badgeColor}12`,
-                border: `1.5px solid ${study.badgeColor}20`,
-              }}
+            <div
+              className="w-11 h-11 rounded-xl flex items-center justify-center text-xl"
+              style={{ background: `${study.badgeColor}10`, border: `1px solid ${study.badgeColor}18` }}
             >
               {study.icon}
             </div>
             <div>
-              <h3 className="text-sm font-extrabold text-slate-800">{study.category}</h3>
-              <p className="text-[10px] font-bold tracking-wider text-blue-600 font-mono mt-0.5 uppercase">{study.subcategory}</p>
+              <h3 className="text-sm font-bold text-slate-800">{study.category}</h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">{study.subcategory}</p>
             </div>
           </div>
-
-          {/* Metric gauge circle */}
-          <div className="relative w-16 h-16 flex items-center justify-center flex-shrink-0">
-            <svg className="w-full h-full transform -rotate-90">
-              {/* Background circle */}
-              <circle
-                cx="32"
-                cy="32"
-                r={radius}
-                className="stroke-blue-100"
-                strokeWidth="4"
-                fill="transparent"
-              />
-              {/* Animated progress circle */}
-              <motion.circle
-                cx="32"
-                cy="32"
-                r={radius}
-                stroke={study.badgeColor}
-                strokeWidth="4.5"
-                fill="transparent"
-                strokeDasharray={circumference}
-                initial={{ strokeDashoffset: circumference }}
-                animate={{ strokeDashoffset }}
-                transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }}
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute flex flex-col items-center justify-center leading-none">
-              <span className="text-xs font-black" style={{ color: study.badgeColor }}>{study.metric}</span>
-              <span className="text-[6px] font-bold text-slate-500 text-center scale-90 w-[45px] leading-tight mt-0.5">{study.metricLabel.split(' ')[0]}</span>
-            </div>
+          <div
+            className="px-3 py-1.5 rounded-lg text-sm font-black"
+            style={{ color: study.badgeColor, background: `${study.badgeColor}10` }}
+          >
+            {study.metric}
           </div>
         </div>
 
-        {/* Challenge Section */}
+        {/* Challenge */}
         <div className="mb-5">
-          <div className="text-[9px] font-bold uppercase tracking-wider text-blue-600 font-mono mb-1">Challenge</div>
-          <p className="text-sm text-slate-700 leading-relaxed font-medium">{study.challenge}</p>
+          <p className="text-sm text-slate-600 leading-relaxed">{study.challenge}</p>
         </div>
 
-        {/* Solutions Section */}
+        {/* Solutions */}
         <div className="mb-5">
-          <div className="text-[9px] font-bold uppercase tracking-wider text-blue-600 font-mono mb-2">Deployed Solutions</div>
           <div className="flex flex-wrap gap-2">
             {study.solutions.map((s: any) => (
-              <span 
-                key={s.label} 
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 bg-blue-50 border border-blue-200"
+              <span
+                key={s.label}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600"
+                style={{ background: 'rgba(37,99,235,0.04)', border: '1px solid rgba(37,99,235,0.08)' }}
               >
                 <span>{s.icon}</span>
                 <span>{s.label}</span>
@@ -328,91 +295,67 @@ function StudyCard({ study, index }: { study: any; index: number }) {
           </div>
         </div>
 
-        <div className="h-px bg-blue-200/60 my-5" />
+        <div className="h-px bg-slate-100 my-4" />
 
-        {/* Results Section */}
-        <div className="mb-6">
-          <div className="text-[9px] font-bold uppercase tracking-wider text-blue-600 font-mono mb-3">Key Results</div>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            {study.results.map((r: any) => (
-              <div 
-                key={r.label} 
-                className="p-2 rounded-xl border transition-all duration-300 bg-white"
-                style={{
-                  background: isHovered ? `${r.color}10` : 'white',
-                  borderColor: isHovered ? `${r.color}25` : 'rgba(59, 130, 246, 0.12)'
-                }}
-              >
-                <div className="text-base font-black font-mono tracking-tight" style={{ color: r.color }}>{r.value}</div>
-                <div className="text-[9px] font-semibold text-slate-500 mt-0.5 leading-tight">{r.label}</div>
-              </div>
-            ))}
-          </div>
+        {/* Results */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          {study.results.map((r: any) => (
+            <div key={r.label} className="text-center">
+              <div className="text-lg font-black font-mono tracking-tight" style={{ color: r.color }}>{r.value}</div>
+              <div className="text-[10px] text-slate-400 font-medium mt-0.5 leading-tight">{r.label}</div>
+            </div>
+          ))}
         </div>
-      </div>
 
-      <Link 
-        to={`/case-studies/${index}`} 
-        className="w-full py-3.5 rounded-xl font-bold transition-all duration-200 flex items-center justify-center gap-2 text-sm cursor-pointer border bg-blue-600 text-white hover:bg-blue-700"
-        style={{
-          borderColor: isHovered ? `${study.badgeColor}50` : 'rgba(59, 130, 246, 0.2)',
-          background: isHovered ? study.badgeColor : '#2563EB',
-        }}
-      >
-        View Full Case Study →
-      </Link>
+        {/* CTA */}
+        <Link
+          to={`/case-studies/${index}`}
+          className="mt-auto w-full py-3 rounded-xl text-sm font-bold text-center transition-all duration-200 no-underline"
+          style={{
+            color: hovered ? '#ffffff' : study.badgeColor,
+            background: hovered ? study.badgeColor : `${study.badgeColor}08`,
+            border: `1px solid ${hovered ? study.badgeColor : `${study.badgeColor}20`}`,
+          }}
+        >
+          Read Full Story →
+        </Link>
+      </div>
     </motion.div>
   );
 }
 
-/* ─── Filterable Grid Component ─── */
-function FilterableGrid() {
-  const [activeTab, setActiveTab] = useState<string>("All");
-  const categories = ["All", "Healthcare", "Real Estate", "E-Commerce", "Customer Support"];
-
-  const filteredStudies = activeTab === "All" 
-    ? STUDIES.map((study, idx) => ({ ...study, originalIndex: idx }))
-    : STUDIES.map((study, idx) => ({ ...study, originalIndex: idx })).filter(s => s.category === activeTab);
-
+/* ─── Filter Tabs ─── */
+function FilterTabs({ active, onChange }: { active: string; onChange: (v: string) => void }) {
+  const categories = ['All', 'Healthcare', 'Real Estate', 'E-Commerce', 'Customer Support'];
   return (
-    <div>
-      {/* Category selector */}
-      <div className="flex flex-wrap items-center justify-center gap-2 mb-10 max-w-2xl mx-auto">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveTab(cat)}
-            className="relative px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-wide transition-colors duration-200 cursor-pointer border"
-            style={{
-              borderColor: activeTab === cat ? 'transparent' : 'rgba(255,255,255,0.06)',
-              background: activeTab === cat ? 'linear-gradient(135deg,#2563EB,#10B981)' : 'rgba(15,23,42,0.4)',
-              color: activeTab === cat ? '#ffffff' : '#94a3b8',
-              boxShadow: activeTab === cat ? '0 10px 20px -10px rgba(16,185,129,0.3)' : 'none'
-            }}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {/* Grid wrapper */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-stretch">
-        <AnimatePresence mode="popLayout">
-          {filteredStudies.map((study, index) => (
-            <StudyCard 
-              key={study.originalIndex} 
-              study={study} 
-              index={index} 
-            />
-          ))}
-        </AnimatePresence>
-      </div>
+    <div className="flex flex-wrap items-center justify-center gap-2 mb-10 max-w-2xl mx-auto">
+      {categories.map(cat => (
+        <button
+          key={cat}
+          onClick={() => onChange(cat)}
+          className="px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer border"
+          style={{
+            borderColor: active === cat ? 'transparent' : 'rgba(255,255,255,0.08)',
+            background: active === cat ? 'linear-gradient(135deg,#2563EB,#10B981)' : 'rgba(255,255,255,0.06)',
+            color: active === cat ? '#ffffff' : 'rgba(255,255,255,0.5)',
+            boxShadow: active === cat ? '0 6px 20px -6px rgba(16,185,129,0.35)' : 'none',
+          }}
+        >
+          {cat}
+        </button>
+      ))}
     </div>
   );
 }
 
 /* ─── Main export ─── */
 export function CaseStudies() {
+  const [activeTab, setActiveTab] = useState('All');
+
+  const filtered = activeTab === 'All'
+    ? STUDIES.map((s, i) => ({ ...s, _idx: i }))
+    : STUDIES.map((s, i) => ({ ...s, _idx: i })).filter(s => s.category === activeTab);
+
   return (
     <div style={{ minHeight: '100vh', background: TINT, fontFamily: SANS, color: INK }}>
       <USPSlider />
@@ -423,46 +366,57 @@ export function CaseStudies() {
 
           {/* ── Hero ── */}
           <section className="section-box tint">
-            {/* <HeroWaveform /> */}
             <div
-              className="max-w-6xl mx-auto flex flex-col items-center justify-center text-center section-pad"
+              className="max-w-5xl mx-auto flex flex-col items-center justify-center text-center section-pad"
               style={{ position: 'relative', zIndex: 1 }}
             >
               <Reveal>
                 <SectionLabel text="Case Studies" />
-                <h1 style={{ fontSize: 'clamp(28px,4vw,48px)', fontWeight: 900, letterSpacing: '-0.03em', color: INK, lineHeight: 1.15, margin: '0 0 14px' }}>
-                  Real Businesses.{' '}
+                <h1 style={{ fontSize: 'clamp(32px,5vw,56px)', fontWeight: 900, letterSpacing: '-0.03em', color: INK, lineHeight: 1.1, margin: '0 0 18px' }}>
+                  Real Businesses.<br />
                   <GradientText>Real Results.</GradientText>
                 </h1>
-                <p style={{ fontSize: 15, color: SLATE, maxWidth: 520, lineHeight: 1.6, margin: 0 }}>
+                <p style={{ fontSize: 16, color: SLATE, maxWidth: 500, lineHeight: 1.7, margin: '0 auto' }}>
                   See how Autoniv's AI Voice Agents, Chatbots & CRM Automation are helping businesses save time, convert more and grow faster.
                 </p>
               </Reveal>
             </div>
           </section>
 
-          {/* ── Success Stories (Dark Section) ── */}
-          <section className="section-box black" style={{ background: '#030812' }}>
-            {/* Ambient background glow blur blobs */}
+          {/* ── Case Studies Grid (Dark) ── */}
+          <section className="section-box black" style={{ background: '#030812', position: 'relative' }}>
             <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-500/5 blur-[120px] pointer-events-none" />
             <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-emerald-500/5 blur-[120px] pointer-events-none" />
-            
+
             <div className="section-pad max-w-6xl mx-auto relative z-10">
               <Reveal>
-                <div className="text-center mb-12">
-                  <SectionLabel text="Success Stories" />
-                  <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight text-white mb-4">
+                <div className="text-center mb-10">
+                  <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-3">
                     Featured <GradientText>Case Studies</GradientText>
                   </h2>
+                  <p className="text-sm text-white/40 max-w-md mx-auto">
+                    Explore how businesses across industries are leveraging Autoniv to drive measurable growth.
+                  </p>
                 </div>
               </Reveal>
-              <Reveal delay={80}>
-                <FilterableGrid />
+
+              <Reveal delay={60}>
+                <FilterTabs active={activeTab} onChange={setActiveTab} />
+              </Reveal>
+
+              <Reveal delay={100}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                  <AnimatePresence mode="popLayout">
+                    {filtered.map((study, i) => (
+                      <StudyCard key={study._idx} study={study} index={i} />
+                    ))}
+                  </AnimatePresence>
+                </div>
               </Reveal>
             </div>
           </section>
 
-          {/* ── Trusted by ── */}
+          {/* ── Trusted By ── */}
           <section className="section-box white">
             <div className="section-pad max-w-6xl mx-auto text-center">
               <Reveal>
@@ -483,7 +437,7 @@ export function CaseStudies() {
             </div>
           </section>
 
-          {/* ── Global Stats ── */}
+          {/* ── Stats ── */}
           <section className="section-box tint">
             <div className="section-pad max-w-6xl mx-auto">
               <Reveal>
@@ -528,7 +482,7 @@ export function CaseStudies() {
                     style={{ background: SURFACE, border: '1.5px solid rgba(15,23,42,0.10)', color: '#475569', cursor: 'pointer' }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(37,99,235,0.32)'; e.currentTarget.style.color = '#2563EB'; }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(15,23,42,0.10)'; e.currentTarget.style.color = '#475569'; }}>
-                    🎧 Talk to Expert
+                    Talk to Expert
                   </button>
                 </div>
               </div>

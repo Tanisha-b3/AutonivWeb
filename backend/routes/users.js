@@ -55,11 +55,11 @@ router.get('/', requireAdmin, async (req, res) => {
       const stats = callMap[u._id.toString()] || {};
       let chatPlan = u.chatPlan;
       let voicePlan = u.voicePlan;
-      if (!chatPlan && !voicePlan) {
+      if (!chatPlan || chatPlan === 'none') {
         const p = u.plan || 'chat_free';
         if (p.startsWith('chat_')) {
           chatPlan = p;
-          voicePlan = 'none';
+          voicePlan = voicePlan || 'none';
         } else if (p.startsWith('voice_')) {
           chatPlan = 'none';
           voicePlan = p;
@@ -71,6 +71,12 @@ router.get('/', requireAdmin, async (req, res) => {
           voicePlan = `voice_${p}`;
         }
       }
+      if (!voicePlan || voicePlan === 'none') {
+        const p = u.plan || 'chat_free';
+        if (p.startsWith('voice_')) voicePlan = p;
+        else if (p.startsWith('both_')) voicePlan = p.replace('both_', 'voice_');
+        else voicePlan = `voice_${p}`;
+      }
       chatPlan = chatPlan || 'none';
       voicePlan = voicePlan || 'none';
 
@@ -78,9 +84,12 @@ router.get('/', requireAdmin, async (req, res) => {
         id: u._id, email: u.email, name: u.name, phoneNumber: u.phoneNumber,
         role: u.role, company: u.company, plan: u.plan || chatPlan,
         chatPlan, voicePlan,
-        minutesUsed: u.minutesUsed, minutesLimit: u.minutesLimit,
-        callsUsed: u.callsUsed || 0, callsLimit: u.callsLimit,
-        chatUsed: u.chatUsed || 0, chatLimit: u.chatLimit || 0,
+        minutesUsed: u.minutesUsed,
+        minutesLimit: voicePlan !== 'none' && User.PLAN_CONFIG[voicePlan] ? User.PLAN_CONFIG[voicePlan].limits.minutes : u.minutesLimit,
+        callsUsed: u.callsUsed || 0,
+        callsLimit: voicePlan !== 'none' && User.PLAN_CONFIG[voicePlan] ? User.PLAN_CONFIG[voicePlan].limits.calls : u.callsLimit,
+        chatUsed: u.chatUsed || 0,
+        chatLimit: chatPlan !== 'none' && User.PLAN_CONFIG[chatPlan] ? User.PLAN_CONFIG[chatPlan].limits.conversations : (u.chatLimit || 0),
         isActive: u.isActive, createdAt: u.createdAt,
         callCount: stats.callCount || 0,
         calcMinutes: Math.round(stats.calcMinutes || 0),
@@ -122,8 +131,8 @@ router.post('/', requireAdmin, contentFilter('name', 'company'), async (req, res
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-    const chatConfig = User.PLAN_CONFIG[chatPlan] || { callsPerMonth: 0 };
-    const voiceConfig = User.PLAN_CONFIG[voicePlan] || { minutesPerMonth: 0 };
+    const chatConfig = (chatPlan !== 'none' && User.PLAN_CONFIG[chatPlan]) ? User.PLAN_CONFIG[chatPlan] : null;
+    const voiceConfig = (voicePlan !== 'none' && User.PLAN_CONFIG[voicePlan]) ? User.PLAN_CONFIG[voicePlan] : null;
 
     let plan = 'chat_free';
     if (chatPlan !== 'none' && voicePlan !== 'none') {
@@ -147,9 +156,6 @@ router.post('/', requireAdmin, contentFilter('name', 'company'), async (req, res
       voicePlan,
       chatEnabled: chatPlan !== 'none',
       voiceEnabled: voicePlan !== 'none',
-      minutesLimit: voiceConfig.minutesPerMonth,
-      callsLimit: chatConfig.callsPerMonth,
-      chatLimit: chatConfig.callsPerMonth,
       passwordChangedAt: new Date(),
     });
 
@@ -158,9 +164,12 @@ router.post('/', requireAdmin, contentFilter('name', 'company'), async (req, res
         id: user._id, email: user.email, name: user.name,
         phoneNumber: user.phoneNumber, role: user.role, company: user.company,
         plan: user.plan, chatPlan: user.chatPlan, voicePlan: user.voicePlan,
-        minutesUsed: user.minutesUsed, minutesLimit: user.minutesLimit,
-        callsUsed: user.callsUsed || 0, callsLimit: user.callsLimit,
-        chatUsed: user.chatUsed || 0, chatLimit: user.chatLimit || 0,
+        minutesUsed: user.minutesUsed,
+        minutesLimit: user.voicePlan !== 'none' && User.PLAN_CONFIG[user.voicePlan] ? User.PLAN_CONFIG[user.voicePlan].limits.minutes : user.minutesLimit,
+        callsUsed: user.callsUsed || 0,
+        callsLimit: user.voicePlan !== 'none' && User.PLAN_CONFIG[user.voicePlan] ? User.PLAN_CONFIG[user.voicePlan].limits.calls : user.callsLimit,
+        chatUsed: user.chatUsed || 0,
+        chatLimit: user.chatPlan !== 'none' && User.PLAN_CONFIG[user.chatPlan] ? User.PLAN_CONFIG[user.chatPlan].limits.conversations : (user.chatLimit || 0),
         isActive: user.isActive, createdAt: user.createdAt, updatedAt: user.updatedAt,
         chatEnabled: user.chatPlan !== 'none', voiceEnabled: user.voicePlan !== 'none',
       },
@@ -189,8 +198,8 @@ router.put('/:id', contentFilter('name', 'company'), async (req, res) => {
     const currentChatPlan = isSelf ? (user.chatPlan || 'chat_free') : (chatPlan !== undefined ? chatPlan : (user.chatPlan || 'chat_free'));
     const currentVoicePlan = isSelf ? (user.voicePlan || 'none') : (voicePlan !== undefined ? voicePlan : (user.voicePlan || 'none'));
 
-    const chatConfig = User.PLAN_CONFIG[currentChatPlan] || { callsPerMonth: 0 };
-    const voiceConfig = User.PLAN_CONFIG[currentVoicePlan] || { minutesPerMonth: 0 };
+    const chatConfig = (currentChatPlan !== 'none' && User.PLAN_CONFIG[currentChatPlan]) ? User.PLAN_CONFIG[currentChatPlan] : null;
+    const voiceConfig = (currentVoicePlan !== 'none' && User.PLAN_CONFIG[currentVoicePlan]) ? User.PLAN_CONFIG[currentVoicePlan] : null;
 
     let planLegacy = user.plan;
     if (!isSelf && (chatPlan !== undefined || voicePlan !== undefined)) {
@@ -220,9 +229,13 @@ router.put('/:id', contentFilter('name', 'company'), async (req, res) => {
       updates.voicePlan = currentVoicePlan;
       updates.chatEnabled = currentChatPlan !== 'none';
       updates.voiceEnabled = currentVoicePlan !== 'none';
-      updates.callsLimit = chatConfig.callsPerMonth;
-      updates.chatLimit = chatConfig.callsPerMonth;
-      updates.minutesLimit = voiceConfig.minutesPerMonth;
+      if (voiceConfig) {
+        updates.callsLimit = voiceConfig.limits.calls;
+        updates.minutesLimit = voiceConfig.limits.minutes;
+      }
+      if (chatConfig) {
+        updates.chatLimit = chatConfig.limits.conversations;
+      }
     }
 
     if (password) {
@@ -248,9 +261,12 @@ router.put('/:id', contentFilter('name', 'company'), async (req, res) => {
         id: updated._id, email: updated.email, name: updated.name,
         phoneNumber: updated.phoneNumber, role: updated.role, company: updated.company,
         plan: updated.plan, chatPlan: updated.chatPlan, voicePlan: updated.voicePlan,
-        minutesUsed: updated.minutesUsed, minutesLimit: updated.minutesLimit,
-        callsUsed: updated.callsUsed || 0, callsLimit: updated.callsLimit,
-        chatUsed: updated.chatUsed || 0, chatLimit: updated.chatLimit || 0,
+        minutesUsed: updated.minutesUsed,
+        minutesLimit: updated.voicePlan !== 'none' && User.PLAN_CONFIG[updated.voicePlan] ? User.PLAN_CONFIG[updated.voicePlan].limits.minutes : updated.minutesLimit,
+        callsUsed: updated.callsUsed || 0,
+        callsLimit: updated.voicePlan !== 'none' && User.PLAN_CONFIG[updated.voicePlan] ? User.PLAN_CONFIG[updated.voicePlan].limits.calls : updated.callsLimit,
+        chatUsed: updated.chatUsed || 0,
+        chatLimit: updated.chatPlan !== 'none' && User.PLAN_CONFIG[updated.chatPlan] ? User.PLAN_CONFIG[updated.chatPlan].limits.conversations : (updated.chatLimit || 0),
         isActive: updated.isActive, createdAt: updated.createdAt, updatedAt: updated.updatedAt,
         chatEnabled: updated.chatPlan !== 'none', voiceEnabled: updated.voicePlan !== 'none',
       },
@@ -346,14 +362,18 @@ router.put('/:id/plan', async (req, res) => {
       if (chatPlan !== 'none' && !User.PLAN_CONFIG[chatPlan]) return res.status(400).json({ message: 'Invalid Chat plan' });
       updates.chatPlan = chatPlan;
       updates.chatEnabled = chatPlan !== 'none';
-      updates.callsLimit = (User.PLAN_CONFIG[chatPlan] || { callsPerMonth: 0 }).callsPerMonth;
-      updates.chatLimit = (User.PLAN_CONFIG[chatPlan] || { callsPerMonth: 0 }).callsPerMonth;
+      const cfg = User.PLAN_CONFIG[chatPlan];
+      if (cfg) updates.chatLimit = cfg.limits.conversations;
     }
     if (voicePlan) {
       if (voicePlan !== 'none' && !User.PLAN_CONFIG[voicePlan]) return res.status(400).json({ message: 'Invalid Voice plan' });
       updates.voicePlan = voicePlan;
       updates.voiceEnabled = voicePlan !== 'none';
-      updates.minutesLimit = (User.PLAN_CONFIG[voicePlan] || { minutesPerMonth: 0 }).minutesPerMonth;
+      const vcfg = User.PLAN_CONFIG[voicePlan];
+      if (vcfg) {
+        updates.callsLimit = vcfg.limits.calls;
+        updates.minutesLimit = vcfg.limits.minutes;
+      }
     }
 
     const finalChat = updates.chatPlan !== undefined ? updates.chatPlan : (user.chatPlan || 'chat_free');
@@ -382,9 +402,12 @@ router.put('/:id/plan', async (req, res) => {
         id: updated._id, email: updated.email, name: updated.name,
         phoneNumber: updated.phoneNumber, role: updated.role, company: updated.company,
         plan: updated.plan, chatPlan: updated.chatPlan, voicePlan: updated.voicePlan,
-        minutesUsed: updated.minutesUsed, minutesLimit: updated.minutesLimit,
-        callsUsed: updated.callsUsed || 0, callsLimit: updated.callsLimit,
-        chatUsed: updated.chatUsed || 0, chatLimit: updated.chatLimit || 0,
+        minutesUsed: updated.minutesUsed,
+        minutesLimit: updated.voicePlan !== 'none' && User.PLAN_CONFIG[updated.voicePlan] ? User.PLAN_CONFIG[updated.voicePlan].limits.minutes : updated.minutesLimit,
+        callsUsed: updated.callsUsed || 0,
+        callsLimit: updated.voicePlan !== 'none' && User.PLAN_CONFIG[updated.voicePlan] ? User.PLAN_CONFIG[updated.voicePlan].limits.calls : updated.callsLimit,
+        chatUsed: updated.chatUsed || 0,
+        chatLimit: updated.chatPlan !== 'none' && User.PLAN_CONFIG[updated.chatPlan] ? User.PLAN_CONFIG[updated.chatPlan].limits.conversations : (updated.chatLimit || 0),
         isActive: updated.isActive, createdAt: updated.createdAt, updatedAt: updated.updatedAt,
         chatEnabled: updated.chatPlan !== 'none', voiceEnabled: updated.voicePlan !== 'none',
       },

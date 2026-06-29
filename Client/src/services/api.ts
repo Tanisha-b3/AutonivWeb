@@ -1,10 +1,14 @@
 import axios from 'axios';
 import { getCookie, setCookie, deleteCookie } from './cookies';
 
+const REQUEST_TIMEOUT_MS = 30000;
+const TOKEN_REFRESH_BUFFER_MS = 30_000;
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
+  timeout: REQUEST_TIMEOUT_MS,
 });
 
 // ── Proactive token refresh — refresh before expiry to avoid 401 delays ────
@@ -29,7 +33,7 @@ function scheduleRefresh() {
   if (!exp) return;
 
   // Refresh 30 seconds before expiry (minimum 5s from now)
-  const msUntilRefresh = Math.max((exp * 1000) - Date.now()) - 30_000;
+  const msUntilRefresh = Math.max((exp * 1000) - Date.now()) - TOKEN_REFRESH_BUFFER_MS;
   const delay = Math.max(msUntilRefresh, 5_000);
 
   refreshTimeout = setTimeout(async () => {
@@ -55,9 +59,20 @@ function scheduleRefresh() {
 
 // Kick off proactive refresh on module load (page load / tab refocus)
 scheduleRefresh();
-document.addEventListener('visibilitychange', () => {
+
+const handleVisibilityChange = () => {
   if (document.visibilityState === 'visible') scheduleRefresh();
-});
+};
+document.addEventListener('visibilitychange', handleVisibilityChange);
+
+// Cleanup function for when app unmounts (e.g., for testing or HMR)
+export function cleanupApiListeners() {
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  if (refreshTimeout) {
+    clearTimeout(refreshTimeout);
+    refreshTimeout = null;
+  }
+}
 
 // ── Request interceptor — attach access token ──────────────────────────────
 api.interceptors.request.use((config) => {
