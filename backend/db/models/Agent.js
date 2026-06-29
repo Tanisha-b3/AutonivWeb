@@ -3,13 +3,13 @@ import mongoose from 'mongoose';
 const agentSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   vapiId: { type: String, default: null },
-  name: { type: String, required: true, trim: true },
+  name: { type: String, required: true, trim: true, maxlength: 100 },
   type: { type: String, required: true, enum: ['receptionist', 'appointment', 'faq'] },
-  prompt: { type: String, default: null },
+  prompt: { type: String, default: null, maxlength: 10000 },
   voiceId: { type: String, default: null },
   phoneNumberId: { type: String, default: null },
   phoneNumber: { type: String, default: null },
-  language: { type: String, default: null },
+  language: { type: String, default: null, maxlength: 50 },
   isActive: { type: Boolean, default: true },
   callCount: { type: Number, default: 0 },
 }, { timestamps: true });

@@ -138,8 +138,6 @@ export const register = createAsyncThunk(
     try {
       const res = await authService.register(data);
 
-      console.log('Register response:', res.data); // Debug log
-
       if (res.data.requiresOtp) {
         return { requiresOtp: true, email: res.data.email, message: res.data.message };
       }

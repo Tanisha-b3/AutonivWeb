@@ -6,6 +6,7 @@ import { Sidebar } from './components/Sidebar';
 import { Breadcrumbs } from './components/Breadcrumbs';
 import ScrollToTop from './components/ScrollToTop';
 import LoadingScreen from './components/LoadingScreen';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { isChatPlan, isVoicePlan } from './utils/plan';
 // import AIAssistantChat from './components/AIAssistantChat';
 
@@ -217,8 +218,9 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppRoutes />
-      {/* <AIAssistantChat />  */}
+      <ErrorBoundary>
+        <AppRoutes />
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }

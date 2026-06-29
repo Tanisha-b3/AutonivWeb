@@ -7,161 +7,16 @@ import { AgentCard } from '../../components/AgentCard';
 import { VoicePreviewButton } from '../../components/VoicePreviewButton';
 import { Pagination } from '../../components/Pagination';
 import { VOICE_OPTIONS } from '../../config/voices';
+import { LANGUAGE_OPTIONS, AGENT_TYPES, PROMPT_TEMPLATES, AGENT_TEMPLATES, DEFAULT_FORM_DATA } from '../../config/agentConfig';
+import { COUNTRY_CODES } from '../../config/constants';
+import { useToast } from '../../hooks/useToast';
+import { ToastContainer } from '../../components/ToastContainer';
 import { callService } from '../../services/api';
 import VapiModule from '@vapi-ai/web';
 import type { Agent } from '../../types';
 import { getMaxChatbots, isVoicePlan } from '../../utils/plan';
 
 const Vapi = (typeof VapiModule === 'function' ? VapiModule : (VapiModule as any).default) as new (key: string) => any;
-
-const LANGUAGE_OPTIONS = [
-  { value: 'en', label: '🇺🇸 English' },
-  { value: 'es', label: '🇪🇸 Spanish' },
-  { value: 'fr', label: '🇫🇷 French' },
-  { value: 'de', label: '🇩🇪 German' },
-  { value: 'it', label: '🇮🇹 Italian' },
-  { value: 'pt', label: '🇵🇹 Portuguese' },
-  { value: 'pl', label: '🇵🇱 Polish' },
-  { value: 'hi', label: '🇮🇳 Hindi' },
-  { value: 'ar', label: '🇸🇦 Arabic' },
-  { value: 'ja', label: '🇯🇵 Japanese' },
-  { value: 'ko', label: '🇰🇷 Korean' },
-  { value: 'zh', label: '🇨🇳 Chinese' },
-  { value: 'nl', label: '🇳🇱 Dutch' },
-  { value: 'ru', label: '🇷🇺 Russian' },
-  { value: 'tr', label: '🇹🇷 Turkish' },
-];
-
-const AGENT_TYPES = [
-  {
-    value: 'receptionist', label: 'Receptionist', icon: (
-      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-    )
-  },
-  {
-    value: 'appointment', label: 'Scheduler', icon: (
-      <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-    )
-  },
-  {
-    value: 'faq', label: 'Q&A Support', icon: (
-      <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-    )
-  },
-];
-
-const PROMPT_TEMPLATES = [
-  {
-    id: 'dentist',
-    label: '🦷 Dental Clinic',
-    prompt: 'You are a friendly scheduling assistant for Smile Dental. Greet patients warmly, check for preferred times (mornings/afternoons), collect full name, phone number, and brief reason for the visit (cleaning, checkup, pain). State that a receptionist will text confirmation.'
-  },
-  {
-    id: 'realestate',
-    label: '🏢 Real Estate',
-    prompt: 'You are an intake assistant for Elite Realtors. Greet callers, ask if they want to buy, sell, or rent. Collect their budget range, neighborhood preference, name, and email.'
-  },
-  {
-    id: 'receptionist',
-    label: '💼 General Receptionist',
-    prompt: 'You are a professional office receptionist. Greet caller, ask for their name and business details, collect contact number, and inform them that we will route their message.'
-  },
-  {
-    id: 'support',
-    label: '💬 Helpdesk Support',
-    prompt: 'You are a technical support helper. Greet callers, ask for their name and account email, gather a description of their issue, and let them know a support specialist will email them a solution shortly.'
-  }
-];
-
-const AGENT_TEMPLATES = [
-  {
-    title: 'Front-Desk Receptionist',
-    description: 'Greets callers warmly, captures names, phone numbers, and routes business messages.',
-    type: 'receptionist',
-    prompt: 'You are a warm, professional front-desk receptionist. Greet the caller warmly, collect their name and email, and ask how you can assist them.',
-    language: 'en',
-    voiceId: VOICE_OPTIONS[0].value,
-    icon: '🏢',
-    borderClass: 'border-l-blue-500 hover:border-blue-300',
-  },
-  {
-    title: 'Appointment Scheduler',
-    description: 'Guides clients to book calendar time slots and gathers checkup requirements.',
-    type: 'appointment',
-    prompt: 'You are an appointment booking coordinator. Help the caller schedule their visit by guiding them to choose a date/time and collecting their details.',
-    language: 'en',
-    voiceId: VOICE_OPTIONS[5].value,
-    icon: '📅',
-    borderClass: 'border-l-emerald-500 hover:border-emerald-300',
-  },
-  {
-    title: 'Customer FAQ Specialist',
-    description: 'Answers FAQs, schedules, and catalog specifications from prompts.',
-    type: 'faq',
-    prompt: 'You are a helpful customer FAQ assistant. Answer questions concisely based on our business hours, pricing plans, and location guidelines.',
-    language: 'en',
-    voiceId: VOICE_OPTIONS[3].value,
-    icon: '💬',
-    borderClass: 'border-l-purple-500 hover:border-purple-300',
-  },
-];
-
-const DEFAULT_FORM_DATA = {
-  name: '', type: 'receptionist', prompt: '', language: 'en', voiceId: VOICE_OPTIONS[0].value,
-};
-
-type ToastType = 'success' | 'error' | 'info';
-interface Toast { id: number; message: string; type: ToastType; action?: { label: string; onClick: () => void } }
-
-function ToastContainer({ toasts, remove }: { toasts: Toast[]; remove: (id: number) => void }) {
-  return (
-    <div className="fixed top-4 left-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none sm:top-5 sm:right-5 sm:left-auto">
-      <AnimatePresence>
-        {toasts.map(t => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, x: 60, scale: 0.92 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 60, scale: 0.88 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-            onClick={() => remove(t.id)}
-            className="pointer-events-auto flex items-center gap-3 px-4 py-3.5 rounded-2xl cursor-pointer select-none shadow-xl"
-            style={{
-              background: 'var(--text)',
-              backdropFilter: 'blur(20px)',
-              border: `1.5px solid ${t.type === 'success' ? 'var(--primary)' : t.type === 'error' ? 'var(--danger)' : 'var(--primary-blue)'}`,
-            }}
-          >
-            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{
-              background: t.type === 'success' ? 'var(--primary)' : t.type === 'error' ? 'var(--danger)' : 'var(--primary-blue)'
-            }} />
-            <span className="text-xs font-bold flex-1" style={{ color: 'var(--s1)' }}>
-              {t.message}
-            </span>
-            {t.action && (
-              <button onClick={(e) => { e.stopPropagation(); t.action!.onClick(); remove(t.id); }}
-                className="ml-2 px-2.5 py-1 text-[10px] font-bold rounded-lg whitespace-nowrap cursor-pointer"
-                style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}>
-                {t.action.label}
-              </button>
-            )}
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function useToast() {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const add = useCallback((message: string, type: ToastType = 'info', action?: { label: string; onClick: () => void }) => {
-    const id = Date.now();
-    setToasts(p => [...p, { id, message, type, action }]);
-    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4000);
-  }, []);
-  const remove = useCallback((id: number) => setToasts(p => p.filter(t => t.id !== id)), []);
-  return { toasts, add, remove };
-}
 
 const fadeUp = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
 const stagger = { container: { animate: { transition: { staggerChildren: 0.05 } } } };
@@ -499,43 +354,6 @@ function DeleteModal({ open, onClose, onConfirm }: { open: boolean; onClose: () 
     </AnimatePresence>
   );
 }
-
-const COUNTRY_CODES = [
-  { code: '+1', country: 'US', flag: '🇺🇸', name: 'United States' },
-  { code: '+1', country: 'CA', flag: '🇨🇦', name: 'Canada' },
-  { code: '+44', country: 'GB', flag: '🇬🇧', name: 'United Kingdom' },
-  { code: '+91', country: 'IN', flag: '🇮🇳', name: 'India' },
-  { code: '+61', country: 'AU', flag: '🇦🇺', name: 'Australia' },
-  { code: '+49', country: 'DE', flag: '🇩🇪', name: 'Germany' },
-  { code: '+33', country: 'FR', flag: '🇫🇷', name: 'France' },
-  { code: '+81', country: 'JP', flag: '🇯🇵', name: 'Japan' },
-  { code: '+86', country: 'CN', flag: '🇨🇳', name: 'China' },
-  { code: '+55', country: 'BR', flag: '🇧🇷', name: 'Brazil' },
-  { code: '+52', country: 'MX', flag: '🇲🇽', name: 'Mexico' },
-  { code: '+82', country: 'KR', flag: '🇰🇷', name: 'South Korea' },
-  { code: '+39', country: 'IT', flag: '🇮🇹', name: 'Italy' },
-  { code: '+34', country: 'ES', flag: '🇪🇸', name: 'Spain' },
-  { code: '+31', country: 'NL', flag: '🇳🇱', name: 'Netherlands' },
-  { code: '+46', country: 'SE', flag: '🇸🇪', name: 'Sweden' },
-  { code: '+47', country: 'NO', flag: '🇳🇴', name: 'Norway' },
-  { code: '+41', country: 'CH', flag: '🇨🇭', name: 'Switzerland' },
-  { code: '+65', country: 'SG', flag: '🇸🇬', name: 'Singapore' },
-  { code: '+971', country: 'AE', flag: '🇦🇪', name: 'UAE' },
-  { code: '+966', country: 'SA', flag: '🇸🇦', name: 'Saudi Arabia' },
-  { code: '+27', country: 'ZA', flag: '🇿🇦', name: 'South Africa' },
-  { code: '+234', country: 'NG', flag: '🇳🇬', name: 'Nigeria' },
-  { code: '+254', country: 'KE', flag: '🇰🇪', name: 'Kenya' },
-  { code: '+64', country: 'NZ', flag: '🇳🇿', name: 'New Zealand' },
-  { code: '+63', country: 'PH', flag: '🇵🇭', name: 'Philippines' },
-  { code: '+66', country: 'TH', flag: '🇹🇭', name: 'Thailand' },
-  { code: '+60', country: 'MY', flag: '🇲🇾', name: 'Malaysia' },
-  { code: '+62', country: 'ID', flag: '🇮🇩', name: 'Indonesia' },
-  { code: '+84', country: 'VN', flag: '🇻🇳', name: 'Vietnam' },
-  { code: '+92', country: 'PK', flag: '🇵🇰', name: 'Pakistan' },
-  { code: '+880', country: 'BD', flag: '🇧🇩', name: 'Bangladesh' },
-  { code: '+94', country: 'LK', flag: '🇱🇰', name: 'Sri Lanka' },
-  { code: '+977', country: 'NP', flag: '🇳🇵', name: 'Nepal' },
-];
 
 function WebCallDialog({
   open,

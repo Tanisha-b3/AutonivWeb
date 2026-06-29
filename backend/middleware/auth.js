@@ -1,6 +1,7 @@
 import { verifyAccessToken, authSecurityEvent } from '../services/tokenService.js';
 import { extractTokenFromCookie } from '../services/cookieService.js';
 import User from '../db/models/User.js';
+import { resolvePlans, PLAN_CONFIG } from '../services/planResolver.js';
 
 function extractToken(req) {
   const authHeader = req.headers.authorization;
@@ -94,33 +95,7 @@ export function requireFeature(feature) {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      let chatPlan = user.chatPlan;
-      let voicePlan = user.voicePlan;
-      // Resolve from user.plan if chatPlan/voicePlan are missing, 'none', or invalid
-      if (!chatPlan || chatPlan === 'none' || !User.PLAN_CONFIG[chatPlan]) {
-        const plan = user.plan || 'chat_free';
-        if (plan.startsWith('chat_')) {
-          chatPlan = plan;
-          voicePlan = voicePlan || 'none';
-        } else if (plan.startsWith('voice_')) {
-          chatPlan = 'none';
-          voicePlan = plan;
-        } else if (plan.startsWith('both_')) {
-          chatPlan = plan.replace('both_', 'chat_');
-          voicePlan = plan.replace('both_', 'voice_');
-        } else {
-          chatPlan = `chat_${plan}`;
-          voicePlan = `voice_${plan}`;
-        }
-      }
-      if (!voicePlan || voicePlan === 'none' || !User.PLAN_CONFIG[voicePlan]) {
-        const plan = user.plan || 'chat_free';
-        if (plan.startsWith('voice_')) voicePlan = plan;
-        else if (plan.startsWith('both_')) voicePlan = plan.replace('both_', 'voice_');
-        else voicePlan = `voice_${plan}`;
-      }
-      chatPlan = chatPlan || 'none';
-      voicePlan = voicePlan || 'none';
+      const { chatPlan, voicePlan } = resolvePlans(user);
 
       if (feature === 'chat') {
         if (chatPlan !== 'none') {
@@ -160,15 +135,7 @@ export function checkChatLimit() {
       const user = await User.findById(req.user.userId).lean();
       if (!user) return res.status(404).json({ message: 'User not found' });
 
-      const PLAN_CONFIG = User.PLAN_CONFIG;
-      let chatPlan = user.chatPlan || 'none';
-      if (!chatPlan || chatPlan === 'none' || !PLAN_CONFIG[chatPlan]) {
-        const p = user.plan || 'chat_free';
-        if (p.startsWith('chat_')) chatPlan = p;
-        else if (p.startsWith('both_')) chatPlan = p.replace('both_', 'chat_');
-        else chatPlan = `chat_${p}`;
-      }
-
+      const { chatPlan } = resolvePlans(user);
       const cfg = PLAN_CONFIG[chatPlan];
       if (!cfg) return res.status(403).json({ message: 'Invalid chat plan', code: 'INVALID_PLAN' });
 
@@ -200,15 +167,7 @@ export function checkVoiceLimit() {
       const user = await User.findById(req.user.userId).lean();
       if (!user) return res.status(404).json({ message: 'User not found' });
 
-      const PLAN_CONFIG = User.PLAN_CONFIG;
-      let voicePlan = user.voicePlan || 'none';
-      if (!voicePlan || voicePlan === 'none' || !PLAN_CONFIG[voicePlan]) {
-        const p = user.plan || 'chat_free';
-        if (p.startsWith('voice_')) voicePlan = p;
-        else if (p.startsWith('both_')) voicePlan = p.replace('both_', 'voice_');
-        else voicePlan = `voice_${p}`;
-      }
-
+      const { voicePlan } = resolvePlans(user);
       const cfg = PLAN_CONFIG[voicePlan];
       if (!cfg) return res.status(403).json({ message: 'Invalid voice plan', code: 'INVALID_PLAN' });
 
@@ -248,23 +207,7 @@ export function checkPlanFeature(featureName) {
       const user = await User.findById(req.user.userId).lean();
       if (!user) return res.status(404).json({ message: 'User not found' });
 
-      let chatPlan = user.chatPlan || 'none';
-      let voicePlan = user.voicePlan || 'none';
-      if (!chatPlan || chatPlan === 'none' || !User.PLAN_CONFIG[chatPlan]) {
-        const p = user.plan || 'chat_free';
-        if (p.startsWith('chat_')) { chatPlan = p; voicePlan = voicePlan || 'none'; }
-        else if (p.startsWith('voice_')) { chatPlan = 'none'; voicePlan = p; }
-        else if (p.startsWith('both_')) { chatPlan = p.replace('both_', 'chat_'); voicePlan = p.replace('both_', 'voice_'); }
-        else { chatPlan = `chat_${p}`; voicePlan = `voice_${p}`; }
-      }
-      if (!voicePlan || voicePlan === 'none' || !User.PLAN_CONFIG[voicePlan]) {
-        const p = user.plan || 'chat_free';
-        if (p.startsWith('voice_')) voicePlan = p;
-        else if (p.startsWith('both_')) voicePlan = p.replace('both_', 'voice_');
-        else voicePlan = `voice_${p}`;
-      }
-
-      const PLAN_CONFIG = User.PLAN_CONFIG;
+      const { chatPlan, voicePlan } = resolvePlans(user);
 
       // Check chat plan features
       if (chatPlan !== 'none') {
