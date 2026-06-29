@@ -26,6 +26,7 @@ import contactRoutes from './routes/contact.js';
 import reportRoutes from './routes/reports.js';
 import chatHistoryRoutes from './routes/chatHistory.js';
 import widgetRoutes from './routes/widget.js';
+import { initOrchestrator } from './services/orchestrator.js';
 
 import {
   buildCors,
@@ -38,6 +39,7 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { requestIdMiddleware } from './services/crypto.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import { IS_PROD, log } from './services/logger.js';
+import './services/orchestratorHandlers.js';
 
 const PORT = Number(process.env.PORT) || 3000;
 const app = express();
@@ -143,6 +145,14 @@ app.use(errorHandler);
     await connectDb();
     const server = app.listen(PORT, () => {
       log.info('server_started', { port: PORT, env: process.env.NODE_ENV || 'development' });
+
+      // Initialize custom voice orchestrator (WebSocket handlers)
+      try {
+        initOrchestrator(server);
+        log.info('orchestrator_initialized', { endpoints: ['/media-stream', '/web-call'] });
+      } catch (err) {
+        log.warn('orchestrator_init_failed', { error: err.message });
+      }
     });
 
     function shutdown(signal) {

@@ -8,6 +8,8 @@ const appointmentSchema = new mongoose.Schema({
   phone: { type: String, default: null },
   email: { type: String, default: null },
   service: { type: String, default: null },
+  provider: { type: String, default: null },
+  patientType: { type: String, default: null },
   preferredDate: { type: String, default: null },
   preferredTime: { type: String, default: null },
   status: { type: String, default: 'pending' },

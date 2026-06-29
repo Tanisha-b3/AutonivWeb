@@ -231,17 +231,22 @@ router.post('/', contentFilter('name', 'prompt'), async (req, res) => {
       }
     }
 
+    // Create Vapi assistant
     let vapiId = null;
     try {
       const vapiAssistant = await createVapiAssistant({
-        name, type, prompt, language, voiceId,
-        userId: req.user.userId,
+        name,
+        type,
+        prompt: prompt || null,
+        language: language || 'en',
+        voiceId: voiceId || null,
+        userId: user._id,
         serverUrl: process.env.WEBHOOK_URL || process.env.SERVER_URL,
       });
-      vapiId = vapiAssistant?.id ?? null;
+      vapiId = vapiAssistant.id;
     } catch (vapiErr) {
-      log.error('vapi_create_agent_failed', { error: vapiErr.message, userId: req.user?.userId });
-      return res.status(502).json({ message: `Voice agent creation failed: ${vapiErr.message}` });
+      log.warn('vapi_create_agent_failed', { error: vapiErr.message, userId: req.user?.userId });
+      // Continue without Vapi — agent saved locally
     }
 
     const agent = await Agent.create({

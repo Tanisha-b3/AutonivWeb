@@ -12,6 +12,7 @@ const agentSchema = new mongoose.Schema({
   language: { type: String, default: null, maxlength: 50 },
   isActive: { type: Boolean, default: true },
   callCount: { type: Number, default: 0 },
+  useCustomEngine: { type: Boolean, default: false },
 }, { timestamps: true });
 
 agentSchema.index({ userId: 1 });

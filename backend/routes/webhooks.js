@@ -187,6 +187,18 @@ async function handleFunctionCall(call, functionCall) {
     const agent = await Agent.findOne({ vapiId: call?.assistantId }).lean();
     if (!agent) return { success: false, error: 'Agent not found' };
 
+    const existingCall = await Call.findOne({ vapiCallId: call.id }).lean();
+    const existingLead = await Lead.findOne({
+      agentId: agent._id,
+      $or: [
+        { callId: existingCall?._id },
+        { phone: functionCall.parameters?.phone }
+      ]
+    }).lean();
+    if (existingLead) {
+      return { success: true, leadId: existingLead._id, message: 'Lead already saved' };
+    }
+
     const { name, phone, email, purpose } = functionCall.parameters || {};
 
     const sanitizedName = name ? sanitizeText(safeString(name, 200)) : null;
@@ -198,8 +210,6 @@ async function handleFunctionCall(call, functionCall) {
       securityEvent('webhook_lead_blocked_abuse', { callId: call?.id });
       return { success: false, error: 'Content policy violation' };
     }
-
-    const existingCall = await Call.findOne({ vapiCallId: call.id }).lean();
 
     const lead = await Lead.create({
       agentId: agent._id,
@@ -214,9 +224,15 @@ async function handleFunctionCall(call, functionCall) {
     return { success: true, leadId: lead._id, name: sanitizedName, phone: safePhone };
   }
 
-  if (functionCall.name === 'saveBooking') {
+  if (functionCall.name === 'saveAppointment') {
     const agent = await Agent.findOne({ vapiId: call?.assistantId }).lean();
     if (!agent) return { success: false, error: 'Agent not found' };
+
+    const existingCall = await Call.findOne({ vapiCallId: call.id }).lean();
+    const existingAppt = await Appointment.findOne({ callId: existingCall?._id, agentId: agent._id }).lean();
+    if (existingAppt) {
+      return { success: true, bookingId: existingAppt._id, message: 'Booking already saved' };
+    }
 
     const { name, phone, service, preferredDate, preferredTime } = functionCall.parameters || {};
 
@@ -230,8 +246,6 @@ async function handleFunctionCall(call, functionCall) {
       securityEvent('webhook_booking_blocked_abuse', { callId: call?.id });
       return { success: false, error: 'Content policy violation' };
     }
-
-    const existingCall = await Call.findOne({ vapiCallId: call.id }).lean();
 
     const appointment = await Appointment.create({
       agentId: agent._id,
@@ -263,6 +277,61 @@ router.get('/test', (req, res) => {
       'transcript':         'POST /api/webhooks/vapi',
     },
   });
+});
+
+router.post('/incoming-call', async (req, res) => {
+  const to = req.body.To || '';
+  const from = req.body.From || 'Unknown';
+  const callSid = req.body.CallSid;
+
+  log.info('twilio_incoming_call', { from, to, callSid });
+
+  let agent = null;
+  try {
+    if (to) {
+      agent = await Agent.findOne({
+        $or: [
+          { phoneNumber: to },
+          { phoneNumber: to.replace('+', '') },
+          { phoneNumber: new RegExp(to.slice(-10) + '$') }
+        ]
+      });
+    }
+
+    if (!agent) {
+      log.warn('twilio_incoming_call_no_agent_resolved', { to });
+      agent = await Agent.findOne({ type: 'receptionist' });
+    }
+
+    if (agent) {
+      await Call.create({
+        _id: callSid,
+        agentId: agent._id,
+        userId: agent.userId,
+        vapiCallId: callSid,
+        callerNumber: from,
+        status: 'in-progress',
+        startedAt: new Date(),
+      });
+      log.info('twilio_incoming_call_initialized_db', { callSid, agentId: agent._id, useCustomEngine: agent.useCustomEngine });
+    }
+  } catch (err) {
+    log.error('twilio_incoming_call_db_failed', { error: err.message, callSid });
+  }
+
+  // Route to custom orchestrator if agent uses custom engine
+  const host = req.headers.host;
+  const protocol = req.headers['x-forwarded-proto'] || 'ws';
+  const wsProtocol = protocol === 'https' ? 'wss' : 'ws';
+  const wsUrl = `${wsProtocol}://${host}/media-stream`;
+
+  res.type('text/xml');
+  res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Connect>
+        <Stream url="${wsUrl}" />
+    </Connect>
+</Response>`);
 });
 
 export default router;

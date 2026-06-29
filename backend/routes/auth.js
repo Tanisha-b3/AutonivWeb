@@ -176,7 +176,6 @@ router.post('/register', registerLimiter, contentFilter('name', 'company'), asyn
 
       const hashedPassword = await bcrypt.hash(password, BCRYPT_COST);
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
       existing.name = name;
       existing.password = hashedPassword;
       existing.phoneNumber = phoneNumber;
