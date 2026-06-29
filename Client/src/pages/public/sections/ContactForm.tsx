@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { contactService } from "../../../services/api";
 
+const CONTACT_PHONE_RAW = import.meta.env.VITE_CONTACT_PHONE_RAW || '917065990307';
+
 export function ContactForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -10,10 +12,9 @@ export function ContactForm() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const WA = "917065990307";
   const openWA = () => {
     const lines = ["Hello! I have an inquiry via Contact Us form:", "", `Name: ${name}`, `Email: ${email}`, phone ? `Phone: ${phone}` : "", company ? `Company: ${company}` : "", "", `Message: ${message}`].filter(Boolean);
-    window.open(`https://wa.me/${WA}?text=${encodeURIComponent(lines.join("\n"))}`, "_blank");
+    window.open(`https://wa.me/${CONTACT_PHONE_RAW}?text=${encodeURIComponent(lines.join("\n"))}`, "_blank");
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
