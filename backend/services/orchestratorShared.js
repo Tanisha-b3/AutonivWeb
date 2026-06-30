@@ -2,6 +2,7 @@ import WebSocket from 'ws';
 import OpenAI from 'openai';
 import Agent from '../db/models/Agent.js';
 import Call from '../db/models/Call.js';
+import Lead from '../db/models/Lead.js';
 import User from '../db/models/User.js';
 import { translateText, LANGUAGE_NAMES } from './translate.js';
 import { getToolDefinitions, executeTool } from './appointmentTools.js';
@@ -273,7 +274,7 @@ export async function translateIfNeeded(systemInstructions, greetingText, langua
   return { systemInstructions, greetingText };
 }
 
-export async function closeAndCleanup({ callSid, agentObj, callStartTime, fullTranscript, deepgramWs }) {
+export async function closeAndCleanup({ callSid, agentObj, callStartTime, fullTranscript, deepgramWs, pendingLeadData }) {
   if (deepgramWs && deepgramWs.readyState === WebSocket.OPEN) {
     deepgramWs.close();
   }
@@ -295,6 +296,12 @@ export async function closeAndCleanup({ callSid, agentObj, callStartTime, fullTr
         });
         console.log(`[Billing] Added ${billingMinutes} minutes for user: ${agentObj.userId}`);
       }
+    }
+
+    // Save pending lead data when conversation ends
+    if (pendingLeadData && (pendingLeadData.name || pendingLeadData.phone)) {
+      const lead = await Lead.create(pendingLeadData);
+      console.log(`[Lead] Saved lead ${lead._id} for agent ${pendingLeadData.agentId}`);
     }
   } catch (dbErr) {
     console.error('[Close Cleanup Error]', dbErr.message);

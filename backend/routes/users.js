@@ -1,7 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import User from '../db/models/User.js';
+import User, { hashApiKey, generateApiKey } from '../db/models/User.js';
 import Agent from '../db/models/Agent.js';
 import Call from '../db/models/Call.js';
 import Lead from '../db/models/Lead.js';
@@ -420,11 +420,15 @@ router.put('/:id/plan', requireValidObjectId('id'), async (req, res) => {
 });
 
 // ─── API Key management ─────────────────────────────────────────────────────
+// Keys are stored as SHA-256 hashes. Plain text is only returned at generation time.
+
 router.get('/api-key', async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select('+apiKey').lean();
     if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json({ apiKey: user.apiKey || null });
+    // Return masked key for display — full key only shown at creation
+    const hasKey = !!user.apiKey;
+    res.json({ apiKey: hasKey ? 'ak_••••••••••••••••••••••••' : null, hasKey });
   } catch (error) {
     log.error('get_api_key_error', { error: error.message, userId: req.user?.userId });
     res.status(500).json({ message: 'Failed to get API key' });
@@ -435,9 +439,14 @@ router.post('/api-key/regenerate', async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select('+apiKey');
     if (!user) return res.status(404).json({ message: 'User not found' });
-    user.apiKey = 'ak_' + crypto.randomBytes(24).toString('hex');
+
+    // Generate new plain text key, hash it, store hash
+    const plainKey = generateApiKey();
+    user.apiKey = hashApiKey(plainKey);
     await user.save();
-    res.json({ apiKey: user.apiKey });
+
+    // Return plain text ONLY here — user must save it now
+    res.json({ apiKey: plainKey, message: 'Save this key — it will not be shown again.' });
   } catch (error) {
     log.error('regenerate_api_key_error', { error: error.message, userId: req.user?.userId });
     res.status(500).json({ message: 'Failed to regenerate API key' });

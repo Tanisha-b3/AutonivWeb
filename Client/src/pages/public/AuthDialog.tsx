@@ -9,6 +9,39 @@ import { authService } from '../../services/api';
 
 type AuthMode = 'login' | 'register' | 'forgot_password' | 'reset_password';
 
+interface GoogleTokenResponse {
+  access_token?: string;
+  error?: string;
+}
+
+interface GoogleCredentialResponse {
+  credential: string;
+}
+
+interface GoogleAccounts {
+  accounts: {
+    id: {
+      initialize: (opts: {
+        client_id: string;
+        callback: (response: GoogleCredentialResponse) => void;
+      }) => void;
+    };
+    oauth2: {
+      initTokenClient: (opts: {
+        client_id: string;
+        scope: string;
+        callback: (response: GoogleTokenResponse) => void;
+      }) => { requestAccessToken: () => void };
+    };
+  };
+}
+
+declare global {
+  interface Window {
+    google?: GoogleAccounts;
+  }
+}
+
 interface AuthDialogProps {
   mode: AuthMode;
   isOpen: boolean;
@@ -102,11 +135,11 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
   const isLogin = mode === 'login';
 
   const handleGoogleClick = () => {
-    if ((window as any).google) {
-      const client = (window as any).google.accounts.oauth2.initTokenClient({
+    if (window.google) {
+      const client = window.google.accounts.oauth2.initTokenClient({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '235489562479-placeholder.apps.googleusercontent.com',
         scope: 'email profile openid',
-        callback: async (response: any) => {
+        callback: async (response: GoogleTokenResponse) => {
           if (response.error) {
             setError('Google login failed');
             return;
@@ -114,12 +147,12 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
           setError('');
           setLoading(true);
           try {
-            await googleLogin(response.access_token);
+            if (response.access_token) await googleLogin(response.access_token);
             onClose();
             const stored = JSON.parse(sessionStorage.getItem('user') || '{}');
             navigate(stored?.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
-          } catch (err: any) {
-            setError(err?.message || 'Google login failed');
+          } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Google login failed');
           } finally {
             setLoading(false);
           }
@@ -137,11 +170,11 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
     if (!isOpen || showOtp || mode === 'forgot_password' || mode === 'reset_password') return;
 
     const initializeGoogle = () => {
-      if ((window as any).google && !googleInitRef.current) {
+      if (window.google && !googleInitRef.current) {
         googleInitRef.current = true;
-        (window as any).google.accounts.id.initialize({
+        window.google.accounts.id.initialize({
           client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '235489562479-placeholder.apps.googleusercontent.com',
-          callback: async (response: any) => {
+          callback: async (response: GoogleCredentialResponse) => {
             setError('');
             setLoading(true);
             try {
@@ -149,8 +182,8 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
               onClose();
               const stored = JSON.parse(sessionStorage.getItem('user') || '{}');
               navigate(stored?.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
-            } catch (err: any) {
-              setError(err?.message || 'Google login failed');
+            } catch (err: unknown) {
+              setError(err instanceof Error ? err.message : 'Google login failed');
             } finally {
               setLoading(false);
             }
@@ -211,7 +244,7 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
       await authService.resendOtp(email, mode === 'reset_password' ? 'reset_password' : otpPurpose!);
       setTimer(30);
       setOtp(Array(6).fill(''));
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(parseError(err, 'Failed to resend code'));
     }
   };
