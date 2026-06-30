@@ -83,8 +83,7 @@ export function Nav({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boo
   return (
     <>
       <nav className="fixed top-[36px] inset-x-0 z-50" style={{
-        background: 'rgba(255,255,255,0.92)',
-        backdropFilter: 'blur(24px)',
+        background: 'rgba(255,255,255,0.97)',
         borderBottom: '1px solid rgba(37,99,235,0.12)',
       }}>
         <div className="max-w-7xl -ml-10 lg:ml-30 md:ml-5 px-6 sm:px-6 h-[68px] flex items-center justify-between">
@@ -148,8 +147,7 @@ export function Nav({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boo
         className="md:hidden fixed top-0 right-0 h-full z-[100] flex flex-col"
         style={{
           width: 'min(82vw, 340px)',
-          background: 'rgba(255,255,255,0.98)',
-          backdropFilter: 'blur(24px)',
+          background: 'rgba(255,255,255,0.99)',
           borderLeft: '1px solid rgba(37,99,235,0.12)',
           boxShadow: mobileMenuOpen ? '-12px 0 32px rgba(0,0,0,0.12)' : 'none',
           transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(100%)',

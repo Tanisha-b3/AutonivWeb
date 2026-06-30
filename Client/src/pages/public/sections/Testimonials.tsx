@@ -100,7 +100,7 @@ export function Testimonials() {
                 style={{
                   background: "linear-gradient(145deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))",
                   border: "1px solid rgba(255,255,255,0.1)",
-                  backdropFilter: "blur(20px)",
+                  background: "linear-gradient(145deg, rgba(15,23,42,0.95), rgba(15,23,42,0.85))",
                   boxShadow: "0 32px 80px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05)",
                   transformStyle: "preserve-3d",
                 }}

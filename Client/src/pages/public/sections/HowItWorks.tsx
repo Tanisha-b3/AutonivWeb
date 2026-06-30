@@ -40,9 +40,8 @@ function TimelineStep({
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
         className="group relative rounded-2xl p-6 h-full overflow-hidden cursor-default"
         style={{
-          background: "rgba(255,255,255,0.05)",
+          background: "rgba(255,255,255,0.08)",
           border: `1px solid ${active ? `${color}55` : "rgba(255,255,255,0.08)"}`,
-          backdropFilter: "blur(14px)",
           boxShadow: active ? `0 16px 48px ${color}26` : "none",
           transition: "border-color 0.5s ease, box-shadow 0.5s ease",
         }}

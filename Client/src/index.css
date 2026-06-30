@@ -198,8 +198,7 @@ button {
 }
 
 .glass {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(16, 185, 129, 0.08);
 }
 
@@ -240,8 +239,7 @@ button {
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(16, 185, 129, 0.08);
 }
 
@@ -626,7 +624,7 @@ textarea::placeholder {
 .chat-bubble-in{animation:slideIn .4s cubic-bezier(.16,1,.3,1) both;}
 .orb-idle{animation:orbIdle 3s ease-in-out infinite;}
 
-.nav-glass{background:linear-gradient(90deg, rgba(255,255,255,0.88) 0%, rgba(245,247,250,0.85) 100%);backdrop-filter:blur(24px);border-bottom:1px solid rgba(37,99,235,0.12);}
+.nav-glass{background:rgba(255,255,255,0.96);border-bottom:1px solid rgba(37,99,235,0.12);}
 .nav-glass.scrolled{box-shadow:0 4px 30px rgba(37,99,235,0.06);}
 
 .feature-card{transform-style:preserve-3d;transition:box-shadow .45s cubic-bezier(.16,1,.3,1),border-color .3s;}

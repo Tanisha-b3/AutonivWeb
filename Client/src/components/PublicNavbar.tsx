@@ -167,7 +167,6 @@ export function PublicNavbar() {
         className="fixed top-9 inset-x-0 z-50 transition-all duration-300"
         style={{
           background: scrolled ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.9)',
-          backdropFilter: 'blur(24px)',
           borderBottom: '1px solid rgba(37,99,235,0.12)',
           boxShadow: scrolled ? '0 2px 16px rgba(0,0,0,0.08)' : 'none',
         }}
@@ -297,7 +296,6 @@ export function PublicNavbar() {
         style={{
           width: 'min(85vw, 320px)',
           background: 'rgba(255,255,255,0.99)',
-          backdropFilter: 'blur(24px)',
           borderLeft: '1px solid rgba(37,99,235,0.12)',
           boxShadow: mobileMenuOpen ? '-12px 0 40px rgba(0,0,0,0.14)' : 'none',
           transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(100%)',

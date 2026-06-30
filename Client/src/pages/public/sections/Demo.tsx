@@ -288,7 +288,6 @@ export function Demo() {
                               border: "1px solid rgba(255,255,255,0.10)",
                               fontSize: 13,
                               color: "#e2e8f0",
-                              backdropFilter: "blur(8px)",
                             }}
                           >
                             <svg

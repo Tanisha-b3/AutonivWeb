@@ -125,7 +125,6 @@ function UseCaseCard({ uc, index, isActive, mode, onClick }: UseCaseCardProps) {
           background: isActive
             ? "linear-gradient(135deg, rgba(37,99,235,0.06), rgba(16,185,129,0.06))"
             : "rgba(255,255,255,0.8)",
-          backdropFilter: "blur(16px)",
           border: isActive
             ? "1.5px solid rgba(16,185,129,0.35)"
             : "1px solid rgba(37,99,235,0.10)",
@@ -341,9 +340,8 @@ function OutcomesPanel({ outcomes, accentColor }: { outcomes: OutcomeItem[]; acc
             whileHover={{ x: 6, transition: { duration: 0.2, ease: EASE } }}
             className="group relative overflow-hidden rounded-xl p-4"
             style={{
-              background: "rgba(255,255,255,0.8)",
+              background: "rgba(255,255,255,0.95)",
               border: "1px solid rgba(37,99,235,0.06)",
-              backdropFilter: "blur(8px)",
               boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
             }}
           >
@@ -451,7 +449,7 @@ function FeaturesPanel({
           whileHover={{ y: -2, background: "rgba(255,255,255,0.9)" }}
           whileTap={{ scale: 0.97 }}
           className="flex-1 px-6 py-3.5 rounded-xl font-semibold"
-          style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(37,99,235,0.1)", color: "#475569", cursor: "pointer", backdropFilter: "blur(8px)" }}
+          style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(37,99,235,0.1)", color: "#475569", cursor: "pointer" }}
         >
           Contact Sales
         </motion.button>
@@ -484,7 +482,7 @@ function IntegrationRow({ items, direction = "normal" }: { items: IntegrationIte
             whileHover={{ scale: 1.06, y: -2, boxShadow: "0 8px 20px rgba(37,99,235,0.12)" }}
             transition={{ duration: 0.2, ease: EASE }}
             className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl flex-shrink-0"
-            style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(37,99,235,0.06)", boxShadow: "0 1px 4px rgba(0,0,0,0.02)", backdropFilter: "blur(8px)" }}
+            style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(37,99,235,0.06)", boxShadow: "0 1px 4px rgba(0,0,0,0.02)" }}
           >
             <span className="text-xl">{item.icon}</span>
             <span className="text-sm font-medium whitespace-nowrap" style={{ color: "#475569" }}>
@@ -659,7 +657,7 @@ export function Industry({ activeUseCase, setActiveUseCase, openAuth }: Industry
                   transition={{ delay: i * 0.1, duration: 0.5, ease: EASE }}
                   whileHover={{ y: -4, boxShadow: "0 16px 36px rgba(37,99,235,0.1)" }}
                   className="group relative rounded-2xl p-6 text-center overflow-hidden"
-                  style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(37,99,235,0.06)", backdropFilter: "blur(12px)" }}
+                  style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(37,99,235,0.06)" }}
                 >
                   <div
                     className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"

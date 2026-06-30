@@ -9,8 +9,8 @@ const cardAnimations = [
   { hidden: { opacity: 0, x: -60, rotateY: -15 }, visible: { opacity: 1, x: 0, rotateY: 0 } },
   // Card 2: Fade up with scale
   { hidden: { opacity: 0, y: 40, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1 } },
-  // Card 3: Scale with blur
-  { hidden: { opacity: 0, scale: 0.7, filter: "blur(10px)" }, visible: { opacity: 1, scale: 1, filter: "blur(0px)" } },
+  // Card 3: Scale with bounce
+  { hidden: { opacity: 0, scale: 0.7 }, visible: { opacity: 1, scale: 1 } },
   // Card 4: Rotate in 3D
   { hidden: { opacity: 0, rotateX: -40, rotateY: 20, scale: 0.85 }, visible: { opacity: 1, rotateX: 0, rotateY: 0, scale: 1 } },
   // Card 5: Rise with glow
@@ -41,7 +41,6 @@ function FeatureCard({ feature, index }: { feature: typeof features[0]; index: n
         className="group relative p-7 rounded-2xl overflow-hidden h-full cursor-default transition-all duration-500"
         style={{
           background: "#f8fafc",
-          backdropFilter: "blur(12px)",
           border: "1px solid rgba(37, 99, 235, 0.14)",
           boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.04)",
           transformStyle: "preserve-3d",

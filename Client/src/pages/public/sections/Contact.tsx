@@ -32,7 +32,7 @@ export function Contact() {
             </Reveal>
             <Reveal from="right" delay={0.1}>
               <div className="space-y-6">
-                <div className="rounded-2xl p-6" style={{ background: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(12px)", border: "1px solid rgba(37, 99, 235, 0.14)", boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.04)" }}>
+                <div className="rounded-2xl p-6" style={{ background: "rgba(255, 255, 255, 0.9)", border: "1px solid rgba(37, 99, 235, 0.14)", boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.04)" }}>
                   <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0a0a0a", marginBottom: 14 }}>Why businesses choose Autoniv</h3>
                   <div className="space-y-4">
                     {[{ icon: "⚡", title: "2-min setup", desc: "No code, no engineers. Describe your agent and go live instantly." },
@@ -49,7 +49,7 @@ export function Contact() {
                     ))}
                   </div>
                 </div>
-                <div className="rounded-2xl p-6" style={{ background: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(12px)", border: "1px solid rgba(37, 99, 235, 0.14)", boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.04)" }}>
+                <div className="rounded-2xl p-6" style={{ background: "rgba(255, 255, 255, 0.9)", border: "1px solid rgba(37, 99, 235, 0.14)", boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.04)" }}>
                   <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0a0a0a", marginBottom: 12 }}>What happens next?</h3>
                   {[{ n: "1", t: "We review your message within 24 hours" }, { n: "2", t: "Schedule a 15-min discovery call" }, { n: "3", t: "Get a custom pricing plan for your use case" }].map((s, i) => (
                     <div key={i} style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: i < 2 ? 12 : 0 }}>
