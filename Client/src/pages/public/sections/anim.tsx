@@ -41,7 +41,7 @@ function buildVariants(variant: RevealVariant, reduced: boolean): Variants {
     slideLeft: { opacity: 0, x: -56 },
     slideRight: { opacity: 0, x: 56 },
     scaleFade: { opacity: 0, scale: 0.92 },
-    blurUp: { opacity: 0, y: 28, filter: "blur(8px)" },
+    blurUp: { opacity: 0, y: 28 },
   };
   return {
     hidden: hiddenByVariant[variant],
@@ -50,7 +50,6 @@ function buildVariants(variant: RevealVariant, reduced: boolean): Variants {
       x: 0,
       y: 0,
       scale: 1,
-      filter: "blur(0px)",
       transition: { duration: 0.7, ease: EXPO_OUT },
     },
   };

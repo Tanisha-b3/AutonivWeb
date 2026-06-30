@@ -32,7 +32,7 @@ function AnimatedStat({ n, l, delay }: { n: string; l: string; delay: number }) 
 
 function ParticleField() {
   const particles = useMemo(() => {
-    const seed = [12, 45, 78, 23, 56, 89, 34, 67, 90, 11, 44, 77, 22, 55, 88, 33, 66, 99, 17, 48];
+    const seed = [12, 45, 78, 23, 56, 89, 34, 67, 90, 11];
     return seed.map((s, i) => ({
       id: i,
       x: `${(s * 7) % 100}%`,
@@ -96,8 +96,8 @@ function MorphingBlob({ color, delay = 0 }: { color: string; delay?: number }) {
       style={{
         width: 300,
         height: 300,
-        background: `radial-gradient(circle, ${color}18, transparent 70%)`,
-        filter: "blur(60px)",
+        background: `radial-gradient(circle, ${color}30, transparent 70%)`,
+        willChange: "transform",
       }}
     />
   );

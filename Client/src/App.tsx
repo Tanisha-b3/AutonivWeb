@@ -143,7 +143,7 @@ function ProtectedRoute({
       <div className="flex flex-col flex-1 min-w-0">
         <header
           className="md:hidden sticky top-0 z-30 flex items-center gap-3 px-4 h-16 shrink-0"
-          style={{ background: 'rgba(248,250,252,0.9)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e2e8f0' }}
+          style={{ background: 'rgba(248,250,252,0.97)', borderBottom: '1px solid #e2e8f0' }}
         >
           <div className="w-10" />
           <div className="flex-1 min-w-0"><Breadcrumbs /></div>

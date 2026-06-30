@@ -90,7 +90,6 @@ function ComparisonRow({ row, index }: { row: typeof COMPARISON[0]; index: numbe
           background: isVerdict
             ? "linear-gradient(90deg, rgba(37,99,235,0.06), rgba(255,255,255,0.95))"
             : "rgba(255,255,255,0.95)",
-          backdropFilter: "blur(8px)",
           borderRight: "1px solid rgba(37,99,235,0.06)",
           fontWeight: isVerdict ? 700 : 600,
         }}
@@ -195,8 +194,7 @@ export function Comparison() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="relative rounded-3xl overflow-hidden"
             style={{
-              background: "rgba(255,255,255,0.9)",
-              backdropFilter: "blur(20px)",
+              background: "rgba(255,255,255,0.98)",
               border: "1px solid rgba(37,99,235,0.1)",
               boxShadow: "0 24px 80px rgba(0,0,0,0.06), 0 0 0 1px rgba(37,99,235,0.04)",
             }}
@@ -225,7 +223,6 @@ export function Comparison() {
                       style={{
                         color: "#64748b",
                         background: "rgba(255,255,255,0.95)",
-                        backdropFilter: "blur(8px)",
                         borderRight: "1px solid rgba(37,99,235,0.06)",
                         width: "18%",
                       }}
@@ -283,9 +280,8 @@ export function Comparison() {
                 key={i}
                 className="group relative rounded-2xl p-4 text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden cursor-default"
                 style={{
-                  background: "rgba(255,255,255,0.8)",
+                  background: "rgba(255,255,255,0.95)",
                   border: "1px solid rgba(37,99,235,0.06)",
-                  backdropFilter: "blur(12px)",
                 }}
               >
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"

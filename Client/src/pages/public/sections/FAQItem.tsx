@@ -29,7 +29,6 @@ export function FAQItem({ question, answer, index }: FAQItemProps) {
         boxShadow: open
           ? "0 12px 40px rgba(37,99,235,0.08), 0 0 0 1px rgba(37,99,235,0.06)"
           : "0 2px 12px rgba(0,0,0,0.02)",
-        backdropFilter: "blur(12px)",
       }}
     >
       {/* Left accent bar */}
