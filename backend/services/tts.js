@@ -82,7 +82,7 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
 
   if (provider === 'elevenlabs' && !isElevenLabsMissing) {
     try {
-      const outputFormat = isTwilio ? 'ulaw_8000hz' : 'pcm_24000hz';
+      const outputFormat = isTwilio ? 'ulaw_8000' : 'pcm_24000';
       const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceModelOrId}?output_format=${outputFormat}`, {
         method: 'POST',
         headers: {

@@ -271,7 +271,7 @@ function handleTwilioStream(twilioWs) {
           break;
         case 'stop':
           console.log('[Twilio WS] Call streaming stopped.');
-          await closeAndCleanup({ callSid, agentObj, callStartTime, fullTranscript, deepgramWs });
+          await closeAndCleanup({ callSid, agentObj, callStartTime, fullTranscript, deepgramWs, pendingLeadData: toolAlreadyExecuted.pendingLeadData });
           break;
       }
     } catch (err) {
@@ -281,7 +281,7 @@ function handleTwilioStream(twilioWs) {
 
   twilioWs.on('close', async () => {
     console.log('[Twilio WS] Connection closed.');
-    await closeAndCleanup({ callSid, agentObj, callStartTime, fullTranscript, deepgramWs });
+    await closeAndCleanup({ callSid, agentObj, callStartTime, fullTranscript, deepgramWs, pendingLeadData: toolAlreadyExecuted.pendingLeadData });
   });
 }
 
@@ -454,6 +454,6 @@ async function handleWebCall(clientWs, req) {
 
   clientWs.on('close', async () => {
     console.log('[Web Call WS] Client closed.');
-    await closeAndCleanup({ callSid, agentObj, callStartTime, fullTranscript, deepgramWs });
+    await closeAndCleanup({ callSid, agentObj, callStartTime, fullTranscript, deepgramWs, pendingLeadData: toolAlreadyExecuted.pendingLeadData });
   });
 }

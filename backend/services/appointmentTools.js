@@ -290,17 +290,18 @@ export async function executeTool(name, args, ctx) {
         if ((leadName && containsAbuse(leadName)) || (reason && containsAbuse(reason))) {
           return { success: false, error: 'Content policy violation' };
         }
-        const lead = await Lead.create({
+        // Collect lead data — will be saved when conversation ends
+        toolState.pendingLeadData = {
           agentId: agentObj._id,
           userId,
           name: leadName ? sanitizeText(safeString(leadName, 200)) : null,
           phone: phone ? safeString(phone, 30) : null,
           email: pick(args, 'email') ? safeString(args.email, 254) : null,
           purpose: sanitizeText(safeString(reason, 500)),
-        });
+        };
         toolState.saveLead = true;
-        log.info('orchestrator_lead_saved', { leadId: lead._id });
-        return { success: true, leadId: String(lead._id), name: lead.name, phone: lead.phone };
+        log.info('orchestrator_lead_collected', { name: toolState.pendingLeadData.name, phone: toolState.pendingLeadData.phone });
+        return { success: true, message: 'Lead data collected' };
       }
 
       case 'checkAppointmentAvailability': {

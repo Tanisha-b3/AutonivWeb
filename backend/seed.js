@@ -3,7 +3,7 @@ dotenv.config();
 
 import { connectDb, closeDb } from './db/connection.js';
 import AddOn from './db/models/AddOn.js';
-import User from './db/models/User.js';
+import User, { hashApiKey, generateApiKey } from './db/models/User.js';
 
 const ADDONS = [
   { id: 'whatsapp-channel',   icon: '💬', title: 'WhatsApp Channel',   price: '₹2,499 / month', category: 'recurring', description: 'Native WhatsApp Business API with template support.', type: 'chat' },
@@ -33,7 +33,7 @@ const USERS = [
     chatPlan: 'chat_starter',
     voiceEnabled: true,
     voicePlan: 'voice_starter',
-    apiKey: 'ak_de0080bc576599ec6a05d54fb82f6b7905a8adc3c8f9b817',
+    apiKey: hashApiKey('ak_de0080bc576599ec6a05d54fb82f6b7905a8adc3c8f9b817'),
   },
   {
     email: 'admin@autoniv.ai',

@@ -3,6 +3,39 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../App';
 import { authService } from '../../services/api';
 
+interface GoogleCredentialResponse {
+  credential: string;
+}
+
+interface GoogleTokenResponse {
+  access_token?: string;
+  error?: string;
+}
+
+interface GoogleAccounts {
+  accounts: {
+    id: {
+      initialize: (opts: {
+        client_id: string;
+        callback: (response: GoogleCredentialResponse) => void;
+      }) => void;
+    };
+    oauth2: {
+      initTokenClient: (opts: {
+        client_id: string;
+        scope: string;
+        callback: (response: GoogleTokenResponse) => void;
+      }) => { requestAccessToken: () => void };
+    };
+  };
+}
+
+declare global {
+  interface Window {
+    google?: GoogleAccounts;
+  }
+}
+
 export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,18 +54,18 @@ export function Login() {
     if (showOtp) return;
 
     const initializeGoogle = () => {
-      if ((window as any).google) {
-        (window as any).google.accounts.id.initialize({
+      if (window.google) {
+        window.google.accounts.id.initialize({
           client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '235489562479-placeholder.apps.googleusercontent.com',
-          callback: async (response: any) => {
+          callback: async (response: GoogleCredentialResponse) => {
             setError('');
             setLoading(true);
             try {
               await googleLogin(response.credential);
               const stored = JSON.parse(sessionStorage.getItem('user') || '{}');
               navigate(stored?.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
-            } catch (err: any) {
-              setError(err?.message || 'Google login failed');
+            } catch (err: unknown) {
+              setError(err instanceof Error ? err.message : 'Google login failed');
             } finally {
               setLoading(false);
             }
@@ -55,11 +88,11 @@ export function Login() {
   }, [googleLogin, navigate, showOtp]);
 
   const handleGoogleClick = () => {
-    if ((window as any).google) {
-      const client = (window as any).google.accounts.oauth2.initTokenClient({
+    if (window.google) {
+      const client = window.google.accounts.oauth2.initTokenClient({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '235489562479-placeholder.apps.googleusercontent.com',
         scope: 'email profile openid',
-        callback: async (response: any) => {
+        callback: async (response: GoogleTokenResponse) => {
           if (response.error) {
             setError('Google login failed');
             return;
@@ -67,11 +100,11 @@ export function Login() {
           setError('');
           setLoading(true);
           try {
-            await googleLogin(response.access_token);
+            if (response.access_token) await googleLogin(response.access_token);
             const stored = JSON.parse(sessionStorage.getItem('user') || '{}');
             navigate(stored?.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
-          } catch (err: any) {
-            setError(err?.message || 'Google login failed');
+          } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Google login failed');
           } finally {
             setLoading(false);
           }
@@ -97,8 +130,8 @@ export function Login() {
       }
       const stored = JSON.parse(sessionStorage.getItem('user') || '{}');
       navigate(stored?.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
-    } catch (err: any) {
-      setError(err?.message || 'Login failed');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -117,8 +150,8 @@ export function Login() {
       await verifyOtp(email, code, 'login');
       const stored = JSON.parse(sessionStorage.getItem('user') || '{}');
       navigate(stored?.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
-    } catch (err: any) {
-      setError(err?.message || 'Verification failed');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Verification failed');
     } finally {
       setLoading(false);
     }
@@ -131,8 +164,9 @@ export function Login() {
       await authService.resendOtp(email, 'login');
       setTimer(30);
       setOtp(Array(6).fill(''));
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to resend code');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      setError(error?.response?.data?.message || error?.message || 'Failed to resend code');
     }
   };
 

@@ -1,6 +1,17 @@
 import mongoose from 'mongoose';
 import crypto from 'crypto';
 
+// ─── API Key Hashing ────────────────────────────────────────────────────────
+const API_KEY_SALT = process.env.API_KEY_HASH_SALT || 'autoniv-api-key-salt';
+
+export function hashApiKey(key) {
+  return crypto.createHash('sha256').update(key + API_KEY_SALT).digest('hex');
+}
+
+export function generateApiKey() {
+  return 'ak_' + crypto.randomBytes(24).toString('hex');
+}
+
 // ─── Plan configurations ──────────────────────────────────────────────────────
 // limits: { calls, minutes, chatbots, conversations }
 // features: boolean flags per plan tier
@@ -221,7 +232,7 @@ const userSchema = new mongoose.Schema(
 // ─── Pre-save: auto-calculate limits & feature flags ──────────────────────────
 userSchema.pre('save', function (next) {
   if (!this.apiKey) {
-    this.apiKey = 'ak_' + crypto.randomBytes(24).toString('hex');
+    this.apiKey = hashApiKey(generateApiKey());
   }
 
   let chatPlan = this.chatPlan;

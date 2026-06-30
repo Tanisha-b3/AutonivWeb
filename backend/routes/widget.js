@@ -1,6 +1,6 @@
 import express from 'express';
 import OpenAI from 'openai';
-import User from '../db/models/User.js';
+import User, { hashApiKey } from '../db/models/User.js';
 import Agent from '../db/models/Agent.js';
 import Lead from '../db/models/Lead.js';
 import Appointment from '../db/models/Appointment.js';
@@ -27,7 +27,9 @@ async function authenticateApiKey(req, res, next) {
       return res.status(401).json({ message: 'API key required' });
     }
 
-    const user = await User.findOne({ apiKey }).select('+apiKey').lean();
+    // Hash the incoming key and look up by hash
+    const hashedKey = hashApiKey(apiKey);
+    const user = await User.findOne({ apiKey: hashedKey }).select('+apiKey').lean();
     if (!user) {
       return res.status(401).json({ message: 'Invalid API key' });
     }
