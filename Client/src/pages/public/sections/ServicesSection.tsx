@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useRef, useState, } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { motion, useInView } from "framer-motion";
 
@@ -230,18 +230,79 @@ const trustItems = [
   { icon: "🎧", label: "24/7 Support", desc: "Always here to help" },
 ];
 
-// ─── Mini sparkline SVG per service ──────────────────────────────────────────
+// ─── Animation variants ─────────────────────────────────────────────────────
+
+const easeOut = [0.22, 1, 0.36, 1] as const;
+
+const cardContainerVariants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.08 },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 36, scale: 0.96 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.6, ease: easeOut },
+  },
+};
+
+const featureListVariants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.06, delayChildren: 0.1 },
+  },
+};
+
+const featureItemVariants = {
+  hidden: { opacity: 0, x: -10 },
+  show: { opacity: 1, x: 0, transition: { duration: 0.35, ease: easeOut } },
+};
+
+const modalListVariants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.05 },
+  },
+};
+
+const modalItemVariants = {
+  hidden: { opacity: 0, x: -12 },
+  show: { opacity: 1, x: 0, transition: { duration: 0.3, ease: easeOut } },
+};
+
+// ─── Mini sparkline SVG per service (animated draw-in) ──────────────────────
 
 function Sparkline({ accent }: { accent: string }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-20px" });
   const points = [
     [0, 40], [16, 32], [32, 36], [48, 22], [64, 28], [80, 14], [96, 18], [112, 8],
   ];
   const pts = points.map(([x, y]) => `${x},${y}`).join(" ");
   const fill = [...points, [112, 48], [0, 48]].map(([x, y]) => `${x},${y}`).join(" ");
+
   return (
-    <svg viewBox="0 0 112 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-      <polyline points={fill} fill={accent} fillOpacity="0.08" />
-      <polyline
+    <svg
+      ref={ref}
+      viewBox="0 0 112 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="w-full h-full"
+    >
+      <motion.polyline
+        points={fill}
+        fill={accent}
+        fillOpacity="0.08"
+        initial={{ opacity: 0 }}
+        animate={inView ? { opacity: 1 } : {}}
+        transition={{ duration: 0.8, delay: 0.5 }}
+      />
+      <motion.polyline
         points={pts}
         fill="none"
         stroke={accent}
@@ -249,8 +310,30 @@ function Sparkline({ accent }: { accent: string }) {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeOpacity="0.9"
+        initial={{ pathLength: 0 }}
+        animate={inView ? { pathLength: 1 } : {}}
+        transition={{ duration: 1.1, ease: easeOut, delay: 0.15 }}
       />
-      <circle cx="112" cy="8" r="3.5" fill={accent} />
+      <motion.circle
+        cx="112"
+        cy="8"
+        r="3.5"
+        fill={accent}
+        initial={{ scale: 0, opacity: 0 }}
+        animate={inView ? { scale: 1, opacity: 1 } : {}}
+        transition={{ duration: 0.4, delay: 1.2, ease: "backOut" }}
+      />
+      <motion.circle
+        cx="112"
+        cy="8"
+        r="3.5"
+        fill="none"
+        stroke={accent}
+        strokeWidth="1.5"
+        initial={{ scale: 1, opacity: 0 }}
+        animate={inView ? { scale: [1, 2.4], opacity: [0.6, 0] } : {}}
+        transition={{ duration: 1.6, delay: 1.3, repeat: Infinity, repeatDelay: 1.2, ease: "easeOut" }}
+      />
     </svg>
   );
 }
@@ -305,9 +388,11 @@ function ServiceDetailDialog({
                 }}
               >
                 {/* Ambient glow */}
-                <div
+                <motion.div
                   className="pointer-events-none absolute -top-24 -right-16 w-72 h-72 rounded-full opacity-40"
                   style={{ background: `radial-gradient(circle, ${s.glow}, transparent 70%)` }}
+                  animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.55, 0.4] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
                 />
 
                 {/* Header */}
@@ -315,13 +400,21 @@ function ServiceDetailDialog({
                   className="flex items-center justify-between p-6 relative z-10"
                   style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
                 >
-                  <div className="flex items-center gap-3">
-                    <div
+                  <motion.div
+                    className="flex items-center gap-3"
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: easeOut }}
+                  >
+                    <motion.div
                       className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
                       style={{ background: s.accentDim, border: `1px solid ${s.accentBorder}` }}
+                      initial={{ scale: 0, rotate: -90 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ duration: 0.45, ease: "backOut", delay: 0.05 }}
                     >
                       {s.icon}
-                    </div>
+                    </motion.div>
                     <div>
                       <Dialog.Title className="text-lg font-bold text-white/90">
                         {s.title}
@@ -333,51 +426,77 @@ function ServiceDetailDialog({
                         {s.tag}
                       </span>
                     </div>
-                  </div>
-                  <button
+                  </motion.div>
+                  <motion.button
                     onClick={onClose}
-                    className="p-1.5 rounded-lg transition-all duration-200
+                    whileHover={{ scale: 1.08, rotate: 90 }}
+                    whileTap={{ scale: 0.92 }}
+                    transition={{ duration: 0.2 }}
+                    className="p-1.5 rounded-lg
                                text-white/30 hover:text-white/80
                                bg-white/[0.03] hover:bg-white/[0.06]
-                               border border-white/[0.06] hover:border-white/[0.12]
-                               hover:scale-105 active:scale-95"
+                               border border-white/[0.06] hover:border-white/[0.12]"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                  </button>
+                  </motion.button>
                 </div>
 
                 {/* Body */}
-                <div className="p-6 max-h-[70vh] overflow-y-auto relative z-10 custom-scrollbar space-y-6">
+                <motion.div
+                  className="p-6 max-h-[70vh] overflow-y-auto relative z-10 custom-scrollbar space-y-6"
+                  initial="hidden"
+                  animate="show"
+                  variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1, delayChildren: 0.1 } } }}
+                >
                   {/* Description */}
-                  <p className="text-slate-300 text-sm leading-relaxed">{d.description}</p>
+                  <motion.p
+                    variants={modalItemVariants}
+                    className="text-slate-300 text-sm leading-relaxed"
+                  >
+                    {d.description}
+                  </motion.p>
 
                   {/* Stat */}
-                  <div
+                  <motion.div
+                    variants={modalItemVariants}
+                    whileHover={{ scale: 1.02 }}
                     className="flex items-center gap-4 p-4 rounded-xl"
                     style={{ background: s.accentDim, border: `1px solid ${s.accentBorder}` }}
                   >
-                    <span
+                    <motion.span
+                      initial={{ opacity: 0, scale: 0.7 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5, delay: 0.3, ease: "backOut" }}
                       className="text-2xl font-extrabold"
                       style={{ color: s.accent, fontFamily: "'JetBrains Mono', monospace" }}
                     >
                       {s.stat.value}
-                    </span>
+                    </motion.span>
                     <span className="text-sm text-slate-400">{s.stat.label}</span>
-                  </div>
+                  </motion.div>
 
                   {/* How It Works */}
-                  <div>
+                  <motion.div variants={modalItemVariants}>
                     <h4 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
                       <svg className="w-4 h-4" style={{ color: s.accent }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                       </svg>
                       How It Works
                     </h4>
-                    <ul className="space-y-2.5">
+                    <motion.ul
+                      variants={modalListVariants}
+                      initial="hidden"
+                      animate="show"
+                      className="space-y-2.5"
+                    >
                       {d.howItWorks.map((step, i) => (
-                        <li key={i} className="flex items-start gap-3 text-sm text-slate-300">
+                        <motion.li
+                          key={i}
+                          variants={modalItemVariants}
+                          className="flex items-start gap-3 text-sm text-slate-300"
+                        >
                           <span
                             className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold"
                             style={{ background: s.accentDim, border: `1px solid ${s.accentBorder}`, color: s.accent }}
@@ -385,45 +504,61 @@ function ServiceDetailDialog({
                             {i + 1}
                           </span>
                           {step}
-                        </li>
+                        </motion.li>
                       ))}
-                    </ul>
-                  </div>
+                    </motion.ul>
+                  </motion.div>
 
                   {/* Use Cases */}
-                  <div>
+                  <motion.div variants={modalItemVariants}>
                     <h4 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
                       <svg className="w-4 h-4" style={{ color: s.accent }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
                       Use Cases
                     </h4>
-                    <ul className="space-y-2">
+                    <motion.ul
+                      variants={modalListVariants}
+                      initial="hidden"
+                      animate="show"
+                      className="space-y-2"
+                    >
                       {d.useCases.map((uc, i) => (
-                        <li key={i} className="flex items-center gap-2.5 text-sm text-slate-300">
+                        <motion.li
+                          key={i}
+                          variants={modalItemVariants}
+                          className="flex items-center gap-2.5 text-sm text-slate-300"
+                        >
                           <span
                             className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                             style={{ background: s.accent }}
                           />
                           {uc}
-                        </li>
+                        </motion.li>
                       ))}
-                    </ul>
-                  </div>
+                    </motion.ul>
+                  </motion.div>
 
                   {/* Integrations */}
-                  <div>
+                  <motion.div variants={modalItemVariants}>
                     <h4 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
                       <svg className="w-4 h-4" style={{ color: s.accent }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                       Integrations
                     </h4>
-                    <div className="flex flex-wrap gap-2">
+                    <motion.div
+                      variants={modalListVariants}
+                      initial="hidden"
+                      animate="show"
+                      className="flex flex-wrap gap-2"
+                    >
                       {d.integrations.map((intg, i) => (
-                        <span
+                        <motion.span
                           key={i}
-                          className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                          variants={modalItemVariants}
+                          whileHover={{ scale: 1.06, y: -2 }}
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-default"
                           style={{
                             background: s.accentDim,
                             border: `1px solid ${s.accentBorder}`,
@@ -431,30 +566,35 @@ function ServiceDetailDialog({
                           }}
                         >
                           {intg}
-                        </span>
+                        </motion.span>
                       ))}
-                    </div>
-                  </div>
-                </div>
+                    </motion.div>
+                  </motion.div>
+                </motion.div>
 
                 {/* Footer */}
                 <div
                   className="flex justify-end gap-3 p-6 relative z-10"
                   style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
                 >
-                  <button
+                  <motion.button
                     onClick={() => {
                       onClose();
                       openAuth?.('login');
                     }}
-                    className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
+                    whileHover={{ y: -2, scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.5 }}
+                    className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer"
                     style={{
                       background: `linear-gradient(135deg, ${s.accent}, ${s.accent})`,
                       boxShadow: `0 4px 20px ${s.glow}`,
                     }}
                   >
                     Get Started
-                  </button>
+                  </motion.button>
                 </div>
               </Dialog.Panel>
             </Transition.Child>
@@ -469,7 +609,6 @@ function ServiceDetailDialog({
 
 function ServiceCard({
   s,
-  index,
   onLearnMore,
 }: {
   s: (typeof services)[0];
@@ -483,9 +622,10 @@ function ServiceCard({
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 32 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.55, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+      variants={cardVariants}
+      initial="hidden"
+      animate={inView ? "show" : "hidden"}
+      whileHover={{ y: -8, transition: { duration: 0.25, ease: easeOut } }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className="group relative flex flex-col rounded-2xl cursor-default overflow-hidden"
@@ -500,42 +640,64 @@ function ServiceCard({
       }}
     >
       {/* Top ambient glow strip */}
-      <div
+      <motion.div
         className="absolute inset-x-0 top-0 h-px"
         style={{
           background: `linear-gradient(90deg, transparent, ${s.accent}60, transparent)`,
-          opacity: hovered ? 1 : 0,
-          transition: "opacity 0.3s",
         }}
+        animate={{ opacity: hovered ? 1 : 0 }}
+        transition={{ duration: 0.3 }}
+      />
+
+      {/* Subtle moving sheen on hover */}
+      <motion.div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `linear-gradient(115deg, transparent 30%, ${s.glow} 50%, transparent 70%)`,
+        }}
+        initial={{ x: "-120%" }}
+        animate={hovered ? { x: "120%" } : { x: "-120%" }}
+        transition={{ duration: 0.9, ease: easeOut }}
       />
 
       {/* Header row */}
       <div className="flex items-start justify-between px-5 pt-5 pb-4">
         {/* Icon pill */}
-        <div
+        <motion.div
           className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl"
           style={{
             background: s.accentDim,
             border: `1px solid ${s.accentBorder}`,
           }}
+          animate={hovered ? { scale: 1.04 } : { scale: 1 }}
+          transition={{ duration: 0.25, ease: easeOut }}
         >
-          <span className="text-base leading-none">{s.icon}</span>
+          <motion.span
+            className="text-base leading-none"
+            animate={hovered ? { rotate: [0, -12, 12, -6, 0], scale: [1, 1.2, 1.2, 1.1, 1] } : { rotate: 0, scale: 1 }}
+            transition={{ duration: 0.6, ease: easeOut }}
+          >
+            {s.icon}
+          </motion.span>
           <span
             className="text-[10px] font-bold tracking-widest"
             style={{ color: s.accent }}
           >
             {s.tag}
           </span>
-        </div>
+        </motion.div>
 
         {/* Stat badge */}
         <div className="text-right">
-          <p
+          <motion.p
+            initial={{ opacity: 0, y: -6 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.2, ease: easeOut }}
             className="text-xl font-extrabold leading-none tracking-tight"
             style={{ color: s.accent, fontFamily: "'JetBrains Mono', monospace" }}
           >
             {s.stat.value}
-          </p>
+          </motion.p>
           <p className="text-[10px] text-slate-500 mt-0.5 font-medium">{s.stat.label}</p>
         </div>
       </div>
@@ -551,54 +713,75 @@ function ServiceCard({
         <p className="text-slate-400 text-sm leading-relaxed mb-5">{s.subtitle}</p>
 
         {/* Feature list */}
-        <ul className="space-y-2.5 mb-6 flex-1">
+        <motion.ul
+          variants={featureListVariants}
+          initial="hidden"
+          animate={inView ? "show" : "hidden"}
+          className="space-y-2.5 mb-6 flex-1"
+        >
           {s.features.map((f, j) => (
-            <li key={j} className="flex items-center gap-2.5 text-sm text-slate-300">
+            <motion.li
+              key={j}
+              variants={featureItemVariants}
+              className="flex items-center gap-2.5 text-sm text-slate-300"
+            >
               <span
                 className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
                 style={{ background: s.accentDim, border: `1px solid ${s.accentBorder}` }}
               >
-                <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
-                  <path
+                <motion.svg
+                  width="8"
+                  height="8"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  initial={{ pathLength: 0 }}
+                  animate={inView ? { pathLength: 1 } : {}}
+                  transition={{ duration: 0.4, delay: 0.3 + j * 0.06 }}
+                >
+                  <motion.path
                     d="M2 6l3 3 5-5"
                     stroke={s.accent}
                     strokeWidth="2.2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
-                </svg>
+                </motion.svg>
               </span>
               {f}
-            </li>
+            </motion.li>
           ))}
-        </ul>
+        </motion.ul>
 
         {/* CTA */}
-        <button
+        <motion.button
           onClick={() => onLearnMore(s)}
-          className="w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 mb-5 transition-all duration-200"
+          whileTap={{ scale: 0.97 }}
+          className="w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 mb-5"
           style={{
             background: hovered ? s.accentDim : "rgba(255,255,255,0.04)",
             border: `1px solid ${hovered ? s.accent : "rgba(255,255,255,0.08)"}`,
             color: hovered ? s.accent : "rgba(255,255,255,0.55)",
+            transition: "background 0.25s, border 0.25s, color 0.25s",
           }}
         >
           Learn More
-          <svg
+          <motion.svg
             width="13"
             height="13"
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
             viewBox="0 0 24 24"
+            animate={hovered ? { x: 4 } : { x: 0 }}
+            transition={{ duration: 0.25, ease: easeOut }}
           >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
               d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
             />
-          </svg>
-        </button>
+          </motion.svg>
+        </motion.button>
       </div>
     </motion.div>
   );
@@ -610,27 +793,33 @@ export function Services({ openAuth }: { openAuth?: (mode: 'login' | 'register')
   const headerRef = useRef(null);
   const headerInView = useInView(headerRef, { once: true, margin: "-80px" });
   const [selectedService, setSelectedService] = useState<(typeof services)[0] | null>(null);
+  const gridRef = useRef(null);
+  const gridInView = useInView(gridRef, { once: true, margin: "-100px" });
 
   return (
     <section
       id="services"
-      className="relative overflow-hidden"
+      className="relative overflow-hidden section-box"
       style={{ background: "#050d1a" }}
     >
-      {/* Ambient blobs */}
-      <div
+      {/* Ambient blobs (slow drifting animation) */}
+      <motion.div
         className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full"
         style={{
           background:
             "radial-gradient(ellipse, rgba(37,99,235,0.06) 0%, transparent 70%)",
         }}
+        animate={{ x: ["-50%", "-46%", "-50%"], opacity: [0.8, 1, 0.8] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
       />
-      <div
+      <motion.div
         className="pointer-events-none absolute bottom-0 right-0 w-[600px] h-[400px] rounded-full"
         style={{
           background:
             "radial-gradient(ellipse, rgba(16,185,129,0.05) 0%, transparent 70%)",
         }}
+        animate={{ y: [0, -30, 0], opacity: [0.7, 1, 0.7] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
 
       {/* Subtle grid texture */}
@@ -652,10 +841,13 @@ export function Services({ openAuth }: { openAuth?: (mode: 'login' | 'register')
           ref={headerRef}
           initial={{ opacity: 0, y: 24 }}
           animate={headerInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.65, ease: easeOut }}
           className="text-center mb-16"
         >
-          <span
+          <motion.span
+            initial={{ opacity: 0, y: -10, scale: 0.9 }}
+            animate={headerInView ? { opacity: 1, y: 0, scale: 1 } : {}}
+            transition={{ duration: 0.5, ease: "backOut" }}
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-[0.18em] uppercase mb-6"
             style={{
               background: "rgba(37,99,235,0.06)",
@@ -672,32 +864,59 @@ export function Services({ openAuth }: { openAuth?: (mode: 'login' | 'register')
               <circle cx="3" cy="3" r="3" fill="#64ddff" />
             </svg>
             OUR SERVICES
-          </span>
+          </motion.span>
 
           <h2 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold tracking-tight leading-[1.08] text-white mb-4">
-            Everything your business needs
+            <motion.span
+              className="inline-block"
+              initial={{ opacity: 0, y: 16 }}
+              animate={headerInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: 0.1, ease: easeOut }}
+            >
+              Everything your business needs
+            </motion.span>
             <br />
-            <span
-              className="gradient-text"
-              
+            <motion.span
+              className="gradient-text inline-block"
+              initial={{ opacity: 0, y: 16 }}
+              animate={headerInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: 0.22, ease: easeOut }}
             >
               to run on autopilot.
-            </span>
+            </motion.span>
           </h2>
-          <p className="text-slate-400 text-base max-w-lg mx-auto leading-relaxed">
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={headerInView ? { opacity: 1 } : {}}
+            transition={{ duration: 0.6, delay: 0.35 }}
+            className="text-slate-400 text-base max-w-lg mx-auto leading-relaxed"
+          >
             Six AI-powered modules that work independently or as a unified stack — deploy
             the ones you need, scale when you're ready.
-          </p>
+          </motion.p>
 
           {/* Module count strip */}
-          <div className="flex items-center justify-center gap-6 mt-8">
+          <motion.div
+            className="flex items-center justify-center gap-6 mt-8"
+            initial="hidden"
+            animate={headerInView ? "show" : "hidden"}
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08, delayChildren: 0.4 } } }}
+          >
             {[
               { v: "6", l: "Modules" },
               { v: "20+", l: "Languages" },
               { v: "99.9%", l: "Uptime SLA" },
               { v: "$0", l: "Setup Fees" },
             ].map((item, i) => (
-              <div key={i} className="text-center">
+              <motion.div
+                key={i}
+                className="text-center"
+                variants={{
+                  hidden: { opacity: 0, y: 10, scale: 0.9 },
+                  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: "backOut" } },
+                }}
+                whileHover={{ y: -3 }}
+              >
                 <p
                   className="text-xl font-extrabold leading-none"
                   style={{
@@ -710,17 +929,23 @@ export function Services({ openAuth }: { openAuth?: (mode: 'login' | 'register')
                 <p className="text-[11px] text-slate-500 mt-1 font-medium tracking-wide">
                   {item.l}
                 </p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* ── Cards Grid ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+        <motion.div
+          ref={gridRef}
+          variants={cardContainerVariants}
+          initial="hidden"
+          animate={gridInView ? "show" : "hidden"}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10"
+        >
           {services.map((s, i) => (
             <ServiceCard key={s.id} s={s} index={i} onLearnMore={setSelectedService} />
           ))}
-        </div>
+        </motion.div>
 
         {/* ── Service Detail Dialog ── */}
         <ServiceDetailDialog
@@ -734,7 +959,7 @@ export function Services({ openAuth }: { openAuth?: (mode: 'login' | 'register')
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-40px" }}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.55, ease: easeOut }}
           className="rounded-2xl px-6 sm:px-10 py-6 mt-6"
           style={{
             background:
@@ -742,18 +967,34 @@ export function Services({ openAuth }: { openAuth?: (mode: 'login' | 'register')
             border: "1px solid rgba(255,255,255,0.07)",
           }}
         >
-          <div className="flex flex-wrap items-center justify-center sm:justify-between gap-6">
+          <motion.div
+            className="flex flex-wrap items-center justify-center sm:justify-between gap-6"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-40px" }}
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }}
+          >
             {trustItems.map((t, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div
+              <motion.div
+                key={i}
+                className="flex items-center gap-3"
+                variants={{
+                  hidden: { opacity: 0, y: 12 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: easeOut } },
+                }}
+                whileHover={{ y: -3 }}
+              >
+                <motion.div
                   className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
                   style={{
                     background: "rgba(100,221,255,0.08)",
                     border: "1px solid rgba(100,221,255,0.15)",
                   }}
+                  whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+                  transition={{ duration: 0.5 }}
                 >
                   {t.icon}
-                </div>
+                </motion.div>
                 <div>
                   <p className="text-white font-semibold text-sm leading-tight">
                     {t.label}
@@ -763,13 +1004,19 @@ export function Services({ openAuth }: { openAuth?: (mode: 'login' | 'register')
                 {i < trustItems.length - 1 && (
                   <div className="hidden sm:block w-px h-8 bg-white/[0.06] ml-3" />
                 )}
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Footer line */}
-        <p className="text-center text-xs text-slate-600 mt-7">
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="text-center text-xs text-slate-600 mt-7"
+        >
           All plans include a 14-day free trial.{" "}
           <a
             href="/services"
@@ -778,7 +1025,7 @@ export function Services({ openAuth }: { openAuth?: (mode: 'login' | 'register')
           >
             View full pricing →
           </a>
-        </p>
+        </motion.p>
       </div>
     </section>
   );

@@ -46,6 +46,7 @@ const AdminAddOns = lazy(() => import('./pages/admin/AdminAddOns').then(m => ({ 
 const AdminAppointments = lazy(() => import('./pages/admin/AdminAppointments').then(m => ({ default: m.AdminAppointments })));
 const AdminChat = lazy(() => import('./pages/admin/AdminChat').then(m => ({ default: m.AdminChat })));
 const WelcomeOnboarding = lazy(() => import('./components/WelcomeOnboarding').then(m => ({ default: m.default })));
+const NotFound = lazy(() => import('./pages/public/NotFound').then(m => ({ default: m.NotFound })));
 
 export function useAuth() {
   const dispatch = useAppDispatch();
@@ -213,6 +214,9 @@ function AppRoutes() {
         <Route path="/admin/upgrade-requests" element={<ProtectedRoute adminOnly><AdminUpgradeRequests /></ProtectedRoute>} />
         <Route path="/admin/add-ons" element={<ProtectedRoute adminOnly><AdminAddOns /></ProtectedRoute>} />
         <Route path="/admin/chat" element={<ProtectedRoute adminOnly><AdminChat /></ProtectedRoute>} />
+
+        {/* Catch-all route for 404 */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
   );

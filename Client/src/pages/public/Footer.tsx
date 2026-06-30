@@ -1,6 +1,7 @@
 // import AIAssistantChat from '../../components/AIAssistantChat';
 import { Link } from 'react-router-dom';
 import UnifiedAssistantWidget from '../../components/UnifiedAssistantWidget';
+import { Stagger, StaggerItem } from './sections/anim';
 
 const LOGO_SRC = '/logo-autoniv.png';
 
@@ -105,10 +106,10 @@ export default function Footer() {
 
       {/* Main footer body */}
       <div className="max-w-7xl mx-auto px-5 sm:px-8 pt-14 pb-10" style={{ position: 'relative', zIndex: 1 }}>
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
+        <Stagger className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-10 mb-12" stagger={0.12} amount={0.15}>
 
           {/* Brand column — FULL WIDTH on mobile (col-span-1), spans 2 on tablet, spans 2 on lg */}
-          <div className="col-span-1 sm:col-span-2 lg:col-span-2">
+          <StaggerItem variant="fadeUp" className="col-span-1 sm:col-span-2 lg:col-span-2">
             <Link to="/" className="inline-block -mb-8 -mx-6 sm:-mx-4 -mt-10 sm:mt-0">
               <img src={LOGO_SRC} alt="Autoniv" style={{ height: 120 }} />
             </Link>
@@ -132,6 +133,7 @@ export default function Footer() {
                   key={s.label}
                   href={s.href}
                   aria-label={s.label}
+                  className="social-bounce"
                   style={{
                     width: 34,
                     height: 34,
@@ -177,11 +179,11 @@ export default function Footer() {
                 Trusted by 2,000+ businesses
               </span>
             </div>
-          </div>
+          </StaggerItem>
 
           {/* Nav columns - On mobile: each takes full width (col-span-1) */}
           {NAV_COLS.map((col) => (
-            <div key={col.heading} className="col-span-1">
+            <StaggerItem key={col.heading} variant="fadeUp" className="col-span-1">
               <p
                 style={{
                   fontSize: 11,
@@ -200,6 +202,7 @@ export default function Footer() {
                     {href.startsWith('/') ? (
                       <Link
                         to={href}
+                        className="link-underline"
                         style={{
                           fontSize: 13.5,
                           color: 'rgba(148,175,210,0.65)',
@@ -221,6 +224,7 @@ export default function Footer() {
                     ) : (
                       <a
                         href={href}
+                        className="link-underline"
                         onClick={
                           scroll
                             ? (e) => scrollToSection(e as React.MouseEvent<HTMLAnchorElement>, href)
@@ -248,9 +252,9 @@ export default function Footer() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </Stagger>
 
         {/* Trust badges row - Green-Blue theme */}
         <div

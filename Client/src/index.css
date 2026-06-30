@@ -616,6 +616,7 @@ textarea::placeholder {
 @keyframes progressBar{from{width:0%}to{width:100%}}
 @keyframes orbIdle{0%,100%{opacity:.7}50%{opacity:1}}
 @keyframes ringPulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.6);opacity:0}}
+@keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 
 .animate-fade-up{animation:fadeUp .85s cubic-bezier(.16,1,.3,1) both;}
 .animate-blink{animation:blink 1.1s step-start infinite;}
@@ -648,6 +649,20 @@ textarea::placeholder {
 .btn-ghost-dark{border:1px solid rgba(16,185,129,.35);color:#34D399;transition:all .25s cubic-bezier(.16,1,.3,1);}
 .btn-ghost-dark:hover{background:rgba(16,185,129,.10);border-color:rgba(16,185,129,.6);transform:translateY(-2px);}
 
+/* ── Comparison table interactivity ── */
+.cmp-row{transition:background .35s cubic-bezier(.16,1,.3,1);}
+.cmp-row:hover{background:rgba(37,99,235,0.045);}
+.cmp-row:hover .cmp-autoniv{background:linear-gradient(135deg,rgba(37,99,235,0.10),rgba(16,185,129,0.10));}
+
+/* ── Hover shine sweep (cards) ── */
+.shine-hover::after{content:'';position:absolute;top:0;left:-130%;width:55%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.16),transparent);transform:skewX(-18deg);pointer-events:none;z-index:5;}
+.shine-hover:hover::after{animation:shineSweep .85s ease;}
+@keyframes shineSweep{from{left:-130%}to{left:150%}}
+
+/* ── Dark CTA stat hover ── */
+.cta-stat{transition:transform .3s cubic-bezier(.16,1,.3,1);}
+.cta-stat:hover{transform:translateY(-4px) scale(1.04);}
+
 .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(37,99,235,.08),rgba(16,185,129,.12),rgba(37,99,235,.08),transparent);}
 
 .btn-responsive{padding:10px 18px;border-radius:12px;font-size:13px;min-height:42px;}
@@ -675,4 +690,56 @@ textarea::placeholder {
   .hero-cta-row .hero-btn-row{display:flex !important;flex-direction:row !important;flex-wrap:nowrap !important;gap:8px !important;width:100% !important;}
   .hero-cta-row .hero-btn-row > button{flex:1 1 0 !important;min-width:0 !important;display:flex !important;align-items:center !important;justify-content:center !important;min-height:42px !important;font-size:11.5px !important;padding:8px 8px !important;gap:5px !important;white-space:nowrap !important;overflow:hidden !important;border-radius:12px !important;}
   .hero-cta-row .hero-btn-row > button svg.w-4{width:12px !important;height:12px !important;flex-shrink:0 !important;}
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   Landing-page animation system — keyframes, utilities, reduced-motion guard
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── Slow drifting gradient (Hero headline / backgrounds) ── */
+@keyframes gradientDrift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.animated-gradient{background-size:200% 200%;animation:gradientDrift 9s ease-in-out infinite;}
+
+/* ── Hero clipped gradient headline (works across per-word reveal spans) ── */
+.hero-gradient-text{
+  background:linear-gradient(135deg,#2563EB 0%,#2563EB 35%,#10B981 75%,#34D399 100%);
+  background-size:200% 200%;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+}
+
+/* ── Floating decorative blobs (CTA / Hero) ── */
+@keyframes blobFloat{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(3%,-4%) scale(1.06)}66%{transform:translate(-3%,4%) scale(0.96)}}
+.blob-float{animation:blobFloat 14s ease-in-out infinite;will-change:transform;}
+.blob-float.slow{animation-duration:20s;}
+
+/* ── Animated gradient border for the "popular" pricing card ── */
+@keyframes borderSpin{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+.popular-border{position:relative;}
+.popular-border::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1.5px;background:linear-gradient(120deg,#2563EB,#10B981,#34D399,#2563EB);background-size:200% 200%;animation:borderSpin 5s linear infinite;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:2;}
+
+/* ── Animated underline for links ── */
+.link-underline{position:relative;}
+.link-underline::after{content:'';position:absolute;left:0;bottom:-2px;width:100%;height:1px;background:currentColor;transform:scaleX(0);transform-origin:right;transition:transform .3s cubic-bezier(.16,1,.3,1);}
+.link-underline:hover::after{transform:scaleX(1);transform-origin:left;}
+
+/* ── Social icon bounce on hover (Footer) ── */
+@keyframes socialBounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}70%{transform:translateY(-2px)}}
+.social-bounce:hover{animation:socialBounce .55s cubic-bezier(.16,1,.3,1);}
+
+/* ── Sparkle twinkle (CTA) ── */
+@keyframes sparkleTwinkle{0%,100%{opacity:.15;transform:scale(.7)}50%{opacity:.9;transform:scale(1.1)}}
+.sparkle{animation:sparkleTwinkle 3s ease-in-out infinite;will-change:transform,opacity;}
+
+/* ════════════════════════════════════════════════════════════════════════
+   prefers-reduced-motion — collapse all motion to near-instant, opacity-safe
+   ════════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
+  }
+  .animated-gradient,.blob-float,.sparkle,.popular-border::before,.animate-marquee,.aurora-orb{animation:none !important;}
 }

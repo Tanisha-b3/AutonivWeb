@@ -1,60 +1,302 @@
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { COMPARISON } from "./data";
-import { Reveal } from "./utils";
+import { MotionReveal } from "./anim";
 
-export function Comparison() {
-  const competitors = [
-    { key: "intercom", label: "Intercom" },
-    { key: "zendesk", label: "Zendesk" },
-    { key: "tidio", label: "Tidio" },
-    { key: "freshchat", label: "Freshchat" },
-    { key: "botpenguin", label: "BotPenguin" },
-  ];
+const competitors = [
+  { key: "intercom", label: "Intercom" },
+  { key: "zendesk", label: "Zendesk" },
+  { key: "tidio", label: "Tidio" },
+  { key: "freshchat", label: "Freshchat" },
+  { key: "botpenguin", label: "BotPenguin" },
+];
+
+function CellValue({ value, isAutoniv = false }: { value: string; isAutoniv?: boolean }) {
+  const isCheck = value.startsWith("✓");
+  const isCross = value.startsWith("✗");
+
+  if (isCheck) {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <span
+          className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{
+            background: isAutoniv ? "rgba(16,185,129,0.15)" : "rgba(16,185,129,0.08)",
+            border: `1px solid ${isAutoniv ? "rgba(16,185,129,0.3)" : "rgba(16,185,129,0.15)"}`,
+          }}
+        >
+          <svg width="10" height="10" fill="none" stroke="#10B981" strokeWidth="2.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </span>
+        <span style={{ color: "#10B981" }}>{value.replace("✓ ", "")}</span>
+      </span>
+    );
+  }
+
+  if (isCross) {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <span
+          className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.12)" }}
+        >
+          <svg width="8" height="8" fill="none" stroke="#ef4444" strokeWidth="2.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </span>
+        <span style={{ color: "#ef4444" }}>{value.replace("✗ ", "")}</span>
+      </span>
+    );
+  }
+
+  return <span>{value}</span>;
+}
+
+function ComparisonRow({ row, index }: { row: typeof COMPARISON[0]; index: number }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-40px" });
+  const isVerdict = row.capability === "Verdict";
 
   return (
-    <section id="comparison" className="section-box tint">
-      <div className="section-pad relative overflow-hidden">
-        <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "100%", height: "100%", background: "radial-gradient(circle at center, rgba(34,197,94,0.06), transparent 70%)", pointerEvents: "none" }} />
-        <div className="relative" style={{ zIndex: 1 }}>
-          <Reveal className="text-center mb-16 space-y-4">
-            <span className="tag px-4 py-1.5 rounded-full inline-block" style={{ color: "#ffffff", background: "var(--gg)" }}>Why Autoniv</span>
-            <h2 className="font-extrabold tracking-tight mt-4" style={{ fontSize: "clamp(28px,4vw,48px)", color: "#0a0a0a" }}>
-              Head-to-head comparison
+    <motion.tr
+      ref={ref}
+      initial={{ opacity: 0, x: -20 }}
+      animate={inView ? { opacity: 1, x: 0 } : {}}
+      transition={{ duration: 0.5, delay: index * 0.04, ease: [0.16, 1, 0.3, 1] }}
+      className="group transition-all duration-300"
+      style={{
+        borderBottom: index < COMPARISON.length - 1 ? "1px solid rgba(37,99,235,0.06)" : "none",
+        background: isVerdict
+          ? "linear-gradient(90deg, rgba(37,99,235,0.03), rgba(16,185,129,0.03))"
+          : "transparent",
+      }}
+      onMouseEnter={(e) => {
+        if (!isVerdict) {
+          e.currentTarget.style.background = "rgba(37,99,235,0.02)";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isVerdict) {
+          e.currentTarget.style.background = "transparent";
+        }
+      }}
+    >
+      {/* Feature name - sticky */}
+      <td
+        className="px-5 py-4 text-xs font-semibold sticky left-0 z-10 transition-colors duration-300"
+        style={{
+          color: isVerdict ? "#0a0a0a" : "#334155",
+          background: isVerdict
+            ? "linear-gradient(90deg, rgba(37,99,235,0.06), rgba(255,255,255,0.95))"
+            : "rgba(255,255,255,0.95)",
+          backdropFilter: "blur(8px)",
+          borderRight: "1px solid rgba(37,99,235,0.06)",
+          fontWeight: isVerdict ? 700 : 600,
+        }}
+      >
+        {row.capability}
+      </td>
+
+      {/* Autoniv - highlighted */}
+      <td
+        className="px-5 py-4 text-xs font-medium transition-all duration-300"
+        style={{
+          background: "linear-gradient(135deg, rgba(37,99,235,0.04), rgba(16,185,129,0.03))",
+          color: row.autoniv.startsWith("✓") ? "#10B981" : row.autoniv.startsWith("✗") ? "#ef4444" : "#0a0a0a",
+          borderLeft: "2px solid rgba(16,185,129,0.2)",
+          borderRight: "2px solid rgba(16,185,129,0.2)",
+        }}
+      >
+        <CellValue value={row.autoniv} isAutoniv />
+      </td>
+
+      {/* Competitors */}
+      {competitors.map((c) => {
+        const val = row[c.key as keyof typeof row] as string;
+        const isWinner = val.startsWith("✓");
+        const isLoser = val.startsWith("✗");
+
+        return (
+          <td
+            key={c.key}
+            className="px-5 py-4 text-xs transition-colors duration-300"
+            style={{
+              color: isWinner ? "#10B981" : isLoser ? "#ef4444" : "#64748b",
+              background: "transparent",
+            }}
+          >
+            <CellValue value={val} />
+          </td>
+        );
+      })}
+    </motion.tr>
+  );
+}
+
+export function Comparison() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+
+  return (
+    <section id="comparison" className="section-box tint" style={{ background: "#f8fafc" }}>
+      {/* Background */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(37,99,235,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.03) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+          maskImage: "radial-gradient(ellipse 70% 50% at 50% 30%, black 40%, transparent 100%)",
+          WebkitMaskImage: "radial-gradient(ellipse 70% 50% at 50% 30%, black 40%, transparent 100%)",
+        }}
+      />
+
+      {/* Ambient orb */}
+      <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px]"
+        style={{ background: "radial-gradient(ellipse, rgba(34,197,94,0.05), transparent 70%)" }}
+      />
+
+      <div ref={ref} className="relative z-10 py-20 sm:py-28 px-4">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <MotionReveal variant="blurUp" className="text-center mb-14">
+            <span
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-[0.18em] uppercase mb-6"
+              style={{
+                color: "#10B981",
+                background: "rgba(16,185,129,0.06)",
+                border: "1px solid rgba(16,185,129,0.15)",
+              }}
+            >
+              <svg width="6" height="6" viewBox="0 0 6 6">
+                <circle cx="3" cy="3" r="3" fill="#10B981" />
+              </svg>
+              WHY AUTONIV
+            </span>
+            <h2
+              className="font-extrabold tracking-tight mt-4"
+              style={{ fontSize: "clamp(28px,4vw,48px)", color: "#0a0a0a" }}
+            >
+              Head-to-head{" "}
+              <span className="bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent">
+                comparison
+              </span>
             </h2>
-            <p style={{ color: "#475569", fontSize: 16, maxWidth: 520, margin: "0 auto" }}>We beat every competitor on every dimension. Real costs, real features — we did the math so you don't have to.</p>
-          </Reveal>
-          <Reveal>
-            <div className="overflow-x-auto" style={{ border: "1px solid rgba(34,197,94,0.16)", borderRadius: 20, background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)", boxShadow: "0 20px 40px -15px rgba(0,0,0,0.04)" }}>
+            <p className="text-sm sm:text-base max-w-lg mx-auto mt-3" style={{ color: "#64748b" }}>
+              We beat every competitor on every dimension. Real costs, real features — we did the math so you don't have to.
+            </p>
+          </MotionReveal>
+
+          {/* Table */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="relative rounded-3xl overflow-hidden"
+            style={{
+              background: "rgba(255,255,255,0.9)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(37,99,235,0.1)",
+              boxShadow: "0 24px 80px rgba(0,0,0,0.06), 0 0 0 1px rgba(37,99,235,0.04)",
+            }}
+          >
+            {/* Scroll hint for mobile */}
+            <div className="sm:hidden flex items-center gap-2 px-5 py-3 text-[11px] text-slate-400 font-medium"
+              style={{ borderBottom: "1px solid rgba(37,99,235,0.06)" }}
+            >
+              <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+              Swipe to see all competitors
+            </div>
+
+            <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse" style={{ minWidth: 900 }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(34,197,94,0.16)", background: "rgba(34,197,94,0.03)" }}>
-                    <th className="p-4 text-xs font-bold uppercase tracking-wider text-[#475569]" style={{ width: "18%" }}>Feature</th>
-                    <th className="p-4 text-xs font-bold uppercase tracking-wider text-[#15803d]" style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.06), rgba(16,185,129,0.06))", width: "14%" }}>Autoniv ✦</th>
+                  <tr
+                    style={{
+                      borderBottom: "2px solid rgba(37,99,235,0.1)",
+                      background: "linear-gradient(135deg, rgba(37,99,235,0.03), rgba(16,185,129,0.02))",
+                    }}
+                  >
+                    <th
+                      className="px-5 py-4 text-[11px] font-bold uppercase tracking-wider sticky left-0 z-20"
+                      style={{
+                        color: "#64748b",
+                        background: "rgba(255,255,255,0.95)",
+                        backdropFilter: "blur(8px)",
+                        borderRight: "1px solid rgba(37,99,235,0.06)",
+                        width: "18%",
+                      }}
+                    >
+                      Feature
+                    </th>
+                    <th
+                      className="px-5 py-4 text-[11px] font-bold uppercase tracking-wider"
+                      style={{
+                        color: "#10B981",
+                        background: "linear-gradient(135deg, rgba(37,99,235,0.04), rgba(16,185,129,0.04))",
+                        width: "14%",
+                        borderLeft: "2px solid rgba(16,185,129,0.2)",
+                        borderRight: "2px solid rgba(16,185,129,0.2)",
+                      }}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        Autoniv
+                        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                          BEST
+                        </span>
+                      </span>
+                    </th>
                     {competitors.map((c) => (
-                      <th key={c.key} className="p-4 text-xs font-bold uppercase tracking-wider text-[#64748b]" style={{ width: "13%" }}>{c.label}</th>
+                      <th
+                        key={c.key}
+                        className="px-5 py-4 text-[11px] font-bold uppercase tracking-wider"
+                        style={{ color: "#94a3b8", width: "13%" }}
+                      >
+                        {c.label}
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {COMPARISON.map((row, index) => (
-                    <tr key={index} style={{ borderBottom: index < COMPARISON.length - 1 ? "1px solid rgba(34,197,94,0.08)" : "none" }}>
-                      <td className="p-4 text-xs font-semibold" style={{ color: "#0a0a0a" }}>{row.capability}</td>
-                      <td className="p-4 text-xs font-medium" style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.04), rgba(16,185,129,0.04))", color: row.autoniv.startsWith("✓") ? "#15803d" : row.autoniv.startsWith("✗") ? "#ef4444" : "#0a0a0a" }}>
-                        {row.autoniv}
-                      </td>
-                      {competitors.map((c) => {
-                        const val = row[c.key as keyof typeof row] as string;
-                        return (
-                          <td key={c.key} className="p-4 text-xs" style={{ color: val.startsWith("✓") ? "#15803d" : val.startsWith("✗") ? "#ef4444" : "#475569" }}>
-                            {val}
-                          </td>
-                        );
-                      })}
-                    </tr>
+                    <ComparisonRow key={index} row={row} index={index} />
                   ))}
                 </tbody>
               </table>
             </div>
-          </Reveal>
+          </motion.div>
+
+          {/* Summary verdict */}
+          <MotionReveal variant="fadeUp" className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[
+              { icon: "💰", label: "Best Value", desc: "Flat pricing, no surprises" },
+              { icon: "🚀", label: "Fastest Setup", desc: "Live in under 24 hours" },
+              { icon: "🌍", label: "INR Native", desc: "India-first pricing" },
+              { icon: "🔒", label: "DPDP Compliant", desc: "Data privacy built-in" },
+              { icon: "📞", label: "WhatsApp Native", desc: "No add-on fees" },
+              { icon: "🎯", label: "No Seat Limits", desc: "Unlimited team access" },
+            ].map((item, i) => (
+              <div
+                key={i}
+                className="group relative rounded-2xl p-4 text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden cursor-default"
+                style={{
+                  background: "rgba(255,255,255,0.8)",
+                  border: "1px solid rgba(37,99,235,0.06)",
+                  backdropFilter: "blur(12px)",
+                }}
+              >
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                  style={{ background: "radial-gradient(circle at 50% 50%, rgba(16,185,129,0.04), transparent 70%)" }}
+                />
+                <div className="relative text-2xl mb-2">{item.icon}</div>
+                <div className="relative text-xs font-bold" style={{ color: "#0a0a0a" }}>{item.label}</div>
+                <div className="relative text-[10px] mt-1" style={{ color: "#94a3b8" }}>{item.desc}</div>
+              </div>
+            ))}
+          </MotionReveal>
         </div>
       </div>
     </section>
