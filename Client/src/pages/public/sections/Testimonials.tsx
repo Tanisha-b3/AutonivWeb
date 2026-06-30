@@ -98,9 +98,8 @@ export function Testimonials() {
                 transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 className="relative p-5 sm:p-8 lg:p-10 rounded-2xl sm:rounded-3xl"
                 style={{
-                  background: "linear-gradient(145deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))",
-                  border: "1px solid rgba(255,255,255,0.1)",
                   background: "linear-gradient(145deg, rgba(15,23,42,0.95), rgba(15,23,42,0.85))",
+                  border: "1px solid rgba(255,255,255,0.1)",
                   boxShadow: "0 32px 80px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05)",
                   transformStyle: "preserve-3d",
                 }}
