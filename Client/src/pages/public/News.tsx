@@ -5,6 +5,7 @@ import ScrollToTop from '../../components/ScrollToTop';
 import { USPSlider } from './sections/USPSlider';
 import { PublicNavbar } from '../../components/PublicNavbar';
 import { BRAND, INK, SLATE, MUTE, HAIRLINE, SURFACE, TINT, MONO, SANS, Reveal, SectionLabel, GradientText, StatCard, CTADecorations } from './design';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const NEWS_ARTICLES = [
   {
@@ -77,30 +78,45 @@ const TIMELINE = [
 function ArticleModal({ article, onClose }: { article: typeof NEWS_ARTICLES[0] | null; onClose: () => void }) {
   if (!article) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose} style={{ animation: 'fadeIn 0.2s ease' }}>
-      <div className="rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}
-        style={{ background: SURFACE, boxShadow: '0 32px 64px -16px rgba(15,23,42,0.24)', animation: 'slideUp 0.3s ease' }}>
-        <div className="sticky top-0 px-6 py-4 flex items-center justify-between z-10" style={{ background: SURFACE, borderBottom: `1px solid ${HAIRLINE}` }}>
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">{article.emoji}</span>
-            <span className="text-xs font-medium" style={{ color: MUTE }}>{article.category}</span>
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          className="rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+          onClick={e => e.stopPropagation()}
+          style={{ background: SURFACE, boxShadow: '0 32px 64px -16px rgba(15,23,42,0.24)' }}
+        >
+          <div className="sticky top-0 px-6 py-4 flex items-center justify-between z-10" style={{ background: SURFACE, borderBottom: `1px solid ${HAIRLINE}` }}>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{article.emoji}</span>
+              <span className="text-xs font-medium" style={{ color: MUTE }}>{article.category}</span>
+            </div>
+            <button onClick={onClose} className="p-2 rounded-full transition-colors" style={{ color: MUTE, background: 'none', border: 'none', cursor: 'pointer' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(15,23,42,0.05)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full transition-colors" style={{ color: MUTE, background: 'none', border: 'none', cursor: 'pointer' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(15,23,42,0.05)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}>
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-        </div>
-        <div className="p-6 sm:p-8">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-xs font-medium" style={{ color: SLATE }}>{article.date}</span>
-            <span style={{ color: MUTE }}>•</span>
-            <span className="text-xs font-medium" style={{ color: SLATE }}>{article.readTime}</span>
+          <div className="p-6 sm:p-8">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-xs font-medium" style={{ color: SLATE }}>{article.date}</span>
+              <span style={{ color: MUTE }}>•</span>
+              <span className="text-xs font-medium" style={{ color: SLATE }}>{article.readTime}</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4" style={{ color: INK }}>{article.title}</h2>
+            <p className="text-sm leading-relaxed" style={{ color: SLATE }}>{article.fullContent}</p>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4" style={{ color: INK }}>{article.title}</h2>
-          <p className="text-sm leading-relaxed" style={{ color: SLATE }}>{article.fullContent}</p>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
@@ -159,13 +175,25 @@ export function News() {
               </Reveal>
               {NEWS_ARTICLES.filter(a => a.featured).map((art) => (
                 <Reveal key={art.title} delay={80}>
-                  <div className="group rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 bg-white border" style={{ borderColor: HAIRLINE, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                    whileHover={{ y: -4, boxShadow: '0 24px 48px -12px rgba(15,23,42,0.12)' }}
+                    className="group rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 bg-white border"
+                    style={{ borderColor: HAIRLINE, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}
                     onClick={() => setSelectedArticle(art)}
-                    onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 24px 48px -12px rgba(15,23,42,0.12)'; e.currentTarget.style.borderColor = 'rgba(37,99,235,0.2)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.02)'; e.currentTarget.style.borderColor = HAIRLINE; }}>
+                  >
                     <div className="grid grid-cols-1 md:grid-cols-2">
                       <div className="h-40 sm:h-56 md:h-auto flex items-center justify-center p-8 border-b md:border-b-0 md:border-r" style={{ background: TINT, borderColor: HAIRLINE }}>
-                        <span className="text-5xl sm:text-7xl md:text-8xl transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">{art.emoji}</span>
+                        <motion.span
+                          className="text-5xl sm:text-7xl md:text-8xl"
+                          whileHover={{ scale: 1.1, rotate: 3 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          {art.emoji}
+                        </motion.span>
                       </div>
                       <div className="p-6 sm:p-8 flex flex-col justify-center">
                         <div className="flex flex-wrap items-center gap-3 mb-3">
@@ -183,7 +211,7 @@ export function News() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 </Reveal>
               ))}
             </div>
@@ -202,13 +230,26 @@ export function News() {
               </Reveal>
               <Reveal delay={80}>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {NEWS_ARTICLES.filter(a => !a.featured).map((art) => (
-                    <div key={art.title} className="group rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 bg-white border" style={{ borderColor: HAIRLINE, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}
+                  {NEWS_ARTICLES.filter(a => !a.featured).map((art, i) => (
+                    <motion.div
+                      key={art.title}
+                      initial={{ opacity: 0, y: 24 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                      whileHover={{ y: -6, boxShadow: '0 12px 32px -8px rgba(15,23,42,0.10)' }}
+                      className="group rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 bg-white border"
+                      style={{ borderColor: HAIRLINE, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}
                       onClick={() => setSelectedArticle(art)}
-                      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 12px 32px -8px rgba(15,23,42,0.10)'; e.currentTarget.style.borderColor = 'rgba(37,99,235,0.2)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.02)'; e.currentTarget.style.borderColor = HAIRLINE; }}>
+                    >
                       <div className="h-28 sm:h-40 flex items-center justify-center" style={{ background: TINT, borderBottom: `1px solid ${HAIRLINE}` }}>
-                        <span className="text-4xl sm:text-5xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">{art.emoji}</span>
+                        <motion.span
+                          className="text-4xl sm:text-5xl"
+                          whileHover={{ scale: 1.1, rotate: 6 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          {art.emoji}
+                        </motion.span>
                       </div>
                       <div className="p-5 sm:p-6">
                         <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -222,7 +263,7 @@ export function News() {
                           <span className="text-sm font-medium transition-all group-hover:translate-x-1" style={{ color: '#2563EB' }}>Read More →</span>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </Reveal>
@@ -242,15 +283,27 @@ export function News() {
               </Reveal>
               <Reveal delay={80}>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {CATEGORIES.map((cat) => (
-                    <div key={cat.name} className="group rounded-2xl p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1 bg-white border cursor-pointer"
+                  {CATEGORIES.map((cat, i) => (
+                    <motion.div
+                      key={cat.name}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                      whileHover={{ y: -4, boxShadow: '0 8px 24px -8px rgba(37,99,235,0.12)' }}
+                      className="group rounded-2xl p-5 sm:p-6 transition-all duration-300 bg-white border cursor-pointer"
                       style={{ borderColor: HAIRLINE }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(37,99,235,0.18)'; e.currentTarget.style.boxShadow = '0 8px 24px -8px rgba(37,99,235,0.12)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = HAIRLINE; e.currentTarget.style.boxShadow = 'none'; }}>
-                      <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">{cat.icon}</div>
+                    >
+                      <motion.div
+                        className="text-3xl mb-3"
+                        whileHover={{ scale: 1.1 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {cat.icon}
+                      </motion.div>
                       <div className="text-sm font-bold mb-1" style={{ color: INK }}>{cat.name}</div>
                       <div className="text-xs" style={{ color: MUTE }}>{cat.count} articles</div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </Reveal>
@@ -271,9 +324,23 @@ export function News() {
               <Reveal delay={80}>
                 <div className="max-w-3xl mx-auto bg-slate-50/50 border border-slate-100/80 rounded-2xl p-6 sm:p-8">
                   {TIMELINE.map((item, i) => (
-                    <div key={i} className="flex gap-4 sm:gap-6" style={{ marginBottom: i < TIMELINE.length - 1 ? 24 : 0 }}>
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                      className="flex gap-4 sm:gap-6"
+                      style={{ marginBottom: i < TIMELINE.length - 1 ? 24 : 0 }}
+                    >
                       <div className="flex flex-col items-center">
-                        <div style={{ width: 14, height: 14, borderRadius: '50%', flexShrink: 0, background: BRAND, boxShadow: '0 0 0 3px rgba(37,99,235,0.12)' }} />
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          whileInView={{ scale: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.4, delay: i * 0.1 + 0.2, type: 'spring', stiffness: 200 }}
+                          style={{ width: 14, height: 14, borderRadius: '50%', flexShrink: 0, background: BRAND, boxShadow: '0 0 0 3px rgba(37,99,235,0.12)' }}
+                        />
                         {i < TIMELINE.length - 1 && <div className="w-px flex-1 mt-2" style={{ background: HAIRLINE }} />}
                       </div>
                       <div style={{ paddingBottom: i < TIMELINE.length - 1 ? 24 : 0 }}>
@@ -281,7 +348,7 @@ export function News() {
                         <div className="text-sm font-bold mb-1" style={{ color: INK }}>{item.title}</div>
                         <div className="text-xs" style={{ color: SLATE }}>{item.desc}</div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </Reveal>

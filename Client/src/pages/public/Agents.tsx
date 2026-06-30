@@ -90,19 +90,21 @@ function Hero() {
             qualify leads, and drive conversions — across every channel.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link to="/register"
-              className="px-8 py-3.5 rounded-full text-sm font-bold text-white no-underline text-center transition-all duration-200"
-              style={{ background: BRAND, boxShadow: '0 8px 26px -4px rgba(16,185,129,0.34)' }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 32px -4px rgba(16,185,129,0.44)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 26px -4px rgba(16,185,129,0.34)'; }}>
-              Book a Free Demo →
-            </Link>
-            <button className="px-8 py-3.5 rounded-full text-sm font-bold text-center transition-all duration-200"
-              style={{ background: SURFACE, border: '1.5px solid rgba(15,23,42,0.10)', color: '#475569', cursor: 'pointer' }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(37,99,235,0.32)'; e.currentTarget.style.color = '#2563EB'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(15,23,42,0.10)'; e.currentTarget.style.color = '#475569'; }}>
-              ▶ See How It Works
-            </button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link to="/register"
+                className="px-8 py-3.5 rounded-full text-sm font-bold text-white no-underline text-center transition-all duration-200"
+                style={{ background: BRAND, boxShadow: '0 8px 26px -4px rgba(16,185,129,0.34)' }}
+              >
+                Book a Free Demo →
+              </Link>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <button className="px-8 py-3.5 rounded-full text-sm font-bold text-center transition-all duration-200"
+                style={{ background: SURFACE, border: '1.5px solid rgba(15,23,42,0.10)', color: '#475569', cursor: 'pointer' }}
+              >
+                ▶ See How It Works
+              </button>
+            </motion.div>
           </div>
         </Reveal>
       </div>
@@ -114,10 +116,11 @@ function Hero() {
 function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: number }) {
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 35 }}
+      initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.6, delay: index * 0.15, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.7, delay: index * 0.15, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -8 }}
       className="rounded-2xl p-8 h-full flex flex-col justify-between border relative overflow-hidden bg-white"
       style={{ 
         borderColor: '#e2e8f0',
@@ -125,32 +128,45 @@ function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: n
       }}
     >
       {/* Subtle blue decoration */}
-      <div 
+      <motion.div 
         className="absolute -top-32 -right-32 w-96 h-96 rounded-full blur-[100px] pointer-events-none opacity-30"
+        initial={{ scale: 0.8, opacity: 0 }}
+        whileInView={{ scale: 1, opacity: 0.3 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1, delay: 0.3 }}
         style={{
           background: `radial-gradient(circle, ${service.color}10 0%, rgba(37,99,235,0.04) 50%, transparent 70%)`,
         }}
       />
 
       {/* Left accent bar */}
-      <div 
+      <motion.div 
         className="absolute top-12 bottom-12 left-0 w-1 rounded-r-full"
+        initial={{ scaleY: 0 }}
+        whileInView={{ scaleY: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
         style={{
           background: `linear-gradient(180deg, ${service.color}, rgba(37,99,235,0.3))`,
-          opacity: 0.4
+          opacity: 0.4,
+          transformOrigin: 'top'
         }}
       />
 
       <div>
         {/* Header */}
         <div className="flex items-start gap-4 mb-6 relative z-10">
-          <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
+          <motion.div 
+            whileHover={{ scale: 1.1, rotate: -5 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+            className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
             style={{ 
               background: '#f8faff', 
               border: '1px solid #e2e8f0',
-            }}>
+            }}
+          >
             {service.icon}
-          </div>
+          </motion.div>
           <div className="flex-1">
             <h3 className="text-lg font-bold text-gray-900 leading-tight">{service.title}</h3>
             <div className="flex items-center gap-2 mt-1.5">
@@ -171,9 +187,13 @@ function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: n
 
         {/* Metrics */}
         <div className="grid grid-cols-3 gap-3 mb-6 relative z-10">
-          {service.metrics.map((metric) => (
-            <div 
-              key={metric.label} 
+          {service.metrics.map((metric, i) => (
+            <motion.div 
+              key={metric.label}
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.5 + i * 0.1 }}
               className="text-center p-3 rounded-xl border"
               style={{ 
                 background: '#fafcff', 
@@ -182,7 +202,7 @@ function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: n
             >
               <div className="text-lg font-bold font-mono tracking-tight" style={{ color: service.color }}>{metric.value}</div>
               <div className="text-[9px] font-medium uppercase tracking-wider text-gray-400 mt-0.5">{metric.label}</div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
@@ -192,9 +212,13 @@ function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: n
             What's included
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {service.features.map((f) => (
-              <span 
-                key={f} 
+            {service.features.map((f, i) => (
+              <motion.span 
+                key={f}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.3, delay: 0.6 + i * 0.05 }}
                 className="px-3 py-1.5 rounded-lg text-[11px] font-medium border flex items-center gap-1.5"
                 style={{ 
                   background: '#fafcff',
@@ -203,7 +227,7 @@ function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: n
                 }}
               >
                 <span style={{ color: service.color, fontSize: 8 }}>●</span> {f}
-              </span>
+              </motion.span>
             ))}
           </div>
         </div>
@@ -214,9 +238,13 @@ function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: n
             Best for
           </div>
           <div className="space-y-2">
-            {service.useCases.map((useCase) => (
-              <div 
-                key={useCase.title} 
+            {service.useCases.map((useCase, i) => (
+              <motion.div 
+                key={useCase.title}
+                initial={{ opacity: 0, x: -10 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: 0.7 + i * 0.1 }}
                 className="flex items-start gap-3 p-2.5 rounded-xl border"
                 style={{ 
                   background: 'transparent',
@@ -228,7 +256,7 @@ function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: n
                   <div className="text-xs font-semibold text-gray-800">{useCase.title}</div>
                   <div className="text-[11px] text-gray-500 mt-0.5 leading-snug">{useCase.desc}</div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -237,21 +265,23 @@ function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: n
       <div className="h-px mb-5 bg-gradient-to-r from-blue-200/40 via-blue-300/20 to-transparent" />
       
       {/* CTA */}
-      <Link to="/register" 
-        className="text-sm font-semibold flex items-center justify-center gap-2 py-3 px-6 rounded-xl no-underline cursor-pointer"
-        style={{ 
-          background: '#f8faff',
-          border: '1.5px solid #e2e8f0',
-          color: '#2563EB',
-        }}
-      >
-        <span className="flex items-center gap-2">
-          Get Started 
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-          </svg>
-        </span>
-      </Link>
+      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+        <Link to="/register" 
+          className="text-sm font-semibold flex items-center justify-center gap-2 py-3 px-6 rounded-xl no-underline cursor-pointer"
+          style={{ 
+            background: '#f8faff',
+            border: '1.5px solid #e2e8f0',
+            color: '#2563EB',
+          }}
+        >
+          <span className="flex items-center gap-2">
+            Get Started 
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </span>
+        </Link>
+      </motion.div>
     </motion.div>
   );
 }
@@ -610,7 +640,7 @@ export function Agents() {
           </section>
 
           {/* ── Pricing Section ── */}
-          <PricingSection openAuth={() => window.location.href = '/register'} />
+          <PricingSection />
 
           {/* ── Trusted Brands ── */}
           <section className="section-box white">

@@ -51,9 +51,12 @@ export const CHAT_ADDONS = [
 ];
 
 export const testimonials = [
-  { name: "Sarah Chen", role: "CEO, HealthFirst Clinic", quote: "Autoniv transformed our patient intake. We handle 3× more calls with the same staff.", initials: "SC", metric: "+40% leads" },
-  { name: "Marcus Johnson", role: "Director, BrightHome Services", quote: "The AI receptionist never sleeps. Our leads increased by 40% in the first month alone.", initials: "MJ", metric: "3× capacity" },
-  { name: "Emily Rodriguez", role: "VP Operations, FastTrack Auto", quote: "Setup was instant. The AI sounds so natural, customers don't know it's not human.", initials: "ER", metric: "2min setup" },
+  { name: "Sarah Chen", role: "CEO, HealthFirst Clinic", quote: "Autoniv transformed our patient intake. We handle 3× more calls with the same staff. The AI books appointments and answers patient queries flawlessly.", initials: "SC", metric: "+40% leads", industry: "Healthcare", avatar: "#2563EB", photo: "https://i.pravatar.cc/150?img=32" },
+  { name: "Marcus Johnson", role: "Director, BrightHome Services", quote: "The AI receptionist never sleeps. Our leads increased by 40% in the first month alone. It qualifies prospects before our team even wakes up.", initials: "MJ", metric: "3× capacity", industry: "Real Estate", avatar: "#10B981", photo: "https://i.pravatar.cc/150?img=11" },
+  { name: "Emily Rodriguez", role: "VP Operations, FastTrack Auto", quote: "Setup was instant. The AI sounds so natural, customers don't know it's not human. Our call handling cost dropped by 60%.", initials: "ER", metric: "2min setup", industry: "Automotive", avatar: "#8b5cf6", photo: "https://i.pravatar.cc/150?img=5" },
+  { name: "Rajesh Patel", role: "Founder, FinServe Capital", quote: "We replaced 3 full-time agents with Autoniv. The AI handles loan inquiries 24/7 and our conversion rate went up 35%.", initials: "RP", metric: "-60% costs", industry: "Finance", avatar: "#f59e0b", photo: "https://i.pravatar.cc/150?img=12" },
+  { name: "Priya Sharma", role: "COO, EduLearn India", quote: "Admissions inquiries used to overwhelm our team. Now Autoniv handles 80% of them automatically. We enrolled 2× more students.", initials: "PS", metric: "2× enrollment", industry: "Education", avatar: "#ec4899", photo: "https://i.pravatar.cc/150?img=9" },
+  { name: "James Wilson", role: "Head of CX, TravelHub", quote: "Our booking conversion jumped 55% after deploying Autoniv. Guests love the instant response — no more waiting on hold.", initials: "JW", metric: "+55% bookings", industry: "Travel", avatar: "#06b6d4", photo: "https://i.pravatar.cc/150?img=7" },
 ];
 
 export const useCases = [

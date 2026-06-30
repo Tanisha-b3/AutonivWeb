@@ -232,10 +232,11 @@ function StudyCard({ study, index }: { study: any; index: number }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.08 }}
+      transition={{ duration: 0.6, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -6 }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className="rounded-2xl overflow-hidden flex flex-col border transition-all duration-300"
@@ -245,33 +246,44 @@ function StudyCard({ study, index }: { study: any; index: number }) {
         boxShadow: hovered
           ? `0 20px 50px -12px ${study.badgeColor}18, 0 0 0 1px ${study.badgeColor}12`
           : '0 4px 20px rgba(0,0,0,0.04)',
-        transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
       }}
     >
       {/* Top accent bar */}
-      <div style={{ height: 3, background: `linear-gradient(90deg, ${study.badgeColor}, ${study.badgeColor}44)` }} />
+      <motion.div
+        initial={{ scaleX: 0 }}
+        whileInView={{ scaleX: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, delay: index * 0.1 + 0.2, ease: [0.22, 1, 0.36, 1] }}
+        style={{ height: 3, background: `linear-gradient(90deg, ${study.badgeColor}, ${study.badgeColor}44)`, transformOrigin: 'left' }}
+      />
 
       <div className="p-6 sm:p-7 flex flex-col flex-1">
         {/* Header */}
         <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div
+            <motion.div
+              whileHover={{ scale: 1.1, rotate: -5 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 15 }}
               className="w-11 h-11 rounded-xl flex items-center justify-center text-xl"
               style={{ background: `${study.badgeColor}10`, border: `1px solid ${study.badgeColor}18` }}
             >
               {study.icon}
-            </div>
+            </motion.div>
             <div>
               <h3 className="text-sm font-bold text-slate-800">{study.category}</h3>
               <p className="text-[11px] text-slate-400 mt-0.5">{study.subcategory}</p>
             </div>
           </div>
-          <div
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            whileInView={{ scale: 1, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: index * 0.1 + 0.3, type: 'spring', stiffness: 200 }}
             className="px-3 py-1.5 rounded-lg text-sm font-black"
             style={{ color: study.badgeColor, background: `${study.badgeColor}10` }}
           >
             {study.metric}
-          </div>
+          </motion.div>
         </div>
 
         {/* Challenge */}
@@ -282,15 +294,19 @@ function StudyCard({ study, index }: { study: any; index: number }) {
         {/* Solutions */}
         <div className="mb-5">
           <div className="flex flex-wrap gap-2">
-            {study.solutions.map((s: any) => (
-              <span
+            {study.solutions.map((s: any, i: number) => (
+              <motion.span
                 key={s.label}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.3, delay: index * 0.1 + 0.4 + i * 0.05 }}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600"
                 style={{ background: 'rgba(37,99,235,0.04)', border: '1px solid rgba(37,99,235,0.08)' }}
               >
                 <span>{s.icon}</span>
                 <span>{s.label}</span>
-              </span>
+              </motion.span>
             ))}
           </div>
         </div>
@@ -299,26 +315,35 @@ function StudyCard({ study, index }: { study: any; index: number }) {
 
         {/* Results */}
         <div className="grid grid-cols-3 gap-3 mb-6">
-          {study.results.map((r: any) => (
-            <div key={r.label} className="text-center">
+          {study.results.map((r: any, i: number) => (
+            <motion.div
+              key={r.label}
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: index * 0.1 + 0.5 + i * 0.1 }}
+              className="text-center"
+            >
               <div className="text-lg font-black font-mono tracking-tight" style={{ color: r.color }}>{r.value}</div>
               <div className="text-[10px] text-slate-400 font-medium mt-0.5 leading-tight">{r.label}</div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
         {/* CTA */}
-        <Link
-          to={`/case-studies/${index}`}
-          className="mt-auto w-full py-3 rounded-xl text-sm font-bold text-center transition-all duration-200 no-underline"
-          style={{
-            color: hovered ? '#ffffff' : study.badgeColor,
-            background: hovered ? study.badgeColor : `${study.badgeColor}08`,
-            border: `1px solid ${hovered ? study.badgeColor : `${study.badgeColor}20`}`,
-          }}
-        >
-          Read Full Story →
-        </Link>
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <Link
+            to={`/case-studies/${index}`}
+            className="mt-auto w-full py-3 rounded-xl text-sm font-bold text-center transition-all duration-200 no-underline block"
+            style={{
+              color: hovered ? '#ffffff' : study.badgeColor,
+              background: hovered ? study.badgeColor : `${study.badgeColor}08`,
+              border: `1px solid ${hovered ? study.badgeColor : `${study.badgeColor}20`}`,
+            }}
+          >
+            Read Full Story →
+          </Link>
+        </motion.div>
       </div>
     </motion.div>
   );

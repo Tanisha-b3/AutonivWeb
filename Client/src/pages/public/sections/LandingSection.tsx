@@ -64,19 +64,20 @@ export function LandingSection() {
             <Blog />
           </Suspense>
           <Suspense fallback={null}>
-            <Pricing openAuth={openAuth} />
+            <Pricing />
           </Suspense>
           <Suspense fallback={null}>
             <Contact />
           </Suspense>
-          <Suspense fallback={null}>
-            <CTABanner openAuth={openAuth} />
-          </Suspense>
+          
           <Suspense fallback={null}>
             <Testimonials />
           </Suspense>
           <Suspense fallback={null}>
             <FAQ />
+          </Suspense>
+          <Suspense fallback={null}>
+            <CTABanner openAuth={openAuth} />
           </Suspense>
         </div>
       </div>
