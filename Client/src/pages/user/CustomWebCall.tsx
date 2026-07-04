@@ -117,9 +117,9 @@ export function CustomWebCall() {
       // hue by state: brand blue when live, amber while connecting, dim slate at rest
       const trace =
         callStatus === 'speaking' ? '#60A5FA' :
-        callStatus === 'listening' ? '#2563EB' :
-        callStatus === 'connecting' ? '#F2A93B' :
-        '#3A3F47';
+          callStatus === 'listening' ? '#2563EB' :
+            callStatus === 'connecting' ? '#F2A93B' :
+              '#3A3F47';
 
       const drawWave = (offset: number, opacity: number, lineWidth: number, speedMult: number, ampMult: number) => {
         ctx.beginPath();
@@ -758,10 +758,10 @@ export function CustomWebCall() {
                       borderColor: 'var(--cs-panel)',
                       background:
                         callStatus === 'speaking' || callStatus === 'listening' ? 'var(--cs-green)' :
-                        callStatus === 'connecting' ? 'var(--cs-amber)' : 'var(--cs-text-faint)',
+                          callStatus === 'connecting' ? 'var(--cs-amber)' : 'var(--cs-text-faint)',
                       boxShadow:
                         callStatus === 'speaking' || callStatus === 'listening' ? '0 0 10px var(--cs-green)' :
-                        callStatus === 'connecting' ? '0 0 10px var(--cs-amber)' : 'none',
+                          callStatus === 'connecting' ? '0 0 10px var(--cs-amber)' : 'none',
                     }}
                   />
                 </div>
@@ -941,13 +941,12 @@ export function CustomWebCall() {
                         key={idx}
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className={`flex flex-col max-w-[85%] ${
-                          log.role === 'system'
+                        className={`flex flex-col max-w-[85%] ${log.role === 'system'
                             ? 'mx-auto w-full items-center text-center'
                             : log.role === 'caller'
-                            ? 'ml-auto items-end'
-                            : 'mr-auto items-start'
-                        }`}
+                              ? 'ml-auto items-end'
+                              : 'mr-auto items-start'
+                          }`}
                       >
                         {log.role === 'system' ? (
                           <div className="mono px-3.5 py-1.5 rounded-full text-[9px] font-semibold" style={{ background: 'var(--cs-panel-raised)', border: '1px solid var(--cs-border)', color: 'var(--cs-text-dim)' }}>

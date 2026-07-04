@@ -286,21 +286,38 @@ export async function executeTool(name, args, ctx) {
         if ((leadName && containsAbuse(leadName)) || (reason && containsAbuse(reason))) {
           return { success: false, error: 'Content policy violation' };
         }
-        // Collect lead data — will be saved when conversation ends
+
         const sanitizedPurpose = isUnknown(reason) ? 'General inquiry' : sanitizeText(safeString(reason, 500));
-        toolState.pendingLeadData = {
+        const safePhone = phone ? safeString(phone, 30) : null;
+
+        // Dedup: check if lead already exists for this call/phone
+        const existing = await Lead.findOne({
+          agentId: agentObj._id,
+          $or: [
+            ...(callId ? [{ callId }] : []),
+            ...(safePhone ? [{ phone: safePhone }] : [])
+          ]
+        }).lean();
+
+        if (existing) {
+          toolState.saveLead = true;
+          return { success: true, message: 'Lead already saved', leadId: existing._id };
+        }
+
+        const lead = await Lead.create({
           agentId: agentObj._id,
           callId: callId || null,
           userId,
           name: leadName ? sanitizeText(safeString(leadName, 200)) : null,
-          phone: phone ? safeString(phone, 30) : null,
+          phone: safePhone,
           email: pick(args, 'email') ? safeString(args.email, 254) : null,
           purpose: sanitizedPurpose,
           leadType: 'call',
-        };
+        });
+
         toolState.saveLead = true;
-        log.info('orchestrator_lead_collected', { name: toolState.pendingLeadData.name, phone: toolState.pendingLeadData.phone });
-        return { success: true, message: 'Lead data collected' };
+        log.info('orchestrator_lead_saved_immediately', { leadId: lead._id, name: lead.name, phone: lead.phone });
+        return { success: true, message: 'Lead saved successfully', leadId: lead._id };
       }
 
       case 'checkAppointmentAvailability': {
@@ -377,6 +394,34 @@ export async function executeTool(name, args, ctx) {
         });
         toolState.saveAppointment = true;
         log.info('orchestrator_appointment_saved', { appointmentId: appt._id });
+
+        // Also save as lead if not already saved
+        try {
+          const existingLead = await Lead.findOne({
+            agentId: agentObj._id,
+            $or: [
+              ...(callId ? [{ callId }] : []),
+              ...(safePhone ? [{ phone: safePhone }] : [])
+            ]
+          }).lean();
+
+          if (!existingLead && safePhone) {
+            await Lead.create({
+              agentId: agentObj._id,
+              callId: callId || null,
+              userId,
+              name: customerName ? sanitizeText(safeString(customerName, 200)) : null,
+              phone: safePhone,
+              email: pick(args, 'email') ? safeString(args.email, 254) : null,
+              purpose: sanitizedService || 'Appointment booking',
+              leadType: 'call',
+            });
+            log.info('orchestrator_lead_auto_saved_from_appointment', { phone: safePhone, callId });
+          }
+        } catch (leadErr) {
+          log.error('orchestrator_lead_auto_save_failed', { error: leadErr.message });
+        }
+
         return {
           success: true,
           appointmentId: shortRef(appt._id),
