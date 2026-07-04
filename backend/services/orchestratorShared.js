@@ -428,10 +428,20 @@ export async function closeAndCleanup({ callSid, agentObj, callStartTime, fullTr
       }
     }
 
-    // Save pending lead data when conversation ends
+    // Save pending lead data when conversation ends (only if not already saved during the call)
     if (pendingLeadData && (pendingLeadData.name || pendingLeadData.phone)) {
-      const lead = await Lead.create(pendingLeadData);
-      console.log(`[Lead] Saved lead ${lead._id} for agent ${pendingLeadData.agentId}`);
+      const existingLead = await Lead.findOne({
+        agentId: pendingLeadData.agentId,
+        $or: [
+          ...(pendingLeadData.callId ? [{ callId: pendingLeadData.callId }] : []),
+          ...(pendingLeadData.phone ? [{ phone: pendingLeadData.phone }] : [])
+        ]
+      }).lean();
+
+      if (!existingLead) {
+        const lead = await Lead.create(pendingLeadData);
+        console.log(`[Lead] Saved lead ${lead._id} for agent ${pendingLeadData.agentId}`);
+      }
     }
   } catch (dbErr) {
     console.error('[Close Cleanup Error]', dbErr.message);
