@@ -126,7 +126,7 @@ const APPOINTMENT_TOOLS = [
         type: 'object',
         properties: {
           provider: { type: 'string', description: 'preferred staff member (dentist/doctor/stylist), optional' },
-          date: { type: 'string', description: 'preferred date as stated by the caller' },
+          date: { type: 'string', description: 'preferred date as stated by the caller (e.g. 2026-08-15)' },
           time: { type: 'string', description: 'preferred time, e.g. "4:30 PM"' },
         },
         required: ['date'],
@@ -147,7 +147,7 @@ const APPOINTMENT_TOOLS = [
           patientType: { type: 'string', description: 'new or existing customer/patient' },
           reason: { type: 'string', description: 'reason for visit / service' },
           provider: { type: 'string', description: 'preferred staff member (dentist/doctor/stylist), optional' },
-          date: { type: 'string', description: 'The confirmed appointment date (e.g. 2024-03-16)' },
+          date: { type: 'string', description: 'The confirmed appointment date (e.g. 2026-08-15)' },
           time: { type: 'string', description: 'The confirmed appointment time (e.g. 10:00 AM)' },
         },
         required: ['name', 'phone', 'date', 'time', 'reason'],
@@ -227,6 +227,24 @@ function pick(args, ...keys) {
     if (args[k] != null && String(args[k]).trim() !== '') return args[k];
   }
   return null;
+}
+
+function isPastDate(dateStr) {
+  if (!dateStr) return false;
+  try {
+    const parsedDate = new Date(dateStr);
+    if (isNaN(parsedDate.getTime())) return false;
+
+    // Set time to midnight for comparison
+    parsedDate.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return parsedDate < today;
+  } catch {
+    return false;
+  }
 }
 
 // shape an Appointment doc for the LLM (privacy-safe subset)
@@ -338,6 +356,11 @@ export async function executeTool(name, args, ctx) {
         const time = pick(args, 'time', 'preferredTime');
         const provider = pick(args, 'provider', 'dentist', 'doctor');
         const safeDate = date ? safeString(date, 50) : null;
+
+        if (isPastDate(safeDate)) {
+          return { success: false, error: `The requested date (${safeDate}) is in the past. Appointments must be scheduled for a future date.` };
+        }
+
         const result = await computeAvailability(userId, safeDate, time, provider ? safeString(provider, 100) : null);
         return { success: true, date: safeDate, requestedTime: time || null, ...result };
       }
@@ -368,6 +391,11 @@ export async function executeTool(name, args, ctx) {
 
         const safePhone = phone ? safeString(phone, 30) : null;
         const sanitizedService = service ? sanitizeText(safeString(service, 200)) : null;
+        const safeDate = date ? safeString(date, 50) : null;
+
+        if (isPastDate(safeDate)) {
+          return { success: false, error: `The requested date (${safeDate}) is in the past. Appointments must be scheduled for a future date.` };
+        }
 
         // Resolve mongoCallId to prevent BSON/Cast validation errors for Twilio callSids
         let mongoCallId = null;
@@ -412,7 +440,7 @@ export async function executeTool(name, args, ctx) {
           service: sanitizedService,
           provider: provider ? sanitizeText(safeString(provider, 100)) : null,
           patientType: patientType ? safeString(patientType, 50) : null,
-          preferredDate: date ? safeString(date, 50) : null,
+          preferredDate: safeDate,
           preferredTime: time ? safeString(time, 30) : null,
           status: 'pending',
         });

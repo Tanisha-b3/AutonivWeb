@@ -109,6 +109,10 @@ function interpolatePrompt(prompt, user) {
   result = result.replace(/\[EMAIL\]/g, email);
   result = result.replace(/\[OWNER NAME\]/g, ownerName);
 
+  // Dynamically append the current date context so the agent always schedules in the future relative to today's date
+  const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  result = result + `\n\nCRITICAL CONTEXT: Today's date is ${todayStr}. Any appointment date requested by the caller (like "tomorrow" or "next Monday") must be computed relative to today's date. Never check or book appointments for past dates.`;
+
   return result;
 }
 
