@@ -155,6 +155,24 @@ export async function generateCompletion({ groq, openaiClient, gemini, conversat
   const slicedRecent = recentMessages.slice(startIndex);
   prunedHistory = prunedHistory.concat(slicedRecent);
 
+  // Normalize prunedHistory to ensure that every assistant tool call has a corresponding tool response
+  const activeToolCallIds = new Set(
+    prunedHistory.filter(m => m.role === 'tool').map(m => m.tool_call_id)
+  );
+
+  prunedHistory = prunedHistory.map(m => {
+    if (m.role === 'assistant' && m.tool_calls) {
+      const validCalls = m.tool_calls.filter(tc => activeToolCallIds.has(tc.id));
+      if (validCalls.length > 0) {
+        return { ...m, tool_calls: validCalls };
+      } else {
+        const { tool_calls, ...rest } = m;
+        return { ...rest, content: rest.content || 'Processing...' };
+      }
+    }
+    return m;
+  });
+
   const engineSelected = agentObj?.customEngineModel || 'groq:llama-3.3-70b';
   const [provider, modelId] = engineSelected.split(':');
 
