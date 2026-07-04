@@ -175,9 +175,13 @@ function handleTwilioStream(twilioWs, urlAgentId) {
 
   const processSentenceForPlay = async (sentence) => {
     if (isInterrupted) return;
-    const base64Audio = await synthesizeSpeech(sentence, true, agentObj?.language || 'en', agentObj?.voiceId);
-    if (base64Audio && !isInterrupted && twilioWs.readyState === WebSocket.OPEN && streamSid) {
-      twilioWs.send(JSON.stringify({ event: 'media', streamSid, media: { payload: base64Audio } }));
+    try {
+      const base64Audio = await synthesizeSpeech(sentence, true, agentObj?.language || 'en', agentObj?.voiceId);
+      if (base64Audio && !isInterrupted && twilioWs.readyState === WebSocket.OPEN && streamSid) {
+        twilioWs.send(JSON.stringify({ event: 'media', streamSid, media: { payload: base64Audio } }));
+      }
+    } catch (err) {
+      console.error('[Orchestrator TTS Error] Telephony TTS synthesis failed:', err.message);
     }
   };
 
@@ -384,14 +388,18 @@ async function handleWebCall(clientWs, req) {
 
   const processSentenceForPlay = async (sentence) => {
     if (isInterrupted) return;
-    const base64Audio = await synthesizeSpeech(sentence, false, agentObj.language || 'en', agentObj.voiceId);
-    if (base64Audio && !isInterrupted) {
-      const agentAudioBuffer = Buffer.from(base64Audio, 'base64');
-      recorder.writeAudio(agentAudioBuffer, Date.now(), 24000);
+    try {
+      const base64Audio = await synthesizeSpeech(sentence, false, agentObj.language || 'en', agentObj.voiceId);
+      if (base64Audio && !isInterrupted) {
+        const agentAudioBuffer = Buffer.from(base64Audio, 'base64');
+        recorder.writeAudio(agentAudioBuffer, Date.now(), 24000);
 
-      if (clientWs.readyState === WebSocket.OPEN) {
-        clientWs.send(JSON.stringify({ event: 'audio', payload: base64Audio }));
+        if (clientWs.readyState === WebSocket.OPEN) {
+          clientWs.send(JSON.stringify({ event: 'audio', payload: base64Audio }));
+        }
       }
+    } catch (err) {
+      console.error('[Orchestrator TTS Error] Web call TTS synthesis failed:', err.message);
     }
   };
 
