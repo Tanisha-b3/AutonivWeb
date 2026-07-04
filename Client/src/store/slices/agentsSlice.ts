@@ -85,6 +85,8 @@ export const updateAgent = createAsyncThunk(
       voiceId?: string;
       useCustomEngine?: boolean;
       customEngineModel?: string;
+      twilioAccountSid?: string;
+      twilioAuthToken?: string;
     };
   }) => {
     const res = await agentService.update(id, data);
@@ -121,8 +123,20 @@ export const updateAgentConfig = createAsyncThunk(
 
 export const assignPhone = createAsyncThunk(
   'agents/assignPhone',
-  async ({ id, phoneNumberId, phoneNumber }: { id: string; phoneNumberId: string; phoneNumber?: string }) => {
-    const res = await agentService.assignPhone(id, phoneNumberId, phoneNumber);
+  async ({
+    id,
+    phoneNumberId,
+    phoneNumber,
+    twilioAccountSid,
+    twilioAuthToken,
+  }: {
+    id: string;
+    phoneNumberId: string;
+    phoneNumber?: string;
+    twilioAccountSid?: string;
+    twilioAuthToken?: string;
+  }) => {
+    const res = await agentService.assignPhone(id, phoneNumberId, phoneNumber, twilioAccountSid, twilioAuthToken);
     return normalize(res.data.agent);
   }
 );

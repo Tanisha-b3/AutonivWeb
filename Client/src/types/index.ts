@@ -51,6 +51,8 @@ export interface Agent {
   updatedAt?: string;
   useCustomEngine?: boolean;
   customEngineModel?: string;
+  twilioAccountSid?: string;
+  twilioAuthToken?: string;
 }
 
 export interface Call {

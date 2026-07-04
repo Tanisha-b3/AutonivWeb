@@ -1087,11 +1087,11 @@ export function AdminAgents() {
         setFormData={setEditForm}
         onSubmit={handleEditSubmit}
         submitting={submitting}
-        onAssignPhone={async (phoneNumberId, phoneNumber) => {
+        onAssignPhone={async (phoneNumberId: string, phoneNumber?: string, twilioAccountSid?: string, twilioAuthToken?: string) => {
           if (!selectedAgent) return;
           try {
-            await dispatch(assignPhone({ id: selectedAgent.id, phoneNumberId, phoneNumber })).unwrap();
-            setSelectedAgent(prev => prev ? { ...prev, phoneNumberId, phoneNumber } : null);
+            await dispatch(assignPhone({ id: selectedAgent.id, phoneNumberId, phoneNumber, twilioAccountSid, twilioAuthToken })).unwrap();
+            setSelectedAgent(prev => prev ? { ...prev, phoneNumberId, phoneNumber, twilioAccountSid, twilioAuthToken } : null);
           } catch (err) {
             console.error(err);
           }
@@ -1100,7 +1100,7 @@ export function AdminAgents() {
           if (!selectedAgent) return;
           try {
             await dispatch(unlinkPhone({ id: selectedAgent.id })).unwrap();
-            setSelectedAgent(prev => prev ? { ...prev, phoneNumberId: undefined, phoneNumber: undefined } : null);
+            setSelectedAgent(prev => prev ? { ...prev, phoneNumberId: undefined, phoneNumber: undefined, twilioAccountSid: undefined, twilioAuthToken: undefined } : null);
           } catch (err) {
             console.error(err);
           }

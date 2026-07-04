@@ -273,6 +273,10 @@ export const agentService = {
     prompt?: string;
     language?: string;
     voiceId?: string;
+    useCustomEngine?: boolean;
+    customEngineModel?: string;
+    twilioAccountSid?: string;
+    twilioAuthToken?: string;
   }) => api.post('/agents', data),
 
   update: (id: string, data: {
@@ -282,6 +286,10 @@ export const agentService = {
     isActive: boolean;
     language?: string;
     voiceId?: string;
+    useCustomEngine?: boolean;
+    customEngineModel?: string;
+    twilioAccountSid?: string;
+    twilioAuthToken?: string;
   }) => api.put(`/agents/${id}`, data),
 
   toggleActive: (id: string, isActive: boolean) =>
@@ -289,8 +297,8 @@ export const agentService = {
 
   delete: (id: string) => api.delete(`/agents/${id}`),
 
-  assignPhone: (id: string, phoneNumberId: string, phoneNumber?: string) =>
-    api.post(`/agents/${id}/assign-phone`, { phoneNumberId, phoneNumber }),
+  assignPhone: (id: string, phoneNumberId: string, phoneNumber?: string, twilioAccountSid?: string, twilioAuthToken?: string) =>
+    api.post(`/agents/${id}/assign-phone`, { phoneNumberId, phoneNumber, twilioAccountSid, twilioAuthToken }),
 
   getPhoneNumbers: () =>
     api.get('/agents/phone-numbers'),

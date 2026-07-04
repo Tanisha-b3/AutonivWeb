@@ -253,7 +253,7 @@ export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, 
           style={{ borderColor: 'var(--border)' }}>
           {/* Phone badge */}
           <div>
-            {agent.phoneNumberId ? (
+            {(agent.phoneNumberId || agent.phoneNumber) ? (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[9.5px] font-extrabold uppercase tracking-wide border bg-emerald-50 border-emerald-200 text-emerald-700">
                 <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -288,7 +288,7 @@ export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, 
               </motion.button>
             )}
 
-            {onCallMe && agent.isActive && agent.phoneNumberId && (
+            {onCallMe && agent.isActive && (agent.phoneNumberId || agent.phoneNumber) && (
               <motion.button
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
