@@ -400,8 +400,8 @@ export async function deleteVapiPhoneNumber(phoneNumberId) {
 
 export async function assignAgentToPhone(phoneNumberId, assistantId) {
   if (!phoneNumberId) throw new Error('[vapi] assignAgentToPhone: phoneNumberId required');
-  if (!assistantId)   throw new Error('[vapi] assignAgentToPhone: assistantId required');
-  return updateVapiPhoneNumber(phoneNumberId, { assistantId });
+  // allow assistantId to be null or empty string to unlink the assistant from the phone number
+  return updateVapiPhoneNumber(phoneNumberId, { assistantId: assistantId || null });
 }
 
 export default {

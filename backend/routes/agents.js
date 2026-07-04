@@ -142,8 +142,8 @@ router.get('/my', async (req, res) => {
   }
 });
 
-// GET /agents/phone-numbers — admin only
-router.get('/phone-numbers', requireAdmin, async (req, res) => {
+// GET /agents/phone-numbers — authenticated users (allow users to link numbers)
+router.get('/phone-numbers', async (req, res) => {
   try {
     const phoneNumbers = await listVapiPhoneNumbers();
     res.json({ phoneNumbers });
@@ -153,7 +153,7 @@ router.get('/phone-numbers', requireAdmin, async (req, res) => {
   }
 });
 
-// POST /agents/phone-numbers — admin only
+// POST /agents/phone-numbers — admin only (to import new numbers)
 router.post('/phone-numbers', requireAdmin, async (req, res) => {
   try {
     const {
@@ -180,7 +180,26 @@ router.post('/phone-numbers', requireAdmin, async (req, res) => {
     res.status(201).json({ phoneNumber: result });
   } catch (err) {
     log.error('create_phone_number_error', { error: err.message, userId: req.user?.userId });
-    res.status(500).json({ message: `Failed to create phone number: ${err.message}` });
+    
+    // Parse Vapi error status and message
+    let status = 500;
+    let message = err.message;
+    if (err.message.includes('=>')) {
+      const parts = err.message.split('=>');
+      const codePart = parts[1].trim();
+      const codeMatch = codePart.match(/^(\d+):/);
+      if (codeMatch) {
+        status = parseInt(codeMatch[1], 10);
+        message = codePart.substring(codeMatch[0].length).trim();
+        try {
+          const parsed = JSON.parse(message);
+          if (parsed.message) {
+            message = Array.isArray(parsed.message) ? parsed.message.join(', ') : parsed.message;
+          }
+        } catch (_) {}
+      }
+    }
+    res.status(status).json({ message: `Failed to create phone number: ${message}` });
   }
 });
 
@@ -389,8 +408,8 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// POST /agents/:id/assign-phone — admin only
-router.post('/:id/assign-phone', requireAdmin, async (req, res) => {
+// POST /agents/:id/assign-phone — admin or agent owner
+router.post('/:id/assign-phone', async (req, res) => {
   try {
     const { id } = req.params;
     const { phoneNumberId, phoneNumber } = req.body;
@@ -399,18 +418,38 @@ router.post('/:id/assign-phone', requireAdmin, async (req, res) => {
       return res.status(400).json({ message: 'phoneNumberId is required' });
     }
 
-    if (phoneNumberId.startsWith('+') || /^\d+$/.test(phoneNumberId)) {
-      return res.status(400).json({
-        message: 'phoneNumberId must be a Vapi UUID (e.g. a1b2c3d4-…), not the phone number string',
-      });
-    }
-
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: 'Invalid agent ID' });
     }
 
     const agent = await Agent.findById(id).lean();
     if (!agent) return res.status(404).json({ message: 'Agent not found' });
+    
+    // Check ownership if not admin
+    if (!req.user.isAdmin && agent.userId.toString() !== req.user.userId) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const isDirectNumber = phoneNumberId.startsWith('+') || /^\d+$/.test(phoneNumberId);
+
+    if (isDirectNumber) {
+      // Direct Twilio phone number assignment (bypass Vapi)
+      const numberValue = phoneNumberId;
+      const updated = await Agent.findByIdAndUpdate(
+        id,
+        { phoneNumber: numberValue, $unset: { phoneNumberId: '' } },
+        { new: true }
+      ).lean();
+
+      return res.json({
+        agent: {
+          ...updated,
+          id: updated._id.toString(),
+          userId: updated.userId.toString(),
+        },
+      });
+    }
+
     if (!agent.vapiId) {
       return res.status(400).json({ message: 'Agent is not linked to Vapi yet' });
     }
@@ -439,8 +478,8 @@ router.post('/:id/assign-phone', requireAdmin, async (req, res) => {
   }
 });
 
-// POST /agents/:id/unlink-phone — admin only
-router.post('/:id/unlink-phone', requireAdmin, async (req, res) => {
+// POST /agents/:id/unlink-phone — admin or agent owner
+router.post('/:id/unlink-phone', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -450,6 +489,11 @@ router.post('/:id/unlink-phone', requireAdmin, async (req, res) => {
 
     const agent = await Agent.findById(id).lean();
     if (!agent) return res.status(404).json({ message: 'Agent not found' });
+
+    // Check ownership if not admin
+    if (!req.user.isAdmin && agent.userId.toString() !== req.user.userId) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
 
     if (!agent.phoneNumberId) {
       return res.status(400).json({ message: 'Agent has no phone number linked' });
