@@ -117,7 +117,7 @@ export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, 
 
       <div className="p-5">
         {/* Header */}
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
             {/* Icon orb */}
             <div className={`relative w-11 h-11 rounded-2xl bg-gradient-to-br ${config.gradient} flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-105 group-hover:rotate-2 flex-shrink-0`}>
@@ -249,10 +249,10 @@ export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, 
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-3.5 border-t gap-3"
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3.5 border-t gap-3"
           style={{ borderColor: 'var(--border)' }}>
           {/* Phone badge */}
-          <div>
+          <div className="flex-shrink-0">
             {(agent.phoneNumberId || agent.phoneNumber) ? (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[9.5px] font-extrabold uppercase tracking-wide border bg-emerald-50 border-emerald-200 text-emerald-700">
                 <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
@@ -272,7 +272,7 @@ export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, 
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
             {onWebCall && agent.isActive && (
               <motion.button
                 whileHover={{ scale: 1.04 }}
