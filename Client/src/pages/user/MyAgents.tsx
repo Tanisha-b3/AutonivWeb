@@ -1140,7 +1140,7 @@ export function MyAgents() {
 
           {agents.length > 0 && (
             <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-              {/* <button
+              <button
                 type="button"
                 onClick={openCreate}
                 disabled={atLimit}
@@ -1157,7 +1157,7 @@ export function MyAgents() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
                 {atLimit ? 'Capacity Reclaimed' : 'Create Vapi Agent'}
-              </button> */}
+              </button>
               {!atLimit && (
                 <button
                   type="button"
