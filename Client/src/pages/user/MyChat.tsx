@@ -455,8 +455,9 @@ export function MyChat() {
       {(() => {
         const used = user?.chatUsed ?? 0;
         const limit = user?.chatLimit ?? 0;
-        const pct = Math.min((used / (limit || 1)) * 100, 100);
-        const over = used >= limit;
+        const isUnlimited = limit === -1;
+        const over = !isUnlimited && used >= limit;
+        const pct = isUnlimited ? 0 : Math.min((used / (limit || 1)) * 100, 100);
         return (
           <motion.div
             initial={{ opacity: 0, y: -6 }}
@@ -474,13 +475,13 @@ export function MyChat() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
             <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>
-              {used}<span style={{ color: 'var(--text-muted)' }}>/{limit}</span>
+              {used}<span style={{ color: 'var(--text-muted)' }}>/{isUnlimited ? '∞' : limit}</span>
             </span>
             <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'var(--border)', overflow: 'hidden' }}>
-              <div style={{ width: `${pct}%`, height: '100%', borderRadius: 2, background: over ? '#ef4444' : 'var(--primary)', transition: 'width 0.4s' }} />
+              <div style={{ width: `${isUnlimited ? 100 : pct}%`, height: '100%', borderRadius: 2, background: over ? '#ef4444' : 'var(--primary)', transition: 'width 0.4s', opacity: isUnlimited ? 0.35 : 1 }} />
             </div>
             <span style={{ fontSize: 10, fontWeight: 500, color: over ? '#ef4444' : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-              {over ? 'Limit reached' : `${Math.round(pct)}% used`}
+              {isUnlimited ? 'Unlimited' : over ? 'Limit reached' : `${Math.round(pct)}% used`}
             </span>
             {over && (
               <button type="button" onClick={() => window.location.href = '/dashboard/billing'} style={{ fontSize: 10, fontWeight: 600, background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', padding: 0, textDecoration: 'underline', whiteSpace: 'nowrap' }}>

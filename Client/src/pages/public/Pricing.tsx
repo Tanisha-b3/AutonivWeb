@@ -588,26 +588,22 @@ export function Pricing() {
             <div key={pricingMode} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 items-stretch">
               {plans.map((plan, index) => (
                 <motion.div
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 40 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.6, delay: index * 0.12, ease: [0.22, 1, 0.36, 1] }}
                   key={plan.name}
-                  className="rounded-3xl p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden bg-slate-950/40 backdrop-blur-md border transition-all duration-300 hover:-translate-y-1.5 cursor-default group"
+                  className="rounded-3xl p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden bg-slate-950/30 backdrop-blur-xl border transition-all duration-500 hover:-translate-y-2 cursor-default group"
                   style={{
                     borderColor: plan.popular ? `${plan.checkColor}` : 'rgba(255, 255, 255, 0.06)',
-                    boxShadow: plan.popular ? `0 10px 30px -10px ${plan.checkColor}45` : 'none',
+                    boxShadow: plan.popular ? `0 15px 40px -12px ${plan.checkColor}50` : '0 4px 20px -4px rgba(0,0,0,0.3)',
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = `${plan.checkColor}40`;
-                    e.currentTarget.style.boxShadow = plan.popular 
-                      ? `0 20px 45px -10px ${plan.checkColor}60, 0 0 0 1px ${plan.checkColor}30` 
-                      : `0 20px 40px -10px rgba(0,0,0,0.4), 0 0 0 1px ${plan.checkColor}30`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = plan.popular ? `${plan.checkColor}` : 'rgba(255, 255, 255, 0.06)';
-                    e.currentTarget.style.boxShadow = plan.popular 
-                      ? `0 10px 30px -10px ${plan.checkColor}45` 
-                      : 'none';
+                  whileHover={{ 
+                    scale: 1.03,
+                    y: -8,
+                    boxShadow: plan.popular 
+                      ? `0 30px 60px -15px ${plan.checkColor}70, 0 0 0 2px ${plan.checkColor}40` 
+                      : `0 25px 50px -12px rgba(0,0,0,0.5), 0 0 0 2px ${plan.checkColor}30`,
+                    borderColor: plan.popular ? `${plan.checkColor}70` : `${plan.checkColor}40`
                   }}
                 >
                   {plan.popular && (
@@ -668,23 +664,31 @@ export function Pricing() {
                       {plan.features.map((feat) => (
                         <li
                           key={feat}
-                          className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-300"
+                          className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-300 group-hover-li"
                         >
-                          <svg
-                            className="w-4 h-4 flex-shrink-0 mt-0.5 transition-transform duration-300 group-hover:scale-110"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                          >
-                            <circle cx="8" cy="8" r="7" fill={`${plan.checkColor}18`} />
-                            <path
-                              d="M5 8l2 2 4-4"
-                              stroke={plan.checkColor}
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
+                          <div className="relative">
+                            <svg
+                              className="w-4 h-4 flex-shrink-0 mt-0.5 transition-all duration-300 group-hover:scale-125"
+                              viewBox="0 0 16 16"
+                              fill="none"
+                            >
+                              <circle cx="8" cy="8" r="7" fill={`${plan.checkColor}15`} stroke={`${plan.checkColor}40`} strokeWidth="0.5" />
+                              <path
+                                d="M5 8l2 2 4-4"
+                                stroke={plan.checkColor}
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="group-hover-li:check-icon"
+                              />
+                            </svg>
+                            {/* Enhanced check glow effect */}
+                            <div 
+                              className="absolute inset-0 rounded-full opacity-0 group-hover-li:feature-glow transition-opacity duration-300"
+                              style={{ boxShadow: `0 0 12px ${plan.checkColor}50` }}
                             />
-                          </svg>
-                          <span>{feat}</span>
+                          </div>
+                          <span className="group-hover-li:feat-text transition-colors duration-300">{feat}</span>
                         </li>
                       ))}
                     </ul>

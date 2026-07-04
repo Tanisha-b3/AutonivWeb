@@ -70,6 +70,13 @@ const FILTERS = [
   { value: 'failed', label: 'Failed' },
 ];
 
+const RECORDING_FILTERS = [
+  { value: 'all', label: 'All Calls' },
+  { value: 'custom', label: 'Custom Recordings' },
+  { value: 'vapi', label: 'Vapi Recordings' },
+  { value: 'none', label: 'No Recording' },
+];
+
 function formatDuration(call: Call): string {
   if (call.startedAt && call.endedAt) {
     const diff = Math.round((new Date(call.endedAt).getTime() - new Date(call.startedAt).getTime()) / 1000);
@@ -168,9 +175,20 @@ function CallDetailModal({
               {/* Recording */}
               {call.recordingUrl && (
                 <div className="border-t border-slate-100 pt-4">
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-3">Recording</p>
+                  <div className="flex items-center gap-2 mb-3">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Recording</p>
+                    {call.recordingUrl.startsWith('/api/recordings/') && (
+                      <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-emerald-50 text-[#10B981] border border-[#10B981]/20">
+                        Custom
+                      </span>
+                    )}
+                  </div>
                   <div className="rounded-xl bg-slate-50/70 border border-slate-100 px-4 py-3">
-                    <audio controls className="w-full" src={call.recordingUrl}>
+                    <audio 
+                      controls 
+                      className="w-full" 
+                      src={call.recordingUrl.startsWith('http') ? call.recordingUrl : `${(import.meta.env.VITE_API_URL || '').replace(/\/api$/, '')}${call.recordingUrl}`}
+                    >
                       Your browser does not support the audio element.
                     </audio>
                   </div>
@@ -214,6 +232,7 @@ export function AdminCalls() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [recordingFilter, setRecordingFilter] = useState<'all' | 'custom' | 'vapi' | 'none'>('all');
   const [syncing, setSyncing] = useState(false);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
@@ -242,6 +261,14 @@ export function AdminCalls() {
     return (c.agentName || '').toLowerCase().includes(q)
       || (c.userName || '').toLowerCase().includes(q)
       || (c.callerNumber || '').toLowerCase().includes(q);
+  }).filter((c) => {
+    if (recordingFilter === 'all') return true;
+    const isCustom = c.recordingUrl?.startsWith('/api/recordings/');
+    const isVapi = c.recordingUrl && !isCustom;
+    if (recordingFilter === 'custom') return !!isCustom;
+    if (recordingFilter === 'vapi') return !!isVapi;
+    if (recordingFilter === 'none') return !c.recordingUrl;
+    return true;
   });
 
   const stats = {
@@ -372,21 +399,29 @@ export function AdminCalls() {
       sortable: true,
       render: (call) => {
         const sc = statusConfig[call.status] ?? fallbackStatus;
+        const isCustomRecording = call.recordingUrl?.startsWith('/api/recordings/');
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-            call.status === 'completed' ? 'bg-[rgba(16,185,129,0.08)] border-[rgba(16,185,129,0.20)] text-[#10B981]' :
-            call.status === 'missed' ? 'bg-[rgba(245,158,11,0.08)] border-[rgba(245,158,11,0.20)] text-[#f59e0b]' :
-            call.status === 'in-progress' ? 'bg-[rgba(37,99,235,0.08)] border-[rgba(37,99,235,0.20)] text-[#2563eb]' :
-            'bg-[rgba(239,68,68,0.08)] border-[rgba(239,68,68,0.20)] text-[#ef4444]'
-          }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${
-              call.status === 'completed' ? 'bg-[#10B981]' :
-              call.status === 'missed' ? 'bg-[#f59e0b]' :
-              call.status === 'in-progress' ? 'bg-[#2563eb]' :
-              'bg-[#ef4444]'
-            }`}/>
-            {sc.label}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+              call.status === 'completed' ? 'bg-[rgba(16,185,129,0.08)] border-[rgba(16,185,129,0.20)] text-[#10B981]' :
+              call.status === 'missed' ? 'bg-[rgba(245,158,11,0.08)] border-[rgba(245,158,11,0.20)] text-[#f59e0b]' :
+              call.status === 'in-progress' ? 'bg-[rgba(37,99,235,0.08)] border-[rgba(37,99,235,0.20)] text-[#2563eb]' :
+              'bg-[rgba(239,68,68,0.08)] border-[rgba(239,68,68,0.20)] text-[#ef4444]'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${
+                call.status === 'completed' ? 'bg-[#10B981]' :
+                call.status === 'missed' ? 'bg-[#f59e0b]' :
+                call.status === 'in-progress' ? 'bg-[#2563eb]' :
+                'bg-[#ef4444]'
+              }`}/>
+              {sc.label}
+            </span>
+            {isCustomRecording && (
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-50 text-[#10B981] border border-[#10B981]/20">
+                REC
+              </span>
+            )}
+          </div>
         );
       },
       card: {
@@ -528,6 +563,22 @@ export function AdminCalls() {
             ))}
           </div>
         </motion.div>
+        <motion.div variants={fadeUp} className="flex items-center gap-2 overflow-x-auto pb-0.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1 flex-shrink-0">Recording:</span>
+          {RECORDING_FILTERS.map((f) => (
+            <button
+              key={f.value}
+              onClick={() => setRecordingFilter(f.value as typeof recordingFilter)}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border cursor-pointer whitespace-nowrap ${
+                recordingFilter === f.value
+                  ? 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/30'
+                  : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </motion.div>
 
         {/* ── Syncing Banner ── */}
         {syncing && (
@@ -559,30 +610,36 @@ export function AdminCalls() {
             pageSize={filteredCalls.length || 20}
             cardBadge={(c) => {
               const sc = statusConfig[c.status] ?? fallbackStatus;
+              const isCustomRecording = c.recordingUrl?.startsWith('/api/recordings/');
               return (
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${
-                  c.status === 'completed' ? 'bg-[rgba(16,185,129,0.08)] border-[rgba(16,185,129,0.20)] text-[#10B981]' :
-                  c.status === 'missed' ? 'bg-[rgba(245,158,11,0.08)] border-[rgba(245,158,11,0.20)] text-[#f59e0b]' :
-                  c.status === 'in-progress' ? 'bg-[rgba(37,99,235,0.08)] border-[rgba(37,99,235,0.20)] text-[#2563eb]' :
-                  'bg-[rgba(239,68,68,0.08)] border-[rgba(239,68,68,0.20)] text-[#ef4444]'
-                }`}>
-                  <span className={`w-1 h-1 rounded-full ${
-                    c.status === 'completed' ? 'bg-[#10B981]' :
-                    c.status === 'missed' ? 'bg-[#f59e0b]' :
-                    c.status === 'in-progress' ? 'bg-[#2563eb]' :
-                    'bg-[#ef4444]'
-                  }`}/>
-                  {sc.label}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+                    c.status === 'completed' ? 'bg-[rgba(16,185,129,0.08)] border-[rgba(16,185,129,0.20)] text-[#10B981]' :
+                    c.status === 'missed' ? 'bg-[rgba(245,158,11,0.08)] border-[rgba(245,158,11,0.20)] text-[#f59e0b]' :
+                    c.status === 'in-progress' ? 'bg-[rgba(37,99,235,0.08)] border-[rgba(37,99,235,0.20)] text-[#2563eb]' :
+                    'bg-[rgba(239,68,68,0.08)] border-[rgba(239,68,68,0.20)] text-[#ef4444]'
+                  }`}>
+                    <span className={`w-1 h-1 rounded-full ${
+                      c.status === 'completed' ? 'bg-[#10B981]' :
+                      c.status === 'missed' ? 'bg-[#f59e0b]' :
+                      c.status === 'in-progress' ? 'bg-[#2563eb]' :
+                      'bg-[#ef4444]'
+                    }`}/>
+                    {sc.label}
+                  </span>
+                  {isCustomRecording && (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-50 text-[#10B981] border border-[#10B981]/20">
+                      REC
+                    </span>
+                  )}
+                </div>
               );
             }}
             emptyState={{
               icon: (
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-slate-50 border border-slate-200">
-                  <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                  </svg>
-                </div>
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                </svg>
               ),
               title: 'No calls yet',
               description: 'Call history will appear here once calls start flowing.',

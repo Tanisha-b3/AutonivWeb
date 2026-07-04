@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../../hooks/useStore';
 import { fetchAllAgents, toggleAgent, assignPhone, unlinkPhone, deleteAgent, updateAgent } from '../../store/slices/agentsSlice';
 import { Modal } from '../../components/Modal';
-import { Input, Button } from '../../components/FormElements';
+
 import { AgentPanel, DeleteModal } from '../../components/AgentPanel';
 import { Pagination } from '../../components/Pagination';
 import { VOICE_OPTIONS } from '../../config/voices';
@@ -130,84 +130,85 @@ function ProviderDropdown({ value, onChange }: { value: string; onChange: (v: st
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full px-4 py-3 bg-[var(--surface)]/50 border border-[var(--border)]/30 rounded-xl text-left flex items-center justify-between gap-3 hover-border-[var(--primary)]/50 transition-colors focus:outline-none focus-border-[var(--primary)]/50 focus:ring-2 focus:ring-[var(--primary)]/20"
+        className="w-full px-4 py-3 rounded-xl text-left flex items-center justify-between gap-3 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
       >
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-[var(--primary-soft)] border border-[var(--border)]/50 flex items-center justify-center text-[var(--primary)] flex-shrink-0">
-            {selected.icon}
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.2)' }}>
+            <span className="text-blue-400">{selected.icon}</span>
           </div>
           <div>
-            <p className="text-sm font-medium text-[var(--text-secondary)]">{selected.label}</p>
-            <p className="text-xs text-[var(--muted)]">{selected.description}</p>
+            <p className="text-sm font-medium text-white/90">{selected.label}</p>
+            <p className="text-xs text-white/40">{selected.description}</p>
           </div>
         </div>
-        <svg className={`w-4 h-4 text-[var(--muted)] flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className={`w-4 h-4 text-white/30 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
         </svg>
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-2 w-full bg-[var(--surface)] border border-[var(--border)]/30 rounded-xl shadow-2xl shadow-[var(--primary)]/10 overflow-hidden">
+        <div className="absolute z-50 mt-2 w-full rounded-xl shadow-2xl overflow-hidden"
+          style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.1)' }}>
           <div className="py-1">
-            <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/60">Direct Integration</p>
+            <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/25">Direct Integration</p>
             {PROVIDER_OPTIONS.filter(p => p.category === 'direct').map((provider) => (
               <button
                 key={provider.value}
                 type="button"
                 onClick={() => { onChange(provider.value); setOpen(false); }}
-                className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors ${
-                  provider.value === value
-                    ? 'bg-[var(--primary-soft)]'
-                    : 'hover:bg-[var(--surface)]'
-                }`}
+                className="w-full px-4 py-3 text-left flex items-center gap-3 transition-colors"
+                style={{ background: provider.value === value ? 'rgba(37,99,235,0.15)' : 'transparent' }}
+                onMouseEnter={(e) => { if (provider.value !== value) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                onMouseLeave={(e) => { if (provider.value !== value) e.currentTarget.style.background = 'transparent'; }}
               >
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  provider.value === value
-                    ? 'bg-[var(--primary-soft)] border border-[var(--border)] text-[var(--primary)]'
-                    : 'bg-[var(--surface)] border border-slate-200 text-[var(--muted)]'
-                }`}>
-                  {provider.icon}
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{
+                    background: provider.value === value ? 'rgba(37,99,235,0.2)' : 'rgba(255,255,255,0.05)',
+                    border: `1px solid ${provider.value === value ? 'rgba(37,99,235,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                  }}>
+                  <span className={provider.value === value ? 'text-blue-400' : 'text-white/30'}>{provider.icon}</span>
                 </div>
                 <div className="flex-1">
-                  <p className={`text-sm font-medium ${provider.value === value ? 'text-[var(--primary)]' : 'text-[var(--text-secondary)]'}`}>
+                  <p className={`text-sm font-medium ${provider.value === value ? 'text-blue-400' : 'text-white/80'}`}>
                     {provider.label}
                   </p>
-                  <p className="text-xs text-[var(--muted)]">{provider.description}</p>
+                  <p className="text-xs text-white/35">{provider.description}</p>
                 </div>
                 {provider.value === value && (
-                  <svg className="w-4 h-4 text-[var(--primary)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                   </svg>
                 )}
               </button>
             ))}
-            <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/60 mt-1">SIP Trunk (BYO)</p>
+            <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/25 mt-1">SIP Trunk (BYO)</p>
             {PROVIDER_OPTIONS.filter(p => p.category === 'sip').map((provider) => (
               <button
                 key={provider.value}
                 type="button"
                 onClick={() => { onChange(provider.value); setOpen(false); }}
-                className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors ${
-                  provider.value === value
-                    ? 'bg-[var(--primary-soft)]'
-                    : 'hover:bg-[var(--surface)]'
-                }`}
+                className="w-full px-4 py-3 text-left flex items-center gap-3 transition-colors"
+                style={{ background: provider.value === value ? 'rgba(37,99,235,0.15)' : 'transparent' }}
+                onMouseEnter={(e) => { if (provider.value !== value) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                onMouseLeave={(e) => { if (provider.value !== value) e.currentTarget.style.background = 'transparent'; }}
               >
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  provider.value === value
-                    ? 'bg-[var(--primary-soft)] border border-[var(--border)] text-[var(--primary)]'
-                    : 'bg-[var(--surface)] border border-slate-200 text-[var(--muted)]'
-                }`}>
-                  {provider.icon}
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{
+                    background: provider.value === value ? 'rgba(37,99,235,0.2)' : 'rgba(255,255,255,0.05)',
+                    border: `1px solid ${provider.value === value ? 'rgba(37,99,235,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                  }}>
+                  <span className={provider.value === value ? 'text-blue-400' : 'text-white/30'}>{provider.icon}</span>
                 </div>
                 <div className="flex-1">
-                  <p className={`text-sm font-medium ${provider.value === value ? 'text-[var(--primary)]' : 'text-[var(--text-secondary)]'}`}>
+                  <p className={`text-sm font-medium ${provider.value === value ? 'text-blue-400' : 'text-white/80'}`}>
                     {provider.label}
                   </p>
-                  <p className="text-xs text-[var(--muted)]">{provider.description}</p>
+                  <p className="text-xs text-white/35">{provider.description}</p>
                 </div>
                 {provider.value === value && (
-                  <svg className="w-4 h-4 text-[var(--primary)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                   </svg>
                 )}
@@ -248,67 +249,71 @@ function PhoneDropdown({ phoneNumbers, selectedId, onSelect }: {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full px-4 py-3 bg-[var(--surface)]/50 border border-[var(--border)]/30 rounded-xl text-left flex items-center justify-between gap-3 hover-border-[var(--primary)]/50 transition-colors focus:outline-none focus-border-[var(--primary)]/50 focus:ring-2 focus:ring-[var(--primary)]/20"
+        className="w-full px-4 py-3 rounded-xl text-left flex items-center justify-between gap-3 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
       >
         {selected ? (
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="w-9 h-9 rounded-lg bg-[var(--primary-soft)] border border-[var(--border)]/50 flex items-center justify-center flex-shrink-0">
-              <svg className="w-4 h-4 text-[var(--primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.2)' }}>
+              <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
               </svg>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-[var(--text-secondary)] truncate">{selected.number}</p>
-              <p className="text-xs text-[var(--muted)] truncate">{selected.provider}</p>
+              <p className="text-sm font-medium text-white/90 truncate">{selected.number}</p>
+              <p className="text-xs text-white/40 truncate">{selected.provider}</p>
             </div>
             {selected.assistantId && (
-              <span className="text-[10px] font-medium text-[var(--warning)] bg-[rgba(245,158,11,0.12)] px-2 py-0.5 rounded-full flex-shrink-0 border border-amber-200/50">In Use</span>
+              <span className="text-[10px] font-medium text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded-full flex-shrink-0 border border-amber-500/20">In Use</span>
             )}
           </div>
         ) : (
-          <span className="text-sm text-[var(--muted)]/50">Select a phone number...</span>
+          <span className="text-sm text-white/30">Select a phone number...</span>
         )}
-        <svg className={`w-4 h-4 text-[var(--muted)] flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className={`w-4 h-4 text-white/30 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
         </svg>
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-2 w-full bg-[var(--surface)] border border-[var(--border)]/30 rounded-xl shadow-2xl shadow-[var(--primary)]/10 overflow-hidden">
+        <div className="absolute z-50 mt-2 w-full rounded-xl shadow-2xl overflow-hidden"
+          style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.1)' }}>
           <div className="max-h-56 overflow-y-auto py-1 custom-scrollbar">
             {phoneNumbers.map((pn) => (
               <button
                 key={pn.id}
                 type="button"
                 onClick={() => { onSelect(pn.id); setOpen(false); }}
-                className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors ${
-                  pn.id === selectedId
-                    ? 'bg-[var(--primary-soft)]'
-                    : 'hover:bg-[var(--surface)]'
-                }`}
+                className="w-full px-4 py-3 text-left flex items-center gap-3 transition-colors"
+                style={{
+                  background: pn.id === selectedId ? 'rgba(37,99,235,0.15)' : 'transparent',
+                }}
+                onMouseEnter={(e) => { if (pn.id !== selectedId) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                onMouseLeave={(e) => { if (pn.id !== selectedId) e.currentTarget.style.background = 'transparent'; }}
               >
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  pn.id === selectedId
-                    ? 'bg-[var(--primary-soft)] border border-[var(--border)]'
-                    : 'bg-[var(--surface)] border border-slate-200'
-                }`}>
-                  <svg className={`w-4 h-4 ${pn.id === selectedId ? 'text-[var(--primary)]' : 'text-[var(--muted)]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{
+                    background: pn.id === selectedId ? 'rgba(37,99,235,0.2)' : 'rgba(255,255,255,0.05)',
+                    border: `1px solid ${pn.id === selectedId ? 'rgba(37,99,235,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                  }}>
+                  <svg className={`w-4 h-4 ${pn.id === selectedId ? 'text-blue-400' : 'text-white/30'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium truncate ${pn.id === selectedId ? 'text-[var(--primary)]' : 'text-[var(--text-secondary)]'}`}>
+                  <p className={`text-sm font-medium truncate ${pn.id === selectedId ? 'text-blue-400' : 'text-white/80'}`}>
                     {pn.number}
                   </p>
-                  <p className="text-xs text-[var(--muted)] truncate">
+                  <p className="text-xs text-white/35 truncate">
                     {pn.provider} • {pn.id.slice(0, 8)}...
                   </p>
                 </div>
                 {pn.assistantId && (
-                  <span className="text-[10px] font-medium text-[var(--warning)] bg-[rgba(245,158,11,0.12)] px-2 py-0.5 rounded-full flex-shrink-0 border border-amber-200/50">In Use</span>
+                  <span className="text-[10px] font-medium text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded-full flex-shrink-0 border border-amber-500/20">In Use</span>
                 )}
                 {pn.id === selectedId && (
-                  <svg className="w-4 h-4 text-[var(--primary)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                   </svg>
                 )}
@@ -345,45 +350,46 @@ function TransportDropdown({ value, onChange }: { value: string; onChange: (v: s
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full px-4 py-2.5 text-sm bg-[var(--surface)]/50 border border-[var(--border)]/30 rounded-xl text-[var(--text-secondary)] flex items-center justify-between gap-2 focus:outline-none focus-border-[var(--primary)]/50 focus:ring-2 focus:ring-[var(--primary)]/20 transition-all cursor-pointer"
+        className="w-full px-4 py-2.5 text-sm rounded-xl text-white/80 flex items-center justify-between gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all cursor-pointer"
+        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
       >
         <div className="flex items-center gap-2.5">
           <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
-            selected.value === 'tls' ? 'bg-[var(--primary)]' : selected.value === 'tcp' ? 'bg-amber-400' : 'bg-[var(--surface)]'
+            selected.value === 'tls' ? 'bg-emerald-400' : selected.value === 'tcp' ? 'bg-amber-400' : 'bg-white/30'
           }`} />
           <div className="text-left">
             <span className="font-medium">{selected.label}</span>
-            <span className="text-[var(--muted)] ml-1.5 text-xs">— {selected.desc}</span>
+            <span className="text-white/35 ml-1.5 text-xs">— {selected.desc}</span>
           </div>
         </div>
-        <svg className={`w-3.5 h-3.5 text-[var(--muted)] shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className={`w-3.5 h-3.5 text-white/30 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
         </svg>
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1.5 w-full bg-[var(--surface)] border border-[var(--border)]/30 rounded-xl shadow-2xl shadow-[var(--primary)]/10 overflow-hidden">
+        <div className="absolute z-50 mt-1.5 w-full rounded-xl shadow-2xl overflow-hidden"
+          style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.1)' }}>
           <div className="max-h-48 overflow-y-auto py-1 custom-scrollbar">
             {TRANSPORT_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => { onChange(opt.value); setOpen(false); }}
-                className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2.5 ${
-                  opt.value === value
-                    ? 'bg-[var(--primary-soft)] text-[var(--primary)] font-medium'
-                    : 'text-[var(--muted)]/70 hover:bg-[var(--surface)] hover:text-[var(--text-secondary)]'
-                }`}
+                className="w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2.5"
+                style={{ background: opt.value === value ? 'rgba(37,99,235,0.15)' : 'transparent' }}
+                onMouseEnter={(e) => { if (opt.value !== value) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                onMouseLeave={(e) => { if (opt.value !== value) e.currentTarget.style.background = 'transparent'; }}
               >
                 <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                  opt.value === 'tls' ? 'bg-[var(--primary)]' : opt.value === 'tcp' ? 'bg-amber-400' : 'bg-[var(--surface)]'
+                  opt.value === 'tls' ? 'bg-emerald-400' : opt.value === 'tcp' ? 'bg-amber-400' : 'bg-white/30'
                 }`} />
                 <div>
-                  <span className="font-medium">{opt.label}</span>
-                  <span className="text-[var(--muted)] ml-1.5 text-xs">— {opt.desc}</span>
+                  <span className={`font-medium ${opt.value === value ? 'text-blue-400' : 'text-white/80'}`}>{opt.label}</span>
+                  <span className="text-white/35 ml-1.5 text-xs">— {opt.desc}</span>
                 </div>
                 {opt.value === value && (
-                  <svg className="w-3.5 h-3.5 text-[var(--primary)] flex-shrink-0 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 text-blue-400 flex-shrink-0 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                   </svg>
                 )}
@@ -406,7 +412,15 @@ export function AdminAgents() {
   const [editPanelOpen, setEditPanelOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [phoneNumberId, setPhoneNumberId] = useState('');
-  const [editForm, setEditForm] = useState({ name: '', type: 'receptionist', prompt: '', language: 'en', voiceId: VOICE_OPTIONS[0]?.value || '' });
+  const [editForm, setEditForm] = useState({
+    name: '',
+    type: 'receptionist',
+    prompt: '',
+    language: 'en',
+    voiceId: VOICE_OPTIONS[0]?.value || '',
+    useCustomEngine: false,
+    customEngineModel: 'groq:llama-3.3-70b',
+  });
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -561,6 +575,8 @@ export function AdminAgents() {
       prompt: agent.prompt || '',
       language: agent.language || 'en',
       voiceId: agent.voiceId || VOICE_OPTIONS[0]?.value || '',
+      useCustomEngine: !!agent.useCustomEngine,
+      customEngineModel: agent.customEngineModel || 'groq:llama-3.3-70b',
     });
     setEditPanelOpen(true);
   };
@@ -571,7 +587,16 @@ export function AdminAgents() {
     try {
       await dispatch(updateAgent({
         id: selectedAgent.id,
-        data: { name: editForm.name, type: editForm.type, prompt: editForm.prompt, language: editForm.language, voiceId: editForm.voiceId, isActive: selectedAgent.isActive },
+        data: {
+          name: editForm.name,
+          type: editForm.type,
+          prompt: editForm.prompt,
+          language: editForm.language,
+          voiceId: editForm.voiceId,
+          isActive: selectedAgent.isActive,
+          useCustomEngine: !!editForm.useCustomEngine,
+          customEngineModel: editForm.customEngineModel,
+        },
       })).unwrap();
       setEditPanelOpen(false);
       setSelectedAgent(null);
@@ -854,27 +879,44 @@ export function AdminAgents() {
         title={`Assign Phone Number to ${selectedAgent?.name || ''}`}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setPhoneModal(false)} className="text-[var(--text-secondary)] hover:text-[var(--text)]">Cancel</Button>
+            <button
+              onClick={() => setPhoneModal(false)}
+              className="px-4 py-2.5 rounded-xl text-sm font-medium text-white/50 hover:text-white/80 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
             {phoneMode === 'import' ? (
-              <Button onClick={handleImportNumber} disabled={importing || !importForm.number.trim()} style={{ background: 'var(--gg)' }} className="text-white">
+              <button
+                onClick={handleImportNumber}
+                disabled={importing || !importForm.number.trim()}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all cursor-pointer disabled:opacity-40 disabled:pointer-events-none"
+                style={{ background: 'linear-gradient(135deg, #2563EB, #10B981)', boxShadow: '0 4px 20px rgba(16,185,129,0.20)' }}
+              >
                 {importing ? 'Importing...' : 'Import & Assign'}
-              </Button>
+              </button>
             ) : (
-              <Button onClick={handleAssignPhone} disabled={!phoneNumberId} style={{ background: 'var(--gg)' }} className="text-white">Assign</Button>
+              <button
+                onClick={handleAssignPhone}
+                disabled={!phoneNumberId}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all cursor-pointer disabled:opacity-40 disabled:pointer-events-none"
+                style={{ background: 'linear-gradient(135deg, #2563EB, #10B981)', boxShadow: '0 4px 20px rgba(16,185,129,0.20)' }}
+              >
+                Assign
+              </button>
             )}
           </>
         }
       >
         <div className="space-y-4">
           {/* Mode Toggle */}
-          <div className="flex gap-2 p-1 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+          <div className="flex gap-2 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
             <button
               type="button"
               onClick={() => setPhoneMode('select')}
-              className="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-colors"
+              className="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-colors cursor-pointer"
               style={{
-                background: phoneMode === 'select' ? 'var(--gg)' : 'transparent',
-                color: phoneMode === 'select' ? 'white' : 'var(--muted)',
+                background: phoneMode === 'select' ? 'linear-gradient(135deg, #2563EB, #10B981)' : 'transparent',
+                color: phoneMode === 'select' ? 'white' : 'rgba(255,255,255,0.4)',
               }}
             >
               Select Existing
@@ -882,13 +924,13 @@ export function AdminAgents() {
             <button
               type="button"
               onClick={() => setPhoneMode('import')}
-              className="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-colors"
+              className="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-colors cursor-pointer"
               style={{
-                background: phoneMode === 'import' ? 'var(--gg)' : 'transparent',
-                color: phoneMode === 'import' ? 'white' : 'var(--muted)',
+                background: phoneMode === 'import' ? 'linear-gradient(135deg, #2563EB, #10B981)' : 'transparent',
+                color: phoneMode === 'import' ? 'white' : 'rgba(255,255,255,0.4)',
               }}
             >
-              Import from Twilio/Vonage
+              Import from Provider
             </button>
           </div>
 
@@ -896,26 +938,26 @@ export function AdminAgents() {
             <>
               {phoneLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <svg className="animate-spin w-5 h-5 text-[var(--muted)]" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin w-5 h-5 text-white/40" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                   </svg>
-                  <span className="ml-2 text-sm text-[var(--muted)]">Loading phone numbers...</span>
+                  <span className="ml-2 text-sm text-white/40">Loading phone numbers...</span>
                 </div>
               ) : phoneNumbers.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-sm text-[var(--muted)]/70">No phone numbers found in Vapi.</p>
+                  <p className="text-sm text-white/40">No phone numbers found in Vapi.</p>
                   <button
                     type="button"
                     onClick={() => setPhoneMode('import')}
-                    className="mt-2 text-sm text-[var(--primary)] hover:text-[var(--primary)] font-medium"
+                    className="mt-2 text-sm text-blue-400 hover:text-blue-300 font-medium cursor-pointer"
                   >
-                    Import one from Twilio/Vonage
+                    Import one from a provider
                   </button>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <label className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/70">Select Phone Number</label>
+                  <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Select Phone Number</label>
                   <PhoneDropdown
                     phoneNumbers={phoneNumbers}
                     selectedId={phoneNumberId}
@@ -926,112 +968,104 @@ export function AdminAgents() {
             </>
           ) : (
             <>
-              <div className="p-4 bg-[var(--primary-soft)] border border-[var(--border)]/50 rounded-xl">
-                <p className="text-sm text-[var(--primary)] font-medium">Import Existing Number</p>
-                <p className="text-xs text-[var(--muted)]/70 mt-1">Connect your Twilio or Vonage phone number to Vapi.</p>
+              <div className="p-4 rounded-xl" style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.15)' }}>
+                <p className="text-sm text-blue-400 font-medium">Import Existing Number</p>
+                <p className="text-xs text-white/35 mt-1">Connect your provider phone number to Vapi.</p>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/70">Provider</label>
+                <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Provider</label>
                 <ProviderDropdown
                   value={importForm.provider}
                   onChange={(v) => setImportForm(prev => ({ ...prev, provider: v }))}
                 />
               </div>
-              <Input
-                label="Phone Number"
-                value={importForm.number}
-                onChange={(e) => setImportForm(prev => ({ ...prev, number: e.target.value }))}
-                placeholder="+1 (555) 123-4567"
-                required
-                className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
-              />
-              <p className="text-[11px] text-[var(--muted)] -mt-2">Must be in E.164 format (e.g. +14155552671)</p>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Phone Number</label>
+                <input
+                  type="text"
+                  value={importForm.number}
+                  onChange={(e) => setImportForm(prev => ({ ...prev, number: e.target.value }))}
+                  placeholder="+1 (555) 123-4567"
+                  className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+                />
+                <p className="text-[11px] text-white/25">Must be in E.164 format (e.g. +14155552671)</p>
+              </div>
 
               {importForm.provider === 'twilio' && (
-                <div className="space-y-3 p-3 bg-[var(--surface)] rounded-xl border border-[var(--border)]/30">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/70">Twilio Credentials</p>
-                  <Input
-                    label="Account SID"
-                    value={importForm.twilioAccountSid}
-                    onChange={(e) => setImportForm(prev => ({ ...prev, twilioAccountSid: e.target.value }))}
-                    placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                    className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
-                  />
-                  <Input
-                    label="Auth Token"
-                    value={importForm.twilioAuthToken}
-                    onChange={(e) => setImportForm(prev => ({ ...prev, twilioAuthToken: e.target.value }))}
-                    placeholder="Your Twilio auth token"
-                    type="password"
-                    className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
-                  />
+                <div className="space-y-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">Twilio Credentials</p>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Account SID</label>
+                    <input type="text" value={importForm.twilioAccountSid} onChange={(e) => setImportForm(prev => ({ ...prev, twilioAccountSid: e.target.value }))} placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                      className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Auth Token</label>
+                    <input type="password" value={importForm.twilioAuthToken} onChange={(e) => setImportForm(prev => ({ ...prev, twilioAuthToken: e.target.value }))} placeholder="Your Twilio auth token"
+                      className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                  </div>
                 </div>
               )}
 
               {importForm.provider === 'vonage' && (
-                <div className="space-y-3 p-3 bg-[var(--surface)] rounded-xl border border-[var(--border)]/30">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/70">Vonage Credentials</p>
-                  <Input
-                    label="API Key"
-                    value={importForm.vonageApiKey}
-                    onChange={(e) => setImportForm(prev => ({ ...prev, vonageApiKey: e.target.value }))}
-                    placeholder="Your Vonage API key"
-                    className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
-                  />
-                  <Input
-                    label="API Secret"
-                    value={importForm.vonageApiSecret}
-                    onChange={(e) => setImportForm(prev => ({ ...prev, vonageApiSecret: e.target.value }))}
-                    placeholder="Your Vonage API secret"
-                    type="password"
-                    className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
-                  />
+                <div className="space-y-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">Vonage Credentials</p>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">API Key</label>
+                    <input type="text" value={importForm.vonageApiKey} onChange={(e) => setImportForm(prev => ({ ...prev, vonageApiKey: e.target.value }))} placeholder="Your Vonage API key"
+                      className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">API Secret</label>
+                    <input type="password" value={importForm.vonageApiSecret} onChange={(e) => setImportForm(prev => ({ ...prev, vonageApiSecret: e.target.value }))} placeholder="Your Vonage API secret"
+                      className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                  </div>
                 </div>
               )}
 
               {importForm.provider === 'telnyx' && (
-                <div className="space-y-3 p-3 bg-[var(--surface)] rounded-xl border border-[var(--border)]/30">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/70">Telnyx Credentials</p>
-                  <Input
-                    label="API Key"
-                    value={importForm.telnyxApiKey}
-                    onChange={(e) => setImportForm(prev => ({ ...prev, telnyxApiKey: e.target.value }))}
-                    placeholder="Your Telnyx API key"
-                    type="password"
-                    className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
-                  />
+                <div className="space-y-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">Telnyx Credentials</p>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">API Key</label>
+                    <input type="password" value={importForm.telnyxApiKey} onChange={(e) => setImportForm(prev => ({ ...prev, telnyxApiKey: e.target.value }))} placeholder="Your Telnyx API key"
+                      className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                  </div>
                 </div>
               )}
 
               {(importForm.provider === 'plivo' || importForm.provider === 'zadarma' || importForm.provider === 'custom-sip') && (
-                <div className="space-y-3 p-3 bg-[var(--surface)] rounded-xl border border-[var(--border)]/30">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/70">SIP Trunk Credentials</p>
-                  <Input
-                    label="SIP Gateway / Domain"
-                    value={importForm.sipGateway}
-                    onChange={(e) => setImportForm(prev => ({ ...prev, sipGateway: e.target.value }))}
-                    placeholder={importForm.provider === 'plivo' ? 'sip.plivo.com' : importForm.provider === 'zadarma' ? 'sip.zadarma.com' : 'sip.example.com'}
-                    className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
-                  />
+                <div className="space-y-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">SIP Trunk Credentials</p>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">SIP Gateway / Domain</label>
+                    <input type="text" value={importForm.sipGateway} onChange={(e) => setImportForm(prev => ({ ...prev, sipGateway: e.target.value }))}
+                      placeholder={importForm.provider === 'plivo' ? 'sip.plivo.com' : importForm.provider === 'zadarma' ? 'sip.zadarma.com' : 'sip.example.com'}
+                      className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <Input
-                      label="Username (optional)"
-                      value={importForm.sipUsername}
-                      onChange={(e) => setImportForm(prev => ({ ...prev, sipUsername: e.target.value }))}
-                      placeholder="SIP username"
-                      className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
-                    />
-                    <Input
-                      label="Password (optional)"
-                      value={importForm.sipPassword}
-                      onChange={(e) => setImportForm(prev => ({ ...prev, sipPassword: e.target.value }))}
-                      placeholder="SIP password"
-                      type="password"
-                      className="bg-[var(--surface)]/80 border-[var(--border)]/30 focus-border-[var(--primary)]/50"
-                    />
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Username (optional)</label>
+                      <input type="text" value={importForm.sipUsername} onChange={(e) => setImportForm(prev => ({ ...prev, sipUsername: e.target.value }))} placeholder="SIP username"
+                        className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Password (optional)</label>
+                      <input type="password" value={importForm.sipPassword} onChange={(e) => setImportForm(prev => ({ ...prev, sipPassword: e.target.value }))} placeholder="SIP password"
+                        className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                    </div>
                   </div>
                   <div className="relative">
-                    <label className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]/70 mb-1.5 block">Transport</label>
+                    <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-1.5 block">Transport</label>
                     <TransportDropdown
                       value={importForm.sipTransport}
                       onChange={(v) => setImportForm(prev => ({ ...prev, sipTransport: v }))}
@@ -1053,6 +1087,24 @@ export function AdminAgents() {
         setFormData={setEditForm}
         onSubmit={handleEditSubmit}
         submitting={submitting}
+        onAssignPhone={async (phoneNumberId, phoneNumber) => {
+          if (!selectedAgent) return;
+          try {
+            await dispatch(assignPhone({ id: selectedAgent.id, phoneNumberId, phoneNumber })).unwrap();
+            setSelectedAgent(prev => prev ? { ...prev, phoneNumberId, phoneNumber } : null);
+          } catch (err) {
+            console.error(err);
+          }
+        }}
+        onUnlinkPhone={async () => {
+          if (!selectedAgent) return;
+          try {
+            await dispatch(unlinkPhone({ id: selectedAgent.id })).unwrap();
+            setSelectedAgent(prev => prev ? { ...prev, phoneNumberId: undefined, phoneNumber: undefined } : null);
+          } catch (err) {
+            console.error(err);
+          }
+        }}
       />
 
       {/* Delete Confirmation */}

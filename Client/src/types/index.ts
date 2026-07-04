@@ -49,6 +49,8 @@ export interface Agent {
   userEmail?: string;
   createdAt?: string;
   updatedAt?: string;
+  useCustomEngine?: boolean;
+  customEngineModel?: string;
 }
 
 export interface Call {

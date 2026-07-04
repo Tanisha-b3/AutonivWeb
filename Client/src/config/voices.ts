@@ -1,9 +1,4 @@
-/**
- * Shared voice configuration.
- *
- * value        — Voice ID sent to Vapi for TTS.
- * label        — Human-readable label shown in the UI.
- */
+
 export interface VoiceOption {
   value: string;
   label: string;
@@ -45,6 +40,25 @@ export const VOICE_OPTIONS: VoiceOption[] = [
   { value: 'openai:onyx', label: 'Onyx (OpenAI) - Male' },
   { value: 'openai:nova', label: 'Nova (OpenAI) - Female' },
   { value: 'openai:shimmer', label: 'Shimmer (OpenAI) - Female' },
+
+  // --- Sarvam AI Indian-Native Voices (Indic-native) - Bulbul V3 ---
+  { value: 'sarvam:bulbul:v3:shreya', label: 'Sarvam Shreya (V3 - Female)' },
+  { value: 'sarvam:bulbul:v3:niharika', label: 'Sarvam Niharika (V3 - Female)' },
+  { value: 'sarvam:bulbul:v3:ishita', label: 'Sarvam Ishita (V3 - Female)' },
+  { value: 'sarvam:bulbul:v3:ritu', label: 'Sarvam Ritu (V3 - Female)' },
+  { value: 'sarvam:bulbul:v3:shubh', label: 'Sarvam Shubh (V3 - Male)' },
+  { value: 'sarvam:bulbul:v3:manan', label: 'Sarvam Manan (V3 - Male)' },
+  { value: 'sarvam:bulbul:v3:rohan', label: 'Sarvam Rohan (V3 - Male)' },
+
+  // --- Sarvam AI Indian-Native Voices (Indic-native) - Bulbul V2 ---
+  { value: 'sarvam:bulbul:v2:anushka', label: 'Sarvam Anushka (V2 - Female)' },
+  { value: 'sarvam:bulbul:v2:abhilash', label: 'Sarvam Abhilash (V2 - Male)' },
+  { value: 'sarvam:bulbul:v2:manisha', label: 'Sarvam Manisha (V2 - Female)' },
+  { value: 'sarvam:bulbul:v2:vidya', label: 'Sarvam Vidya (V2 - Female)' },
+  { value: 'sarvam:bulbul:v2:arya', label: 'Sarvam Arya (V2 - Female)' },
+  { value: 'sarvam:bulbul:v2:karun', label: 'Sarvam Karun (V2 - Male)' },
+  { value: 'sarvam:bulbul:v2:hitesh', label: 'Sarvam Hitesh (V2 - Male)' },
+
 ];
 
 export function getVoicesForLanguage(language: string): VoiceOption[] {
