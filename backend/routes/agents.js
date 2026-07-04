@@ -426,7 +426,7 @@ router.post('/:id/assign-phone', async (req, res) => {
     if (!agent) return res.status(404).json({ message: 'Agent not found' });
     
     // Check ownership if not admin
-    if (!req.user.isAdmin && agent.userId.toString() !== req.user.userId) {
+    if (req.user.role !== 'admin' && agent.userId.toString() !== req.user.userId) {
       return res.status(403).json({ message: 'Forbidden' });
     }
 
@@ -491,7 +491,7 @@ router.post('/:id/unlink-phone', async (req, res) => {
     if (!agent) return res.status(404).json({ message: 'Agent not found' });
 
     // Check ownership if not admin
-    if (!req.user.isAdmin && agent.userId.toString() !== req.user.userId) {
+    if (req.user.role !== 'admin' && agent.userId.toString() !== req.user.userId) {
       return res.status(403).json({ message: 'Forbidden' });
     }
 
