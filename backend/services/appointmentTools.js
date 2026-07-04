@@ -1,6 +1,8 @@
 
+import mongoose from 'mongoose';
 import Lead from '../db/models/Lead.js';
 import Appointment from '../db/models/Appointment.js';
+import Call from '../db/models/Call.js';
 import { containsAbuse, sanitizeText } from './contentModeration.js';
 import { safeString } from './validators.js';
 import { log } from './logger.js';
@@ -290,11 +292,22 @@ export async function executeTool(name, args, ctx) {
         const sanitizedPurpose = isUnknown(reason) ? 'General inquiry' : sanitizeText(safeString(reason, 500));
         const safePhone = phone ? safeString(phone, 30) : null;
 
+        // Resolve mongoCallId to prevent BSON/Cast validation errors for Twilio callSids
+        let mongoCallId = null;
+        if (callId) {
+          if (mongoose.Types.ObjectId.isValid(callId)) {
+            mongoCallId = callId;
+          } else {
+            const callDoc = await Call.findOne({ vapiCallId: callId }).select('_id').lean();
+            if (callDoc) mongoCallId = callDoc._id;
+          }
+        }
+
         // Dedup: check if lead already exists for this call/phone
         const existing = await Lead.findOne({
           agentId: agentObj._id,
           $or: [
-            ...(callId ? [{ callId }] : []),
+            ...(mongoCallId ? [{ callId: mongoCallId }] : []),
             ...(safePhone ? [{ phone: safePhone }] : [])
           ]
         }).lean();
@@ -306,7 +319,7 @@ export async function executeTool(name, args, ctx) {
 
         const lead = await Lead.create({
           agentId: agentObj._id,
-          callId: callId || null,
+          callId: mongoCallId,
           userId,
           name: leadName ? sanitizeText(safeString(leadName, 200)) : null,
           phone: safePhone,
@@ -356,6 +369,17 @@ export async function executeTool(name, args, ctx) {
         const safePhone = phone ? safeString(phone, 30) : null;
         const sanitizedService = service ? sanitizeText(safeString(service, 200)) : null;
 
+        // Resolve mongoCallId to prevent BSON/Cast validation errors for Twilio callSids
+        let mongoCallId = null;
+        if (callId) {
+          if (mongoose.Types.ObjectId.isValid(callId)) {
+            mongoCallId = callId;
+          } else {
+            const callDoc = await Call.findOne({ vapiCallId: callId }).select('_id').lean();
+            if (callDoc) mongoCallId = callDoc._id;
+          }
+        }
+
         // dedup: reuse a matching pending booking made in the last 10 min
         const existing = await Appointment.findOne({
           userId,
@@ -380,7 +404,7 @@ export async function executeTool(name, args, ctx) {
 
         const appt = await Appointment.create({
           agentId: agentObj._id,
-          callId: callId || null,
+          callId: mongoCallId,
           userId,
           name: customerName ? sanitizeText(safeString(customerName, 200)) : null,
           phone: safePhone,
@@ -400,7 +424,7 @@ export async function executeTool(name, args, ctx) {
           const existingLead = await Lead.findOne({
             agentId: agentObj._id,
             $or: [
-              ...(callId ? [{ callId }] : []),
+              ...(mongoCallId ? [{ callId: mongoCallId }] : []),
               ...(safePhone ? [{ phone: safePhone }] : [])
             ]
           }).lean();
@@ -408,7 +432,7 @@ export async function executeTool(name, args, ctx) {
           if (!existingLead && safePhone) {
             await Lead.create({
               agentId: agentObj._id,
-              callId: callId || null,
+              callId: mongoCallId,
               userId,
               name: customerName ? sanitizeText(safeString(customerName, 200)) : null,
               phone: safePhone,
