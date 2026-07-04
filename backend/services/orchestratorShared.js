@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import fs from 'fs';
 import path from 'path';
 import WebSocket from 'ws';
@@ -153,6 +154,24 @@ export async function generateCompletion({ groq, openaiClient, gemini, conversat
 
   const slicedRecent = recentMessages.slice(startIndex);
   prunedHistory = prunedHistory.concat(slicedRecent);
+
+  // Normalize prunedHistory to ensure that every assistant tool call has a corresponding tool response
+  const activeToolCallIds = new Set(
+    prunedHistory.filter(m => m.role === 'tool').map(m => m.tool_call_id)
+  );
+
+  prunedHistory = prunedHistory.map(m => {
+    if (m.role === 'assistant' && m.tool_calls) {
+      const validCalls = m.tool_calls.filter(tc => activeToolCallIds.has(tc.id));
+      if (validCalls.length > 0) {
+        return { ...m, tool_calls: validCalls };
+      } else {
+        const { tool_calls, ...rest } = m;
+        return { ...rest, content: rest.content || 'Processing...' };
+      }
+    }
+    return m;
+  });
 
   const engineSelected = agentObj?.customEngineModel || 'groq:llama-3.3-70b';
   const [provider, modelId] = engineSelected.split(':');
@@ -430,10 +449,22 @@ export async function closeAndCleanup({ callSid, agentObj, callStartTime, fullTr
 
     // Save pending lead data when conversation ends (only if not already saved during the call)
     if (pendingLeadData && (pendingLeadData.name || pendingLeadData.phone)) {
+      // Resolve mongoCallId to prevent BSON/Cast validation errors for Twilio callSids
+      let mongoCallId = null;
+      if (pendingLeadData.callId) {
+        if (mongoose.Types.ObjectId.isValid(pendingLeadData.callId)) {
+          mongoCallId = pendingLeadData.callId;
+        } else {
+          const callDoc = await Call.findOne({ vapiCallId: pendingLeadData.callId }).select('_id').lean();
+          if (callDoc) mongoCallId = callDoc._id;
+        }
+      }
+      pendingLeadData.callId = mongoCallId;
+
       const existingLead = await Lead.findOne({
         agentId: pendingLeadData.agentId,
         $or: [
-          ...(pendingLeadData.callId ? [{ callId: pendingLeadData.callId }] : []),
+          ...(mongoCallId ? [{ callId: mongoCallId }] : []),
           ...(pendingLeadData.phone ? [{ phone: pendingLeadData.phone }] : [])
         ]
       }).lean();
