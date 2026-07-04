@@ -123,11 +123,13 @@ export function initOrchestrator(server) {
   const wss = new WebSocketServer({ server });
 
   wss.on('connection', async (ws, req) => {
-    const urlPath = new URL(req.url, `http://${req.headers.host}`).pathname;
+    const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
+    const urlPath = parsedUrl.pathname;
     console.log(`[WebSocket] Connection request on path: ${urlPath}`);
 
     if (urlPath === '/media-stream') {
-      handleTwilioStream(ws);
+      const agentId = parsedUrl.searchParams.get('agentId');
+      handleTwilioStream(ws, agentId);
     } else if (urlPath === '/web-call') {
       handleWebCall(ws, req);
     } else {
@@ -138,10 +140,7 @@ export function initOrchestrator(server) {
   console.log('[Orchestrator] Voice agent WebSocket handlers initialized on /media-stream and /web-call');
 }
 
-// ==========================================
-// 1. Twilio Stream Connection Handler
-// ==========================================
-function handleTwilioStream(twilioWs) {
+function handleTwilioStream(twilioWs, urlAgentId) {
   console.log('[Twilio WS] Stream connection established.');
 
   let streamSid = null;
@@ -236,11 +235,18 @@ function handleTwilioStream(twilioWs) {
 
   const handleStartCall = async () => {
     try {
-      if (callSid) {
+      if (urlAgentId && mongoose.Types.ObjectId.isValid(urlAgentId)) {
+        agentObj = await Agent.findById(urlAgentId).lean();
+        if (agentObj) {
+          console.log(`[Database] Loaded Telephony Agent directly: ${agentObj.name}`);
+        }
+      }
+
+      if (!agentObj && callSid) {
         const callObj = await Call.findOne({ vapiCallId: callSid }).populate('agentId').lean();
         if (callObj?.agentId) {
           agentObj = callObj.agentId;
-          console.log(`[Database] Loaded Telephony Agent: ${agentObj.name}`);
+          console.log(`[Database] Loaded Telephony Agent via Call record fallback: ${agentObj.name}`);
         }
       }
     } catch (dbErr) {

@@ -321,9 +321,10 @@ router.post('/incoming-call', async (req, res) => {
 
   let agent = null;
   try {
+    const allAgents = await Agent.find({ phoneNumber: { $ne: null } }).lean();
+
     if (to) {
       const cleanTo = to.replace(/\D/g, '');
-      const allAgents = await Agent.find({ phoneNumber: { $ne: null } }).lean();
       agent = allAgents.find(a => {
         const cleanAgentNum = a.phoneNumber.replace(/\D/g, '');
         return cleanAgentNum === cleanTo || 
@@ -332,20 +333,37 @@ router.post('/incoming-call', async (req, res) => {
       });
     }
 
+    if (!agent && from && from !== 'Unknown') {
+      const cleanFrom = from.replace(/\D/g, '');
+      agent = allAgents.find(a => {
+        const cleanAgentNum = a.phoneNumber.replace(/\D/g, '');
+        return cleanAgentNum === cleanFrom || 
+               (cleanAgentNum.length >= 10 && cleanFrom.endsWith(cleanAgentNum.slice(-10))) || 
+               (cleanFrom.length >= 10 && cleanAgentNum.endsWith(cleanFrom.slice(-10)));
+      });
+    }
+
     if (!agent) {
-      log.warn('twilio_incoming_call_no_agent_resolved', { to });
+      log.warn('twilio_incoming_call_no_agent_resolved', { to, from });
       agent = await Agent.findOne({ type: 'receptionist' });
     }
 
     if (agent) {
-      await Call.create({
-        agentId: agent._id,
-        userId: agent.userId,
-        vapiCallId: callSid,
-        callerNumber: from,
-        status: 'in-progress',
-        startedAt: new Date(),
-      });
+      // Use findOneAndUpdate with upsert to avoid duplicate key errors for outbound calls
+      await Call.findOneAndUpdate(
+        { vapiCallId: callSid },
+        {
+          $setOnInsert: {
+            agentId: agent._id,
+            userId: agent.userId,
+            vapiCallId: callSid,
+            callerNumber: req.body.Direction === 'outbound-api' ? to : from,
+            status: 'in-progress',
+            startedAt: new Date(),
+          }
+        },
+        { upsert: true, new: true }
+      );
       log.info('twilio_incoming_call_initialized_db', { callSid, agentId: agent._id, useCustomEngine: agent.useCustomEngine });
     }
   } catch (err) {
@@ -361,7 +379,8 @@ router.post('/incoming-call', async (req, res) => {
     return res.status(400).type('text/xml').send(`<?xml version="1.0" encoding="UTF-8"?><Response></Response>`);
   }
   const protocol = req.headers['x-forwarded-proto'] === 'https' ? 'wss' : 'ws';
-  const wsUrl = `${protocol}://${host}/media-stream`;
+  const agentParam = agent ? `?agentId=${agent._id.toString()}` : '';
+  const wsUrl = `${protocol}://${host}/media-stream${agentParam}`;
 
   res.type('text/xml');
   res.send(`<?xml version="1.0" encoding="UTF-8"?>
