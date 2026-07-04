@@ -328,7 +328,11 @@ const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
                     <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-[0.16em] block">Audio Playback</span>
                     {call.recordingUrl ? (
                       <div className="bg-white p-3 rounded-xl border border-slate-200/40 shadow-inner">
-                        <audio src={call.recordingUrl} controls className="w-full accent-blue-600 h-8" />
+                        <audio 
+                          src={call.recordingUrl.startsWith('http') ? call.recordingUrl : `${(import.meta.env.VITE_API_URL || '').replace(/\/api$/, '')}${call.recordingUrl}`} 
+                          controls 
+                          className="w-full accent-blue-600 h-8" 
+                        />
                       </div>
                     ) : (
                       <div className="flex items-center gap-2.5 py-3 px-4 bg-amber-50/40 rounded-xl border border-amber-100 text-amber-600">
@@ -832,8 +836,13 @@ export function MyCalls() {
               );
             }}
             emptyState={{
-              title: 'No call records matched',
-              description: 'Call logs will populate here once Vapi synchronization completes.',
+              icon: (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                </svg>
+              ),
+              title: 'No calls yet',
+              description: 'Call history will appear here once calls start flowing.',
             }}
             defaultSort={{ key: 'startedAt', direction: 'desc' }}
             

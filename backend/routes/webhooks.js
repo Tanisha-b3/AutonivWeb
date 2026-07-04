@@ -8,7 +8,7 @@ import Webhook from '../db/models/Webhook.js';
 import User from '../db/models/User.js';
 import { verifyVapiSignature } from '../middleware/webhookSignature.js';
 import { webhookLimiter } from '../middleware/rateLimiters.js';
-import { extractVapiCallData } from '../services/vapi.js';
+import { extractVapiCallData, getVapiCall } from '../services/vapi.js';
 import { containsAbuse, sanitizeText } from '../services/contentModeration.js';
 import { log, securityEvent } from '../services/logger.js';
 import { safeString } from '../services/validators.js';
@@ -108,26 +108,26 @@ router.post('/vapi', webhookLimiter, async (req, res) => {
 async function handleCallStarted(call) {
   if (!call?.id) return;
 
-  const agent = await Agent.findOne({ vapiId: call.assistantId }).lean();
-  if (!agent) {
-    log.warn('webhook_call_started_no_agent', { vapiId: call.assistantId });
-    return;
-  }
-
   const existing = await Call.findOne({ vapiCallId: call.id });
   if (existing) return;
 
   const { callerNumber, startedAt } = extractVapiCallData(call) || {};
 
+  const agent = await Agent.findOne({ vapiId: call.assistantId }).lean();
+
   await Call.create({
     _id: call.id,
-    agentId: agent._id,
-    userId: agent.userId,
+    agentId: agent?._id || null,
+    userId: agent?.userId || null,
     vapiCallId: call.id,
     callerNumber: callerNumber ? safeString(callerNumber, 30) : null,
     status: 'in-progress',
     startedAt: startedAt || new Date().toISOString(),
   });
+
+  if (!agent) {
+    log.warn('webhook_call_started_no_agent', { vapiId: call.assistantId, callId: call.id });
+  }
 }
 
 async function handleCallEnded(call) {
@@ -135,7 +135,7 @@ async function handleCallEnded(call) {
 
   const extracted = extractVapiCallData(call);
   if (!extracted) return;
-  const { duration, callerNumber, endedAt, recordingUrl, endedReason, status: vapiStatus } = extracted;
+  let { duration, callerNumber, endedAt, recordingUrl, endedReason, status: vapiStatus } = extracted;
 
   const statusMap = {
     'customer-ended-call': 'completed',
@@ -145,6 +145,20 @@ async function handleCallEnded(call) {
     'error': 'failed',
   };
   const status = statusMap[endedReason] || statusMap[vapiStatus] || 'completed';
+
+  // If webhook didn't include recordingUrl, fetch from Vapi REST API
+  if (!recordingUrl) {
+    try {
+      const fullCallData = await getVapiCall(call.id);
+      const fullExtracted = extractVapiCallData(fullCallData);
+      recordingUrl = fullExtracted?.recordingUrl || null;
+      if (recordingUrl) {
+        log.info('webhook_recording_url_fetched_from_api', { callId: call.id });
+      }
+    } catch (e) {
+      log.warn('webhook_recording_url_api_fetch_failed', { callId: call.id, error: e.message });
+    }
+  }
 
   const existing = await Call.findOne({ vapiCallId: call.id });
   if (!existing) return;
@@ -161,6 +175,25 @@ async function handleCallEnded(call) {
   }
 
   await Call.updateOne({ _id: existing._id }, updates);
+
+  // If recordingUrl is still null, schedule a delayed retry
+  if (!recordingUrl) {
+    setTimeout(async () => {
+      try {
+        const retryData = await getVapiCall(call.id);
+        const retryExtracted = extractVapiCallData(retryData);
+        if (retryExtracted?.recordingUrl) {
+          await Call.updateOne(
+            { vapiCallId: call.id },
+            { recordingUrl: retryExtracted.recordingUrl }
+          );
+          log.info('webhook_recording_url_delayed_fetch_success', { callId: call.id });
+        }
+      } catch (e) {
+        log.warn('webhook_recording_url_delayed_fetch_failed', { callId: call.id, error: e.message });
+      }
+    }, 30000);
+  }
 
   if (duration > 0) {
     await User.findByIdAndUpdate(existing.userId, { $inc: { minutesUsed: Math.ceil(duration / 60) } });
@@ -202,7 +235,7 @@ async function handleFunctionCall(call, functionCall) {
     const { name, phone, email, purpose } = functionCall.parameters || {};
 
     const sanitizedName = name ? sanitizeText(safeString(name, 200)) : null;
-    const sanitizedPurpose = purpose ? sanitizeText(safeString(purpose, 500)) : 'inquiry';
+    const sanitizedPurpose = purpose && !['unknown', 'Unknown'].includes(purpose) ? sanitizeText(safeString(purpose, 500)) : 'inquiry';
     const safePhone = phone ? safeString(phone, 30) : null;
     const safeEmail = email ? safeString(email, 254) : null;
 

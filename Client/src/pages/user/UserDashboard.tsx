@@ -190,7 +190,7 @@ const DonutChart = memo(({ data, rate }: {
 // ─── Stat Card ────────────────────────────────────────────────────────
 interface StatCardProps {
   label: string;
-  value: number;
+  value: number | string;
   icon: React.ReactNode;
   accentColor: string;
   delta?: string;
@@ -237,7 +237,11 @@ const StatCard = memo(({ label, value, icon, accentColor, delta, onClick, trend,
       <div className="relative z-10">
         <div className="flex items-baseline gap-2">
           <p className="text-2xl sm:text-[28px] font-extrabold text-slate-800 tracking-tight leading-none">
-            <AnimatedCounter value={value} />
+            {typeof value === 'number' ? (
+              <AnimatedCounter value={value} />
+            ) : (
+              value
+            )}
           </p>
           {trend && (
             <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md ${trend === 'up' ? 'text-green-600 bg-green-50' : trend === 'down' ? 'text-rose-600 bg-rose-50' : 'text-slate-500 bg-slate-50'}`}>
@@ -437,7 +441,11 @@ const CallDetailsDrawer = ({ call, onClose }: DrawerProps) => {
               <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-3">
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">Voice Recording</span>
                 {call.recordingUrl ? (
-                  <audio src={call.recordingUrl} controls className="w-full h-8" />
+                  <audio 
+                    src={call.recordingUrl.startsWith('http') ? call.recordingUrl : `${(import.meta.env.VITE_API_URL || '').replace(/\/api$/, '')}${call.recordingUrl}`} 
+                    controls 
+                    className="w-full h-8" 
+                  />
                 ) : (
                   <div className="flex items-center gap-3 py-1.5 text-slate-400">
                     <svg className="w-5 h-5 opacity-60 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -1209,7 +1217,7 @@ export function UserDashboard() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
         ),
-        delta: `Limit: ${user?.chatLimit || 0} / mo`,
+        delta: `Limit: ${user?.chatLimit === -1 ? '∞' : (user?.chatLimit || 0)} / mo`,
         colorHex: '#2563EB',
       });
     }
@@ -1245,7 +1253,7 @@ export function UserDashboard() {
     if (isChatOnly) {
       list.push({
         label: 'Chats Remaining',
-        value: Math.max(0, (user?.chatLimit || 0) - (user?.chatUsed || 0)),
+        value: user?.chatLimit === -1 ? 'Unlimited' : Math.max(0, (user?.chatLimit || 0) - (user?.chatUsed || 0)),
         accentColor: '0,212,255',
         icon: (
           <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -1696,14 +1704,18 @@ export function UserDashboard() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {[
                 { label: 'Conversations Used', value: user?.chatUsed || 0, color: 'text-blue-600', bg: 'bg-blue-50/50' },
-                { label: 'Monthly Limit', value: user?.chatLimit || 0, color: 'text-[var(--primary-blue)]', bg: 'bg-[var(--primary-blue-soft)]/20' },
-                { label: 'Remaining', value: Math.max(0, (user?.chatLimit || 0) - (user?.chatUsed || 0)), color: 'text-green-600', bg: 'bg-green-50/50' },
-                { label: 'Usage Rate', value: user?.chatLimit ? Math.round(((user?.chatUsed || 0) / user.chatLimit) * 100) : 0, color: 'text-amber-600', bg: 'bg-amber-50/50', suffix: '%' },
+                { label: 'Monthly Limit', value: user?.chatLimit === -1 ? 'Unlimited' : (user?.chatLimit || 0), color: 'text-[var(--primary-blue)]', bg: 'bg-[var(--primary-blue-soft)]/20' },
+                { label: 'Remaining', value: user?.chatLimit === -1 ? 'Unlimited' : Math.max(0, (user?.chatLimit || 0) - (user?.chatUsed || 0)), color: 'text-green-600', bg: 'bg-green-50/50' },
+                { label: 'Usage Rate', value: user?.chatLimit === -1 ? 0 : (user?.chatLimit ? Math.round(((user?.chatUsed || 0) / user.chatLimit) * 100) : 0), color: 'text-amber-600', bg: 'bg-amber-50/50', suffix: '%' },
               ].map(item => (
                 <div key={item.label} className={`rounded-xl p-3.5 border border-slate-100 ${item.bg}`}>
                   <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">{item.label}</p>
                   <p className={`text-xl font-extrabold ${item.color}`}>
-                    <AnimatedCounter value={item.value} />{item.suffix || ''}
+                    {typeof item.value === 'number' ? (
+                      <AnimatedCounter value={item.value} />
+                    ) : (
+                      item.value
+                    )}{item.suffix || ''}
                   </p>
                 </div>
               ))}
@@ -1896,32 +1908,34 @@ export function UserDashboard() {
             <div className="rounded-xl p-4 mb-4 bg-slate-50/70 border border-slate-100">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-slate-600 font-bold">{isVoice ? 'Billing Minutes' : 'Chat Conversations'}</span>
-                <span className={`text-xs font-extrabold ${(isVoice ? usagePercent : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100) > 80 ? 'text-rose-600' : 'text-slate-800'}`}>
+                <span className={`text-xs font-extrabold ${(isVoice ? usagePercent : (user?.chatLimit === -1 ? 0 : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100)) > 80 ? 'text-rose-600' : 'text-slate-800'}`}>
                   <AnimatedCounter value={isVoice ? minutesUsed : (user?.chatUsed || 0)} />
                   {isVoice ? (
                     isUnlimitedMinutes
                       ? <span className="text-slate-400 font-semibold"> / ∞ mins</span>
                       : minutesLimit > 0 && <span className="text-slate-400 font-semibold"> / {minutesLimit.toLocaleString()} mins</span>
                   ) : (
-                    user?.chatLimit ? <span className="text-slate-400 font-semibold"> / {user.chatLimit.toLocaleString()} chats</span> : null
+                    user?.chatLimit === -1
+                      ? <span className="text-slate-400 font-semibold"> / ∞ chats</span>
+                      : user?.chatLimit ? <span className="text-slate-400 font-semibold"> / {user.chatLimit.toLocaleString()} chats</span> : null
                   )}
                 </span>
               </div>
               <div className="h-2 rounded-full overflow-hidden bg-slate-200">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${isVoice ? usagePercent : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100}%` }}
+                <motion.div initial={{ width: 0 }} animate={{ width: `${isVoice ? usagePercent : (user?.chatLimit === -1 ? 0 : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100)}%` }}
                   transition={{ delay: 0.2, duration: 0.75, ease: 'easeOut' }}
-                  className={`h-full rounded-full ${(isVoice ? usagePercent : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100) > 80 ? 'bg-gradient-to-r from-rose-500 to-amber-500' : 'bg-gradient-to-r from-[var(--primary-blue)] to-[#10B981]'}`} />
+                  className={`h-full rounded-full ${(isVoice ? usagePercent : (user?.chatLimit === -1 ? 0 : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100)) > 80 ? 'bg-gradient-to-r from-rose-500 to-amber-500' : 'bg-gradient-to-r from-[var(--primary-blue)] to-[#10B981]'}`} />
               </div>
               <div className="flex items-center justify-between mt-1.5">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{Math.round(isVoice ? usagePercent : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100)}% metrics consumed</span>
-                {(isVoice ? usagePercent : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100) > 80 && (
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{Math.round(isVoice ? usagePercent : (user?.chatLimit === -1 ? 0 : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100))}% metrics consumed</span>
+                {(isVoice ? usagePercent : (user?.chatLimit === -1 ? 0 : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100)) > 80 && (
                   <span className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 text-rose-500">
                     ⚠ quota critical
                   </span>
                 )}
               </div>
             </div>
-
+ 
             <div className="grid grid-cols-2 gap-2.5">
               {(isVoice ? [
                 { label: 'Active Agents',   value: myAgentStats.active,   color: 'text-green-600', bg: 'bg-green-50/30' },
@@ -1930,15 +1944,19 @@ export function UserDashboard() {
                 { label: 'Captured Leads',  value: s.leadCount || 0,       color: 'text-amber-600', bg: 'bg-amber-50/30', to: '/dashboard/leads' },
               ] : [
                 { label: 'Chats Used',      value: user?.chatUsed || 0,   color: 'text-blue-600', bg: 'bg-blue-50/30' },
-                { label: 'Chats Available', value: Math.max(0, (user?.chatLimit || 0) - (user?.chatUsed || 0)), color: 'text-green-600', bg: 'bg-green-50/30' },
-                { label: 'Monthly Quota',   value: user?.chatLimit || 0, color: 'text-[var(--primary-blue)]', bg: 'bg-[var(--primary-blue-soft)]/20' },
+                { label: 'Chats Available', value: user?.chatLimit === -1 ? 'Unlimited' : Math.max(0, (user?.chatLimit || 0) - (user?.chatUsed || 0)), color: 'text-green-600', bg: 'bg-green-50/30' },
+                { label: 'Monthly Quota',   value: user?.chatLimit === -1 ? 'Unlimited' : (user?.chatLimit || 0), color: 'text-[var(--primary-blue)]', bg: 'bg-[var(--primary-blue-soft)]/20' },
                 { label: 'Captured Leads',  value: s.leadCount || 0,       color: 'text-amber-600', bg: 'bg-amber-50/30', to: '/dashboard/leads' },
               ]).map(item => {
                 const inner = (
                   <div className={`rounded-xl p-3 border transition-all ${item.bg} border-slate-100 hover:border-slate-200`}>
                     <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">{item.label}</p>
                     <p className={`text-xl font-extrabold ${item.color}`}>
-                      <AnimatedCounter value={item.value} />
+                      {typeof item.value === 'number' ? (
+                        <AnimatedCounter value={item.value} />
+                      ) : (
+                        item.value
+                      )}
                     </p>
                   </div>
                 );

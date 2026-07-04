@@ -13,6 +13,7 @@ const agentSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
   callCount: { type: Number, default: 0 },
   useCustomEngine: { type: Boolean, default: false },
+  customEngineModel: { type: String, default: 'groq:llama-3.3-70b' },
 }, { timestamps: true });
 
 agentSchema.index({ userId: 1 });

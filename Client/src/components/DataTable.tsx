@@ -123,20 +123,30 @@ function CardSkeleton({ count = 6 }: { count?: number }) {
 function EmptyState({ icon, title, description }: { icon?: React.ReactNode; title: string; description: string }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease }}
+      transition={{ duration: 0.4, ease }}
       className="flex flex-col items-center justify-center py-24 text-center px-6"
     >
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/60 flex items-center justify-center mb-5 shadow-sm">
-        {icon || (
-          <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-          </svg>
-        )}
+      <div className="relative group mb-6 flex-shrink-0">
+        {/* Modern blur background glow */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-blue-500 to-indigo-500 rounded-3xl blur-xl opacity-15 group-hover:opacity-25 transition-all duration-300 scale-90 group-hover:scale-105" />
+        
+        {/* Core Icon Container */}
+        <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-white to-slate-50 border border-slate-200/80 flex items-center justify-center shadow-md shadow-slate-100/50 transition-all duration-300 group-hover:scale-105 group-hover:border-blue-300 group-hover:shadow-indigo-100/50">
+          {icon ? (
+            <div className="text-slate-500 transition-colors duration-200 group-hover:text-blue-600">
+              {icon}
+            </div>
+          ) : (
+            <svg className="w-8 h-8 text-slate-350 transition-colors duration-200 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            </svg>
+          )}
+        </div>
       </div>
-      <p className="text-sm font-semibold text-slate-700 mb-1.5">{title}</p>
-      <p className="text-xs text-slate-400 max-w-xs leading-relaxed">{description}</p>
+      <h3 className="text-sm font-extrabold text-slate-800 tracking-tight mb-1.5">{title}</h3>
+      <p className="text-xs text-slate-500 max-w-xs leading-relaxed">{description}</p>
     </motion.div>
   );
 }

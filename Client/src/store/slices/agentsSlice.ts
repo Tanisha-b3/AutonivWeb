@@ -83,6 +83,8 @@ export const updateAgent = createAsyncThunk(
       isActive: boolean;
       language?: string;
       voiceId?: string;
+      useCustomEngine?: boolean;
+      customEngineModel?: string;
     };
   }) => {
     const res = await agentService.update(id, data);

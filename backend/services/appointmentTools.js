@@ -1,18 +1,3 @@
-/**
- * Generic appointment & lead tools for the voice/web orchestrator.
- *
- * Works for ANY appointment-based business (clinics, salons, garages, etc.) —
- * "provider" is the generic term for dentist / doctor / stylist / mechanic, and
- * "service"/"reason" is the generic reason-for-visit.
- *
- * Exposes:
- *   getToolDefinitions(agentType) -> tool[]  (OpenAI/Groq function-calling schema)
- *   executeTool(name, args, ctx)  -> result  (runs the backend action)
- *
- * ctx = { agentObj, toolState }
- *   agentObj  : the Agent mongoose doc (needs _id, userId)
- *   toolState : per-call object for dedup, e.g. { saveLead:false, saveAppointment:false }
- */
 
 import Lead from '../db/models/Lead.js';
 import Appointment from '../db/models/Appointment.js';
@@ -163,7 +148,7 @@ const APPOINTMENT_TOOLS = [
           date: { type: 'string' },
           time: { type: 'string' },
         },
-        required: ['name', 'phone', 'date', 'time'],
+        required: ['name', 'phone', 'date', 'time', 'reason'],
       },
     },
   },
@@ -277,7 +262,7 @@ async function findAppointment(userId, appointmentId, phone) {
 // ---------- dispatcher ----------
 
 export async function executeTool(name, args, ctx) {
-  const { agentObj, toolState = {} } = ctx;
+  const { agentObj, toolState = {}, callId } = ctx;
   const userId = agentObj.userId;
 
   try {
@@ -287,17 +272,31 @@ export async function executeTool(name, args, ctx) {
         const leadName = pick(args, 'name');
         const phone = pick(args, 'phone');
         const reason = pick(args, 'reason', 'purpose') || 'inquiry';
+
+        const isUnknown = (val) => {
+          if (!val) return true;
+          const s = String(val).trim().toLowerCase();
+          return s === 'unknown' || s === 'unknown name' || s === 'unknown phone' || s === 'u' || s === 'none' || s === 'null' || s === 'undefined' || s === 'web caller' || s === '';
+        };
+
+        if (isUnknown(leadName) || isUnknown(phone)) {
+          return { success: false, error: 'Cannot save lead with unknown contact details. Please ask the caller for their name and phone number.' };
+        }
+
         if ((leadName && containsAbuse(leadName)) || (reason && containsAbuse(reason))) {
           return { success: false, error: 'Content policy violation' };
         }
         // Collect lead data — will be saved when conversation ends
+        const sanitizedPurpose = isUnknown(reason) ? 'General inquiry' : sanitizeText(safeString(reason, 500));
         toolState.pendingLeadData = {
           agentId: agentObj._id,
+          callId: callId || null,
           userId,
           name: leadName ? sanitizeText(safeString(leadName, 200)) : null,
           phone: phone ? safeString(phone, 30) : null,
           email: pick(args, 'email') ? safeString(args.email, 254) : null,
-          purpose: sanitizeText(safeString(reason, 500)),
+          purpose: sanitizedPurpose,
+          leadType: 'call',
         };
         toolState.saveLead = true;
         log.info('orchestrator_lead_collected', { name: toolState.pendingLeadData.name, phone: toolState.pendingLeadData.phone });
@@ -322,6 +321,16 @@ export async function executeTool(name, args, ctx) {
         const date = pick(args, 'date', 'preferredDate');
         const time = pick(args, 'time', 'preferredTime');
         const patientType = pick(args, 'patientType');
+
+        const isUnknown = (val) => {
+          if (!val) return true;
+          const s = String(val).trim().toLowerCase();
+          return s === 'unknown' || s === 'unknown name' || s === 'unknown phone' || s === 'u' || s === 'none' || s === 'null' || s === 'undefined' || s === 'web caller' || s === '';
+        };
+
+        if (isUnknown(customerName) || isUnknown(phone)) {
+          return { success: false, error: 'Cannot book appointment with unknown contact details. Please ask the caller for their name and phone number first.' };
+        }
 
         if ((customerName && containsAbuse(customerName)) || (service && containsAbuse(service))) {
           return { success: false, error: 'Content policy violation' };
@@ -354,6 +363,7 @@ export async function executeTool(name, args, ctx) {
 
         const appt = await Appointment.create({
           agentId: agentObj._id,
+          callId: callId || null,
           userId,
           name: customerName ? sanitizeText(safeString(customerName, 200)) : null,
           phone: safePhone,

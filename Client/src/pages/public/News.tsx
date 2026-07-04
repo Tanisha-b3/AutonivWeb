@@ -174,101 +174,192 @@ export function News() {
                 </div>
               </Reveal>
               {NEWS_ARTICLES.filter(a => a.featured).map((art) => (
-                <Reveal key={art.title} delay={80}>
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                    whileHover={{ y: -4, boxShadow: '0 24px 48px -12px rgba(15,23,42,0.12)' }}
-                    className="group rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 bg-white border"
-                    style={{ borderColor: HAIRLINE, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}
-                    onClick={() => setSelectedArticle(art)}
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-2">
-                      <div className="h-40 sm:h-56 md:h-auto flex items-center justify-center p-8 border-b md:border-b-0 md:border-r" style={{ background: TINT, borderColor: HAIRLINE }}>
-                        <motion.span
-                          className="text-5xl sm:text-7xl md:text-8xl"
-                          whileHover={{ scale: 1.1, rotate: 3 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          {art.emoji}
-                        </motion.span>
-                      </div>
-                      <div className="p-6 sm:p-8 flex flex-col justify-center">
-                        <div className="flex flex-wrap items-center gap-3 mb-3">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(37,99,235,0.08)', color: '#2563EB' }}>{art.category}</span>
-                          <span className="text-xs font-medium" style={{ color: MUTE }}>{art.date}</span>
-                        </div>
-                        <h3 className="text-xl sm:text-2xl font-bold mb-3 leading-snug" style={{ color: INK }}>{art.title}</h3>
-                        <p className="text-sm leading-relaxed mb-5" style={{ color: SLATE }}>{art.desc}</p>
-                        <div className="flex items-center justify-between pt-4" style={{ borderTop: `1px solid ${HAIRLINE}` }}>
-                          <span className="text-xs font-medium" style={{ color: MUTE }}>{art.readTime}</span>
-                          <span className="inline-flex items-center gap-2 text-sm font-bold transition-all group-hover:gap-3" style={{ color: '#2563EB' }}>
-                            Read More
-                            <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                </Reveal>
-              ))}
-            </div>
-          </section>
+                    <Reveal key={art.title} delay={80}>
+                      <motion.div
+                        initial={{ opacity: 0, y: 40 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-40px" }}
+                        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                        whileHover={{ 
+                          y: -12, 
+                          scale: 1.02,
+                          boxShadow: '0 32px 64px -16px rgba(15,23,42,0.2)'
+                        }}
+                        className="group cursor-pointer transition-all duration-500 relative overflow-hidden"
+                        style={{
+                          background: 'linear-gradient(135deg, #ffffff, #fafcff)',
+                          borderRadius: '24px',
+                          boxShadow: '0 4px 20px rgba(0,0,0,0.04)'
+                        }}
+                        onClick={() => setSelectedArticle(art)}
+                      >
+<div className="grid grid-cols-1 md:grid-cols-2 relative z-10">
+                       <div className="h-40 sm:h-56 md:h-auto flex items-center justify-center p-8 border-b md:border-b-0 md:border-r border-slate-100 relative overflow-hidden">
+                         <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 to-emerald-50/20"></div>
+                         <motion.span
+                           className="text-5xl sm:text-7xl md:text-8xl relative z-10 transform-gpu"
+                           whileHover={{ 
+                             scale: 1.15, 
+                             rotate: 8,
+                             y: -5,
+                             filter: 'brightness(1.1)'
+                           }}
+                           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                         >
+                           {art.emoji}
+                         </motion.span>
+                       </div>
+                       <div className="p-6 sm:p-8 flex flex-col justify-center relative overflow-hidden">
+                         <div className="relative z-10">
+                           <div className="flex flex-wrap items-center gap-3 mb-4">
+                             <motion.span 
+                               whileHover={{ scale: 1.05, y: -2 }}
+                               className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-300 cursor-default"
+                               style={{ 
+                                 background: 'linear-gradient(135deg, #eff6ff, #f0fdf9)',
+                                 color: '#2563EB',
+                                 border: '1px solid rgba(37,99,235,0.15)',
+                                 boxShadow: '0 2px 8px rgba(37,99,235,0.1)'
+                               }}
+                             >{art.category}</motion.span>
+                             <motion.span 
+                               whileHover={{ scale: 1.05 }}
+                               className="text-xs font-medium transition-colors duration-300"
+                               style={{ color: MUTE }}
+                             >{art.date}</motion.span>
+                           </div>
+                           
+                           <h3 className="text-xl sm:text-2xl font-bold mb-3 leading-snug transition-all duration-300 group-hover:text-blue-900" style={{ color: INK }}>{art.title}</h3>
+                           <p className="text-sm leading-relaxed mb-6 transition-all duration-300 group-hover:text-slate-800" style={{ color: SLATE }}>{art.desc}</p>
+                           
+                           <div className="flex items-center justify-between pt-4 border-t border-slate-100 relative overflow-hidden">
+                             <span className="text-xs font-medium transition-colors duration-300" style={{ color: MUTE }}>{art.readTime}</span>
+                             <motion.span 
+                               className="inline-flex items-center gap-2 text-sm font-bold transition-all cursor-pointer relative overflow-hidden"
+                               style={{ color: '#2563EB' }}
+                               whileHover={{ gap: 3 }}
+                             >
+                               <span className="relative z-10">Read More</span>
+                               <motion.svg 
+                                 className="w-4 h-4 transition-all duration-300 relative z-10" 
+                                 fill="none" 
+                                 viewBox="0 0 24 24" 
+                                 stroke="currentColor"
+                                 whileHover={{ x: 3, strokeWidth: 2.5 }}
+                               >
+                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                               </motion.svg>
+                             </motion.span>
+                           </div>
+                         </div>
+                       </div>
+                     </div>
+                   </motion.div>
+                 </Reveal>
+               ))}
+             </div>
+           </section>
 
-          {/* ── All Articles ── */}
-          <section className="section-box white">
-            <div className="section-pad max-w-6xl mx-auto">
-              <Reveal>
-                <div className="text-center mb-10">
-                  <SectionLabel text="Articles" />
-                  <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: 0 }}>
-                    All <GradientText>Articles</GradientText>
-                  </h2>
-                </div>
-              </Reveal>
-              <Reveal delay={80}>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {NEWS_ARTICLES.filter(a => !a.featured).map((art, i) => (
-                    <motion.div
-                      key={art.title}
-                      initial={{ opacity: 0, y: 24 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                      whileHover={{ y: -6, boxShadow: '0 12px 32px -8px rgba(15,23,42,0.10)' }}
-                      className="group rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 bg-white border"
-                      style={{ borderColor: HAIRLINE, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}
-                      onClick={() => setSelectedArticle(art)}
-                    >
-                      <div className="h-28 sm:h-40 flex items-center justify-center" style={{ background: TINT, borderBottom: `1px solid ${HAIRLINE}` }}>
-                        <motion.span
-                          className="text-4xl sm:text-5xl"
-                          whileHover={{ scale: 1.1, rotate: 6 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          {art.emoji}
-                        </motion.span>
-                      </div>
-                      <div className="p-5 sm:p-6">
-                        <div className="flex flex-wrap items-center gap-2 mb-3">
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ background: 'rgba(37,99,235,0.08)', color: '#2563EB' }}>{art.category}</span>
-                          <span className="text-[10px] font-medium" style={{ color: MUTE }}>{art.date}</span>
-                        </div>
-                        <h3 className="text-sm font-bold mb-2 leading-snug line-clamp-2" style={{ color: INK }}>{art.title}</h3>
-                        <p className="text-xs leading-relaxed mb-4 line-clamp-2" style={{ color: SLATE }}>{art.desc}</p>
-                        <div className="flex items-center justify-between pt-3" style={{ borderTop: `1px solid ${HAIRLINE}` }}>
-                          <span className="text-[10px] font-medium" style={{ color: MUTE }}>{art.readTime}</span>
-                          <span className="text-sm font-medium transition-all group-hover:translate-x-1" style={{ color: '#2563EB' }}>Read More →</span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </Reveal>
-            </div>
-          </section>
+           {/* ── All Articles ── */}
+           <section className="section-box white">
+             <div className="section-pad max-w-6xl mx-auto">
+               <Reveal>
+                 <div className="text-center mb-10">
+                   <SectionLabel text="Articles" />
+                   <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 800, letterSpacing: '-0.025em', color: INK, margin: 0 }}>
+                     All <GradientText>Articles</GradientText>
+                   </h2>
+                 </div>
+               </Reveal>
+               <Reveal delay={80}>
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                   {NEWS_ARTICLES.filter(a => !a.featured).map((art, i) => (
+                     <motion.div
+                       key={art.title}
+                       initial={{ opacity: 0, y: 30 }}
+                       whileInView={{ opacity: 1, y: 0 }}
+                       viewport={{ once: true, margin: "-40px" }}
+                       transition={{ duration: 0.6, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                       whileHover={{ 
+                         y: -10, 
+                         scale: 1.02,
+                         boxShadow: '0 20px 40px -12px rgba(15,23,42,0.15)'
+                       }}
+                       className="group cursor-pointer transition-all duration-500 relative overflow-hidden"
+                       style={{
+                         background: 'linear-gradient(135deg, #ffffff, #fafcff)',
+                         borderRadius: '20px',
+                         boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+                         border: '1px solid rgba(37,99,235,0.06)'
+                       }}
+                       onClick={() => setSelectedArticle(art)}
+                     >
+                       <div className="h-32 sm:h-40 flex items-center justify-center relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #f0f7ff, #f8fbfd)' }}>
+                         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ 
+                           background: 'radial-gradient(circle at center, rgba(37,99,235,0.08), transparent 70%)' 
+                         }} />
+                         <motion.span
+                           className="text-4xl sm:text-5xl relative z-10 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6"
+                           whileHover={{ scale: 1.1, rotate: 6, y: -5, filter: 'brightness(1.1)' }}
+                           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                         >
+                           {art.emoji}
+                         </motion.span>
+                       </div>
+                       <div className="p-6 sm:p-6 relative">
+                         <div className="relative z-10">
+                           <div className="flex flex-wrap items-center gap-2 mb-3">
+                             <motion.span 
+                               whileHover={{ scale: 1.03, y: -1 }}
+                               className="inline-flex items-center px-2.5 py-1.5 rounded-full text-[10px] font-bold transition-all duration-300 cursor-default"
+                               style={{ 
+                                 background: 'linear-gradient(135deg, #eff6ff, #f0fdf9)',
+                                 color: '#2563EB',
+                                 border: '1px solid rgba(37,99,235,0.12)',
+                                 boxShadow: '0 2px 6px rgba(37,99,235,0.08)'
+                               }}
+                             >{art.category}</motion.span>
+                             <motion.span 
+                               whileHover={{ scale: 1.03 }}
+                               className="text-[10px] font-medium transition-colors duration-300"
+                               style={{ color: MUTE }}
+                             >{art.date}</motion.span>
+                           </div>
+                           
+                           <h3 className="text-sm font-bold mb-2.5 leading-snug line-clamp-2 transition-all duration-300 group-hover:text-blue-900" style={{ color: INK }}>{art.title}</h3>
+                           <p className="text-xs leading-relaxed mb-4 line-clamp-2 transition-all duration-300 group-hover:text-slate-700" style={{ color: SLATE }}>{art.desc}</p>
+                           
+                           <div className="flex items-center justify-between pt-3.5 border-t border-slate-100 relative overflow-hidden">
+                             <span className="text-[10px] font-medium transition-colors duration-300" style={{ color: MUTE }}>{art.readTime}</span>
+                             <motion.span 
+                               className="text-sm font-semibold transition-all duration-300 cursor-pointer flex items-center gap-1 group-hover:gap-2"
+                               style={{ color: '#2563EB' }}
+                               whileHover={{ x: 2 }}
+                             >
+                               Read More →
+                               <motion.svg 
+                                 className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all duration-300" 
+                                 fill="none" 
+                                 viewBox="0 0 24 24" 
+                                 stroke="currentColor"
+                                 initial={{ x: -2, opacity: 0 }}
+                                 whileHover={{ x: 0, opacity: 1 }}
+                               >
+                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                               </motion.svg>
+                             </motion.span>
+                           </div>
+                         </div>
+                       </div>
+                       
+                       {/* Subtle hover effect line */}
+                       <div className="absolute bottom-0 left-0 h-1 w-0 bg-gradient-to-r from-blue-500 to-emerald-500 group-hover:w-full transition-all duration-500 ease-out" />
+                     </motion.div>
+                   ))}
+                 </div>
+               </Reveal>
+             </div>
+           </section>
 
           {/* ── Categories ── */}
           <section className="section-box tint">

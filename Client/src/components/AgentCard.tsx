@@ -22,6 +22,15 @@ const LANGUAGE_FLAGS: Record<string, { label: string; flag: string }> = {
   pt: { label: 'Portuguese', flag: '🇵🇹' },
   pl: { label: 'Polish', flag: '🇵🇱' },
   hi: { label: 'Hindi', flag: '🇮🇳' },
+  bn: { label: 'Bengali', flag: '🇮🇳' },
+  te: { label: 'Telugu', flag: '🇮🇳' },
+  ta: { label: 'Tamil', flag: '🇮🇳' },
+  mr: { label: 'Marathi', flag: '🇮🇳' },
+  gu: { label: 'Gujarati', flag: '🇮🇳' },
+  kn: { label: 'Kannada', flag: '🇮🇳' },
+  ml: { label: 'Malayalam', flag: '🇮🇳' },
+  pa: { label: 'Punjabi', flag: '🇮🇳' },
+  or: { label: 'Odia', flag: '🇮🇳' },
   ar: { label: 'Arabic', flag: '🇸🇦' },
   ja: { label: 'Japanese', flag: '🇯🇵' },
   ko: { label: 'Korean', flag: '🇰🇷' },
@@ -76,7 +85,16 @@ const typeConfig: Record<string, {
 export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, onWebCall, onViewPrompt, showOwner }: AgentCardProps) {
   const config = typeConfig[agent.type] || typeConfig.receptionist;
   const voiceOpt = VOICE_OPTIONS.find(v => v.value === agent.voiceId);
-  const voiceName = voiceOpt ? voiceOpt.label.split(' - ')[0] : 'Default';
+  let voiceName = 'Default';
+  if (voiceOpt) {
+    voiceName = voiceOpt.label.split(' - ')[0];
+  } else if (agent.voiceId === 'sarvam:bulbul') {
+    voiceName = 'Sarvam Bulbul (Indic-native)';
+  } else if (agent.voiceId && agent.voiceId.startsWith('sarvam:')) {
+    const parts = agent.voiceId.split(':');
+    const speaker = parts[parts.length - 1];
+    voiceName = `Sarvam ${speaker.charAt(0).toUpperCase() + speaker.slice(1)}`;
+  }
   const langConfig = LANGUAGE_FLAGS[agent.language || 'en'] || { label: 'English', flag: '🇺🇸' };
 
   return (
@@ -124,6 +142,11 @@ export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, 
 
           {/* Status pill + toggle */}
           <div className="flex items-center gap-2 flex-shrink-0">
+            {agent.useCustomEngine && (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[8.5px] font-black uppercase tracking-wider bg-violet-55 border border-violet-200/60 text-violet-700">
+                Custom
+              </span>
+            )}
             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[8.5px] font-black uppercase tracking-wider border ${
               agent.isActive
                 ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
@@ -192,6 +215,15 @@ export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, 
             </svg>
             {voiceName}
           </span>
+          {agent.useCustomEngine && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-bold border"
+              style={{ background: 'var(--s1)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--text-muted)' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              {agent.customEngineModel?.startsWith('gemini') ? 'Gemini 2.5 Flash' : agent.customEngineModel?.startsWith('openai') ? 'GPT-4o-mini' : 'Groq Llama-3.3'}
+            </span>
+          )}
           {agent.callCount > 0 && (
             <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-bold border ${config.pillClass}`}>
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

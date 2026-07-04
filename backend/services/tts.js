@@ -50,6 +50,110 @@ async function synthesizeSpeechDirectDeepgram(text, isTwilio, modelName) {
   return Buffer.from(buffer).toString('base64');
 }
 
+const AZURE_DEFAULT_VOICES = {
+  en: { female: 'en-US-JennyNeural', male: 'en-US-GuyNeural' },
+  hi: { female: 'hi-IN-SwaraNeural', male: 'hi-IN-MadhurNeural' },
+  es: { female: 'es-ES-ElviraNeural', male: 'es-ES-AlvaroNeural' },
+  fr: { female: 'fr-FR-DeniseNeural', male: 'fr-FR-HenriNeural' },
+  de: { female: 'de-DE-KatjaNeural', male: 'de-DE-ConradNeural' },
+  it: { female: 'it-IT-ElsaNeural', male: 'it-IT-DiegoNeural' },
+  pt: { female: 'pt-BR-FranciscaNeural', male: 'pt-BR-AntonioNeural' },
+  pl: { female: 'pl-PL-ZofiaNeural', male: 'pl-PL-MarekNeural' },
+  ar: { female: 'ar-EG-SalmaNeural', male: 'ar-EG-ShakirNeural' },
+  ja: { female: 'ja-JP-NanamiNeural', male: 'ja-JP-KeitaNeural' },
+  ko: { female: 'ko-KR-SunHiNeural', male: 'ko-KR-InJoonNeural' },
+  zh: { female: 'zh-CN-XiaoxiaoNeural', male: 'zh-CN-YunxiNeural' },
+  nl: { female: 'nl-NL-ColetteNeural', male: 'nl-NL-MaartenNeural' },
+  ru: { female: 'ru-RU-SvetlanaNeural', male: 'ru-RU-DmitryNeural' },
+  tr: { female: 'tr-TR-EmelNeural', male: 'tr-TR-AhmetNeural' },
+  bn: { female: 'bn-IN-TanishaNeural', male: 'bn-IN-BashkarNeural' },
+  te: { female: 'te-IN-ShrutiNeural', male: 'te-IN-MohanNeural' },
+  ta: { female: 'ta-IN-PallaviNeural', male: 'ta-IN-ValluvarNeural' },
+  mr: { female: 'mr-IN-AarohiNeural', male: 'mr-IN-ManoharNeural' },
+  gu: { female: 'gu-IN-DhwaniNeural', male: 'gu-IN-NiranjanNeural' },
+  kn: { female: 'kn-IN-SapnaNeural', male: 'kn-IN-GaganNeural' },
+  ml: { female: 'ml-IN-SobhanaNeural', male: 'ml-IN-MidhunNeural' },
+  pa: { female: 'pa-IN-OjasNeural', male: 'pa-IN-GurpreetNeural' },
+  or: { female: 'or-IN-SubhasiniNeural', male: 'or-IN-AnanyaNeural' }
+};
+
+export function detectLanguageOfText(text, agentLanguage = 'en') {
+  if (!text) return agentLanguage;
+
+  // 1. Script checks (Unicode ranges)
+  if (/[\u0900-\u097F]/.test(text)) {
+    return agentLanguage === 'mr' ? 'mr' : 'hi';
+  }
+  if (/[\u0980-\u09FF]/.test(text)) return 'bn';
+  if (/[\u0C00-\u0C7F]/.test(text)) return 'te';
+  if (/[\u0B80-\u0BFF]/.test(text)) return 'ta';
+  if (/[\u0A80-\u0AFF]/.test(text)) return 'gu';
+  if (/[\u0C80-\u0CFF]/.test(text)) return 'kn';
+  if (/[\u0D00-\u0D7F]/.test(text)) return 'ml';
+  if (/[\u0A00-\u0A7F]/.test(text)) return 'pa';
+  if (/[\u0B00-\u0B7F]/.test(text)) return 'or';
+  if (/[\u0600-\u06FF]/.test(text)) return 'ar';
+  if (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text)) return 'ja';
+  if (/[\uAC00-\uD7AF]/.test(text)) return 'ko';
+  if (/[\u4E00-\u9FFF]/.test(text)) return 'zh';
+  if (/[\u0400-\u04FF]/.test(text)) return 'ru';
+
+  // 2. Word & Character checks for common European languages
+  const lowerText = text.toLowerCase();
+  
+  if (/[¡¿ñáéíóúü]/.test(lowerText) || /\b(hola|gracias|buenos|dias|como|esta|adios|por|favor|señor|si|para|con)\b/.test(lowerText)) {
+    return 'es';
+  }
+  if (/[œçàèùâêîôûëï]/.test(lowerText) || /\b(bonjour|merci|oui|comment|allez|tres|bien|s'il|plaît|pour|avec|vous)\b/.test(lowerText)) {
+    return 'fr';
+  }
+  if (/[äöüß]/.test(lowerText) || /\b(hallo|danke|bitte|ja|nein|wie|geht|und|der|die|das|ist)\b/.test(lowerText)) {
+    return 'de';
+  }
+  if (/[àèéìòù]/.test(lowerText) || /\b(ciao|grazie|prego|si|come|sta|bene|per|con|bene)\b/.test(lowerText)) {
+    return 'it';
+  }
+  if (/[ãõçáéíóúâêô]/.test(lowerText) || /\b(olá|obrigado|sim|como|vai|bem|por|com|bom|dia)\b/.test(lowerText)) {
+    return 'pt';
+  }
+  if (/[ąćęłńóśźż]/.test(lowerText) || /\b(dzień|dobry|dziękuję|proszę|tak|nie|jak|się|masz)\b/.test(lowerText)) {
+    return 'pl';
+  }
+  if (/[çğıöşü]/.test(lowerText) || /\b(merhaba|teşekkürler|lütfen|evet|hayır|nasıl|iyi|bir|ve|ile)\b/.test(lowerText)) {
+    return 'tr';
+  }
+  if (/\b(hallo|bedankt|alsjeblieft|ja|nee|hoe|gaat|het|en|de|een|is)\b/.test(lowerText)) {
+    return 'nl';
+  }
+
+  return agentLanguage;
+}
+
+function getBestMultilingualProvider(detectedLang, gender) {
+  const elevenlabsKey = process.env.ELEVENLABS_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
+  const sarvamKey = process.env.SARVAM_API_KEY;
+
+  if (elevenlabsKey && !elevenlabsKey.startsWith('your-') && !elevenlabsKey.includes('placeholder')) {
+    const voiceId = gender === 'male' ? 'cjVigY5qzO86Huf0OWal' : 'hpp4J3VqNfWAUOO0d1Us';
+    return { provider: 'elevenlabs', voiceModelOrId: voiceId };
+  }
+
+  if (openaiKey && !openaiKey.startsWith('your-')) {
+    const voiceId = gender === 'male' ? 'onyx' : 'nova';
+    return { provider: 'openai', voiceModelOrId: voiceId };
+  }
+
+  const sarvamSupported = ['en', 'hi', 'bn', 'te', 'ta', 'mr', 'gu', 'kn', 'ml', 'pa', 'or'];
+  if (sarvamKey && !sarvamKey.startsWith('your-') && sarvamSupported.includes(detectedLang)) {
+    const voiceId = gender === 'male' ? 'shubh' : 'shreya';
+    return { provider: 'sarvam', voiceModelOrId: voiceId };
+  }
+
+  const voiceId = gender === 'male' ? 'onyx' : 'nova';
+  return { provider: 'openai', voiceModelOrId: voiceId };
+}
+
 export async function synthesizeSpeech(text, isTwilio = true, language = 'en', voiceId = null) {
   let provider = 'elevenlabs';
   let voiceModelOrId = voiceId;
@@ -58,6 +162,57 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
     const parts = voiceId.split(':');
     provider = parts[0];
     voiceModelOrId = parts.slice(1).join(':');
+  }
+
+  const hasAzure = !!(process.env.AZURE_SPEECH_KEY && !process.env.AZURE_SPEECH_KEY.startsWith('your-'));
+  const detectedLang = detectLanguageOfText(text, language);
+
+  if (detectedLang !== language) {
+    language = detectedLang;
+    const isMale = /male|prabhat|guy|madhur|alvaro|henri|conrad|diego|antonio|marek|shakir|keita|injoon|yunxi|maarten|dmitry|ahmet|bashkar|mohan|valluvar|manohar|niranjan|gagan|midhun|gurpreet|ananya|zeus|orion/i.test(voiceModelOrId || '');
+    const gender = isMale ? 'male' : 'female';
+
+    if (provider === 'azure') {
+      if (hasAzure && AZURE_DEFAULT_VOICES[detectedLang]) {
+        voiceModelOrId = AZURE_DEFAULT_VOICES[detectedLang][gender];
+      } else {
+        const fallback = getBestMultilingualProvider(detectedLang, gender);
+        provider = fallback.provider;
+        voiceModelOrId = fallback.voiceModelOrId;
+      }
+    } else if (provider === 'deepgram') {
+      if (detectedLang !== 'en') {
+        if (hasAzure && AZURE_DEFAULT_VOICES[detectedLang]) {
+          provider = 'azure';
+          voiceModelOrId = AZURE_DEFAULT_VOICES[detectedLang][gender];
+        } else {
+          const fallback = getBestMultilingualProvider(detectedLang, gender);
+          provider = fallback.provider;
+          voiceModelOrId = fallback.voiceModelOrId;
+        }
+      }
+    } else if (provider === 'sarvam') {
+      const sarvamSupported = ['en', 'hi', 'bn', 'te', 'ta', 'mr', 'gu', 'kn', 'ml', 'pa', 'or'];
+      if (!sarvamSupported.includes(detectedLang)) {
+        if (hasAzure && AZURE_DEFAULT_VOICES[detectedLang]) {
+          provider = 'azure';
+          voiceModelOrId = AZURE_DEFAULT_VOICES[detectedLang][gender];
+        } else {
+          const fallback = getBestMultilingualProvider(detectedLang, gender);
+          provider = fallback.provider;
+          voiceModelOrId = fallback.voiceModelOrId;
+        }
+      }
+    }
+  }
+
+  // Safeguard: Re-verify if Azure was selected but its key is missing
+  if (provider === 'azure' && !hasAzure) {
+    const isMale = /male|prabhat|guy|madhur|alvaro|henri|conrad|diego|antonio|marek|shakir|keita|injoon|yunxi|maarten|dmitry|ahmet|bashkar|mohan|valluvar|manohar|niranjan|gagan|midhun|gurpreet|ananya|zeus|orion/i.test(voiceModelOrId || '');
+    const gender = isMale ? 'male' : 'female';
+    const fallback = getBestMultilingualProvider(language, gender);
+    provider = fallback.provider;
+    voiceModelOrId = fallback.voiceModelOrId;
   }
 
   if (!voiceModelOrId) {
@@ -123,7 +278,8 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
       throw new Error('AZURE_SPEECH_KEY is not set');
     }
 
-    const langCode = language === 'en' ? 'en-IN' : language;
+    const match = voiceModelOrId ? voiceModelOrId.match(/^([a-z]{2}-[A-Z]{2})/) : null;
+    const langCode = match ? match[1] : (language === 'en' ? 'en-IN' : (language === 'hi' ? 'hi-IN' : language));
     const ssml = `<speak version='1.0' xml:lang='${langCode}'><voice xml:lang='${langCode}' name='${voiceModelOrId}'>${text}</voice></speak>`;
 
     const tokenResponse = await fetch(`https://${azureRegion}.api.cognitive.microsoft.com/sts/v1/issueToken`, {
@@ -177,6 +333,95 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
       const fallbackVoice = (voiceModelOrId && voiceModelOrId.includes('male')) ? 'aura-orion-en' : 'aura-asteria-en';
       return synthesizeSpeechDirectDeepgram(text, isTwilio, fallbackVoice);
     }
+  }
+  if (provider === 'sarvam') {
+    const sarvamKey = process.env.SARVAM_API_KEY;
+    if (!sarvamKey || sarvamKey.startsWith('your-')) {
+      throw new Error('SARVAM_API_KEY is not set');
+    }
+
+    const languageCodes = {
+      en: 'en-IN',
+      hi: 'hi-IN',
+      bn: 'bn-IN',
+      te: 'te-IN',
+      ta: 'ta-IN',
+      mr: 'mr-IN',
+      gu: 'gu-IN',
+      kn: 'kn-IN',
+      ml: 'ml-IN',
+      pa: 'pa-IN',
+      or: 'or-IN',
+    };
+
+    if (!languageCodes[language]) {
+      console.warn(`[TTS] Sarvam does not support language: ${language}. Falling back to Deepgram Aura.`);
+      const fallbackVoice = (voiceModelOrId && voiceModelOrId.includes('male')) ? 'aura-orion-en' : 'aura-asteria-en';
+      return synthesizeSpeechDirectDeepgram(text, isTwilio, fallbackVoice);
+    }
+
+    const targetLangCode = languageCodes[language];
+    const sampleRate = isTwilio ? 8000 : 24000;
+    const outputCodec = isTwilio ? 'mulaw' : 'linear16';
+
+    let sarvamModel = 'bulbul:v3';
+    let speaker = 'shreya';
+
+    if (voiceModelOrId) {
+      if (voiceModelOrId.includes(':')) {
+        const subparts = voiceModelOrId.split(':');
+        if (subparts.length >= 3) {
+          sarvamModel = `${subparts[0]}:${subparts[1]}`;
+          speaker = subparts[2];
+        } else if (subparts.length === 2) {
+          sarvamModel = `${subparts[0]}:${subparts[1]}`;
+          speaker = 'shreya';
+        }
+      } else if (voiceModelOrId === 'bulbul') {
+        sarvamModel = 'bulbul:v3';
+        speaker = 'shreya';
+      } else {
+        sarvamModel = 'bulbul:v3';
+        speaker = voiceModelOrId;
+      }
+    }
+
+    // Safeguard: Ensure speaker matches V3 model compatibility constraints
+    const V3_SPEAKERS = ['aditya', 'ritu', 'ashutosh', 'priya', 'neha', 'rahul', 'pooja', 'rohan', 'simran', 'kavya', 'amit', 'dev', 'ishita', 'shreya', 'ratan', 'varun', 'manan', 'sumit', 'roopa', 'kabir', 'aayan', 'shubh', 'advait', 'anand', 'tanya', 'tarun', 'sunny', 'mani', 'gokul', 'vijay', 'shruti', 'suhani', 'mohit', 'kavitha', 'rehan', 'soham', 'rupali', 'niharika'];
+    if (sarvamModel === 'bulbul:v3' && !V3_SPEAKERS.includes(speaker.toLowerCase())) {
+      speaker = 'shreya';
+    }
+
+    const requestBody = {
+      text,
+      model: sarvamModel,
+      speaker: speaker,
+      target_language_code: targetLangCode,
+      speech_sample_rate: sampleRate,
+      output_audio_codec: outputCodec,
+    };
+
+    const response = await fetch('https://api.sarvam.ai/text-to-speech', {
+      method: 'POST',
+      headers: {
+        'api-subscription-key': sarvamKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const errTxt = await response.text();
+      throw new Error(`Sarvam TTS failed (${response.status}): ${errTxt}`);
+    }
+
+    const json = await response.json();
+    const base64Audio = json.audios?.[0];
+    if (!base64Audio) {
+      throw new Error('Sarvam TTS returned empty audio list');
+    }
+
+    return base64Audio;
   }
 
   throw new Error(`Unsupported voice provider: ${provider}`);
