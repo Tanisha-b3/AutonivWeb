@@ -353,8 +353,14 @@ router.post('/outbound', checkVoiceLimit(), async (req, res) => {
       }
 
       // Calculate Twilio callback URL for incoming call
-      const baseWebhookUrl = process.env.WEBHOOK_URL || `https://${req.headers.host}/api/webhooks/vapi`;
-      const twilioWebhookUrl = baseWebhookUrl.replace('/vapi', '/incoming-call');
+      const baseWebhookUrl = process.env.WEBHOOK_URL || `https://${req.headers.host}`;
+      let twilioWebhookUrl;
+      if (baseWebhookUrl.endsWith('/api/webhooks/vapi')) {
+        twilioWebhookUrl = baseWebhookUrl.replace('/vapi', '/incoming-call');
+      } else {
+        const base = baseWebhookUrl.replace(/\/$/, '');
+        twilioWebhookUrl = `${base}/api/webhooks/incoming-call`;
+      }
 
       // Place Twilio outbound call using REST API
       const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Calls.json`;
