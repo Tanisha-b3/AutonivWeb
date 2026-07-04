@@ -451,7 +451,18 @@ router.post('/:id/assign-phone', async (req, res) => {
     }
 
     if (!agent.vapiId) {
-      return res.status(400).json({ message: 'Agent is not linked to Vapi yet' });
+      // Agent is a custom/non-Vapi agent; skip Vapi phone assignment and save locally in DB
+      const updateFields = { phoneNumberId };
+      if (phoneNumber) updateFields.phoneNumber = phoneNumber;
+      const updated = await Agent.findByIdAndUpdate(id, updateFields, { new: true }).lean();
+
+      return res.json({
+        agent: {
+          ...updated,
+          id: updated._id.toString(),
+          userId: updated.userId.toString(),
+        },
+      });
     }
 
     try {
