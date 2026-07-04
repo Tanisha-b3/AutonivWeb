@@ -3,6 +3,15 @@ import { log } from './logger.js';
 
 const VAPI_BASE_URL = process.env.VAPI_BASE_URL || 'https://api.vapi.ai';
 
+function getWebhookUrl(serverUrl) {
+  if (!serverUrl) return null;
+  if (serverUrl.endsWith('/api/webhooks/vapi')) {
+    return serverUrl;
+  }
+  const base = serverUrl.replace(/\/$/, '');
+  return `${base}/api/webhooks/vapi`;
+}
+
 function getVapiApiKey() {
   const key = process.env.VAPI_API_KEY;
   if (!key) throw new Error('VAPI_API_KEY is not set in environment variables');
@@ -108,13 +117,7 @@ const FIRST_MESSAGES = {
 };
 
 function buildVapiTools(serverUrl) {
-  const toolServerUrl = serverUrl
-    ? `${serverUrl}/api/webhooks/vapi`
-    : process.env.WEBHOOK_URL
-      ? `${process.env.WEBHOOK_URL}/api/webhooks/vapi`
-      : process.env.SERVER_URL
-        ? `${process.env.SERVER_URL}/api/webhooks/vapi`
-        : null;
+  const toolServerUrl = getWebhookUrl(serverUrl || process.env.WEBHOOK_URL || process.env.SERVER_URL);
 
   const serverConfig = toolServerUrl ? { server: { url: toolServerUrl } } : {};
 
@@ -220,7 +223,7 @@ async function buildAssistantConfig({ name, type, prompt, language, voiceId, use
     model: modelConfig,
     voice,
     ...(transcriber ? { transcriber } : {}),
-    ...(serverUrl ? { serverUrl: `${serverUrl}/api/webhooks/vapi` } : {}),
+    ...(serverUrl ? { serverUrl: getWebhookUrl(serverUrl) } : {}),
     recordingEnabled: true,
     silenceTimeoutSeconds: 30,
     maxDurationSeconds: 600,
