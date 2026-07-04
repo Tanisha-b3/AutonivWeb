@@ -401,24 +401,58 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
       output_audio_codec: outputCodec,
     };
 
-    const response = await fetch('https://api.sarvam.ai/text-to-speech', {
-      method: 'POST',
-      headers: {
-        'api-subscription-key': sarvamKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
+    let response = null;
+    try {
+      response = await fetch('https://api.sarvam.ai/text-to-speech', {
+        method: 'POST',
+        headers: {
+          'api-subscription-key': sarvamKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+    } catch (fetchErr) {
+      log.warn('sarvam_tts_fetch_network_error', { error: fetchErr.message });
+    }
 
-    if (!response.ok) {
-      const errTxt = await response.text();
-      throw new Error(`Sarvam TTS failed (${response.status}): ${errTxt}`);
+    if (!response || !response.ok) {
+      const errTxt = response ? await response.text() : 'Network/API error';
+      log.warn('sarvam_tts_first_attempt_failed', { speaker, model: sarvamModel, error: errTxt });
+
+      // Fallback: Retry with speaker 'shreya'
+      if (speaker.toLowerCase() !== 'shreya') {
+        log.info('sarvam_tts_retrying_with_fallback_speaker', { fallbackSpeaker: 'shreya' });
+        requestBody.speaker = 'shreya';
+
+        try {
+          response = await fetch('https://api.sarvam.ai/text-to-speech', {
+            method: 'POST',
+            headers: {
+              'api-subscription-key': sarvamKey,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+          });
+        } catch (retryErr) {
+          log.warn('sarvam_tts_retry_fetch_failed', { error: retryErr.message });
+        }
+      }
+    }
+
+    if (!response || !response.ok) {
+      const errTxt = response ? await response.text() : 'Network/API error';
+      log.warn('sarvam_tts_fully_failed_falling_back_to_deepgram', { error: errTxt });
+      // Final fallback to Deepgram
+      const fallbackVoice = isTwilio ? 'aura-stella-en' : 'aura-asteria-en';
+      return synthesizeSpeechDirectDeepgram(text, isTwilio, fallbackVoice);
     }
 
     const json = await response.json();
     const base64Audio = json.audios?.[0];
     if (!base64Audio) {
-      throw new Error('Sarvam TTS returned empty audio list');
+      log.warn('sarvam_tts_empty_audio_list_falling_back_to_deepgram');
+      const fallbackVoice = isTwilio ? 'aura-stella-en' : 'aura-asteria-en';
+      return synthesizeSpeechDirectDeepgram(text, isTwilio, fallbackVoice);
     }
 
     return base64Audio;
