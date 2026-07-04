@@ -14,6 +14,8 @@ const agentSchema = new mongoose.Schema({
   callCount: { type: Number, default: 0 },
   useCustomEngine: { type: Boolean, default: false },
   customEngineModel: { type: String, default: 'groq:llama-3.3-70b' },
+  twilioAccountSid: { type: String, default: null },
+  twilioAuthToken: { type: String, default: null },
 }, { timestamps: true });
 
 agentSchema.index({ userId: 1 });

@@ -17,12 +17,23 @@ import {
   createVapiPhoneNumber,
   listVapiPhoneNumbers,
 } from '../services/vapi.js';
+import { encrypt, decrypt } from '../services/encryption.js';
 
 const router = express.Router();
 router.use(authenticate);
 router.use(requireFeature('voice'));
 
 const VALID_TYPES = ['receptionist', 'appointment', 'faq'];
+
+function normalizeAgent(agent) {
+  if (!agent) return null;
+  const obj = agent.toObject ? agent.toObject() : { ...agent };
+  obj.id = obj._id ? obj._id.toString() : obj.id;
+  if (obj.userId) obj.userId = obj.userId.toString();
+  if (obj.twilioAccountSid) obj.twilioAccountSid = decrypt(obj.twilioAccountSid);
+  if (obj.twilioAuthToken) obj.twilioAuthToken = decrypt(obj.twilioAuthToken);
+  return obj;
+}
 
 async function resolveAgentForUser(id, user) {
   if (!mongoose.Types.ObjectId.isValid(id)) return { agent: null, forbidden: false };
@@ -77,11 +88,7 @@ router.get('/', requireAdmin, async (req, res) => {
     ]);
 
     const total = countResult[0]?.total || 0;
-    const normalized = (agents || []).map((a) => ({
-      ...a,
-      id: a._id.toString(),
-      userId: a.userId?.toString(),
-    }));
+    const normalized = (agents || []).map(normalizeAgent);
 
     res.json(paginatedResponse({ items: normalized, total, page, limit }));
   } catch (err) {
@@ -129,11 +136,7 @@ router.get('/my', async (req, res) => {
     ]);
 
     const total = countResult[0]?.total || 0;
-    const normalized = (agents || []).map((a) => ({
-      ...a,
-      id: a._id.toString(),
-      userId: a.userId?.toString(),
-    }));
+    const normalized = (agents || []).map(normalizeAgent);
 
     res.json(paginatedResponse({ items: normalized, total, page, limit }));
   } catch (err) {
@@ -206,7 +209,7 @@ router.post('/phone-numbers', requireAdmin, async (req, res) => {
 // POST /agents — create agent
 router.post('/', contentFilter('name', 'prompt'), async (req, res) => {
   try {
-    const { name, type, prompt, language, voiceId, useCustomEngine, customEngineModel } = req.body;
+    const { name, type, prompt, language, voiceId, useCustomEngine, customEngineModel, twilioAccountSid, twilioAuthToken } = req.body;
 
     if (!name || !type) {
       return res.status(400).json({ message: 'name and type are required' });
@@ -281,14 +284,12 @@ router.post('/', contentFilter('name', 'prompt'), async (req, res) => {
       isActive: true,
       useCustomEngine: !!useCustomEngine,
       customEngineModel: customEngineModel || 'groq:llama-3.3-70b',
+      twilioAccountSid: twilioAccountSid ? encrypt(twilioAccountSid) : null,
+      twilioAuthToken: twilioAuthToken ? encrypt(twilioAuthToken) : null,
     });
 
     res.status(201).json({
-      agent: {
-        ...agent.toObject(),
-        id: agent._id.toString(),
-        userId: agent.userId.toString(),
-      },
+      agent: normalizeAgent(agent),
     });
   } catch (err) {
     log.error('create_agent_error', { error: err.message, userId: req.user?.userId });
@@ -300,7 +301,7 @@ router.post('/', contentFilter('name', 'prompt'), async (req, res) => {
 router.put('/:id', contentFilter('name', 'prompt'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, type, prompt, isActive, language, voiceId, useCustomEngine, customEngineModel } = req.body;
+    const { name, type, prompt, isActive, language, voiceId, useCustomEngine, customEngineModel, twilioAccountSid, twilioAuthToken } = req.body;
 
     const { agent, forbidden } = await resolveAgentForUser(id, req.user);
     if (!agent) return res.status(404).json({ message: 'Agent not found' });
@@ -350,15 +351,13 @@ router.put('/:id', contentFilter('name', 'prompt'), async (req, res) => {
     if (voiceId !== undefined) updates.voiceId = voiceId;
     if (useCustomEngine !== undefined) updates.useCustomEngine = useCustomEngine;
     if (customEngineModel !== undefined) updates.customEngineModel = customEngineModel;
+    if (twilioAccountSid !== undefined) updates.twilioAccountSid = twilioAccountSid ? encrypt(twilioAccountSid) : null;
+    if (twilioAuthToken !== undefined) updates.twilioAuthToken = twilioAuthToken ? encrypt(twilioAuthToken) : null;
 
     const updated = await Agent.findByIdAndUpdate(id, updates, { new: true }).lean();
 
     res.json({
-      agent: {
-        ...updated,
-        id: updated._id.toString(),
-        userId: updated.userId.toString(),
-      },
+      agent: normalizeAgent(updated),
     });
   } catch (err) {
     log.error('update_agent_error', { error: err.message, userId: req.user?.userId });
@@ -412,7 +411,7 @@ router.delete('/:id', async (req, res) => {
 router.post('/:id/assign-phone', async (req, res) => {
   try {
     const { id } = req.params;
-    const { phoneNumberId, phoneNumber } = req.body;
+    const { phoneNumberId, phoneNumber, twilioAccountSid, twilioAuthToken } = req.body;
 
     if (!phoneNumberId) {
       return res.status(400).json({ message: 'phoneNumberId is required' });
@@ -437,16 +436,17 @@ router.post('/:id/assign-phone', async (req, res) => {
       const numberValue = phoneNumberId;
       const updated = await Agent.findByIdAndUpdate(
         id,
-        { phoneNumber: numberValue, $unset: { phoneNumberId: '' } },
+        { 
+          phoneNumber: numberValue, 
+          twilioAccountSid: twilioAccountSid ? encrypt(twilioAccountSid) : null,
+          twilioAuthToken: twilioAuthToken ? encrypt(twilioAuthToken) : null,
+          $unset: { phoneNumberId: '' } 
+        },
         { new: true }
       ).lean();
 
       return res.json({
-        agent: {
-          ...updated,
-          id: updated._id.toString(),
-          userId: updated.userId.toString(),
-        },
+        agent: normalizeAgent(updated),
       });
     }
 
@@ -474,14 +474,12 @@ router.post('/:id/assign-phone', async (req, res) => {
 
     const updateFields = { phoneNumberId };
     if (phoneNumber) updateFields.phoneNumber = phoneNumber;
+    if (twilioAccountSid) updateFields.twilioAccountSid = encrypt(twilioAccountSid);
+    if (twilioAuthToken) updateFields.twilioAuthToken = encrypt(twilioAuthToken);
     const updated = await Agent.findByIdAndUpdate(id, updateFields, { new: true }).lean();
 
     res.json({
-      agent: {
-        ...updated,
-        id: updated._id.toString(),
-        userId: updated.userId.toString(),
-      },
+      agent: normalizeAgent(updated),
     });
   } catch (err) {
     log.error('assign_phone_error', { error: err.message, userId: req.user?.userId });
@@ -519,15 +517,11 @@ router.post('/:id/unlink-phone', async (req, res) => {
       log.warn('vapi_unlink_phone_failed', { error: vapiErr.message, userId: req.user?.userId });
     }
 
-    // Remove phoneNumberId and phoneNumber from agent in database
-    const updated = await Agent.findByIdAndUpdate(id, { $unset: { phoneNumberId: '', phoneNumber: '' } }, { new: true }).lean();
+    // Remove phoneNumberId, phoneNumber, and Twilio credentials from agent in database
+    const updated = await Agent.findByIdAndUpdate(id, { $unset: { phoneNumberId: '', phoneNumber: '', twilioAccountSid: '', twilioAuthToken: '' } }, { new: true }).lean();
 
     res.json({
-      agent: {
-        ...updated,
-        id: updated._id.toString(),
-        userId: updated.userId.toString(),
-      },
+      agent: normalizeAgent(updated),
       message: 'Phone number unlinked successfully',
     });
   } catch (err) {

@@ -417,7 +417,7 @@ export async function closeAndCleanup({ callSid, agentObj, callStartTime, fullTr
         updateData.recordingUrl = recordingUrl;
       }
 
-      await Call.findByIdAndUpdate(callSid, updateData);
+      await Call.findOneAndUpdate({ vapiCallId: callSid }, updateData);
 
       if (agentObj && durationSeconds > 0) {
         const billingMinutes = Math.ceil(durationSeconds / 60);

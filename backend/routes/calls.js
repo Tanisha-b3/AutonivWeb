@@ -7,6 +7,7 @@ import { authenticate, requireAdmin, requireFeature, checkVoiceLimit } from '../
 import { log } from '../services/logger.js';
 import { getVapiCalls, extractVapiCallData, createVapiOutboundCall } from '../services/vapi.js';
 import { parsePage, paginatedResponse } from '../services/pagination.js';
+import { decrypt } from '../services/encryption.js';
 
 const router = express.Router();
 router.use(authenticate);
@@ -332,15 +333,73 @@ router.post('/outbound', checkVoiceLimit(), async (req, res) => {
       return res.status(400).json({ message: 'Agent is not active. Enable it first.' });
     }
 
-    if (!agent.phoneNumberId) {
-      return res.status(400).json({ message: 'Agent has no phone number assigned. Assign a phone number first.' });
-    }
+    const e164Number = phoneClean.startsWith('+') ? phoneClean : `+${phoneClean}`;
 
     if (!agent.vapiId) {
-      return res.status(400).json({ message: 'Agent has no Vapi assistant linked.' });
-    }
+      // Check if we have Twilio credentials to make direct Twilio outbound call (agent-specific first, fallback to env)
+      const accountSid = agent.twilioAccountSid ? decrypt(agent.twilioAccountSid) : process.env.TWILIO_ACCOUNT_SID;
+      const authToken = agent.twilioAuthToken ? decrypt(agent.twilioAuthToken) : process.env.TWILIO_AUTH_TOKEN;
+      if (!accountSid || !authToken) {
+        return res.status(400).json({
+          message: 'To use custom outbound calls, please configure your Twilio Account SID and Twilio Auth Token in your agent settings or backend .env file.'
+        });
+      }
 
-    const e164Number = phoneClean.startsWith('+') ? phoneClean : `+${phoneClean}`;
+      const fromNumber = agent.phoneNumber || process.env.TWILIO_FROM_NUMBER;
+      if (!fromNumber) {
+        return res.status(400).json({
+          message: 'No outbound caller ID number associated with this agent. Please link a Twilio phone number first.'
+        });
+      }
+
+      // Calculate Twilio callback URL for incoming call
+      const baseWebhookUrl = process.env.WEBHOOK_URL || `https://${req.headers.host}/api/webhooks/vapi`;
+      const twilioWebhookUrl = baseWebhookUrl.replace('/vapi', '/incoming-call');
+
+      // Place Twilio outbound call using REST API
+      const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Calls.json`;
+      const bodyParams = new URLSearchParams({
+        To: e164Number,
+        From: fromNumber,
+        Url: twilioWebhookUrl,
+      });
+
+      const basicAuth = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
+      const twilioRes = await fetch(twilioUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${basicAuth}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: bodyParams.toString(),
+      });
+
+      if (!twilioRes.ok) {
+        const responseText = await twilioRes.text();
+        throw new Error(`Twilio API Error (${twilioRes.status}): ${responseText}`);
+      }
+
+      const twilioCall = await twilioRes.json();
+
+      // Create a local Call record to track the outbound call
+      await Call.create({
+        agentId: agent._id,
+        userId: agent.userId,
+        vapiCallId: twilioCall.sid,
+        callerNumber: e164Number,
+        status: 'in-progress',
+        startedAt: new Date(),
+      });
+
+      log.info('twilio_outbound_call_initiated', {
+        userId: req.user.userId,
+        agentId,
+        phoneNumber: e164Number,
+        callSid: twilioCall.sid,
+      });
+
+      return res.json({ message: 'Twilio outbound call initiated', callId: twilioCall.sid });
+    }
 
     const vapiCall = await createVapiOutboundCall({
       assistantId: agent.vapiId,

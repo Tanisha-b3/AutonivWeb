@@ -237,7 +237,7 @@ function handleTwilioStream(twilioWs) {
   const handleStartCall = async () => {
     try {
       if (callSid) {
-        const callObj = await Call.findById(callSid).populate('agentId').lean();
+        const callObj = await Call.findOne({ vapiCallId: callSid }).populate('agentId').lean();
         if (callObj?.agentId) {
           agentObj = callObj.agentId;
           console.log(`[Database] Loaded Telephony Agent: ${agentObj.name}`);

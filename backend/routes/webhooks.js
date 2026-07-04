@@ -322,12 +322,13 @@ router.post('/incoming-call', async (req, res) => {
   let agent = null;
   try {
     if (to) {
-      agent = await Agent.findOne({
-        $or: [
-          { phoneNumber: to },
-          { phoneNumber: to.replace('+', '') },
-          { phoneNumber: new RegExp(to.slice(-10) + '$') }
-        ]
+      const cleanTo = to.replace(/\D/g, '');
+      const allAgents = await Agent.find({ phoneNumber: { $ne: null } }).lean();
+      agent = allAgents.find(a => {
+        const cleanAgentNum = a.phoneNumber.replace(/\D/g, '');
+        return cleanAgentNum === cleanTo || 
+               (cleanAgentNum.length >= 10 && cleanTo.endsWith(cleanAgentNum.slice(-10))) || 
+               (cleanTo.length >= 10 && cleanAgentNum.endsWith(cleanTo.slice(-10)));
       });
     }
 
@@ -338,7 +339,6 @@ router.post('/incoming-call', async (req, res) => {
 
     if (agent) {
       await Call.create({
-        _id: callSid,
         agentId: agent._id,
         userId: agent.userId,
         vapiCallId: callSid,
