@@ -400,7 +400,7 @@ You MUST respond in valid JSON only:
 
     const groq = getGroq();
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'llama-3.1-8b-instant',
       messages: groqMessages,
       temperature: 0.3,
       max_tokens: 800,

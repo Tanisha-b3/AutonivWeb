@@ -14,13 +14,15 @@ export const LANGUAGE_NAMES = {
   en: 'English', es: 'Spanish', fr: 'French', de: 'German', it: 'Italian',
   pt: 'Portuguese', pl: 'Polish', hi: 'Hindi', ar: 'Arabic', ja: 'Japanese',
   ko: 'Korean', zh: 'Chinese', nl: 'Dutch', ru: 'Russian', tr: 'Turkish',
+  bn: 'Bengali', te: 'Telugu', ta: 'Tamil', mr: 'Marathi', gu: 'Gujarati',
+  kn: 'Kannada', ml: 'Malayalam', pa: 'Punjabi', or: 'Odia',
 };
 
 export async function translateText(text, targetLang) {
   if (!targetLang || targetLang === 'en' || !text) return text;
   const langName = LANGUAGE_NAMES[targetLang] || targetLang;
   const resp = await getGroq().chat.completions.create({
-    model: 'llama-3.3-70b-versatile',
+    model: 'llama-3.1-8b-instant',
     messages: [
       {
         role: 'system',

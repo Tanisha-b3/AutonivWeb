@@ -27,7 +27,7 @@ process.on('voiceAgentToolCall', async ({ callSid, toolName, args }) => {
         name: args.name,
         phone: args.phone,
         email: args.email || null,
-        purpose: args.purpose || 'General inquiry',
+        purpose: (args.purpose && !['unknown', 'Unknown'].includes(args.purpose)) ? args.purpose : 'General inquiry',
       });
       log.info('orchestrator_lead_saved', { leadId: lead._id, callSid });
     }

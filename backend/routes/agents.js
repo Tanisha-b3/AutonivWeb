@@ -187,7 +187,7 @@ router.post('/phone-numbers', requireAdmin, async (req, res) => {
 // POST /agents — create agent
 router.post('/', contentFilter('name', 'prompt'), async (req, res) => {
   try {
-    const { name, type, prompt, language, voiceId } = req.body;
+    const { name, type, prompt, language, voiceId, useCustomEngine, customEngineModel } = req.body;
 
     if (!name || !type) {
       return res.status(400).json({ message: 'name and type are required' });
@@ -231,22 +231,24 @@ router.post('/', contentFilter('name', 'prompt'), async (req, res) => {
       }
     }
 
-    // Create Vapi assistant
+    // Create Vapi assistant only if not using custom engine
     let vapiId = null;
-    try {
-      const vapiAssistant = await createVapiAssistant({
-        name,
-        type,
-        prompt: prompt || null,
-        language: language || 'en',
-        voiceId: voiceId || null,
-        userId: user._id,
-        serverUrl: process.env.WEBHOOK_URL || process.env.SERVER_URL,
-      });
-      vapiId = vapiAssistant.id;
-    } catch (vapiErr) {
-      log.warn('vapi_create_agent_failed', { error: vapiErr.message, userId: req.user?.userId });
-      // Continue without Vapi — agent saved locally
+    if (!useCustomEngine) {
+      try {
+        const vapiAssistant = await createVapiAssistant({
+          name,
+          type,
+          prompt: prompt || null,
+          language: language || 'en',
+          voiceId: voiceId || null,
+          userId: user._id,
+          serverUrl: process.env.WEBHOOK_URL || process.env.SERVER_URL,
+        });
+        vapiId = vapiAssistant.id;
+      } catch (vapiErr) {
+        log.warn('vapi_create_agent_failed', { error: vapiErr.message, userId: req.user?.userId });
+        // Continue without Vapi — agent saved locally
+      }
     }
 
     const agent = await Agent.create({
@@ -258,6 +260,8 @@ router.post('/', contentFilter('name', 'prompt'), async (req, res) => {
       language: language || null,
       voiceId: voiceId || null,
       isActive: true,
+      useCustomEngine: !!useCustomEngine,
+      customEngineModel: customEngineModel || 'groq:llama-3.3-70b',
     });
 
     res.status(201).json({
@@ -277,7 +281,7 @@ router.post('/', contentFilter('name', 'prompt'), async (req, res) => {
 router.put('/:id', contentFilter('name', 'prompt'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, type, prompt, isActive, language, voiceId } = req.body;
+    const { name, type, prompt, isActive, language, voiceId, useCustomEngine, customEngineModel } = req.body;
 
     const { agent, forbidden } = await resolveAgentForUser(id, req.user);
     if (!agent) return res.status(404).json({ message: 'Agent not found' });
@@ -299,7 +303,9 @@ router.put('/:id', contentFilter('name', 'prompt'), async (req, res) => {
 
     const configChanged = name !== undefined || type !== undefined || prompt !== undefined || language !== undefined || voiceId !== undefined;
 
-    if (agent.vapiId && configChanged) {
+    const isCustom = useCustomEngine !== undefined ? !!useCustomEngine : !!agent.useCustomEngine;
+
+    if (agent.vapiId && configChanged && !isCustom) {
       try {
         await updateVapiAssistant(agent.vapiId, {
           name: effectiveName,
@@ -323,6 +329,8 @@ router.put('/:id', contentFilter('name', 'prompt'), async (req, res) => {
     if (isActive !== undefined) updates.isActive = isActive;
     if (language !== undefined) updates.language = language;
     if (voiceId !== undefined) updates.voiceId = voiceId;
+    if (useCustomEngine !== undefined) updates.useCustomEngine = useCustomEngine;
+    if (customEngineModel !== undefined) updates.customEngineModel = customEngineModel;
 
     const updated = await Agent.findByIdAndUpdate(id, updates, { new: true }).lean();
 
@@ -348,6 +356,15 @@ router.delete('/:id', async (req, res) => {
     if (!agent) return res.status(404).json({ message: 'Agent not found' });
     if (forbidden) return res.status(403).json({ message: 'Access denied' });
 
+    // Unlink any assigned Vapi phone number first to prevent deletion blocks/orphans on Vapi
+    if (agent.phoneNumberId) {
+      try {
+        await assignAgentToPhone(agent.phoneNumberId, null);
+      } catch (phoneErr) {
+        log.warn('vapi_unlink_phone_during_delete_failed', { error: phoneErr.message, userId: req.user?.userId });
+      }
+    }
+
     if (agent.vapiId) {
       try {
         await deleteVapiAssistant(agent.vapiId);
@@ -356,11 +373,13 @@ router.delete('/:id', async (req, res) => {
       }
     }
 
+    const objId = new mongoose.Types.ObjectId(id);
+
     await Promise.all([
-      Lead.deleteMany({ agentId: id }),
-      Appointment.deleteMany({ agentId: id }),
-      Call.deleteMany({ agentId: id }),
-      Agent.findByIdAndDelete(id),
+      Lead.deleteMany({ agentId: objId }),
+      Appointment.deleteMany({ agentId: objId }),
+      Call.deleteMany({ agentId: objId }),
+      Agent.findByIdAndDelete(objId),
     ]);
 
     res.json({ message: 'Agent and all associated data deleted successfully' });

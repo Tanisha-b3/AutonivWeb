@@ -116,6 +116,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+app.use('/api/recordings', express.static('recordings'));
 app.use('/api/vapi', vapiProxy);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);

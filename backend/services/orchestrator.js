@@ -6,9 +6,9 @@ import Agent from '../db/models/Agent.js';
 import Call from '../db/models/Call.js';
 import User from '../db/models/User.js';
 
-import { sanitizeText } from './contentModeration.js';
-import { getToolDefinitions, executeTool } from './appointmentTools.js';
 import { synthesizeSpeech } from './tts.js';
+import { LANGUAGE_NAMES } from './translate.js';
+import { AudioRecorder } from './audioRecorder.js';
 import {
   createDeepgramSTT,
   createLLMClient,
@@ -155,7 +155,7 @@ function handleTwilioStream(twilioWs) {
   let isProcessing = false;
   let toolAlreadyExecuted = { saveAppointment: false, saveLead: false };
 
-  const { groq, openaiClient } = getSharedLLM();
+  const { groq, openaiClient, gemini } = getSharedLLM();
 
   const triggerInterruption = () => {
     isInterrupted = true;
@@ -184,8 +184,10 @@ function handleTwilioStream(twilioWs) {
 
     try {
       const { stream } = await generateCompletion({
-        groq, openaiClient, conversationHistory,
+        groq, openaiClient, gemini, conversationHistory,
         agentType: agentObj?.type, logPrefix: 'Twilio LLM',
+        toolState: toolAlreadyExecuted,
+        agentObj,
       });
 
       const { fullResponseText, toolCalls, interrupted } = await processStream({
@@ -194,15 +196,32 @@ function handleTwilioStream(twilioWs) {
 
       if (interrupted) return;
 
-      if (fullResponseText) {
-        conversationHistory.push({ role: 'assistant', content: fullResponseText });
-        fullTranscript += `Agent: ${fullResponseText}\n`;
+      if (fullResponseText || toolCalls.length > 0) {
+        const assistantMsg = { role: 'assistant' };
+        if (fullResponseText) {
+          assistantMsg.content = fullResponseText;
+          fullTranscript += `Agent: ${fullResponseText}\n`;
+        } else {
+          assistantMsg.content = null;
+        }
+        if (toolCalls.length > 0) {
+          assistantMsg.tool_calls = toolCalls.map(tc => ({
+            id: tc.id,
+            type: 'function',
+            function: {
+              name: tc.name,
+              arguments: tc.arguments
+            }
+          }));
+        }
+        conversationHistory.push(assistantMsg);
       }
 
       if (toolCalls.length > 0 && !isInterrupted) {
         await executeToolCalls({
           toolCalls, agentObj, toolAlreadyExecuted,
           conversationHistory, logPrefix: 'Twilio Tool',
+          callId: callSid,
         });
         isProcessing = false;
         await executeCompletionFlow();
@@ -242,7 +261,13 @@ function handleTwilioStream(twilioWs) {
     let systemInstructions = buildSystemPrompt(agentObj?.type || 'receptionist', agentObj?.prompt);
     if (ownerUser) systemInstructions = interpolatePrompt(systemInstructions, ownerUser);
 
-    let greetingText = await generateGreeting({ groq, openaiClient, systemInstructions, agentType: agentObj?.type || 'receptionist' });
+    const agentLangName = LANGUAGE_NAMES[agentObj?.language || 'en'] || 'English';
+    systemInstructions += `\n\nMULTILINGUAL & HUMAN SPEECH RULES:
+1. You must respond in the same language that the user is speaking. If the user speaks or switches to another language (such as English, Hindi, Spanish, French, etc.), you MUST switch and reply in that language directly. Your default/starting language is ${agentLangName}.
+2. Speak exactly like a natural, warm, and friendly human. Never sound robotic, and never output lists, tables, or bullet points.
+3. When speaking in Hindi, use natural, conversational Hindi phrasing. Never write dates or times using spelled-out English words (e.g., do NOT say "twenty sixth july" or "four baje"). Instead, write them in standard digits or native Hindi words (e.g., say "26 जुलाई 2026" or "छब्बीस जुलाई" and "4 बजे" or "चार बजे"). Keep numbers and dates in standard format so the voice engine pronounces them naturally like a human.`;
+
+    let greetingText = await generateGreeting({ groq, openaiClient, gemini, systemInstructions, agentType: agentObj?.type || 'receptionist', agentObj });
     const result = await translateIfNeeded(systemInstructions, greetingText, agentObj?.language || 'en');
     systemInstructions = result.systemInstructions;
     greetingText = result.greetingText;
@@ -309,8 +334,9 @@ async function handleWebCall(clientWs, req) {
   let chunkCount = 0;
   let isProcessing = false;
   let toolAlreadyExecuted = { saveAppointment: false, saveLead: false };
+  const recorder = new AudioRecorder(24000);
 
-  const { groq, openaiClient } = getSharedLLM();
+  const { groq, openaiClient, gemini } = getSharedLLM();
 
   try {
     agentObj = await Agent.findById(agentId);
@@ -349,8 +375,13 @@ async function handleWebCall(clientWs, req) {
   const processSentenceForPlay = async (sentence) => {
     if (isInterrupted) return;
     const base64Audio = await synthesizeSpeech(sentence, false, agentObj.language || 'en', agentObj.voiceId);
-    if (base64Audio && !isInterrupted && clientWs.readyState === WebSocket.OPEN) {
-      clientWs.send(JSON.stringify({ event: 'audio', payload: base64Audio }));
+    if (base64Audio && !isInterrupted) {
+      const agentAudioBuffer = Buffer.from(base64Audio, 'base64');
+      recorder.writeAudio(agentAudioBuffer, Date.now(), 24000);
+
+      if (clientWs.readyState === WebSocket.OPEN) {
+        clientWs.send(JSON.stringify({ event: 'audio', payload: base64Audio }));
+      }
     }
   };
 
@@ -360,8 +391,10 @@ async function handleWebCall(clientWs, req) {
 
     try {
       const { stream } = await generateCompletion({
-        groq, openaiClient, conversationHistory,
+        groq, openaiClient, gemini, conversationHistory,
         agentType: agentObj?.type, logPrefix: 'Web LLM',
+        toolState: toolAlreadyExecuted,
+        agentObj,
       });
 
       const { fullResponseText, toolCalls, interrupted } = await processStream({
@@ -370,18 +403,35 @@ async function handleWebCall(clientWs, req) {
 
       if (interrupted) return;
 
-      if (fullResponseText) {
-        conversationHistory.push({ role: 'assistant', content: fullResponseText });
-        fullTranscript += `Agent: ${fullResponseText}\n`;
-        if (clientWs.readyState === WebSocket.OPEN) {
-          clientWs.send(JSON.stringify({ event: 'transcript', role: 'agent', text: fullResponseText }));
+      if (fullResponseText || toolCalls.length > 0) {
+        const assistantMsg = { role: 'assistant' };
+        if (fullResponseText) {
+          assistantMsg.content = fullResponseText;
+          fullTranscript += `Agent: ${fullResponseText}\n`;
+          if (clientWs.readyState === WebSocket.OPEN) {
+            clientWs.send(JSON.stringify({ event: 'transcript', role: 'agent', text: fullResponseText }));
+          }
+        } else {
+          assistantMsg.content = null;
         }
+        if (toolCalls.length > 0) {
+          assistantMsg.tool_calls = toolCalls.map(tc => ({
+            id: tc.id,
+            type: 'function',
+            function: {
+              name: tc.name,
+              arguments: tc.arguments
+            }
+          }));
+        }
+        conversationHistory.push(assistantMsg);
       }
 
       if (toolCalls.length > 0 && !isInterrupted) {
         await executeToolCalls({
           toolCalls, agentObj, toolAlreadyExecuted,
           conversationHistory, logPrefix: 'Web Tool',
+          callId: callSid,
         });
         isProcessing = false;
         await executeCompletionFlow();
@@ -399,7 +449,13 @@ async function handleWebCall(clientWs, req) {
     let systemInstructions = buildSystemPrompt(agentObj.type, agentObj.prompt);
     if (ownerUser) systemInstructions = interpolatePrompt(systemInstructions, ownerUser);
 
-    let greetingText = await generateGreeting({ groq, openaiClient, systemInstructions, agentType: agentObj.type });
+    const agentLangName = LANGUAGE_NAMES[agentObj?.language || 'en'] || 'English';
+    systemInstructions += `\n\nMULTILINGUAL & HUMAN SPEECH RULES:
+1. You must respond in the same language that the user is speaking. If the user speaks or switches to another language (such as English, Hindi, Spanish, French, etc.), you MUST switch and reply in that language directly. Your default/starting language is ${agentLangName}.
+2. Speak exactly like a natural, warm, and friendly human. Never sound robotic, and never output lists, tables, or bullet points.
+3. When speaking in Hindi, use natural, conversational Hindi phrasing. Never write dates or times using spelled-out English words (e.g., do NOT say "twenty sixth july" or "four baje"). Instead, write them in standard digits or native Hindi words (e.g., say "26 जुलाई 2026" or "छब्बीस जुलाई" and "4 बजे" or "चार बजे"). Keep numbers and dates in standard format so the voice engine pronounces them naturally like a human.`;
+
+    let greetingText = await generateGreeting({ groq, openaiClient, gemini, systemInstructions, agentType: agentObj.type, agentObj });
     const result = await translateIfNeeded(systemInstructions, greetingText, agentObj.language || 'en');
     systemInstructions = result.systemInstructions;
     greetingText = result.greetingText;
@@ -436,6 +492,7 @@ async function handleWebCall(clientWs, req) {
     try {
       if (isBinary || Buffer.isBuffer(message) || message instanceof Uint8Array || message instanceof ArrayBuffer) {
         const audioBuffer = Buffer.from(message);
+        recorder.writeAudio(audioBuffer, Date.now(), 16000);
         chunkCount++;
         if (chunkCount % 50 === 0 || chunkCount <= 5) {
           console.log(`[Web Call] Received chunk #${chunkCount}. Length: ${audioBuffer.length} bytes.`);
@@ -454,6 +511,6 @@ async function handleWebCall(clientWs, req) {
 
   clientWs.on('close', async () => {
     console.log('[Web Call WS] Client closed.');
-    await closeAndCleanup({ callSid, agentObj, callStartTime, fullTranscript, deepgramWs, pendingLeadData: toolAlreadyExecuted.pendingLeadData });
+    await closeAndCleanup({ callSid, agentObj, callStartTime, fullTranscript, deepgramWs, pendingLeadData: toolAlreadyExecuted.pendingLeadData, recorder });
   });
 }

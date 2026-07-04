@@ -189,13 +189,12 @@ async function buildAssistantConfig({ name, type, prompt, language, voiceId, use
 
   if (language && language !== 'en') {
     const langName = LANGUAGE_NAMES[language] || language;
+    const langRule = `\n\nCRITICAL LANGUAGE RULE: You MUST respond ONLY in ${langName}. Every single response must be in ${langName}. Never switch to English or any other language under any circumstances.`;
 
     [systemPrompt, firstMessage] = await Promise.all([
-      translateText(systemPrompt, language),
+      translateText(systemPrompt + langRule, language),
       translateText(firstMessage, language),
     ]);
-
-    systemPrompt += `\n\nCRITICAL LANGUAGE RULE: You MUST respond ONLY in ${langName}. Every single response must be in ${langName}. Never switch to English or any other language under any circumstances.`;
   }
 
   const modelConfig = {
