@@ -155,6 +155,32 @@ const PLAN_CONFIG = {
   enterprise: { name: 'Dominate',    monthlyPrice: 74999, monthlyPriceUSD: 899, setupFee: 89999, limits: { calls: 1200, minutes: -1, chatbots: -1, conversations: -1 }, features: { whatsapp: true, removeBranding: true, hindiSupport: true, allChannels: true, crmIntegration: true, analytics: true, customAI: true, dpdpCompliance: true, dedicatedManager: true, leadCapture: true, whatsappDelivery: true, upgradePath: true, customScripts: true, prioritySupport: true, customReporting: true, whiteLabel: true, advancedAutomation: true } },
 };
 
+const FEATURES = {
+  appointments: {
+    whatsappNotification: { free: false, starter: true, growth: true, enterprise: true },
+  },
+  leads: {
+    exportCsv:            { free: true,  starter: true, growth: true, enterprise: true },
+    crmIntegration:       { free: false, starter: true,  growth: true, enterprise: true },
+  },
+  chat: {
+    whatsappIntegration:  { free: false, starter: true, growth: true, enterprise: true },
+    removeBranding:       { free: false, starter: true, growth: true, enterprise: true },
+    multiLanguage:        { free: false, starter: true, growth: true, enterprise: true },
+    allChannels:          { free: false, starter: false, growth: true, enterprise: true },
+    crmIntegration:       { free: false, starter: true,  growth: true, enterprise: true },
+    analytics:            { free: false, starter: false, growth: true, enterprise: true },
+  },
+  agents: {
+    callRecording:        { free: false, starter: true, growth: true, enterprise: true },
+    dedicatedPhone:       { free: false, starter: true, growth: true, enterprise: true },
+    multiLanguage:        { free: false, starter: true, growth: true, enterprise: true },
+    smartIVR:             { free: false, starter: false, growth: true, enterprise: true },
+    customVoice:          { free: false, starter: false, growth: true, enterprise: true },
+    crmIntegration:       { free: false, starter: true,  growth: true, enterprise: true },
+  },
+};
+
 // ─── Tier level for upgrade path checks ───────────────────────────────────────
 const TIER_ORDER = { free: 0, starter: 1, growth: 2, enterprise: 3 };
 
@@ -414,6 +440,7 @@ userSchema.set('toObject', {
 
 userSchema.statics.PLAN_CONFIG  = PLAN_CONFIG;
 userSchema.statics.VALID_PLANS  = Object.keys(PLAN_CONFIG);
+userSchema.statics.FEATURES     = FEATURES;
 userSchema.statics.TIER_ORDER   = TIER_ORDER;
 userSchema.statics.getTierFromPlan = getTierFromPlan;
 userSchema.statics.getFeatureTogglesForPlan = function (plan) {
