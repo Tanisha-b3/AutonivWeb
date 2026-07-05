@@ -50,8 +50,8 @@ router.post('/vapi', webhookLimiter, async (req, res) => {
         try {
           args = tc?.function?.arguments
             ? (typeof tc.function.arguments === 'string'
-                ? JSON.parse(tc.function.arguments)
-                : tc.function.arguments)
+              ? JSON.parse(tc.function.arguments)
+              : tc.function.arguments)
             : {};
         } catch {
           log.warn('webhook_tool_calls_parse_failed', { name });
@@ -316,11 +316,11 @@ router.get('/test', (req, res) => {
     status: 'ok',
     message: 'Webhook endpoint is reachable',
     events: {
-      'tool-calls':         'POST /api/webhooks/vapi',
-      'function-call':      'POST /api/webhooks/vapi',
-      'status-update':      'POST /api/webhooks/vapi',
+      'tool-calls': 'POST /api/webhooks/vapi',
+      'function-call': 'POST /api/webhooks/vapi',
+      'status-update': 'POST /api/webhooks/vapi',
       'end-of-call-report': 'POST /api/webhooks/vapi',
-      'transcript':         'POST /api/webhooks/vapi',
+      'transcript': 'POST /api/webhooks/vapi',
     },
   });
 });
@@ -340,9 +340,9 @@ router.post('/incoming-call', async (req, res) => {
       const cleanTo = to.replace(/\D/g, '');
       agent = allAgents.find(a => {
         const cleanAgentNum = a.phoneNumber.replace(/\D/g, '');
-        return cleanAgentNum === cleanTo || 
-               (cleanAgentNum.length >= 10 && cleanTo.endsWith(cleanAgentNum.slice(-10))) || 
-               (cleanTo.length >= 10 && cleanAgentNum.endsWith(cleanTo.slice(-10)));
+        return cleanAgentNum === cleanTo ||
+          (cleanAgentNum.length >= 10 && cleanTo.endsWith(cleanAgentNum.slice(-10))) ||
+          (cleanTo.length >= 10 && cleanAgentNum.endsWith(cleanTo.slice(-10)));
       });
     }
 
@@ -350,9 +350,9 @@ router.post('/incoming-call', async (req, res) => {
       const cleanFrom = from.replace(/\D/g, '');
       agent = allAgents.find(a => {
         const cleanAgentNum = a.phoneNumber.replace(/\D/g, '');
-        return cleanAgentNum === cleanFrom || 
-               (cleanAgentNum.length >= 10 && cleanFrom.endsWith(cleanAgentNum.slice(-10))) || 
-               (cleanFrom.length >= 10 && cleanAgentNum.endsWith(cleanFrom.slice(-10)));
+        return cleanAgentNum === cleanFrom ||
+          (cleanAgentNum.length >= 10 && cleanFrom.endsWith(cleanAgentNum.slice(-10))) ||
+          (cleanFrom.length >= 10 && cleanAgentNum.endsWith(cleanFrom.slice(-10)));
       });
     }
 
@@ -442,11 +442,13 @@ router.post('/incoming-call', async (req, res) => {
   const streamToken = signMediaStreamToken(agentId);
   const tokenParam = streamToken ? `&token=${encodeURIComponent(streamToken)}` : '';
   const wsUrl = `${protocol}://${host}/media-stream?agentId=${agentId}${tokenParam}`;
+  const escapedWsUrl = wsUrl.replace(/&/g, '&amp;');
+  console.log(escapedWsUrl)
 
   return res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Connect>
-        <Stream url="${wsUrl}" />
+        <Stream url="${escapedWsUrl}" />
     </Connect>
 </Response>`);
 });
