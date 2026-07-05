@@ -157,10 +157,13 @@ export function initOrchestrator(server) {
       const agentId = parsedUrl.searchParams.get('agentId');
       const token = parsedUrl.searchParams.get('token') || parsedUrl.searchParams.get('amp;token');
       console.log(`[WebSocket Debug] agentId=${agentId}, token=${token}, rawUrl=${req.url}`);
-      if (!verifyMediaStreamToken(agentId, token)) {
-        console.warn(`[WebSocket] Rejected /media-stream: invalid or missing token (agentId=${agentId}, token=${token})`);
-        ws.close(4401, 'Unauthorized');
-        return;
+      // Defer verification to 'start' message if query params are stripped (standard for Twilio)
+      if (agentId || token) {
+        if (!verifyMediaStreamToken(agentId, token)) {
+          console.warn(`[WebSocket] Rejected /media-stream: invalid or missing token (agentId=${agentId}, token=${token})`);
+          ws.close(4401, 'Unauthorized');
+          return;
+        }
       }
       handleTwilioStream(ws, agentId);
     } else if (urlPath === '/web-call') {
@@ -179,6 +182,7 @@ function handleTwilioStream(twilioWs, urlAgentId) {
   let streamSid = null;
   let callSid = null;
   let agentObj = null;
+  let resolvedAgentId = urlAgentId;
   let conversationHistory = [];
   let fullTranscript = '';
   const callStartTime = new Date();
@@ -296,8 +300,8 @@ function handleTwilioStream(twilioWs, urlAgentId) {
 
   const handleStartCall = async () => {
     try {
-      if (urlAgentId && mongoose.Types.ObjectId.isValid(urlAgentId)) {
-        agentObj = await Agent.findById(urlAgentId).lean();
+      if (resolvedAgentId && mongoose.Types.ObjectId.isValid(resolvedAgentId)) {
+        agentObj = await Agent.findById(resolvedAgentId).lean();
         if (agentObj) {
           console.log(`[Database] Loaded Telephony Agent directly: ${agentObj.name}`);
         }
@@ -353,7 +357,20 @@ function handleTwilioStream(twilioWs, urlAgentId) {
         case 'start':
           streamSid = data.start.streamSid;
           callSid = data.start.callSid;
-          console.log(`[Twilio WS] Call streaming started. StreamSid: ${streamSid}, CallSid: ${callSid}`);
+
+          if (!resolvedAgentId) {
+            const customParams = data.start.customParameters || {};
+            resolvedAgentId = customParams.agentId;
+            const token = customParams.token;
+            console.log(`[Twilio WS] Verifying deferred custom parameters: agentId=${resolvedAgentId}, token=${token}`);
+            if (!verifyMediaStreamToken(resolvedAgentId, token)) {
+              console.warn(`[WebSocket] Rejected /media-stream in start event: invalid or missing token`);
+              twilioWs.close(4401, 'Unauthorized');
+              return;
+            }
+          }
+
+          console.log(`[Twilio WS] Call streaming started. StreamSid: ${streamSid}, CallSid: ${callSid}, agentId: ${resolvedAgentId}`);
           await handleStartCall();
           break;
         case 'media': {
