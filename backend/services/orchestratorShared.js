@@ -21,6 +21,163 @@ export function getLangCode(language) {
   return LANGUAGE_MAP[language] || 'en-IN';
 }
 
+export class ReconnectingDeepgramWS {
+  constructor(url, options, logPrefix, onTranscript, onInterruption) {
+    this.url = url;
+    this.options = options;
+    this.logPrefix = logPrefix;
+    this.onTranscript = onTranscript;
+    this.onInterruption = onInterruption;
+    this.ws = null;
+    this.intentionalClose = false;
+    this.keepAliveTimer = null;
+    this.reconnectTimer = null;
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+    this.baseDelay = 1000;
+    this.lastProcessedTranscript = '';
+  }
+
+  get readyState() {
+    return this.ws ? this.ws.readyState : WebSocket.CLOSED;
+  }
+
+  async connect() {
+    console.log(`[${this.logPrefix}] Connecting to ${this.url}`);
+    this.ws = new WebSocket(this.url, this.options);
+
+    return new Promise((resolve, reject) => {
+      let resolved = false;
+
+      this.ws.once('open', () => {
+        console.log(`[${this.logPrefix}] Connection established.`);
+        this.reconnectAttempts = 0;
+        this.startKeepAlive();
+        resolved = true;
+        resolve();
+      });
+
+      this.ws.once('error', (err) => {
+        console.error(`[${this.logPrefix}] Failed to connect:`, err.message);
+        if (!resolved) {
+          resolved = true;
+          reject(err);
+        }
+      });
+
+      this.setupHandlers();
+    });
+  }
+
+  startKeepAlive() {
+    if (this.keepAliveTimer) clearInterval(this.keepAliveTimer);
+    this.keepAliveTimer = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: 'KeepAlive' }));
+      }
+    }, 8000);
+    if (typeof this.keepAliveTimer.unref === 'function') {
+      this.keepAliveTimer.unref();
+    }
+  }
+
+  setupHandlers() {
+    const activeWs = this.ws;
+
+    activeWs.on('message', async (message) => {
+      if (this.ws !== activeWs) return;
+      try {
+        const response = JSON.parse(message.toString());
+        const transcript = response.channel?.alternatives?.[0]?.transcript;
+        const isFinal = response.is_final;
+
+        if (transcript && transcript.trim().length > 0) {
+          if (isFinal) {
+            if (transcript === this.lastProcessedTranscript) {
+              console.log(`[${this.logPrefix}] Duplicate final ignored: "${transcript}"`);
+              return;
+            }
+            this.lastProcessedTranscript = transcript;
+            console.log(`[${this.logPrefix} Final] ${transcript}`);
+            this.onTranscript(transcript, true);
+          } else {
+            console.log(`[${this.logPrefix} Interim] Interruption detected.`);
+            this.onInterruption();
+          }
+        }
+      } catch (err) {
+        console.error(`[${this.logPrefix} Parse Error]`, err.message);
+      }
+    });
+
+    activeWs.on('error', (err) => {
+      if (this.ws !== activeWs) return;
+      console.error(`[${this.logPrefix} Error]`, err.message);
+    });
+
+    activeWs.on('close', (code, reason) => {
+      if (this.ws !== activeWs) return;
+      if (this.keepAliveTimer) {
+        clearInterval(this.keepAliveTimer);
+        this.keepAliveTimer = null;
+      }
+      console.log(`[${this.logPrefix} Close] Code: ${code}, Reason: ${reason ? reason.toString() : 'none'}`);
+      if (!this.intentionalClose) {
+        this.attemptReconnect();
+      }
+    });
+  }
+
+  attemptReconnect() {
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error(`[${this.logPrefix}] Max reconnect attempts reached. STT disabled for the rest of the call.`);
+      return;
+    }
+
+    const delay = this.baseDelay * Math.pow(2, this.reconnectAttempts);
+    this.reconnectAttempts++;
+    console.log(`[${this.logPrefix}] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+
+    this.reconnectTimer = setTimeout(async () => {
+      try {
+        await this.connect();
+      } catch (err) {
+        // Safe to ignore here, as the 'close' event from the new failed socket will trigger the next retry.
+      }
+    }, delay);
+  }
+
+  send(data) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(data);
+    } else {
+      console.warn(`[${this.logPrefix}] Drop audio: WebSocket state is not OPEN.`);
+    }
+  }
+
+  close(code, reason) {
+    this.intentionalClose = true;
+    if (this.keepAliveTimer) {
+      clearInterval(this.keepAliveTimer);
+      this.keepAliveTimer = null;
+    }
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    if (this.ws) {
+      try {
+        if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
+          this.ws.close(code, reason);
+        }
+      } catch (err) {
+        console.error(`[${this.logPrefix}] Error closing socket:`, err.message);
+      }
+    }
+  }
+}
+
 export function createDeepgramSTT({ agentObj, encoding, sampleRate, logPrefix, onTranscript, onInterruption }) {
   const deepgramKey = process.env.DEEPGRAM_API_KEY;
   if (!deepgramKey || deepgramKey.startsWith('your-')) {
@@ -30,67 +187,16 @@ export function createDeepgramSTT({ agentObj, encoding, sampleRate, logPrefix, o
   const langCode = getLangCode(agentObj?.language || 'en');
   const langParam = (agentObj?.language === 'en' || !agentObj?.language) ? 'multi' : langCode;
   const deepgramUrl = `wss://api.deepgram.com/v1/listen?model=nova-2&language=${langParam}&encoding=${encoding}&sample_rate=${sampleRate}&interim_results=true&endpointing=200&utterance_end_ms=1000&vad_events=true`;
-  console.log(`[${logPrefix}] Connecting to ${deepgramUrl}`);
 
-  const deepgramWs = new WebSocket(deepgramUrl, {
-    headers: { 'Authorization': `Token ${deepgramKey}` }
-  });
+  const wrapper = new ReconnectingDeepgramWS(
+    deepgramUrl,
+    { headers: { 'Authorization': `Token ${deepgramKey}` } },
+    logPrefix,
+    onTranscript,
+    onInterruption
+  );
 
-  let lastProcessedTranscript = '';
-  let keepAliveTimer = null;
-
-  const readyPromise = new Promise((resolve, reject) => {
-    deepgramWs.once('open', () => {
-      console.log(`[${logPrefix}] Connection established.`);
-      // Deepgram closes the socket after ~10s with no audio — which happens
-      // whenever the agent is speaking and the caller is silent. Send periodic
-      // KeepAlive frames so mid-call transcription never silently drops.
-      keepAliveTimer = setInterval(() => {
-        if (deepgramWs.readyState === WebSocket.OPEN) {
-          deepgramWs.send(JSON.stringify({ type: 'KeepAlive' }));
-        }
-      }, 8000);
-      if (typeof keepAliveTimer.unref === 'function') keepAliveTimer.unref();
-      resolve();
-    });
-    deepgramWs.once('error', (err) => {
-      console.error(`[${logPrefix}] Failed to open:`, err.message);
-      reject(err);
-    });
-  });
-
-  deepgramWs.on('message', async (message) => {
-    try {
-      const response = JSON.parse(message.toString());
-      const transcript = response.channel?.alternatives?.[0]?.transcript;
-      const isFinal = response.is_final;
-
-      if (transcript && transcript.trim().length > 0) {
-        if (isFinal) {
-          if (transcript === lastProcessedTranscript) {
-            console.log(`[${logPrefix}] Duplicate final ignored: "${transcript}"`);
-            return;
-          }
-          lastProcessedTranscript = transcript;
-          console.log(`[${logPrefix} Final] ${transcript}`);
-          onTranscript(transcript, true);
-        } else {
-          console.log(`[${logPrefix} Interim] Interruption detected.`);
-          onInterruption();
-        }
-      }
-    } catch (err) {
-      console.error(`[${logPrefix} Parse Error]`, err.message);
-    }
-  });
-
-  deepgramWs.on('error', (err) => console.error(`[${logPrefix} Error]`, err.message));
-  deepgramWs.on('close', (code, reason) => {
-    if (keepAliveTimer) clearInterval(keepAliveTimer);
-    console.log(`[${logPrefix} Close] Code: ${code}, Reason: ${reason ? reason.toString() : 'none'}`);
-  });
-
-  return readyPromise.then(() => deepgramWs);
+  return wrapper.connect().then(() => wrapper);
 }
 
 export function createLLMClient() {
@@ -119,6 +225,44 @@ export function createLLMClient() {
   }
 
   return { groq, openaiClient, gemini };
+}
+
+async function requestCompletion(client, modelName, messages, tools, timeoutMs = 12000) {
+  const isGemini = modelName.toLowerCase().includes('gemini');
+
+  if (isGemini) {
+    console.log(`[LLM Tool Check] Non-streamed call to Gemini (${modelName}) to support native tool calls`);
+    const completion = await client.chat.completions.create({
+      model: modelName,
+      messages,
+      stream: false,
+      ...(tools.length > 0 ? { tools, tool_choice: 'auto' } : {}),
+    }, { timeout: timeoutMs });
+
+    // Return a mock async generator stream
+    return {
+      async *[Symbol.asyncIterator]() {
+        yield {
+          choices: [
+            {
+              delta: {
+                content: completion.choices[0]?.message?.content || null,
+                tool_calls: completion.choices[0]?.message?.tool_calls || null,
+              }
+            }
+          ]
+        };
+      }
+    };
+  } else {
+    // Standard stream call
+    return client.chat.completions.create({
+      model: modelName,
+      messages,
+      stream: true,
+      ...(tools.length > 0 ? { tools, tool_choice: 'auto' } : {}),
+    }, { timeout: timeoutMs });
+  }
 }
 
 export async function generateCompletion({ groq, openaiClient, gemini, conversationHistory, agentType, agentObj, logPrefix = 'LLM', toolState }) {
@@ -205,12 +349,7 @@ export async function generateCompletion({ groq, openaiClient, gemini, conversat
   console.log(`[${logPrefix}] Using ${modelName}...`);
   let stream;
   try {
-    stream = await client.chat.completions.create({
-      model: modelName,
-      messages: prunedHistory,
-      stream: true,
-      ...(tools.length > 0 ? { tools, tool_choice: 'auto' } : {}),
-    }, { timeout: 12000 });
+    stream = await requestCompletion(client, modelName, prunedHistory, tools, 12000);
   } catch (primaryErr) {
     const clients = [
       { name: 'Groq', client: groq, model: 'llama-3.3-70b-versatile' },
@@ -220,12 +359,7 @@ export async function generateCompletion({ groq, openaiClient, gemini, conversat
     const alternative = clients.find(c => c.client && c.client !== client);
     if (alternative) {
       console.warn(`[${logPrefix}] Primary failed, falling back to ${alternative.name}:`, primaryErr.message);
-      stream = await alternative.client.chat.completions.create({
-        model: alternative.model,
-        messages: prunedHistory,
-        stream: true,
-        ...(tools.length > 0 ? { tools, tool_choice: 'auto' } : {}),
-      }, { timeout: 12000 });
+      stream = await requestCompletion(alternative.client, alternative.model, prunedHistory, tools, 12000);
     } else {
       throw primaryErr;
     }
@@ -412,8 +546,12 @@ export async function translateIfNeeded(systemInstructions, greetingText, langua
 }
 
 export async function closeAndCleanup({ callSid, agentObj, callStartTime, fullTranscript, deepgramWs, pendingLeadData, recorder }) {
-  if (deepgramWs && deepgramWs.readyState === WebSocket.OPEN) {
-    deepgramWs.close();
+  if (deepgramWs) {
+    try {
+      deepgramWs.close();
+    } catch (err) {
+      console.error('[Cleanup] Error closing deepgramWs:', err.message);
+    }
   }
 
   try {

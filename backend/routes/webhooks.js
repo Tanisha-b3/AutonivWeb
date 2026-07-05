@@ -199,7 +199,17 @@ async function handleCallEnded(call) {
   }
 
   if (duration > 0) {
-    await User.findByIdAndUpdate(existing.userId, { $inc: { minutesUsed: Math.ceil(duration / 60) } });
+    const billingMinutes = Math.ceil(duration / 60);
+    const flip = await Call.findOneAndUpdate(
+      { vapiCallId: call.id, billed: { $ne: true } },
+      { $set: { billed: true } }
+    );
+    if (flip) {
+      await User.findByIdAndUpdate(existing.userId, { $inc: { minutesUsed: billingMinutes } });
+      log.info('webhook_call_billed', { callId: call.id, billingMinutes });
+    } else {
+      log.info('webhook_call_already_billed', { callId: call.id });
+    }
   }
 }
 
