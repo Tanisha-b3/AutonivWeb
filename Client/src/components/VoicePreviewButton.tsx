@@ -167,6 +167,32 @@ export function VoicePreviewButton({ voiceId, language, prompt }: VoicePreviewBu
       vapi.on('call-end', onCallEnd);
       vapi.on('error', onError);
 
+      let vapiProvider = '11labs';
+      let vapiVoiceId = voiceId;
+
+      if (voiceId && voiceId.includes(':')) {
+        const parts = voiceId.split(':');
+        const prefix = parts[0];
+        if (prefix === 'deepgram') {
+          vapiProvider = 'deepgram';
+          vapiVoiceId = parts.slice(1).join(':');
+        } else if (prefix === 'azure') {
+          vapiProvider = 'azure';
+          vapiVoiceId = parts.slice(1).join(':');
+        } else if (prefix === 'openai') {
+          vapiProvider = 'openai';
+          vapiVoiceId = parts.slice(1).join(':');
+        } else if (prefix === 'sarvam') {
+          // Vapi doesn't support Sarvam. Fall back to OpenAI nova/onyx depending on voice/gender
+          const isMale = /abhilash|karun|hitesh|rohan|shubh|manan/i.test(voiceId);
+          vapiProvider = 'openai';
+          vapiVoiceId = isMale ? 'onyx' : 'nova';
+        } else if (prefix === 'elevenlabs') {
+          vapiProvider = '11labs';
+          vapiVoiceId = parts.slice(1).join(':');
+        }
+      }
+
       await vapi.start({
         name: 'Voice Preview',
         firstMessage,
@@ -176,8 +202,8 @@ export function VoicePreviewButton({ voiceId, language, prompt }: VoicePreviewBu
           messages: [{ role: 'system', content: systemPrompt }],
         },
         voice: {
-          provider: '11labs',
-          voiceId,
+          provider: vapiProvider,
+          voiceId: vapiVoiceId,
         },
       });
 
