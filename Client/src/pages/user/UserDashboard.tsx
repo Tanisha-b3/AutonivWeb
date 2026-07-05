@@ -275,74 +275,67 @@ const AgentCard = memo(({ agent, index, onWebCall, onCallMe }: { agent: any; ind
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04 }}
-      whileHover={{ y: -3, boxShadow: '0 8px 24px rgba(37,99,235,0.06)' }}
-      className="rounded-xl border bg-white/70 overflow-hidden transition-all duration-200 group flex flex-col justify-between"
-      style={{ borderColor: 'var(--slate-border)' }}
+      whileHover={{ y: -4, boxShadow: '0 16px 32px rgba(37,99,235,0.08)' }}
+      className="rounded-[20px] border border-slate-200/50 bg-white/75 backdrop-blur-md overflow-hidden transition-all duration-300 group flex flex-col justify-between"
     >
       <div>
-        <div className={`h-0.8 w-full ${isActive ? '' : 'bg-slate-300'}`} style={isActive ? { background: T.gradient } : undefined} />
+        <div className="h-1 w-full" style={{ background: isActive ? 'linear-gradient(90deg, #2563EB, #10B981)' : '#cbd5e1' }} />
         <div className="p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: `rgba(${cfg.color},0.12)` }}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
+              style={{ background: `rgba(${cfg.color},0.1)` }}>
               <span style={{ color: `rgb(${cfg.color})` }}>{cfg.icon}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-xs font-bold text-slate-800 truncate">{agent.name}</h3>
-              <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">{cfg.label}</p>
+              <h3 className="text-[13px] font-bold text-slate-800 truncate">{agent.name}</h3>
+              <p className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400">{cfg.label}</p>
             </div>
-            <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${
+            <div className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase border transition-colors duration-250 ${
               isActive
-                ? 'border-green-200 text-green-600 bg-green-50'
-                : 'border-slate-200 text-slate-400 bg-slate-50'
+                ? 'border-emerald-500/20 text-emerald-600 bg-emerald-500/10'
+                : 'border-slate-300/35 text-slate-400 bg-slate-50'
             }`}>
-              <span className={`w-1 h-1 rounded-full ${isActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+              <span className={`w-1 h-1 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`} />
               {isActive ? 'Active' : 'Muted'}
             </div>
           </div>
         </div>
       </div>
       
-      <div className="flex items-center justify-between px-4 pb-4.5 pt-1 border-t border-slate-50 gap-2">
-        <span className="text-[10px] font-semibold text-slate-400">
+      <div className="flex items-center justify-between px-4 pb-4 pt-1.5 border-t border-slate-100/50 gap-2">
+        <span className="text-[10px] font-bold text-slate-400">
           {(agent.callCount || 0).toLocaleString()} calls
         </span>
         <div className="flex items-center gap-1">
           {onWebCall && isActive && (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               onClick={() => onWebCall(agent)}
-              className="px-2 py-1 text-[10px] font-bold rounded-lg bg-[var(--primary-blue)] text-white hover:opacity-90 transition-all cursor-pointer border-none"
+              className="px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wide rounded-lg bg-gradient-to-r from-blue-600 to-emerald-600 text-white cursor-pointer border-none shadow-xs hover:opacity-95 transition-all"
             >
               Web
-            </button>
+            </motion.button>
           )}
           {onCallMe && isActive && agent.phoneNumberId && (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.04, backgroundColor: '#10B981', color: '#fff', borderColor: '#10B981' }}
+              whileTap={{ scale: 0.96 }}
               onClick={() => onCallMe(agent)}
-              className="px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer border"
+              className="px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wide rounded-lg transition-all cursor-pointer border"
               style={{
                 background: 'rgba(16,185,129,0.06)',
-                border: '1.5px solid rgba(16,185,129,0.3)',
+                border: '1.5px solid rgba(16,185,129,0.25)',
                 color: '#10B981',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.background = '#10B981';
-                (e.currentTarget as HTMLElement).style.color = '#fff';
-                (e.currentTarget as HTMLElement).style.borderColor = '#10B981';
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.background = 'rgba(16,185,129,0.06)';
-                (e.currentTarget as HTMLElement).style.color = '#10B981';
-                (e.currentTarget as HTMLElement).style.borderColor = 'rgba(16,185,129,0.3)';
               }}
             >
               Test
-            </button>
+            </motion.button>
           )}
           <Link to={`/dashboard/agents`}
-            className="px-2 py-1 text-[10px] font-bold rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+            className="px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wide rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-500/5 transition-all"
           >
-            Configure
+            Config
           </Link>
         </div>
       </div>
