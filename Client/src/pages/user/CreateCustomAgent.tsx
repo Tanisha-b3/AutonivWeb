@@ -7,6 +7,7 @@ import { AgentCard } from '../../components/AgentCard';
 import type { Agent } from '../../types';
 import { createPortal } from 'react-dom';
 import { VOICE_OPTIONS } from '../../config/voices';
+import { VoicePreviewButton } from '../../components/VoicePreviewButton';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const LANGUAGE_OPTIONS = [
@@ -514,11 +515,20 @@ export function CreateCustomAgent() {
                 </div>
                 <div>
                   <label style={fieldLabel}>Voice model</label>
-                  <SelectInput
-                    value={formData.voiceId}
-                    onChange={v => patch({ voiceId: v })}
-                    options={VOICE_OPTIONS}
-                  />
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <SelectInput
+                        value={formData.voiceId}
+                        onChange={v => patch({ voiceId: v })}
+                        options={VOICE_OPTIONS}
+                      />
+                    </div>
+                    <VoicePreviewButton
+                      voiceId={formData.voiceId}
+                      language={formData.language}
+                      prompt={formData.prompt || undefined}
+                    />
+                  </div>
                 </div>
                 <div>
                   <label style={fieldLabel}>LLM Engine</label>
