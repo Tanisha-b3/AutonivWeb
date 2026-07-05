@@ -25,13 +25,38 @@ function pcm16ToMulaw(pcm16Buffer) {
   return mulaw;
 }
 
+function addWavHeader(pcmBuffer, sampleRate = 24000, numChannels = 1, bitsPerSample = 16) {
+  const header = Buffer.alloc(44);
+  const blockAlign = numChannels * (bitsPerSample / 8);
+  const byteRate = sampleRate * blockAlign;
+  const dataSize = pcmBuffer.length;
+  const chunkSize = 36 + dataSize;
+
+  header.write('RIFF', 0);
+  header.writeUInt32LE(chunkSize, 4);
+  header.write('WAVE', 8);
+  header.write('fmt ', 12);
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20);
+  header.writeUInt16LE(numChannels, 22);
+  header.writeUInt32LE(sampleRate, 24);
+  header.writeUInt32LE(byteRate, 28);
+  header.writeUInt16LE(blockAlign, 32);
+  header.writeUInt16LE(bitsPerSample, 34);
+  header.write('data', 36);
+  header.writeUInt32LE(dataSize, 40);
+
+  return Buffer.concat([header, pcmBuffer]);
+}
+
 async function synthesizeSpeechDirectDeepgram(text, isTwilio, modelName) {
   const deepgramKey = process.env.DEEPGRAM_API_KEY;
   if (!deepgramKey || deepgramKey.startsWith('your-')) {
     throw new Error('DEEPGRAM_API_KEY is not set or is a placeholder');
   }
   const format = isTwilio ? 'encoding=mulaw&sample_rate=8000' : 'encoding=linear16&sample_rate=24000';
-  const url = `https://api.deepgram.com/v1/speak?model=${modelName}&${format}&container=none`;
+  const container = isTwilio ? 'container=none' : 'container=wav';
+  const url = `https://api.deepgram.com/v1/speak?model=${modelName}&${format}&${container}`;
 
   const response = await fetch(url, {
     method: 'POST',
@@ -238,13 +263,14 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
 
   if (provider === 'elevenlabs' && !isElevenLabsMissing) {
     try {
-      const outputFormat = isTwilio ? 'ulaw_8000' : 'pcm_24000';
+      const outputFormat = isTwilio ? 'ulaw_8000' : 'mp3_44100_128';
+      const acceptHeader = isTwilio ? 'audio/wav' : 'audio/mpeg';
       const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceModelOrId}?output_format=${outputFormat}`, {
         method: 'POST',
         headers: {
           'xi-api-key': elevenlabsKey,
           'Content-Type': 'application/json',
-          'Accept': 'audio/wav',
+          'Accept': acceptHeader,
         },
         body: JSON.stringify({
           text,
@@ -454,6 +480,12 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
       log.warn('sarvam_tts_empty_audio_list_falling_back_to_deepgram');
       const fallbackVoice = isTwilio ? 'aura-stella-en' : 'aura-asteria-en';
       return synthesizeSpeechDirectDeepgram(text, isTwilio, fallbackVoice);
+    }
+
+    if (!isTwilio) {
+      const pcmBuffer = Buffer.from(base64Audio, 'base64');
+      const wavBuffer = addWavHeader(pcmBuffer, 24000, 1, 16);
+      return wavBuffer.toString('base64');
     }
 
     return base64Audio;
