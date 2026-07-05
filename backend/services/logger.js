@@ -69,7 +69,6 @@ function safeStringify(obj) {
 }
 
 function emit(level, message, meta) {
-  if (IS_PROD) return;
   const payload = { ts: ts(), level, msg: message };
   if (meta && Object.keys(meta).length) payload.meta = redactObject(meta);
   const line = safeStringify(payload);
