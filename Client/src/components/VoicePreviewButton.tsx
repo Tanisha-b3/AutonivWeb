@@ -175,7 +175,8 @@ export function VoicePreviewButton({ voiceId, language, prompt }: VoicePreviewBu
         const prefix = parts[0];
         if (prefix === 'deepgram') {
           vapiProvider = 'deepgram';
-          vapiVoiceId = parts.slice(1).join(':');
+          const rawId = parts.slice(1).join(':');
+          vapiVoiceId = rawId.replace(/^aura-/, '').split('-')[0];
         } else if (prefix === 'azure') {
           vapiProvider = 'azure';
           vapiVoiceId = parts.slice(1).join(':');
