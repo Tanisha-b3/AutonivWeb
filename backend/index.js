@@ -26,6 +26,7 @@ import contactRoutes from './routes/contact.js';
 import reportRoutes from './routes/reports.js';
 import chatHistoryRoutes from './routes/chatHistory.js';
 import widgetRoutes from './routes/widget.js';
+import ttsRoutes from './routes/tts.js';
 import { initOrchestrator } from './services/orchestrator.js';
 
 import {
@@ -137,6 +138,7 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/chat-history', chatHistoryRoutes);
 app.use('/api/widget', widgetRoutes);
+app.use('/api/tts', ttsRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
