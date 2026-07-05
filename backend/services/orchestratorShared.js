@@ -37,10 +37,20 @@ export function createDeepgramSTT({ agentObj, encoding, sampleRate, logPrefix, o
   });
 
   let lastProcessedTranscript = '';
+  let keepAliveTimer = null;
 
   const readyPromise = new Promise((resolve, reject) => {
     deepgramWs.once('open', () => {
       console.log(`[${logPrefix}] Connection established.`);
+      // Deepgram closes the socket after ~10s with no audio — which happens
+      // whenever the agent is speaking and the caller is silent. Send periodic
+      // KeepAlive frames so mid-call transcription never silently drops.
+      keepAliveTimer = setInterval(() => {
+        if (deepgramWs.readyState === WebSocket.OPEN) {
+          deepgramWs.send(JSON.stringify({ type: 'KeepAlive' }));
+        }
+      }, 8000);
+      if (typeof keepAliveTimer.unref === 'function') keepAliveTimer.unref();
       resolve();
     });
     deepgramWs.once('error', (err) => {
@@ -76,6 +86,7 @@ export function createDeepgramSTT({ agentObj, encoding, sampleRate, logPrefix, o
 
   deepgramWs.on('error', (err) => console.error(`[${logPrefix} Error]`, err.message));
   deepgramWs.on('close', (code, reason) => {
+    if (keepAliveTimer) clearInterval(keepAliveTimer);
     console.log(`[${logPrefix} Close] Code: ${code}, Reason: ${reason ? reason.toString() : 'none'}`);
   });
 
@@ -199,7 +210,7 @@ export async function generateCompletion({ groq, openaiClient, gemini, conversat
       messages: prunedHistory,
       stream: true,
       ...(tools.length > 0 ? { tools, tool_choice: 'auto' } : {}),
-    });
+    }, { timeout: 12000 });
   } catch (primaryErr) {
     const clients = [
       { name: 'Groq', client: groq, model: 'llama-3.3-70b-versatile' },
@@ -214,7 +225,7 @@ export async function generateCompletion({ groq, openaiClient, gemini, conversat
         messages: prunedHistory,
         stream: true,
         ...(tools.length > 0 ? { tools, tool_choice: 'auto' } : {}),
-      });
+      }, { timeout: 12000 });
     } else {
       throw primaryErr;
     }
@@ -348,7 +359,7 @@ export async function generateGreeting({ groq, openaiClient, gemini, systemInstr
           ],
           max_tokens: 60,
           temperature: 0.7,
-        });
+        }, { timeout: 8000 });
       } catch (primaryErr) {
         const generators = [
           { name: 'Groq', client: groq, model: 'llama-3.1-8b-instant' },
@@ -366,7 +377,7 @@ export async function generateGreeting({ groq, openaiClient, gemini, systemInstr
             ],
             max_tokens: 60,
             temperature: 0.7,
-          });
+          }, { timeout: 8000 });
         } else {
           throw primaryErr;
         }
@@ -412,13 +423,13 @@ export async function closeAndCleanup({ callSid, agentObj, callStartTime, fullTr
       let recordingUrl = null;
       if (recorder) {
         try {
-          if (!fs.existsSync('recordings')) {
-            fs.mkdirSync('recordings');
-          }
+          // Async I/O so the write never blocks the event loop (and every other
+          // live call) the way fs.writeFileSync did.
+          await fs.promises.mkdir('recordings', { recursive: true });
           const wavBuffer = recorder.getWavBuffer();
           const filename = `${callSid}.wav`;
           const filepath = path.join('recordings', filename);
-          fs.writeFileSync(filepath, wavBuffer);
+          await fs.promises.writeFile(filepath, wavBuffer);
           recordingUrl = `/api/recordings/${filename}`;
           console.log(`[Audio Recording] Saved custom call recording to ${filepath}`);
         } catch (recErr) {
@@ -440,10 +451,21 @@ export async function closeAndCleanup({ callSid, agentObj, callStartTime, fullTr
 
       if (agentObj && durationSeconds > 0) {
         const billingMinutes = Math.ceil(durationSeconds / 60);
-        await User.findByIdAndUpdate(agentObj.userId, {
-          $inc: { minutesUsed: billingMinutes }
-        });
-        console.log(`[Billing] Added ${billingMinutes} minutes for user: ${agentObj.userId}`);
+        // Flip a one-time `billed` flag atomically. If it was already set (a
+        // duplicate cleanup, a retry, or a restart re-running this path), the
+        // filter won't match and we skip the non-idempotent $inc — no double charge.
+        const flip = await Call.findOneAndUpdate(
+          { vapiCallId: callSid, billed: { $ne: true } },
+          { $set: { billed: true } }
+        );
+        if (flip) {
+          await User.findByIdAndUpdate(agentObj.userId, {
+            $inc: { minutesUsed: billingMinutes }
+          });
+          console.log(`[Billing] Added ${billingMinutes} minutes for user: ${agentObj.userId}`);
+        } else {
+          console.log(`[Billing] Skipped — call ${callSid} already billed.`);
+        }
       }
     }
 

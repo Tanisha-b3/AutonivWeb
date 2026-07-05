@@ -7,11 +7,14 @@ import Appointment from '../db/models/Appointment.js';
 import Webhook from '../db/models/Webhook.js';
 import User from '../db/models/User.js';
 import { verifyVapiSignature } from '../middleware/webhookSignature.js';
+import { enforceTwilioSignature } from '../middleware/twilioSignature.js';
 import { webhookLimiter } from '../middleware/rateLimiters.js';
 import { extractVapiCallData, getVapiCall } from '../services/vapi.js';
 import { containsAbuse, sanitizeText } from '../services/contentModeration.js';
-import { log, securityEvent } from '../services/logger.js';
+import { log, securityEvent, IS_PROD } from '../services/logger.js';
 import { safeString } from '../services/validators.js';
+import { decrypt } from '../services/encryption.js';
+import { signMediaStreamToken } from '../services/mediaStreamToken.js';
 
 const router = express.Router();
 
@@ -348,6 +351,18 @@ router.post('/incoming-call', async (req, res) => {
       agent = await Agent.findOne({ type: 'receptionist' });
     }
 
+    // Verify the request genuinely came from Twilio before acting on it.
+    // Prefer the agent's own Twilio auth token, fall back to the account-wide env.
+    const twilioToken = agent?.twilioAuthToken
+      ? decrypt(agent.twilioAuthToken)
+      : process.env.TWILIO_AUTH_TOKEN || null;
+    if (!enforceTwilioSignature(req, twilioToken, { callSid, to, from })) {
+      return res
+        .status(403)
+        .type('text/xml')
+        .send(`<?xml version="1.0" encoding="UTF-8"?><Response><Reject/></Response>`);
+    }
+
     if (agent) {
       // Use findOneAndUpdate with upsert to avoid duplicate key errors for outbound calls
       await Call.findOneAndUpdate(
@@ -370,20 +385,55 @@ router.post('/incoming-call', async (req, res) => {
     log.error('twilio_incoming_call_db_failed', { error: err.message, callSid });
   }
 
-  // Route to custom orchestrator if agent uses custom engine
-  const host = req.headers.host;
-  // Validate host header to prevent injection (must be hostname:port or hostname only)
+  // Validate host header to prevent injection (must be hostname:port or hostname only).
+  // Prefer the proxy-forwarded host so the wss URL matches the public endpoint;
+  // take the first value when chained proxies send a comma-separated list.
+  const host = (req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
   const VALID_HOST_REGEX = /^[a-zA-Z0-9._-]+(:\d{1,5})?$/;
   if (!host || !VALID_HOST_REGEX.test(host)) {
     log.warn('twilio_invalid_host_header', { host });
     return res.status(400).type('text/xml').send(`<?xml version="1.0" encoding="UTF-8"?><Response></Response>`);
   }
-  const protocol = req.headers['x-forwarded-proto'] === 'https' ? 'wss' : 'ws';
-  const agentParam = agent ? `?agentId=${agent._id.toString()}` : '';
-  const wsUrl = `${protocol}://${host}/media-stream${agentParam}`;
 
   res.type('text/xml');
-  res.send(`<?xml version="1.0" encoding="UTF-8"?>
+
+  // No agent could be resolved for this number — answer gracefully instead of
+  // opening a media stream with no agent context.
+  if (!agent) {
+    log.warn('twilio_incoming_call_unresolved', { to, from, callSid });
+    return res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say>Sorry, no agent is available to take your call right now. Please try again later.</Say>
+    <Hangup/>
+</Response>`);
+  }
+
+  // Only custom-engine agents are handled by our own WebSocket orchestrator.
+  // Vapi agents are answered by Vapi directly (their Twilio number points at
+  // Vapi), so a non-custom agent reaching here means the number is misconfigured.
+  if (!agent.useCustomEngine) {
+    log.warn('twilio_incoming_call_non_custom_agent', {
+      agentId: agent._id?.toString(), vapiId: agent.vapiId, callSid,
+    });
+    return res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say>This number is not configured for direct handling. Please contact support.</Say>
+    <Hangup/>
+</Response>`);
+  }
+
+  // Twilio Media Streams REQUIRE wss. Force it in production and whenever the
+  // proxy reports https; tolerate comma-separated x-forwarded-proto values.
+  const xfProto = (req.headers['x-forwarded-proto'] || '').split(',')[0].trim().toLowerCase();
+  const isSecure = xfProto === 'https' || req.secure || IS_PROD;
+  const protocol = isSecure ? 'wss' : 'ws';
+  const agentId = agent._id.toString();
+  // Short-lived signed token so only calls we just answered can open a stream.
+  const streamToken = signMediaStreamToken(agentId);
+  const tokenParam = streamToken ? `&token=${encodeURIComponent(streamToken)}` : '';
+  const wsUrl = `${protocol}://${host}/media-stream?agentId=${agentId}${tokenParam}`;
+
+  return res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Connect>
         <Stream url="${wsUrl}" />
