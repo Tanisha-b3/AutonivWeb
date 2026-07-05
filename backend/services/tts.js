@@ -428,10 +428,12 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
       speaker = isMale ? 'shubh' : 'shreya';
     }
 
+    const formattedSpeaker = speaker.charAt(0).toUpperCase() + speaker.slice(1).toLowerCase();
+
     const requestBody = {
       text,
       model: sarvamModel,
-      speaker: speaker,
+      speaker: formattedSpeaker,
       target_language_code: targetLangCode,
       speech_sample_rate: sampleRate,
       output_audio_codec: outputCodec,
@@ -455,10 +457,10 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
 
     if (!response || !response.ok) {
       const errTxt = response ? await response.text() : 'Network/API error';
-      log.warn('sarvam_tts_first_attempt_failed', { speaker, model: sarvamModel, error: errTxt });
+      log.warn('sarvam_tts_first_attempt_failed', { speaker: formattedSpeaker, model: sarvamModel, error: errTxt });
 
-      // Fallback: Retry with gender-matched fallback speaker
-      const fallbackSpeaker = isMaleSpeaker ? 'shubh' : 'shreya';
+      // Fallback: Retry with gender-matched fallback speaker in Title Case
+      const fallbackSpeaker = isMaleSpeaker ? 'Shubh' : 'Shreya';
       if (speaker.toLowerCase() !== fallbackSpeaker.toLowerCase()) {
         log.info('sarvam_tts_retrying_with_fallback_speaker', { fallbackSpeaker });
         requestBody.speaker = fallbackSpeaker;
