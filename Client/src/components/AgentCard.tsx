@@ -140,22 +140,8 @@ export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, 
             </div>
           </div>
 
-          {/* Status pill + toggle */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {agent.useCustomEngine && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[8.5px] font-black uppercase tracking-wider bg-violet-55 border border-violet-200/60 text-violet-700">
-                Custom
-              </span>
-            )}
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[8.5px] font-black uppercase tracking-wider border ${
-              agent.isActive
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                : 'bg-red-50 border-red-200 text-red-600'
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${agent.isActive ? 'animate-pulse' : ''}`}
-                style={{ background: agent.isActive ? 'var(--primary)' : 'var(--danger)' }} />
-              {agent.isActive ? 'Live' : 'Off'}
-            </span>
+          {/* Toggle Switch */}
+          <div className="flex items-center flex-shrink-0">
             {onToggle && (
               <button
                 onClick={(e) => { e.stopPropagation(); onToggle(agent.id, !agent.isActive); }}
@@ -203,6 +189,19 @@ export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, 
 
         {/* Meta chips */}
         <div className="flex flex-wrap gap-1.5 mb-4">
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-xl text-[10px] font-bold border ${
+            agent.isActive
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+              : 'bg-red-50 border-red-200 text-red-600'
+          }`}>
+            <span className={`w-1 h-1 rounded-full mr-1 ${agent.isActive ? 'animate-pulse bg-emerald-500' : 'bg-red-500'}`} />
+            {agent.isActive ? 'Live' : 'Off'}
+          </span>
+          {agent.useCustomEngine && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-xl text-[10px] font-bold border bg-emerald-50 border-emerald-200 text-emerald-700">
+              Custom Engine
+            </span>
+          )}
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-bold border"
             style={{ background: 'var(--s1)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
             <span className="text-[11px]">{langConfig.flag}</span>
