@@ -195,7 +195,7 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
 
   if (detectedLang !== language) {
     language = detectedLang;
-    const isMale = /male|prabhat|guy|madhur|alvaro|henri|conrad|diego|antonio|marek|shakir|keita|injoon|yunxi|maarten|dmitry|ahmet|bashkar|mohan|valluvar|manohar|niranjan|gagan|midhun|gurpreet|ananya|zeus|orion/i.test(voiceModelOrId || '');
+    const isMale = /male|prabhat|guy|madhur|alvaro|henri|conrad|diego|antonio|marek|shakir|keita|injoon|yunxi|maarten|dmitry|ahmet|bashkar|mohan|valluvar|manohar|niranjan|gagan|midhun|gurpreet|ananya|zeus|orion|echo|fable|onyx|daniel|eric|chris|brian|adam|bill|shubh|manan|rohan|abhilash|karun|hitesh/i.test(voiceModelOrId || '');
     const gender = isMale ? 'male' : 'female';
 
     if (provider === 'azure') {
@@ -234,7 +234,7 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
 
   // Safeguard: Re-verify if Azure was selected but its key is missing
   if (provider === 'azure' && !hasAzure) {
-    const isMale = /male|prabhat|guy|madhur|alvaro|henri|conrad|diego|antonio|marek|shakir|keita|injoon|yunxi|maarten|dmitry|ahmet|bashkar|mohan|valluvar|manohar|niranjan|gagan|midhun|gurpreet|ananya|zeus|orion/i.test(voiceModelOrId || '');
+    const isMale = /male|prabhat|guy|madhur|alvaro|henri|conrad|diego|antonio|marek|shakir|keita|injoon|yunxi|maarten|dmitry|ahmet|bashkar|mohan|valluvar|manohar|niranjan|gagan|midhun|gurpreet|ananya|zeus|orion|echo|fable|onyx|daniel|eric|chris|brian|adam|bill|shubh|manan|rohan|abhilash|karun|hitesh/i.test(voiceModelOrId || '');
     const gender = isMale ? 'male' : 'female';
     const fallback = getBestMultilingualProvider(language, gender);
     provider = fallback.provider;
@@ -246,6 +246,7 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
     else if (provider === 'deepgram') voiceModelOrId = 'aura-asteria-en';
     else if (provider === 'azure') voiceModelOrId = 'en-IN-NeerjaNeural';
     else if (provider === 'openai') voiceModelOrId = 'nova';
+    else if (provider === 'sarvam') voiceModelOrId = 'bulbul:v3:shreya';
   }
 
   const elevenlabsKey = process.env.ELEVENLABS_API_KEY;
@@ -413,10 +414,18 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
       }
     }
 
+    // Automatically upgrade V2 to V3 model if language is not Hindi, since V2 is Hindi-only
+    if (sarvamModel === 'bulbul:v2' && language !== 'hi') {
+      sarvamModel = 'bulbul:v3';
+      const isMale = /abhilash|karun|hitesh/i.test(speaker);
+      speaker = isMale ? 'shubh' : 'shreya';
+    }
+
     // Safeguard: Ensure speaker matches V3 model compatibility constraints
     const V3_SPEAKERS = ['aditya', 'ritu', 'ashutosh', 'priya', 'neha', 'rahul', 'pooja', 'rohan', 'simran', 'kavya', 'amit', 'dev', 'ishita', 'shreya', 'ratan', 'varun', 'manan', 'sumit', 'roopa', 'kabir', 'aayan', 'shubh', 'advait', 'anand', 'tanya', 'tarun', 'sunny', 'mani', 'gokul', 'vijay', 'shruti', 'suhani', 'mohit', 'kavitha', 'rehan', 'soham', 'rupali', 'niharika'];
     if (sarvamModel === 'bulbul:v3' && !V3_SPEAKERS.includes(speaker.toLowerCase())) {
-      speaker = 'shreya';
+      const isMale = /shubh|manan|rohan/i.test(speaker);
+      speaker = isMale ? 'shubh' : 'shreya';
     }
 
     const requestBody = {
@@ -442,14 +451,17 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
       log.warn('sarvam_tts_fetch_network_error', { error: fetchErr.message });
     }
 
+    const isMaleSpeaker = /abhilash|karun|hitesh|rohan|shubh|manan/i.test(speaker);
+
     if (!response || !response.ok) {
       const errTxt = response ? await response.text() : 'Network/API error';
       log.warn('sarvam_tts_first_attempt_failed', { speaker, model: sarvamModel, error: errTxt });
 
-      // Fallback: Retry with speaker 'shreya'
-      if (speaker.toLowerCase() !== 'shreya') {
-        log.info('sarvam_tts_retrying_with_fallback_speaker', { fallbackSpeaker: 'shreya' });
-        requestBody.speaker = 'shreya';
+      // Fallback: Retry with gender-matched fallback speaker
+      const fallbackSpeaker = isMaleSpeaker ? 'shubh' : 'shreya';
+      if (speaker.toLowerCase() !== fallbackSpeaker.toLowerCase()) {
+        log.info('sarvam_tts_retrying_with_fallback_speaker', { fallbackSpeaker });
+        requestBody.speaker = fallbackSpeaker;
 
         try {
           response = await fetch('https://api.sarvam.ai/text-to-speech', {
@@ -469,8 +481,8 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
     if (!response || !response.ok) {
       const errTxt = response ? await response.text() : 'Network/API error';
       log.warn('sarvam_tts_fully_failed_falling_back_to_deepgram', { error: errTxt });
-      // Final fallback to Deepgram
-      const fallbackVoice = isTwilio ? 'aura-stella-en' : 'aura-asteria-en';
+      // Final fallback to Deepgram with correct gender
+      const fallbackVoice = isMaleSpeaker ? 'aura-orion-en' : (isTwilio ? 'aura-stella-en' : 'aura-asteria-en');
       return synthesizeSpeechDirectDeepgram(text, isTwilio, fallbackVoice);
     }
 
@@ -478,7 +490,7 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
     const base64Audio = json.audios?.[0];
     if (!base64Audio) {
       log.warn('sarvam_tts_empty_audio_list_falling_back_to_deepgram');
-      const fallbackVoice = isTwilio ? 'aura-stella-en' : 'aura-asteria-en';
+      const fallbackVoice = isMaleSpeaker ? 'aura-orion-en' : (isTwilio ? 'aura-stella-en' : 'aura-asteria-en');
       return synthesizeSpeechDirectDeepgram(text, isTwilio, fallbackVoice);
     }
 
