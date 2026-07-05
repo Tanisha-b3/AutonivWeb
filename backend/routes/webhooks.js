@@ -443,12 +443,14 @@ router.post('/incoming-call', async (req, res) => {
   const tokenParam = streamToken ? `&token=${encodeURIComponent(streamToken)}` : '';
   const wsUrl = `${protocol}://${host}/media-stream?agentId=${agentId}${tokenParam}`;
   const escapedWsUrl = wsUrl.replace(/&/g, '&amp;');
-  console.log(escapedWsUrl)
 
   return res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Connect>
-        <Stream url="${escapedWsUrl}" />
+        <Stream url="${escapedWsUrl}">
+            <Parameter name="agentId" value="${agentId}" />
+            <Parameter name="token" value="${streamToken || ''}" />
+        </Stream>
     </Connect>
 </Response>`);
 });
