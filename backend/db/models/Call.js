@@ -16,6 +16,7 @@ const callSchema = new mongoose.Schema({
   startedAt:    { type: Date, default: null },
   endedAt:      { type: Date, default: null },
   endedReason:  { type: String, default: null },
+  billed:       { type: Boolean, default: false },
 }, { timestamps: true });
 
 callSchema.index({ userId: 1 });

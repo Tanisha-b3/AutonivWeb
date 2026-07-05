@@ -9,6 +9,7 @@ import User from '../db/models/User.js';
 import { synthesizeSpeech } from './tts.js';
 import { LANGUAGE_NAMES } from './translate.js';
 import { AudioRecorder } from './audioRecorder.js';
+import { verifyMediaStreamToken } from './mediaStreamToken.js';
 import {
   createDeepgramSTT,
   createLLMClient,
@@ -124,15 +125,42 @@ function safeString(value, maxLength, defaultValue = null) {
 }
 
 export function initOrchestrator(server) {
-  const wss = new WebSocketServer({ server });
+  // Bound frame size so a malformed/oversized frame can't exhaust memory.
+  const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 });
+
+  // Heartbeat: a half-open TCP connection stops delivering audio without
+  // firing 'close', so the call would hang forever. Any inbound frame (Twilio
+  // streams ~50/s) or a pong marks the socket alive; miss a full round -> drop.
+  const heartbeat = setInterval(() => {
+    for (const ws of wss.clients) {
+      if (ws.isAlive === false) {
+        ws.terminate();
+        continue;
+      }
+      ws.isAlive = false;
+      try { ws.ping(); } catch (_) { /* socket already gone */ }
+    }
+  }, 15000);
+  if (typeof heartbeat.unref === 'function') heartbeat.unref();
+  wss.on('close', () => clearInterval(heartbeat));
 
   wss.on('connection', async (ws, req) => {
+    ws.isAlive = true;
+    ws.on('pong', () => { ws.isAlive = true; });
+    ws.on('message', () => { ws.isAlive = true; });
+
     const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
     const urlPath = parsedUrl.pathname;
     console.log(`[WebSocket] Connection request on path: ${urlPath}`);
 
     if (urlPath === '/media-stream') {
       const agentId = parsedUrl.searchParams.get('agentId');
+      const token = parsedUrl.searchParams.get('token');
+      if (!verifyMediaStreamToken(agentId, token)) {
+        console.warn('[WebSocket] Rejected /media-stream: invalid or missing token');
+        ws.close(4401, 'Unauthorized');
+        return;
+      }
       handleTwilioStream(ws, agentId);
     } else if (urlPath === '/web-call') {
       handleWebCall(ws, req);
@@ -157,8 +185,24 @@ function handleTwilioStream(twilioWs, urlAgentId) {
   let isInterrupted = false;
   let isProcessing = false;
   let toolAlreadyExecuted = { saveAppointment: false, saveLead: false };
+  let cleanedUp = false;
+  // Records caller (inbound) + agent (outbound) mu-law audio into one track so
+  // phone calls produce a recordingUrl, just like the web-call path.
+  const recorder = new AudioRecorder(24000); // 24kHz mixed track
 
   const { groq, openaiClient, gemini } = getSharedLLM();
+
+  // Cleanup is triggered by BOTH the Twilio 'stop' message and the socket
+  // 'close' event, which fire back-to-back. Guard so the billing $inc and
+  // recording write in closeAndCleanup happen exactly once per call.
+  const runCleanup = async () => {
+    if (cleanedUp) return;
+    cleanedUp = true;
+    await closeAndCleanup({
+      callSid, agentObj, callStartTime, fullTranscript, deepgramWs,
+      pendingLeadData: toolAlreadyExecuted.pendingLeadData, recorder,
+    });
+  };
 
   const triggerInterruption = () => {
     isInterrupted = true;
@@ -178,6 +222,7 @@ function handleTwilioStream(twilioWs, urlAgentId) {
     try {
       const base64Audio = await synthesizeSpeech(sentence, true, agentObj?.language || 'en', agentObj?.voiceId);
       if (base64Audio && !isInterrupted && twilioWs.readyState === WebSocket.OPEN && streamSid) {
+        recorder.writeMulaw8k(Buffer.from(base64Audio, 'base64'), Date.now());
         twilioWs.send(JSON.stringify({ event: 'media', streamSid, media: { payload: base64Audio } }));
       }
     } catch (err) {
@@ -236,6 +281,13 @@ function handleTwilioStream(twilioWs, urlAgentId) {
       }
     } catch (err) {
       console.error('[Twilio Completion Flow Error]', err.message);
+      // Every LLM provider failed (or timed out). Don't leave the caller in
+      // dead silence — speak a short recovery line so the turn degrades gracefully.
+      if (!isInterrupted) {
+        try {
+          await processSentenceForPlay('Sorry, I missed that. Could you say it again?');
+        } catch (_) { /* best-effort recovery */ }
+      }
     } finally {
       isProcessing = false;
     }
@@ -303,14 +355,17 @@ function handleTwilioStream(twilioWs, urlAgentId) {
           console.log(`[Twilio WS] Call streaming started. StreamSid: ${streamSid}, CallSid: ${callSid}`);
           await handleStartCall();
           break;
-        case 'media':
+        case 'media': {
+          const inboundMulaw = Buffer.from(data.media.payload, 'base64');
+          recorder.writeMulaw8k(inboundMulaw, Date.now());
           if (deepgramWs && deepgramWs.readyState === WebSocket.OPEN) {
-            deepgramWs.send(Buffer.from(data.media.payload, 'base64'));
+            deepgramWs.send(inboundMulaw);
           }
           break;
+        }
         case 'stop':
           console.log('[Twilio WS] Call streaming stopped.');
-          await closeAndCleanup({ callSid, agentObj, callStartTime, fullTranscript, deepgramWs, pendingLeadData: toolAlreadyExecuted.pendingLeadData });
+          await runCleanup();
           break;
       }
     } catch (err) {
@@ -320,7 +375,7 @@ function handleTwilioStream(twilioWs, urlAgentId) {
 
   twilioWs.on('close', async () => {
     console.log('[Twilio WS] Connection closed.');
-    await closeAndCleanup({ callSid, agentObj, callStartTime, fullTranscript, deepgramWs, pendingLeadData: toolAlreadyExecuted.pendingLeadData });
+    await runCleanup();
   });
 }
 
@@ -457,6 +512,12 @@ async function handleWebCall(clientWs, req) {
       }
     } catch (err) {
       console.error('[Web Completions Error]', err.message);
+      // All providers failed/timed out — speak a recovery line instead of silence.
+      if (!isInterrupted) {
+        try {
+          await processSentenceForPlay('Sorry, I missed that. Could you say it again?');
+        } catch (_) { /* best-effort recovery */ }
+      }
     } finally {
       isProcessing = false;
     }
