@@ -155,7 +155,7 @@ export function initOrchestrator(server) {
 
     if (urlPath === '/media-stream') {
       const agentId = parsedUrl.searchParams.get('agentId');
-      const token = parsedUrl.searchParams.get('token');
+      const token = parsedUrl.searchParams.get('token') || parsedUrl.searchParams.get('amp;token');
       if (!verifyMediaStreamToken(agentId, token)) {
         console.warn('[WebSocket] Rejected /media-stream: invalid or missing token');
         ws.close(4401, 'Unauthorized');
