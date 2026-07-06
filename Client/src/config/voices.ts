@@ -79,7 +79,6 @@ export const VOICE_OPTIONS: VoiceOption[] = [
   { value: 'sarvam:bulbul:v3:rehan', label: 'Sarvam Rehan (V3 - Male)' },
   { value: 'sarvam:bulbul:v3:soham', label: 'Sarvam Soham (V3 - Male)' },
   { value: 'sarvam:bulbul:v3:rupali', label: 'Sarvam Rupali (V3 - Female)' },
-  { value: 'sarvam:bulbul:v3:niharika', label: 'Sarvam Niharika (V3 - Female)' },
 
   // --- Sarvam AI Indian-Native Voices (Indic-native) - Bulbul V2 ---
   { value: 'sarvam:bulbul:v2:anushka', label: 'Sarvam Anushka (V2 - Female)' },

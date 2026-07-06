@@ -66,13 +66,12 @@ export function PublicNavbar() {
   const navigate = useNavigate();
 
   const navItems = [
-     { label: 'How It Works', href: '#how-it-works', isHash: true },
+    { label: 'How It Works', href: '#how-it-works', isHash: true },
     { label: 'Features', href: '#features', isHash: true },
-    { label: 'Services', href: '/services' },
+    { label: 'Services', href: '/services', hasDropdown: true },
     { label: 'Case Studies', href: '/case-studies' },
     { label: 'Pricing', href: '/pricing' },
-    { label: 'News', href: '/news' },
-    // { label: 'Add-Ons', href: '#addons', isHash: true },
+    { label: 'News', href: '/news', badge: 'NEW' },
     { label: 'Contact', href: '#contact', isHash: true },
     { label: 'About Us', href: '/about' },
   ];
@@ -161,65 +160,69 @@ export function PublicNavbar() {
 
   return (
     <>
-      {/* Top announcement bar placeholder offset */}
-      <nav
-        ref={navRef}
-        className="fixed top-9 inset-x-0 z-50 transition-all duration-300"
-        style={{
-          background: scrolled ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.9)',
-          borderBottom: '1px solid rgba(37,99,235,0.12)',
-          boxShadow: scrolled ? '0 2px 16px rgba(0,0,0,0.08)' : 'none',
-        }}
-      >
-        <div className=" max-w-7xl mx-auto px-4 sm:px-0 lg:px-0 h-14 sm:h-16 flex items-center justify-between gap-3">
-
+      <div className="fixed top-[35px] inset-x-0 z-50 px-4 sm:px-6 lg:px-8 flex justify-center pointer-events-none transition-all duration-300">
+        <nav
+          ref={navRef}
+          className="w-full max-w-8xl h-14 sm:h-16 flex items-center justify-between px-6 rounded-full shadow-lg pointer-events-auto transition-all duration-300"
+          style={{
+            background: scrolled ? 'rgba(255, 255, 255, 0.98)' : 'rgba(255, 255, 255, 0.90)',
+            boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgba(226, 232, 240, 0.8)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+          }}
+        >
           {/* Logo */}
           <Link
             to="/"
-            className="flex-shrink-0 flex items-center"
+            className="flex-shrink-0 flex items-center h-full"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             aria-label="Autoniv home"
           >
             <img
               src={LOGO_SRC}
               alt="Autoniv"
-              className="-ml-6 h-40 sm:h-40 md:h-40 w-auto object-contain"
+              className="h-30 sm:h-30 w-auto object-contain transition-transform hover:scale-105"
             />
           </Link>
 
           {/* Desktop nav links */}
-          <div className="hidden lg:flex items-center gap-1  flex-1 justify-center">
+          <div className="hidden lg:flex items-center gap-1 xl:gap-2 flex-1 justify-center">
             {navItems.map((item) => (
               <Link
                 key={item.label}
                 to={item.isHash ? `/${item.href}` : item.href}
                 onClick={(e) => handleNavClick(e, item)}
-                className="relative px-2 xl:px-3 py-1 text-xs xl:text-sm font-semibold transition-colors duration-150 whitespace-nowrap rounded"
+                className="relative px-2 xl:px-3 py-1.5 text-xs xl:text-[13px] font-semibold transition-colors duration-150 whitespace-nowrap rounded-full flex items-center"
                 style={{ color: '#475569' }}
                 onMouseEnter={(e) => { e.currentTarget.style.color = '#0a0a0a'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = '#475569'; }}
               >
-                {item.label}
-                {selectedLabel === item.label && (
-                  <span
-                    className="absolute -bottom-[18px] left-0 right-0 h-[2px] rounded-full"
-                    style={{ background: 'linear-gradient(90deg, #2563EB, #10B981)' }}
-                  />
+                <span>{item.label}</span>
+                {item.badge && (
+                  <span className="ml-1.5 text-[8px] font-bold text-white bg-blue-600 px-1.5 py-0.5 rounded-full uppercase tracking-wider scale-90 origin-left">
+                    {item.badge}
+                  </span>
+                )}
+                {item.hasDropdown && (
+                  <svg className="w-2.5 h-2.5 ml-1 inline text-slate-450" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 )}
               </Link>
             ))}
           </div>
 
           {/* Desktop CTA buttons */}
-          <div className=" hidden sm:flex items-center gap-2 flex-shrink-0">
+          <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => openAuth('login')}
-              className="min-h-[44px] px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-150 whitespace-nowrap"
+              className="px-4 py-2 text-xs xl:text-sm font-semibold rounded-full transition-all duration-150 whitespace-nowrap cursor-pointer"
               style={{
                 color: '#475569',
-                cursor: 'pointer',
                 border: '1px solid rgba(37,99,235,0.15)',
                 background: 'transparent',
+                minHeight: '40px',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.color = '#2563EB';
@@ -240,11 +243,11 @@ export function PublicNavbar() {
               style={{
                 background: 'var(--gg)',
                 boxShadow: '0 4px 14px rgba(16,185,129,0.25)',
-                borderRadius: 10,
+                borderRadius: '9999px',
                 padding: '10px 16px',
                 border: 'none',
                 fontSize: '13px',
-                minHeight: '44px',
+                minHeight: '40px',
                 display: 'flex',
                 alignItems: 'center',
               }}
@@ -256,7 +259,7 @@ export function PublicNavbar() {
           {/* Mobile hamburger */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden flex items-center justify-center w-11 h-11 rounded-lg flex-shrink-0"
+            className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full flex-shrink-0"
             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileMenuOpen}
             style={{
@@ -274,8 +277,8 @@ export function PublicNavbar() {
               )}
             </svg>
           </button>
-        </div>
-      </nav>
+        </nav>
+      </div>
 
       {/* Backdrop */}
       <div
@@ -292,7 +295,7 @@ export function PublicNavbar() {
       {/* Slide-in drawer */}
       <div
         ref={drawerRef}
-        className="mt-9.5 lg:hidden fixed top-0 right-0 h-full z-[100] flex flex-col"
+        className="lg:hidden fixed top-0 right-0 h-full z-[100] flex flex-col"
         style={{
           width: 'min(85vw, 320px)',
           background: 'rgba(255,255,255,0.99)',
@@ -314,14 +317,14 @@ export function PublicNavbar() {
         >
           <Link
             to="/"
-            className="-ml-8 flex items-center"
+            className="flex items-center"
             onClick={() => {
               setMobileMenuOpen(false);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             aria-label="Autoniv home"
           >
-            <img src={LOGO_SRC} alt="Autoniv" className="h-30 sm:h-30 w-auto object-contain" />
+            <img src={LOGO_SRC} alt="Autoniv" className="h-10 sm:h-12 w-auto object-contain" />
           </Link>
           <button
             onClick={() => setMobileMenuOpen(false)}
@@ -383,13 +386,13 @@ export function PublicNavbar() {
             }}
             className="flex items-center justify-center w-full min-h-[48px] px-4 py-3 text-sm font-bold text-white rounded-xl transition-opacity duration-150 hover:opacity-90"
             style={{
-              background: 'var(--gg)',
-              boxShadow: '0 4px 14px rgba(16,185,129,0.25)',
+              background: '#1A56DB',
+              boxShadow: '0 4px 14px rgba(26,86,219,0.2)',
               border: 'none',
               cursor: 'pointer',
             }}
           >
-            Get Started Free
+            Start for Free
           </button>
         </div>
       </div>

@@ -1,3 +1,4 @@
+// Active pinggy webhook config reload
 import WebSocket from 'ws';
 import { log } from './logger.js';
 
@@ -156,9 +157,15 @@ export function detectLanguageOfText(text, agentLanguage = 'en') {
 }
 
 function getBestMultilingualProvider(detectedLang, gender) {
+  const deepgramKey = process.env.DEEPGRAM_API_KEY;
   const elevenlabsKey = process.env.ELEVENLABS_API_KEY;
   const openaiKey = process.env.OPENAI_API_KEY;
   const sarvamKey = process.env.SARVAM_API_KEY;
+
+  if (detectedLang === 'en' && deepgramKey && !deepgramKey.startsWith('your-')) {
+    const voiceId = gender === 'male' ? 'aura-orion-en' : 'aura-asteria-en';
+    return { provider: 'deepgram', voiceModelOrId: voiceId };
+  }
 
   if (elevenlabsKey && !elevenlabsKey.startsWith('your-') && !elevenlabsKey.includes('placeholder')) {
     const voiceId = gender === 'male' ? 'cjVigY5qzO86Huf0OWal' : 'hpp4J3VqNfWAUOO0d1Us';
@@ -181,7 +188,7 @@ function getBestMultilingualProvider(detectedLang, gender) {
 }
 
 export async function synthesizeSpeech(text, isTwilio = true, language = 'en', voiceId = null) {
-  let provider = 'elevenlabs';
+  let provider = (language === 'en' || !language) ? 'deepgram' : 'elevenlabs';
   let voiceModelOrId = voiceId;
 
   if (voiceId && voiceId.includes(':')) {
@@ -422,13 +429,13 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
     }
 
     // Safeguard: Ensure speaker matches V3 model compatibility constraints
-    const V3_SPEAKERS = ['aditya', 'ritu', 'ashutosh', 'priya', 'neha', 'rahul', 'pooja', 'rohan', 'simran', 'kavya', 'amit', 'dev', 'ishita', 'shreya', 'ratan', 'varun', 'manan', 'sumit', 'roopa', 'kabir', 'aayan', 'shubh', 'advait', 'anand', 'tanya', 'tarun', 'sunny', 'mani', 'gokul', 'vijay', 'shruti', 'suhani', 'mohit', 'kavitha', 'rehan', 'soham', 'rupali', 'niharika'];
+    const V3_SPEAKERS = ['aditya', 'ritu', 'ashutosh', 'priya', 'neha', 'rahul', 'pooja', 'rohan', 'simran', 'kavya', 'amit', 'dev', 'ishita', 'shreya', 'ratan', 'varun', 'manan', 'sumit', 'roopa', 'kabir', 'aayan', 'shubh', 'advait', 'anand', 'tanya', 'tarun', 'sunny', 'mani', 'gokul', 'vijay', 'shruti', 'suhani', 'mohit', 'kavitha', 'rehan', 'soham', 'rupali'];
     if (sarvamModel === 'bulbul:v3' && !V3_SPEAKERS.includes(speaker.toLowerCase())) {
       const isMale = /shubh|manan|rohan/i.test(speaker);
       speaker = isMale ? 'shubh' : 'shreya';
     }
 
-    const formattedSpeaker = speaker.charAt(0).toUpperCase() + speaker.slice(1).toLowerCase();
+    const formattedSpeaker = speaker.toLowerCase();
 
     const requestBody = {
       text,
@@ -454,13 +461,14 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
     }
 
     const isMaleSpeaker = /abhilash|karun|hitesh|rohan|shubh|manan/i.test(speaker);
+    let errTxt = null;
 
     if (!response || !response.ok) {
-      const errTxt = response ? await response.text() : 'Network/API error';
+      errTxt = response ? await response.text().catch(() => 'Unreadable body') : 'Network/API error';
       log.warn('sarvam_tts_first_attempt_failed', { speaker: formattedSpeaker, model: sarvamModel, error: errTxt });
 
-      // Fallback: Retry with gender-matched fallback speaker in Title Case
-      const fallbackSpeaker = isMaleSpeaker ? 'Shubh' : 'Shreya';
+      // Fallback: Retry with gender-matched fallback speaker
+      const fallbackSpeaker = isMaleSpeaker ? 'shubh' : 'shreya';
       if (speaker.toLowerCase() !== fallbackSpeaker.toLowerCase()) {
         log.info('sarvam_tts_retrying_with_fallback_speaker', { fallbackSpeaker });
         requestBody.speaker = fallbackSpeaker;
@@ -474,22 +482,35 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
             },
             body: JSON.stringify(requestBody),
           });
+          errTxt = null; // Reset error for retried response
         } catch (retryErr) {
           log.warn('sarvam_tts_retry_fetch_failed', { error: retryErr.message });
+          response = null;
+          errTxt = retryErr.message;
         }
       }
     }
 
     if (!response || !response.ok) {
-      const errTxt = response ? await response.text() : 'Network/API error';
-      log.warn('sarvam_tts_fully_failed_falling_back_to_deepgram', { error: errTxt });
+      if (!errTxt && response) {
+        errTxt = await response.text().catch(() => 'Unreadable body');
+      }
+      log.warn('sarvam_tts_fully_failed_falling_back_to_deepgram', { error: errTxt || 'Network/API error' });
       // Final fallback to Deepgram with correct gender
       const fallbackVoice = isMaleSpeaker ? 'aura-orion-en' : (isTwilio ? 'aura-stella-en' : 'aura-asteria-en');
       return synthesizeSpeechDirectDeepgram(text, isTwilio, fallbackVoice);
     }
 
-    const json = await response.json();
-    const base64Audio = json.audios?.[0];
+    let json = null;
+    try {
+      json = await response.json();
+    } catch (jsonErr) {
+      log.warn('sarvam_tts_json_parse_failed_falling_back_to_deepgram', { error: jsonErr.message });
+      const fallbackVoice = isMaleSpeaker ? 'aura-orion-en' : (isTwilio ? 'aura-stella-en' : 'aura-asteria-en');
+      return synthesizeSpeechDirectDeepgram(text, isTwilio, fallbackVoice);
+    }
+
+    const base64Audio = json?.audios?.[0];
     if (!base64Audio) {
       log.warn('sarvam_tts_empty_audio_list_falling_back_to_deepgram');
       const fallbackVoice = isMaleSpeaker ? 'aura-orion-en' : (isTwilio ? 'aura-stella-en' : 'aura-asteria-en');

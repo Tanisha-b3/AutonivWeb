@@ -331,38 +331,47 @@ export async function generateCompletion({ groq, openaiClient, gemini, conversat
   const engineSelected = agentObj?.customEngineModel || 'groq:llama-3.3-70b';
   const [provider, modelId] = engineSelected.split(':');
 
-  let client;
-  let modelName;
-
-  if (provider === 'gemini') {
-    client = gemini || openaiClient || groq;
-    modelName = gemini ? (modelId || 'gemini-2.5-flash') : (openaiClient ? 'gpt-4o-mini' : 'llama-3.3-70b-versatile');
-  } else if (provider === 'openai') {
-    client = openaiClient || groq || gemini;
-    modelName = openaiClient ? (modelId || 'gpt-4o-mini') : (groq ? 'llama-3.3-70b-versatile' : 'gemini-2.5-flash');
-  } else {
-    // Default or groq
-    client = groq || openaiClient || gemini;
-    modelName = groq ? (modelId === 'llama-3.3-70b' ? 'llama-3.3-70b-versatile' : (modelId || 'llama-3.3-70b-versatile')) : (openaiClient ? 'gpt-4o-mini' : 'gemini-2.5-flash');
+  // Build client candidate list based on starting engine selection
+  const candidates = [];
+  if (provider === 'gemini' && gemini) {
+    candidates.push({ name: 'Gemini', client: gemini, model: modelId || 'gemini-2.5-flash' });
+  } else if (provider === 'openai' && openaiClient) {
+    candidates.push({ name: 'OpenAI', client: openaiClient, model: modelId || 'gpt-4o-mini' });
+  } else if (groq) {
+    candidates.push({ name: 'Groq', client: groq, model: modelId || 'llama-3.3-70b-versatile' });
   }
 
-  console.log(`[${logPrefix}] Using ${modelName}...`);
-  let stream;
-  try {
-    stream = await requestCompletion(client, modelName, prunedHistory, tools, 12000);
-  } catch (primaryErr) {
-    const clients = [
-      { name: 'Groq', client: groq, model: 'llama-3.3-70b-versatile' },
-      { name: 'OpenAI', client: openaiClient, model: 'gpt-4o-mini' },
-      { name: 'Gemini', client: gemini, model: 'gemini-2.5-flash' },
-    ];
-    const alternative = clients.find(c => c.client && c.client !== client);
-    if (alternative) {
-      console.warn(`[${logPrefix}] Primary failed, falling back to ${alternative.name}:`, primaryErr.message);
-      stream = await requestCompletion(alternative.client, alternative.model, prunedHistory, tools, 12000);
-    } else {
-      throw primaryErr;
+  // Load backups to candidates list in standard order
+  if (groq && !candidates.some(c => c.name === 'Groq')) {
+    candidates.push({ name: 'Groq', client: groq, model: 'llama-3.3-70b-versatile' });
+  }
+  if (openaiClient && !candidates.some(c => c.name === 'OpenAI')) {
+    candidates.push({ name: 'OpenAI', client: openaiClient, model: 'gpt-4o-mini' });
+  }
+  if (gemini && !candidates.some(c => c.name === 'Gemini')) {
+    candidates.push({ name: 'Gemini', client: gemini, model: 'gemini-2.5-flash' });
+  }
+
+  if (candidates.length === 0) {
+    throw new Error('No LLM providers (Groq, OpenAI, Gemini) are configured or available');
+  }
+
+  let stream = null;
+  let lastErr = null;
+
+  for (const candidate of candidates) {
+    try {
+      console.log(`[${logPrefix}] Attempting completion with ${candidate.name} (${candidate.model})...`);
+      stream = await requestCompletion(candidate.client, candidate.model, prunedHistory, tools, 12000);
+      break; // Success!
+    } catch (err) {
+      console.warn(`[${logPrefix}] ${candidate.name} failed:`, err.message);
+      lastErr = err;
     }
+  }
+
+  if (!stream) {
+    throw lastErr || new Error('All LLM providers failed to generate completion');
   }
 
   return { stream, tools };

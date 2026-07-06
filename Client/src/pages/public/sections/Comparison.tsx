@@ -17,40 +17,40 @@ function CellValue({ value, isAutoniv = false }: { value: string; isAutoniv?: bo
 
   if (isCheck) {
     return (
-      <span className="inline-flex items-center gap-1.5">
+      <span className="inline-flex items-center gap-2">
         <span
-          className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+          className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm"
           style={{
-            background: isAutoniv ? "rgba(16,185,129,0.15)" : "rgba(16,185,129,0.08)",
-            border: `1px solid ${isAutoniv ? "rgba(16,185,129,0.3)" : "rgba(16,185,129,0.15)"}`,
+            background: isAutoniv ? "rgba(16,185,129,0.18)" : "rgba(16,185,129,0.08)",
+            border: `1px solid ${isAutoniv ? "rgba(16,185,129,0.4)" : "rgba(16,185,129,0.18)"}`,
           }}
         >
-          <svg width="10" height="10" fill="none" stroke="#10B981" strokeWidth="2.5" viewBox="0 0 24 24">
+          <svg width="10" height="10" fill="none" stroke="#10B981" strokeWidth="3" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </span>
-        <span style={{ color: "#10B981" }}>{value.replace("✓ ", "")}</span>
+        <span className="font-semibold text-slate-900" style={{ color: "#10B981", fontSize: "11.5px" }}>{value.replace("✓ ", "")}</span>
       </span>
     );
   }
 
   if (isCross) {
     return (
-      <span className="inline-flex items-center gap-1.5">
+      <span className="inline-flex items-center gap-2">
         <span
           className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.12)" }}
+          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.14)" }}
         >
-          <svg width="8" height="8" fill="none" stroke="#ef4444" strokeWidth="2.5" viewBox="0 0 24 24">
+          <svg width="8" height="8" fill="none" stroke="#ef4444" strokeWidth="3" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </span>
-        <span style={{ color: "#ef4444" }}>{value.replace("✗ ", "")}</span>
+        <span className="text-slate-500 font-medium" style={{ color: "#ef4444", fontSize: "11.5px" }}>{value.replace("✗ ", "")}</span>
       </span>
     );
   }
 
-  return <span>{value}</span>;
+  return <span className="font-semibold text-slate-700" style={{ fontSize: "12px" }}>{value}</span>;
 }
 
 function ComparisonRow({ row, index }: { row: typeof COMPARISON[0]; index: number }) {
@@ -68,12 +68,12 @@ function ComparisonRow({ row, index }: { row: typeof COMPARISON[0]; index: numbe
       style={{
         borderBottom: index < COMPARISON.length - 1 ? "1px solid rgba(37,99,235,0.06)" : "none",
         background: isVerdict
-          ? "linear-gradient(90deg, rgba(37,99,235,0.03), rgba(16,185,129,0.03))"
+          ? "linear-gradient(90deg, rgba(37,99,235,0.04), rgba(16,185,129,0.04))"
           : "transparent",
       }}
       onMouseEnter={(e) => {
         if (!isVerdict) {
-          e.currentTarget.style.background = "rgba(37,99,235,0.02)";
+          e.currentTarget.style.background = "rgba(37,99,235,0.015)";
         }
       }}
       onMouseLeave={(e) => {
@@ -88,10 +88,10 @@ function ComparisonRow({ row, index }: { row: typeof COMPARISON[0]; index: numbe
         style={{
           color: isVerdict ? "#0a0a0a" : "#334155",
           background: isVerdict
-            ? "linear-gradient(90deg, rgba(37,99,235,0.06), rgba(255,255,255,0.95))"
-            : "rgba(255,255,255,0.95)",
+            ? "linear-gradient(90deg, rgba(37,99,235,0.06), rgba(255,255,255,0.98))"
+            : "rgba(255,255,255,0.98)",
           borderRight: "1px solid rgba(37,99,235,0.06)",
-          fontWeight: isVerdict ? 700 : 600,
+          fontWeight: isVerdict ? 800 : 600,
         }}
       >
         {row.capability}
@@ -101,10 +101,10 @@ function ComparisonRow({ row, index }: { row: typeof COMPARISON[0]; index: numbe
       <td
         className="px-5 py-4 text-xs font-medium transition-all duration-300"
         style={{
-          background: "linear-gradient(135deg, rgba(37,99,235,0.04), rgba(16,185,129,0.03))",
+          background: "linear-gradient(135deg, rgba(37,99,235,0.05), rgba(16,185,129,0.04))",
           color: row.autoniv.startsWith("✓") ? "#10B981" : row.autoniv.startsWith("✗") ? "#ef4444" : "#0a0a0a",
-          borderLeft: "2px solid rgba(16,185,129,0.2)",
-          borderRight: "2px solid rgba(16,185,129,0.2)",
+          borderLeft: "2.5px solid rgba(16,185,129,0.25)",
+          borderRight: "2.5px solid rgba(16,185,129,0.25)",
         }}
       >
         <CellValue value={row.autoniv} isAutoniv />
@@ -195,8 +195,8 @@ export function Comparison() {
             className="relative rounded-3xl overflow-hidden"
             style={{
               background: "rgba(255,255,255,0.98)",
-              border: "1px solid rgba(37,99,235,0.1)",
-              boxShadow: "0 24px 80px rgba(0,0,0,0.06), 0 0 0 1px rgba(37,99,235,0.04)",
+              border: "1px solid rgba(37,99,235,0.12)",
+              boxShadow: "0 30px 100px rgba(16,185,129,0.05), 0 0 0 1px rgba(37,99,235,0.03)",
             }}
           >
             {/* Scroll hint for mobile */}
@@ -214,15 +214,15 @@ export function Comparison() {
                 <thead>
                   <tr
                     style={{
-                      borderBottom: "2px solid rgba(37,99,235,0.1)",
-                      background: "linear-gradient(135deg, rgba(37,99,235,0.03), rgba(16,185,129,0.02))",
+                      borderBottom: "2px solid rgba(37,99,235,0.08)",
+                      background: "linear-gradient(135deg, rgba(37,99,235,0.02), rgba(16,185,129,0.01))",
                     }}
                   >
                     <th
-                      className="px-5 py-4 text-[11px] font-bold uppercase tracking-wider sticky left-0 z-20"
+                      className="px-5 py-5 text-[11px] font-bold uppercase tracking-wider sticky left-0 z-20"
                       style={{
                         color: "#64748b",
-                        background: "rgba(255,255,255,0.95)",
+                        background: "rgba(255,255,255,0.98)",
                         borderRight: "1px solid rgba(37,99,235,0.06)",
                         width: "18%",
                       }}
@@ -230,26 +230,27 @@ export function Comparison() {
                       Feature
                     </th>
                     <th
-                      className="px-5 py-4 text-[11px] font-bold uppercase tracking-wider"
+                      className="px-5 py-5 text-[11px] font-bold uppercase tracking-wider relative overflow-hidden"
                       style={{
-                        color: "#10B981",
-                        background: "linear-gradient(135deg, rgba(37,99,235,0.04), rgba(16,185,129,0.04))",
+                        color: "#ffffff",
+                        background: "linear-gradient(135deg, #1d4ed8, #059669)",
                         width: "14%",
-                        borderLeft: "2px solid rgba(16,185,129,0.2)",
-                        borderRight: "2px solid rgba(16,185,129,0.2)",
+                        borderLeft: "2px solid rgba(16,185,129,0.25)",
+                        borderRight: "2px solid rgba(16,185,129,0.25)",
+                        boxShadow: "0 4px 15px rgba(16,185,129,0.15)",
                       }}
                     >
-                      <span className="flex items-center gap-1.5">
-                        Autoniv
-                        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                          BEST
+                      <div className="flex flex-col items-start gap-1">
+                        <span className="px-1.5 py-0.5 rounded text-[8px] font-black bg-white/20 text-white border border-white/20 tracking-wider">
+                          🏆 WINNER
                         </span>
-                      </span>
+                        <span className="text-xs font-extrabold tracking-wide">Autoniv</span>
+                      </div>
                     </th>
                     {competitors.map((c) => (
                       <th
                         key={c.key}
-                        className="px-5 py-4 text-[11px] font-bold uppercase tracking-wider"
+                        className="px-5 py-5 text-[11px] font-bold uppercase tracking-wider"
                         style={{ color: "#94a3b8", width: "13%" }}
                       >
                         {c.label}
@@ -267,29 +268,35 @@ export function Comparison() {
           </motion.div>
 
           {/* Summary verdict */}
-          <MotionReveal variant="fadeUp" className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <MotionReveal variant="fadeUp" className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
-              { icon: "💰", label: "Best Value", desc: "Flat pricing, no surprises" },
+              { icon: "💰", label: "Best Value", desc: "Flat subscription, no surprises" },
               { icon: "🚀", label: "Fastest Setup", desc: "Live in under 24 hours" },
-              { icon: "🌍", label: "INR Native", desc: "India-first pricing" },
-              { icon: "🔒", label: "DPDP Compliant", desc: "Data privacy built-in" },
-              { icon: "📞", label: "WhatsApp Native", desc: "No add-on fees" },
+              { icon: "🌐", label: "INR Native", desc: "India-first pricing" },
+              { icon: "🛡️", label: "DPDP Compliant", desc: "Data privacy built-in" },
+              { icon: "💬", label: "WhatsApp Native", desc: "No add-on fees" },
               { icon: "🎯", label: "No Seat Limits", desc: "Unlimited team access" },
             ].map((item, i) => (
               <div
                 key={i}
-                className="group relative rounded-2xl p-4 text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden cursor-default"
+                className="group relative rounded-2xl p-5 text-center transition-all duration-500 hover:shadow-xl hover:-translate-y-1.5 overflow-hidden cursor-default"
                 style={{
-                  background: "rgba(255,255,255,0.95)",
-                  border: "1px solid rgba(37,99,235,0.06)",
+                  background: "#ffffff",
+                  border: "1px solid rgba(37,99,235,0.08)",
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.02)",
                 }}
               >
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                  style={{ background: "radial-gradient(circle at 50% 50%, rgba(16,185,129,0.04), transparent 70%)" }}
+                {/* Accent hover wash */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                  style={{ background: "radial-gradient(circle at 50% 50%, rgba(16,185,129,0.08), transparent 70%)" }}
                 />
-                <div className="relative text-2xl mb-2">{item.icon}</div>
-                <div className="relative text-xs font-bold" style={{ color: "#0a0a0a" }}>{item.label}</div>
-                <div className="relative text-[10px] mt-1" style={{ color: "#94a3b8" }}>{item.desc}</div>
+                
+                {/* Border line indicator */}
+                <div className="absolute bottom-0 left-0 right-0 h-[2.5px] w-0 group-hover:w-full transition-all duration-500 bg-gradient-to-r from-blue-500 to-emerald-500" />
+                
+                <div className="relative text-3xl mb-3 transform group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500 inline-block">{item.icon}</div>
+                <div className="relative text-xs font-black tracking-wide" style={{ color: "#1e293b" }}>{item.label}</div>
+                <div className="relative text-[10px] mt-1.5 font-medium leading-relaxed" style={{ color: "#64748b" }}>{item.desc}</div>
               </div>
             ))}
           </MotionReveal>

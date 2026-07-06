@@ -6,6 +6,7 @@ import { Hero } from "./Hero";
 import { Demo } from "./Demo";
 import { Features } from "./Features";
 import { Services } from "./ServicesSection";
+import { VoiceAgentService, ChatAgentService } from "./services";
 
 const AuthDialog = lazy(() =>
   import("../AuthDialog").then((m) => ({ default: m.AuthDialog }))
@@ -46,6 +47,8 @@ export function LandingSection() {
               <Features />
             </div>
             <Services openAuth={openAuth} />
+            <VoiceAgentService />
+            <ChatAgentService />
           <Suspense fallback={null}>
             <Comparison />
           </Suspense>

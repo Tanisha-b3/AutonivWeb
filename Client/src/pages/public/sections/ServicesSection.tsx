@@ -12,10 +12,10 @@ const services = [
     title: "AI Voice Agents",
     subtitle:
       "Human-like agents that pick up every call, qualify leads, and book appointments — without a single dropped conversation.",
-    accent: "var(--primary-blue)",
-    accentDim: "var(--primary-blue-soft)",
-    accentBorder: "rgba(37,99,235,0.25)",
-    glow: "rgba(37,99,235,0.18)",
+    accent: "#10B981",
+    accentDim: "rgba(16,185,129,0.08)",
+    accentBorder: "rgba(16,185,129,0.25)",
+    glow: "rgba(16,185,129,0.18)",
     features: [
       "Inbound & Outbound Calls",
       "Natural Conversation Flow",
@@ -48,10 +48,10 @@ const services = [
     title: "AI Chatbot",
     subtitle:
       "Deploy smart chatbots across your website, WhatsApp, Facebook & Instagram. Capture leads and support customers around the clock.",
-    accent: "var(--secondary)",
-    accentDim: "var(--emerald-dim)",
-    accentBorder: "rgba(16,185,129,0.25)",
-    glow: "rgba(16,185,129,0.18)",
+    accent: "#3B82F6",
+    accentDim: "rgba(59,130,246,0.08)",
+    accentBorder: "rgba(59,130,246,0.25)",
+    glow: "rgba(59,130,246,0.18)",
     features: [
       "Multi-platform Support",
       "Lead Capture & Qualification",
@@ -84,10 +84,10 @@ const services = [
     title: "CRM Automation",
     subtitle:
       "Automate workflows, follow-ups, and pipeline management. Plugs directly into your existing CRM without ripping it apart.",
-    accent: "var(--violet)",
-    accentDim: "rgba(124,58,237,0.12)",
-    accentBorder: "rgba(124,58,237,0.25)",
-    glow: "rgba(124,58,237,0.18)",
+    accent: "#8B5CF6",
+    accentDim: "rgba(139,92,246,0.08)",
+    accentBorder: "rgba(139,92,246,0.25)",
+    glow: "rgba(139,92,246,0.18)",
     features: [
       "Lead Management",
       "Automated Follow-ups",
@@ -120,10 +120,10 @@ const services = [
     title: "Smart Appointment Booking",
     subtitle:
       "AI books directly into Google Calendar, Outlook, or Calendly — no back-and-forth emails, no missed slots.",
-    accent: "var(--primary-blue)",
-    accentDim: "var(--primary-blue-soft)",
-    accentBorder: "rgba(37,99,235,0.25)",
-    glow: "rgba(37,99,235,0.18)",
+    accent: "#06B6D4",
+    accentDim: "rgba(6,182,212,0.08)",
+    accentBorder: "rgba(6,182,212,0.25)",
+    glow: "rgba(6,182,212,0.18)",
     features: [
       "Google Calendar Sync",
       "Outlook & Calendly",
@@ -156,8 +156,8 @@ const services = [
     title: "Analytics & Reporting",
     subtitle:
       "Real-time dashboards with call transcripts, sentiment scores, and conversion metrics so you always know what's working.",
-    accent: "var(--warning)",
-    accentDim: "rgba(245,158,11,0.12)",
+    accent: "#F59E0B",
+    accentDim: "rgba(245,158,11,0.08)",
     accentBorder: "rgba(245,158,11,0.25)",
     glow: "rgba(245,158,11,0.18)",
     features: [
@@ -192,10 +192,10 @@ const services = [
     title: "Multi-Language Support",
     subtitle:
       "Deploy agents in Hindi, Tamil, Telugu, Bengali and 17 more — with region-appropriate accents and cultural context baked in.",
-    accent: "var(--secondary)",
-    accentDim: "var(--emerald-dim)",
-    accentBorder: "rgba(16,185,129,0.25)",
-    glow: "rgba(16,185,129,0.18)",
+    accent: "#EC4899",
+    accentDim: "rgba(236,72,153,0.08)",
+    accentBorder: "rgba(236,72,153,0.25)",
+    glow: "rgba(236,72,153,0.18)",
     features: [
       "20+ Languages",
       "Regional Accents",
@@ -587,10 +587,10 @@ function ServiceDetailDialog({
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.5 }}
-                    className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer border-none"
                     style={{
-                      background: `linear-gradient(135deg, ${s.accent}, ${s.accent})`,
-                      boxShadow: `0 4px 20px ${s.glow}`,
+                      background: `linear-gradient(135deg, ${s.accent}, ${s.accent}dd)`,
+                      boxShadow: `0 8px 24px -6px ${s.glow}`,
                     }}
                   >
                     Get Started
@@ -628,22 +628,23 @@ function ServiceCard({
       whileHover={{ y: -8, transition: { duration: 0.25, ease: easeOut } }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="group relative flex flex-col rounded-2xl cursor-default overflow-hidden"
+      className="group relative flex flex-col rounded-3xl cursor-default overflow-hidden backdrop-blur-md"
       style={{
-        background:
-          "linear-gradient(145deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.015) 100%)",
-        border: `1px solid ${hovered ? s.accentBorder : "rgba(255,255,255,0.07)"}`,
+        background: hovered
+          ? "linear-gradient(145deg, rgba(255,255,255,0.065) 0%, rgba(255,255,255,0.02) 100%)"
+          : "linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)",
+        border: `1px solid ${hovered ? s.accent : "rgba(255,255,255,0.06)"}`,
         boxShadow: hovered
-          ? `0 0 0 1px ${s.accentBorder}, 0 24px 64px ${s.glow}`
-          : "none",
-        transition: "border 0.3s, box-shadow 0.3s",
+          ? `0 20px 50px -12px ${s.glow}, inset 0 0 12px 1px rgba(255,255,255,0.02)`
+          : "inset 0 0 12px 1px rgba(255,255,255,0.01)",
+        transition: "border 0.35s ease, box-shadow 0.35s ease",
       }}
     >
       {/* Top ambient glow strip */}
       <motion.div
-        className="absolute inset-x-0 top-0 h-px"
+        className="absolute inset-x-0 top-0 h-[2px]"
         style={{
-          background: `linear-gradient(90deg, transparent, ${s.accent}60, transparent)`,
+          background: `linear-gradient(90deg, transparent, ${s.accent}, transparent)`,
         }}
         animate={{ opacity: hovered ? 1 : 0 }}
         transition={{ duration: 0.3 }}
@@ -661,7 +662,7 @@ function ServiceCard({
       />
 
       {/* Header row */}
-      <div className="flex items-start justify-between px-5 pt-5 pb-4">
+      <div className="flex items-start justify-between px-6 pt-6 pb-4">
         {/* Icon pill */}
         <motion.div
           className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl"
@@ -703,13 +704,13 @@ function ServiceCard({
       </div>
 
       {/* Sparkline strip */}
-      <div className="px-5 h-12 mb-4">
+      <div className="px-6 h-12 mb-4">
         <Sparkline accent={s.accent} />
       </div>
 
       {/* Text */}
-      <div className="px-5 flex-1 flex flex-col">
-        <h3 className="text-white font-bold text-lg mb-2 leading-snug">{s.title}</h3>
+      <div className="px-6 flex-1 flex flex-col">
+        <h3 className="text-white font-bold text-lg mb-2 leading-snug group-hover:text-white transition-colors">{s.title}</h3>
         <p className="text-slate-400 text-sm leading-relaxed mb-5">{s.subtitle}</p>
 
         {/* Feature list */}
@@ -723,7 +724,7 @@ function ServiceCard({
             <motion.li
               key={j}
               variants={featureItemVariants}
-              className="flex items-center gap-2.5 text-sm text-slate-300"
+              className="flex items-center gap-2.5 text-sm text-slate-350"
             >
               <span
                 className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
@@ -741,7 +742,7 @@ function ServiceCard({
                   <motion.path
                     d="M2 6l3 3 5-5"
                     stroke={s.accent}
-                    strokeWidth="2.2"
+                    strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
@@ -756,12 +757,11 @@ function ServiceCard({
         <motion.button
           onClick={() => onLearnMore(s)}
           whileTap={{ scale: 0.97 }}
-          className="w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 mb-5"
+          className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 mb-6 border-none cursor-pointer transition-all duration-350"
           style={{
-            background: hovered ? s.accentDim : "rgba(255,255,255,0.04)",
-            border: `1px solid ${hovered ? s.accent : "rgba(255,255,255,0.08)"}`,
-            color: hovered ? s.accent : "rgba(255,255,255,0.55)",
-            transition: "background 0.25s, border 0.25s, color 0.25s",
+            background: hovered ? `linear-gradient(135deg, ${s.accent}, ${s.accent}dd)` : "rgba(255,255,255,0.04)",
+            color: hovered ? "#ffffff" : "rgba(255,255,255,0.65)",
+            boxShadow: hovered ? `0 8px 24px -6px ${s.glow}` : "none",
           }}
         >
           Learn More
@@ -770,7 +770,7 @@ function ServiceCard({
             height="13"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="2.5"
             viewBox="0 0 24 24"
             animate={hovered ? { x: 4 } : { x: 0 }}
             transition={{ duration: 0.25, ease: easeOut }}

@@ -3,53 +3,256 @@ import { motion, useInView, useReducedMotion, AnimatePresence } from "framer-mot
 import { testimonials } from "./data";
 import { GradientText } from "./anim";
 
+interface TestimonialItem {
+  name: string;
+  role: string;
+  quote: string;
+  initials: string;
+  metric: string;
+  industry: string;
+  avatar: string;
+  photo: string;
+}
+
 function StarRating() {
   return (
-    <div className="flex gap-0.5">
+    <div className="flex gap-1">
       {[...Array(5)].map((_, k) => (
-        <svg key={k} className="w-3.5 h-3.5" viewBox="0 0 20 20">
-          <defs>
-            <linearGradient id={`star-g-${k}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#fbbf24" />
-              <stop offset="100%" stopColor="#f59e0b" />
-            </linearGradient>
-          </defs>
-          <path
-            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-            fill={`url(#star-g-${k})`}
-          />
+        <svg key={k} className="w-4 h-4 text-amber-400 drop-shadow-[0_2px_4px_rgba(245,158,11,0.2)]" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
         </svg>
       ))}
     </div>
   );
 }
 
+const INDUSTRIES = ["All", "Healthcare", "Real Estate", "Automotive", "Finance", "Education", "Travel"];
+
+// Featured Card Component
+function FeaturedTestimonialCard({ item }: { item: TestimonialItem }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    setCoords({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
+
+  return (
+    <motion.div
+      ref={cardRef}
+      layout
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="group relative p-6 sm:p-8 lg:p-10 rounded-3xl flex flex-col justify-between overflow-hidden"
+      style={{
+        background: "linear-gradient(145deg, rgba(15,23,42,0.8), rgba(15,23,42,0.6))",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        borderColor: isHovered ? item.avatar : "rgba(255, 255, 255, 0.08)",
+        boxShadow: isHovered 
+          ? `0 32px 80px rgba(0,0,0,0.45), 0 0 0 1px ${item.avatar}25, inset 0 0 32px ${item.avatar}05`
+          : "0 24px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.02)",
+        backdropFilter: "blur(16px)",
+        transition: "border-color 0.4s ease, box-shadow 0.4s ease",
+      }}
+    >
+      {/* Move-sensitive glow */}
+      {isHovered && (
+        <div
+          className="absolute inset-0 pointer-events-none transition-opacity duration-300"
+          style={{
+            background: `radial-gradient(400px circle at ${coords.x}px ${coords.y}px, ${item.avatar}15, transparent 65%)`
+          }}
+        />
+      )}
+
+      {/* Quote Mark */}
+      <span className="absolute right-8 top-6 text-[120px] font-serif select-none pointer-events-none opacity-5 font-bold leading-none" style={{ color: item.avatar }}>
+        &rdquo;
+      </span>
+
+      <div className="relative z-10">
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <StarRating />
+          <span
+            className="text-[10px] font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full"
+            style={{
+              color: item.avatar,
+              background: `${item.avatar}15`,
+              border: `1px solid ${item.avatar}30`,
+              fontFamily: "'JetBrains Mono', monospace"
+            }}
+          >
+            {item.industry}
+          </span>
+        </div>
+
+        <p className="text-base sm:text-lg md:text-xl leading-relaxed text-white font-medium mb-8 italic relative z-10">
+          &ldquo;{item.quote}&rdquo;
+        </p>
+      </div>
+
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 pt-6 border-t border-white/5 mt-auto relative z-10">
+        <div className="flex items-center gap-4">
+          <div className="relative flex-shrink-0">
+            <div className="absolute -inset-1 rounded-full opacity-60 blur-xs" style={{ background: `linear-gradient(135deg, ${item.avatar}, #34d399)` }} />
+            <img src={item.photo} alt={item.name} className="relative w-12 h-12 rounded-full object-cover" style={{ border: `2px solid ${item.avatar}` }} />
+          </div>
+          <div>
+            <h3 className="text-sm sm:text-base font-bold text-white leading-tight">{item.name}</h3>
+            <p className="text-xs text-slate-400 mt-1">{item.role}</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center sm:items-end justify-center px-5 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md min-w-[130px] text-center sm:text-right">
+          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Impact Metric</span>
+          <span className="text-xl font-black font-mono text-emerald-400">{item.metric}</span>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// Compact Thumbnail Card Component
+function TestimonialThumbnailCard({
+  item,
+  isActive,
+  onClick
+}: {
+  item: TestimonialItem;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    setCoords({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
+
+  return (
+    <motion.div
+      ref={cardRef}
+      layout
+      onClick={onClick}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="group relative p-4 rounded-2xl cursor-pointer overflow-hidden border transition-all duration-300"
+      style={{
+        background: isActive 
+          ? "rgba(15, 23, 42, 0.85)" 
+          : "rgba(15, 23, 42, 0.35)",
+        borderColor: isActive 
+          ? item.avatar 
+          : isHovered 
+            ? "rgba(255,255,255,0.12)" 
+            : "rgba(255,255,255,0.04)",
+        boxShadow: isActive 
+          ? `0 12px 28px rgba(0,0,0,0.35), inset 0 0 16px ${item.avatar}25` 
+          : "none",
+        backdropFilter: "blur(8px)"
+      }}
+    >
+      {/* Mini hover glow */}
+      {isHovered && !isActive && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: `radial-gradient(150px circle at ${coords.x}px ${coords.y}px, rgba(255,255,255,0.03), transparent 60%)`
+          }}
+        />
+      )}
+
+      <div className="flex items-start justify-between gap-3 relative z-10">
+        <div className="flex items-center gap-3 min-w-0">
+          <img
+            src={item.photo}
+            alt={item.name}
+            className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+            style={{ border: `1.5px solid ${isActive ? item.avatar : "rgba(255,255,255,0.2)"}` }}
+          />
+          <div className="min-w-0">
+            <h4 className="text-xs sm:text-sm font-bold text-white truncate group-hover:text-emerald-400 transition-colors duration-200">{item.name}</h4>
+            <p className="text-[10px] text-slate-400 truncate">{item.role}</p>
+          </div>
+        </div>
+
+        <span
+          className="px-2.5 py-0.5 rounded-lg text-[9px] font-bold font-mono whitespace-nowrap self-start"
+          style={{
+            color: "#10B981",
+            background: "rgba(16,185,129,0.08)",
+            border: "1px solid rgba(16,185,129,0.15)",
+          }}
+        >
+          {item.metric}
+        </span>
+      </div>
+
+      <p className="text-xs text-slate-400 leading-relaxed mt-3 line-clamp-2 italic">
+        &ldquo;{item.quote}&rdquo;
+      </p>
+    </motion.div>
+  );
+}
+
 export function Testimonials() {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
-  const [active, setActive] = useState(0);
+  const [selectedIndustry, setSelectedIndustry] = useState("All");
+  const [activeIndex, setActiveIndex] = useState(0);
   const reduced = useReducedMotion() ?? false;
 
-  // Auto-rotate
+  // Filter testimonials based on selected industry
+  const filtered = testimonials.filter(
+    (t) => selectedIndustry === "All" || t.industry.toLowerCase() === selectedIndustry.toLowerCase()
+  );
+
+  // Safely clamp activeIndex if filtered list changes
   useEffect(() => {
-    if (reduced) return;
+    setActiveIndex(0);
+  }, [selectedIndustry]);
+
+  // Auto-rotate among the filtered testimonials
+  useEffect(() => {
+    if (reduced || filtered.length <= 1) return;
     const timer = setInterval(() => {
-      setActive((prev) => (prev + 1) % testimonials.length);
-    }, 5000);
+      setActiveIndex((prev) => (prev + 1) % filtered.length);
+    }, 6000);
     return () => clearInterval(timer);
-  }, [reduced]);
+  }, [reduced, filtered.length]);
+
+  const activeTestimonial = filtered[activeIndex] || filtered[0] || testimonials[0];
+  const isSingle = filtered.length <= 1;
 
   return (
-    <section ref={ref} className="section-box black" style={{ background: "#050d1a" }}>
-      {/* Ambient blobs */}
-      <div className="pointer-events-none absolute top-0 left-1/4 w-[600px] h-[400px] rounded-full"
-        style={{ background: "radial-gradient(ellipse, rgba(37,99,235,0.06) 0%, transparent 70%)" }}
+    <section ref={ref} className="section-box black relative overflow-hidden" style={{ background: "#050d1a" }}>
+      {/* Ambient glowing blobs */}
+      <div className="pointer-events-none absolute top-0 left-1/4 w-[600px] h-[400px] rounded-full opacity-60"
+        style={{ background: "radial-gradient(ellipse, rgba(37,99,235,0.07) 0%, transparent 70%)" }}
       />
-      <div className="pointer-events-none absolute bottom-0 right-1/4 w-[500px] h-[350px] rounded-full"
-        style={{ background: "radial-gradient(ellipse, rgba(16,185,129,0.05) 0%, transparent 70%)" }}
+      <div className="pointer-events-none absolute bottom-0 right-1/4 w-[500px] h-[350px] rounded-full opacity-60"
+        style={{ background: "radial-gradient(ellipse, rgba(16,185,129,0.06) 0%, transparent 70%)" }}
       />
 
-      {/* Subtle grid */}
+      {/* Subtle backdrop grid pattern */}
       <div className="pointer-events-none absolute inset-0 opacity-30"
         style={{
           backgroundImage: "linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)",
@@ -60,13 +263,13 @@ export function Testimonials() {
       />
 
       <div className="relative z-10 py-20 sm:py-28 px-4">
-        <div className="max-w-5xl mx-auto">
-          {/* Header */}
+        <div className="max-w-6xl mx-auto">
+          {/* Section Header */}
           <motion.div
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: 30 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center mb-14"
+            className="text-center mb-10"
           >
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-[0.18em] uppercase mb-6"
               style={{ color: "#ffffff", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}
@@ -87,124 +290,78 @@ export function Testimonials() {
             </p>
           </motion.div>
 
-          {/* 3D Card Stack - Active card */}
-          <div className="relative max-w-3xl mx-auto mb-12" style={{ perspective: 1200 }}>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={active}
-                initial={reduced ? { opacity: 0 } : { opacity: 0, rotateY: -15, scale: 0.9, z: -100 }}
-                animate={{ opacity: 1, rotateY: 0, scale: 1, z: 0 }}
-                exit={reduced ? { opacity: 0 } : { opacity: 0, rotateY: 15, scale: 0.9, z: -100 }}
-                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="relative p-5 sm:p-8 lg:p-10 rounded-2xl sm:rounded-3xl"
+          {/* Industry Filters */}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="flex items-center justify-center gap-2 flex-wrap mb-12 max-w-3xl mx-auto"
+          >
+            {INDUSTRIES.map((ind) => (
+              <button
+                key={ind}
+                onClick={() => setSelectedIndustry(ind)}
+                className="px-4 py-2 text-xs font-semibold rounded-full border transition-all duration-300 cursor-pointer"
                 style={{
-                  background: "linear-gradient(145deg, rgba(15,23,42,0.95), rgba(15,23,42,0.85))",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  boxShadow: "0 32px 80px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05)",
-                  transformStyle: "preserve-3d",
+                  background: selectedIndustry === ind 
+                    ? "linear-gradient(135deg, rgba(37,99,235,0.15), rgba(16,185,129,0.15))" 
+                    : "rgba(255,255,255,0.02)",
+                  borderColor: selectedIndustry === ind 
+                    ? "#10B981" 
+                    : "rgba(255,255,255,0.06)",
+                  color: selectedIndustry === ind ? "#34d399" : "#94A3B8"
                 }}
               >
-                {/* Ambient glow */}
-                <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full pointer-events-none"
-                  style={{ background: `radial-gradient(circle, ${testimonials[active].avatar}15, transparent 70%)` }}
-                />
-
-                {/* Quote icon */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
-                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  className="text-4xl sm:text-6xl lg:text-7xl font-serif leading-none select-none pointer-events-none mb-3 sm:mb-4"
-                  style={{ color: `${testimonials[active].avatar}20` }}
-                >
-                  &ldquo;
-                </motion.div>
-
-                {/* Stars */}
-                <div className="mb-3 sm:mb-5">
-                  <StarRating />
-                </div>
-
-                {/* Quote */}
-                <motion.p
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                  className="text-base sm:text-lg lg:text-xl leading-relaxed mb-6 sm:mb-8 text-white/80"
-                >
-                  &ldquo;{testimonials[active].quote}&rdquo;
-                </motion.p>
-
-                {/* Author */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 pt-5 sm:pt-6 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="relative flex-shrink-0">
-                      <div className="absolute -inset-1 rounded-full opacity-50"
-                        style={{ background: `linear-gradient(135deg, ${testimonials[active].avatar}, ${testimonials[active].avatar}80)` }}
-                      />
-                      <img
-                        src={testimonials[active].photo}
-                        alt={testimonials[active].name}
-                        className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
-                        style={{ border: `2px solid ${testimonials[active].avatar}` }}
-                      />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm sm:text-base font-bold text-white truncate">{testimonials[active].name}</div>
-                      <div className="text-[10px] sm:text-xs text-slate-400 truncate">{testimonials[active].role}</div>
-                    </div>
-                  </div>
-                  <span className="self-start sm:self-auto px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold flex-shrink-0"
-                    style={{
-                      color: "#10B981",
-                      background: "rgba(16,185,129,0.1)",
-                      border: "1px solid rgba(16,185,129,0.2)",
-                      fontFamily: "'JetBrains Mono', monospace",
-                    }}
-                  >
-                    {testimonials[active].metric}
-                  </span>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Navigation dots */}
-          <div className="flex items-center justify-center gap-3">
-            {testimonials.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setActive(i)}
-                className="transition-all duration-300 cursor-pointer"
-                style={{
-                  width: active === i ? 32 : 8,
-                  height: 8,
-                  borderRadius: 99,
-                  background: active === i
-                    ? "linear-gradient(90deg, #2563EB, #10B981)"
-                    : "rgba(255,255,255,0.15)",
-                  border: "none",
-                }}
-              />
+                {ind}
+              </button>
             ))}
+          </motion.div>
+
+          {/* Dual Panel Layout with Framer Motion Layout Animations */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left Panel: Featured Hero Card */}
+            <div className={`${isSingle ? "lg:col-span-8 lg:col-start-3" : "lg:col-span-7"} col-span-1`}>
+              <AnimatePresence mode="wait">
+                <FeaturedTestimonialCard 
+                  key={`${activeTestimonial.name}-${selectedIndustry}`} 
+                  item={activeTestimonial} 
+                />
+              </AnimatePresence>
+            </div>
+
+            {/* Right Panel: Thumbnails Grid */}
+            {!isSingle && (
+              <div className="lg:col-span-5 col-span-1 flex flex-col gap-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                <AnimatePresence>
+                  {filtered.map((item, idx) => (
+                    <TestimonialThumbnailCard
+                      key={item.name}
+                      item={item}
+                      isActive={idx === activeIndex}
+                      onClick={() => setActiveIndex(idx)}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
           </div>
 
-          {/* Stats bar */}
+          {/* Stats Bar */}
           <motion.div
             initial={reduced ? { opacity: 0 } : { opacity: 0, y: 20 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.8 }}
-            className="grid grid-cols-3 gap-4 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-8 lg:gap-16 mt-10 sm:mt-14"
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="grid grid-cols-3 gap-4 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-8 lg:gap-16 mt-16 pt-10 border-t border-white/5"
           >
             {[
               { n: "4.9/5", l: "Avg Rating", icon: "⭐" },
               { n: "2,500+", l: "Happy Clients", icon: "👥" },
               { n: "98%", l: "Satisfaction", icon: "🎯" },
             ].map((s, i) => (
-              <div key={i} className="group flex flex-col items-center text-center cursor-default">
-                <span className="text-xl sm:text-2xl mb-1 group-hover:scale-110 transition-transform duration-300">{s.icon}</span>
-                <div className="text-base sm:text-xl lg:text-2xl font-extrabold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">{s.n}</div>
-                <div className="text-[9px] sm:text-[11px] text-slate-500 font-medium tracking-wide">{s.l}</div>
+              <div key={i} className="group flex flex-col items-center text-center cursor-default bg-white/[0.02] border border-white/[0.05] rounded-2xl p-4 min-w-[110px] sm:min-w-[140px] hover:border-emerald-500/25 transition-all duration-300">
+                <span className="text-xl sm:text-2xl mb-2 group-hover:scale-110 transition-transform duration-300">{s.icon}</span>
+                <div className="text-lg sm:text-xl lg:text-2xl font-extrabold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">{s.n}</div>
+                <div className="text-[10px] sm:text-xs text-slate-500 font-medium tracking-wide mt-1">{s.l}</div>
               </div>
             ))}
           </motion.div>

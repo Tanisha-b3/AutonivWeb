@@ -1,10 +1,10 @@
 export const features = [
   { icon: "🎙️", title: "AI Voice Agents", desc: "Deploy intelligent voice assistants with 20+ languages and 100+ realistic voices for natural, human-like conversation.", metric: "3×", metricLabel: "faster response", color: "#2563EB" },
   { icon: "🌍", title: "Global Language Support", desc: "Serve customers worldwide with AI agents that speak 20+ languages including English, Hindi, Arabic, and more.", metric: "20+", metricLabel: "languages", color: "#10B981" },
-  { icon: "🎧", title: "Premium Voice Selection", desc: "Choose from 100+ realistic voices across different ages, genders, and accents to match your brand perfectly.", metric: "100+", metricLabel: "voices", color: "#10B981" },
-  { icon: "📊", title: "Smart Analytics", desc: "Track call performance, lead conversion, and agent effectiveness with real-time dashboards.", metric: "99.8%", metricLabel: "accuracy rate", color: "#2563EB" },
-  { icon: "🔗", title: "CRM Integration", desc: "Seamlessly sync leads and call data with your existing CRM and business tools.", metric: "50+", metricLabel: "integrations", color: "#10B981" },
-  { icon: "🛡️", title: "Enterprise Security", desc: "Bank-grade encryption and compliance for your business communication needs.", metric: "SOC 2", metricLabel: "certified", color: "#10B981" },
+  { icon: "🎧", title: "Premium Voice Selection", desc: "Choose from 100+ realistic voices across different ages, genders, and accents to match your brand perfectly.", metric: "100+", metricLabel: "voices", color: "#8B5CF6" },
+  { icon: "📊", title: "Smart Analytics", desc: "Track call performance, lead conversion, and agent effectiveness with real-time dashboards.", metric: "99.8%", metricLabel: "accuracy rate", color: "#06B6D4" },
+  { icon: "🔗", title: "CRM Integration", desc: "Seamlessly sync leads and call data with your existing CRM and business tools.", metric: "50+", metricLabel: "integrations", color: "#6366F1" },
+  { icon: "🛡️", title: "Enterprise Security", desc: "Bank-grade encryption and compliance for your business communication needs.", metric: "SOC 2", metricLabel: "certified", color: "#F43F5E" },
 ];
 
 export const WAVE_HEIGHTS = Array.from({ length: 38 }, (_, i) => {

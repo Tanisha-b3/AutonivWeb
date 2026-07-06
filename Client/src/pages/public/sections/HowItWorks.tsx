@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { motion, useScroll, useReducedMotion, useInView, useMotionValueEvent } from "framer-motion";
+import { useRef, useState, useEffect } from "react";
+import { motion, useScroll, useReducedMotion, useInView, useMotionValueEvent, AnimatePresence } from "framer-motion";
 import { STEPS } from "./data";
 import { MagBtn } from "./utils";
 import { GradientText } from "./anim";
@@ -17,10 +17,12 @@ function TimelineStep({
   step,
   index,
   active,
+  onClick
 }: {
   step: (typeof STEPS)[0];
   index: number;
   active: boolean;
+  onClick: () => void;
 }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
@@ -33,33 +35,35 @@ function TimelineStep({
       initial={reduced ? { opacity: 0 } : { opacity: 0, y: 40, scale: 0.96 }}
       animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
       transition={{ duration: 0.75, delay: index * 0.1, ease: EASE_OUT }}
-      className="relative flex-1 min-w-[220px]"
+      className="relative flex-1 min-w-[200px] cursor-pointer"
+      onClick={onClick}
     >
       <motion.div
         whileHover={reduced ? undefined : { y: -6, scale: 1.02 }}
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="group relative rounded-2xl p-6 h-full overflow-hidden cursor-default"
+        className="group relative rounded-2xl p-5 h-full overflow-hidden transition-all duration-300"
         style={{
-          background: "rgba(255,255,255,0.08)",
-          border: `1px solid ${active ? `${color}55` : "rgba(255,255,255,0.08)"}`,
-          boxShadow: active ? `0 16px 48px ${color}26` : "none",
-          transition: "border-color 0.5s ease, box-shadow 0.5s ease",
+          background: active 
+            ? "linear-gradient(145deg, rgba(15,23,42,0.85), rgba(15,23,42,0.6))"
+            : "rgba(255,255,255,0.04)",
+          border: `1px solid ${active ? `${color}55` : "rgba(255,255,255,0.06)"}`,
+          boxShadow: active ? `0 16px 40px ${color}18, inset 0 0 16px ${color}10` : "none",
         }}
       >
         {/* Animated corner glow */}
         <div
-          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none rounded-2xl"
-          style={{ background: `radial-gradient(ellipse at 20% 20%, ${color}22, transparent 60%)` }}
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"
+          style={{ background: `radial-gradient(ellipse at 20% 20%, ${color}15, transparent 60%)` }}
         />
 
         {/* Top hairline shimmer */}
-        <motion.div
-          className="absolute inset-x-0 top-0 h-px pointer-events-none"
-          style={{ background: `linear-gradient(90deg, transparent, ${color}90, transparent)` }}
-          initial={{ opacity: 0 }}
-          animate={inView ? { opacity: [0, 1, 0.3] } : {}}
-          transition={{ duration: 1.2, delay: 0.3 }}
-        />
+        {active && (
+          <motion.div
+            className="absolute inset-x-0 top-0 h-[2px] pointer-events-none"
+            style={{ background: `linear-gradient(90deg, transparent, ${color}, transparent)` }}
+            layoutId="stepHairline"
+          />
+        )}
 
         {/* Step number + icon */}
         <div className="relative z-10 flex items-center gap-4 mb-4">
@@ -68,7 +72,6 @@ function TimelineStep({
             style={{ background: `${color}1a`, border: `1px solid ${color}33` }}
             animate={active && !reduced ? { scale: [1, 1.08, 1] } : {}}
             transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-            whileHover={reduced ? undefined : { scale: 1.15, rotate: 8 }}
           >
             {step.icon}
           </motion.div>
@@ -79,7 +82,7 @@ function TimelineStep({
             >
               Step {String(step.n).padStart(2, "0")}
             </span>
-            <h3 className="text-base font-bold text-white">{step.title}</h3>
+            <h3 className="text-base font-bold text-white leading-tight">{step.title}</h3>
           </div>
         </div>
 
@@ -96,6 +99,244 @@ function TimelineStep({
           />
         </div>
       </motion.div>
+    </motion.div>
+  );
+}
+
+// ─── Previews for each step in Mock Console ───────────────────────────────
+
+function Step1Preview() {
+  const [text, setText] = useState("");
+  const fullText = "Create a friendly Patient Care coordinator voice agent for HealthFirst Clinic. It should answer FAQs, ask patients for their name, and book slots in Google Calendar.";
+
+  useEffect(() => {
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < fullText.length) {
+        setText((prev) => prev + fullText[i]);
+        i++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 20);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] font-bold text-slate-400 bg-white/5 px-2 py-0.5 rounded uppercase font-mono">AI Prompt Editor</span>
+        <span className="text-[10px] text-blue-400 font-bold animate-pulse">● Typing requirements...</span>
+      </div>
+      <div className="bg-slate-900/60 rounded-xl p-4 border border-white/5 font-mono text-xs text-white leading-relaxed min-h-[90px]">
+        {text}
+        <span className="animate-pulse inline-block w-1.5 h-3.5 bg-blue-500 ml-0.5" />
+      </div>
+      {text.length === fullText.length && (
+        <motion.div
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-wrap gap-2 pt-1"
+        >
+          {["🏥 Healthcare Persona Created", "💬 Dialogues Calibrated", "📅 Google Calendar Linked"].map((badge, k) => (
+            <span key={k} className="text-[9px] font-bold bg-blue-600/10 text-blue-400 px-2.5 py-1 rounded-full border border-blue-500/20">
+              {badge}
+            </span>
+          ))}
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+function Step2Preview() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold text-slate-400 bg-white/5 px-2 py-0.5 rounded uppercase font-mono">Agent Voice Configurator</span>
+        </div>
+        
+        <div className="space-y-3">
+          <div>
+            <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1">Active Voice</label>
+            <div className="bg-slate-900 border border-white/10 px-3.5 py-2.5 rounded-xl text-white text-xs font-bold flex items-center justify-between">
+              <span>Rachel (Inbound Premium)</span>
+              <span className="text-emerald-400 font-mono">Selected ✓</span>
+            </div>
+          </div>
+          <div>
+            <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1">Language</label>
+            <div className="bg-slate-900 border border-white/10 px-3.5 py-2.5 rounded-xl text-white text-xs font-bold flex items-center justify-between">
+              <span>English (US Accent)</span>
+              <span className="text-slate-500">▼</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-slate-900/60 rounded-xl p-4 border border-white/5 flex flex-col items-center justify-center text-center">
+        <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-xl border border-emerald-500/20 mb-3 animate-pulse">
+          🎙️
+        </div>
+        <h4 className="text-xs font-bold text-white mb-1">Voice Calibration</h4>
+        <p className="text-[10px] text-slate-500 max-w-[180px] leading-relaxed">Rachel's parameters have been optimized for high clarity and responsiveness.</p>
+      </div>
+    </div>
+  );
+}
+
+function Step3Preview() {
+  const [messages, setMessages] = useState<Array<{ r: string; t: string }>>([]);
+
+  useEffect(() => {
+    const dialog = [
+      { r: "user", t: "Hi, I need to reschedule my doctor visit for next Monday." },
+      { r: "agent", t: "Sure, let me check the openings. I have slots at 10 AM or 3 PM. Which works?" },
+      { r: "user", t: "10 AM works best." },
+      { r: "agent", t: "Done! Your appointment is rescheduled for Monday at 10 AM. ✓" }
+    ];
+
+    let current = 0;
+    const addMessage = () => {
+      if (current < dialog.length) {
+        setMessages((prev) => [...prev, dialog[current]]);
+        current++;
+        setTimeout(addMessage, 2200);
+      }
+    };
+
+    const firstDelay = setTimeout(addMessage, 500);
+    return () => {
+      clearTimeout(firstDelay);
+      setMessages([]);
+    };
+  }, []);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-bold text-slate-400 bg-white/5 px-2 py-0.5 rounded uppercase font-mono">Agent Testing sandbox</span>
+        <span className="text-[10px] text-purple-400 font-bold flex items-center gap-1">
+          <span className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-ping" />
+          Test Call Running
+        </span>
+      </div>
+
+      <div className="bg-slate-900/60 rounded-xl p-4 border border-white/5 space-y-3 max-h-[140px] overflow-y-auto">
+        {messages.map((m, k) => (
+          <motion.div
+            key={k}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`flex flex-col ${m.r === "user" ? "items-end" : "items-start"}`}
+          >
+            <div className={`rounded-xl px-3 py-1.5 text-xs max-w-[85%] ${
+              m.r === "user" 
+                ? "bg-purple-600/90 text-white rounded-tr-none" 
+                : "bg-slate-950 border border-white/10 text-slate-350 rounded-tl-none"
+            }`}>
+              {m.t}
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Step4Preview() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-bold text-slate-400 bg-white/5 px-2 py-0.5 rounded uppercase font-mono">Deployment Methods</span>
+        <span className="text-[9px] text-emerald-450 font-bold font-mono">Connected</span>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          { label: "Phone Number", icon: "📞", val: "+1 (800) 555-0199", action: "Assigned" },
+          { label: "Web Widget", icon: "💬", val: "Embed Script Widget", action: "Configured" },
+          { label: "Webhook Integration", icon: "⚡", val: "POST /v1/calls", action: "Live" }
+        ].map((item, k) => (
+          <div key={k} className="bg-slate-900/80 border border-white/5 rounded-xl p-4 hover:border-amber-500/20 transition-all duration-300">
+            <span className="text-xl block mb-2">{item.icon}</span>
+            <h4 className="text-[11px] text-slate-500 uppercase tracking-wider font-bold">{item.label}</h4>
+            <p className="text-xs text-white font-bold truncate mt-1">{item.val}</p>
+            <span className="inline-block text-[9px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 mt-3">
+              {item.action}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Step5Preview() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-bold text-slate-400 bg-white/5 px-2 py-0.5 rounded uppercase font-mono">Real-time Analytics Dashboard</span>
+        <span className="text-[9px] text-emerald-450 font-bold font-mono flex items-center gap-1">
+          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+          Active
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { n: "1,248", l: "Total Calls", color: "#60a5fa" },
+          { n: "98.2%", l: "CSAT Score", color: "#34d399" },
+          { n: "78%", l: "Auto deflection", color: "#a78bfa" },
+          { n: "₹12.50", l: "Cost / Call", color: "#fbbf24" }
+        ].map((stat, k) => (
+          <div key={k} className="bg-slate-900 border border-white/5 rounded-xl p-3.5 text-center">
+            <div className="text-lg font-black font-mono" style={{ color: stat.color }}>{stat.n}</div>
+            <div className="text-[9px] text-slate-500 uppercase tracking-wide font-bold mt-1">{stat.l}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StepConsolePreview({ index }: { index: number }) {
+  const color = colorFor(index);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="relative rounded-3xl border border-white/10 overflow-hidden"
+      style={{
+        background: "linear-gradient(145deg, rgba(15,23,42,0.9), rgba(15,23,42,0.7))",
+        boxShadow: `0 24px 60px rgba(0,0,0,0.5), inset 0 0 24px ${color}05`
+      }}
+    >
+      {/* Console Header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-slate-950/65 border-b border-white/5">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+        </div>
+        <div className="text-[10px] font-bold text-slate-500 font-mono tracking-widest uppercase">
+          autoniv_dashboard // {STEPS[index].title}
+        </div>
+        <div className="w-8" />
+      </div>
+
+      {/* Console Body */}
+      <div className="p-6 sm:p-8 min-h-[220px] flex flex-col justify-center">
+        {index === 0 && <Step1Preview />}
+        {index === 1 && <Step2Preview />}
+        {index === 2 && <Step3Preview />}
+        {index === 3 && <Step4Preview />}
+        {index === 4 && <Step5Preview />}
+      </div>
     </motion.div>
   );
 }
@@ -209,10 +450,17 @@ export function HowItWorks({ openAuth }: { openAuth: (m: "login" | "register") =
           </motion.div>
 
           {/* Horizontal step cards */}
-          <div className="flex flex-col md:flex-row gap-5 max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row gap-5 max-w-6xl mx-auto mb-12">
             {STEPS.map((step, i) => (
-              <TimelineStep key={i} step={step} index={i} active={i === activeIndex} />
+              <TimelineStep key={i} step={step} index={i} active={i === activeIndex} onClick={() => setActiveIndex(i)} />
             ))}
+          </div>
+
+          {/* Console Preview Panel */}
+          <div className="max-w-4xl mx-auto mb-14">
+            <AnimatePresence mode="wait">
+              <StepConsolePreview key={activeIndex} index={activeIndex} />
+            </AnimatePresence>
           </div>
 
           {/* CTA */}
