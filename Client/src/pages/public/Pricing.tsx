@@ -938,35 +938,35 @@ export function Pricing() {
                 ].map((addon, i) => (
                   <div
                     key={i}
-                    className="shine-hover relative overflow-hidden rounded-2xl p-5 border bg-slate-950/40 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg group"
+                    className="shine-hover relative overflow-hidden rounded-2xl p-5 border backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl group"
                     style={{
-                      borderColor: 'rgba(255, 255, 255, 0.06)',
-                      background: 'linear-gradient(180deg, rgba(10,15,30,0.5) 0%, rgba(10,15,30,0.2) 100%)'
+                      borderColor: 'rgba(255, 255, 255, 0.14)',
+                      background: 'linear-gradient(180deg, rgba(30,41,59,0.6) 0%, rgba(15,23,42,0.5) 100%)'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(16,185,129,0.3)';
-                      e.currentTarget.style.boxShadow = '0 20px 40px -15px rgba(16,185,129,0.1)';
+                      e.currentTarget.style.borderColor = 'rgba(16,185,129,0.45)';
+                      e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(16,185,129,0.18)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.14)';
                       e.currentTarget.style.boxShadow = 'none';
                     }}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <span className="text-xl p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 transition-transform duration-300 group-hover:scale-110">{addon.icon}</span>
+                        <span className="text-xl p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 transition-transform duration-300 group-hover:scale-110">{addon.icon}</span>
                         <div>
                           <h4 className="text-sm font-bold text-white leading-tight group-hover:text-emerald-400 transition-colors duration-200">{addon.title}</h4>
-                          <span className="text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-slate-400 inline-block mt-1">{addon.freq}</span>
+                          <span className="text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-slate-300 inline-block mt-1">{addon.freq}</span>
                         </div>
                       </div>
                     </div>
-                    <p className="text-xs text-slate-400 mb-4 leading-relaxed">{addon.desc}</p>
-                    <div className="flex items-baseline gap-2 pt-2 border-t border-slate-800/60">
-                      <span className="text-base font-extrabold text-white">
+                    <p className="text-xs text-slate-300 mb-4 leading-relaxed font-semibold">{addon.desc}</p>
+                    <div className="flex items-baseline gap-2 pt-2 border-t border-slate-800/80">
+                      <span className="text-lg font-black text-emerald-400">
                         {currency === 'usd' ? addon.priceUSD : addon.price}
                       </span>
-                      <span className="text-[10px] font-medium text-slate-500">{addon.period}</span>
+                      <span className="text-[10px] font-bold text-slate-400">{addon.period}</span>
                     </div>
                   </div>
                 ))}
@@ -986,35 +986,35 @@ export function Pricing() {
                 ].map((addon, i) => (
                   <div
                     key={i}
-                    className="shine-hover relative overflow-hidden rounded-2xl p-5 border bg-slate-950/40 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg group"
+                    className="shine-hover relative overflow-hidden rounded-2xl p-5 border backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl group"
                     style={{
-                      borderColor: 'rgba(255, 255, 255, 0.06)',
-                      background: 'linear-gradient(180deg, rgba(10,15,30,0.5) 0%, rgba(10,15,30,0.2) 100%)'
+                      borderColor: 'rgba(255, 255, 255, 0.14)',
+                      background: 'linear-gradient(180deg, rgba(30,41,59,0.6) 0%, rgba(15,23,42,0.5) 100%)'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(16,185,129,0.3)';
-                      e.currentTarget.style.boxShadow = '0 20px 40px -15px rgba(16,185,129,0.1)';
+                      e.currentTarget.style.borderColor = 'rgba(16,185,129,0.45)';
+                      e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(16,185,129,0.18)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.14)';
                       e.currentTarget.style.boxShadow = 'none';
                     }}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <span className="text-xl p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 transition-transform duration-300 group-hover:scale-110">{addon.icon}</span>
+                        <span className="text-xl p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 transition-transform duration-300 group-hover:scale-110">{addon.icon}</span>
                         <div>
                           <h4 className="text-sm font-bold text-white leading-tight group-hover:text-emerald-400 transition-colors duration-200">{addon.title}</h4>
-                          <span className="text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-slate-400 inline-block mt-1">{addon.freq}</span>
+                          <span className="text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-slate-300 inline-block mt-1">{addon.freq}</span>
                         </div>
                       </div>
                     </div>
-                    <p className="text-xs text-slate-400 mb-4 leading-relaxed">{addon.desc}</p>
-                    <div className="flex items-baseline gap-2 pt-2 border-t border-slate-800/60">
-                      <span className="text-base font-extrabold text-white">
+                    <p className="text-xs text-slate-300 mb-4 leading-relaxed font-semibold">{addon.desc}</p>
+                    <div className="flex items-baseline gap-2 pt-2 border-t border-slate-800/80">
+                      <span className="text-lg font-black text-emerald-400">
                         {currency === 'usd' ? addon.priceUSD : addon.price}
                       </span>
-                      <span className="text-[10px] font-medium text-slate-500">{addon.period}</span>
+                      <span className="text-[10px] font-bold text-slate-400">{addon.period}</span>
                     </div>
                   </div>
                 ))}
