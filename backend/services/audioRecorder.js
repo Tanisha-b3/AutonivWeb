@@ -96,9 +96,9 @@ export class AudioRecorder {
     }
 
     // Mix PCM16 samples sequentially or simultaneously
-    for (let i = 0; i < activeBuffer.length; i += 2) {
+    for (let i = 0; i < activeBuffer.length - 1; i += 2) {
       const targetOffset = byteOffset + i;
-      if (targetOffset >= this.buffer.length) break;
+      if (targetOffset >= this.buffer.length - 1) break;
 
       const srcVal = activeBuffer.readInt16LE(i);
       const existingVal = this.buffer.readInt16LE(targetOffset);

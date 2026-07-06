@@ -412,6 +412,9 @@ export function AdminAgents() {
   const [editPanelOpen, setEditPanelOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [phoneNumberId, setPhoneNumberId] = useState('');
+  const [directPhoneNum, setDirectPhoneNum] = useState('');
+  const [twilioSid, setTwilioSid] = useState('');
+  const [twilioToken, setTwilioToken] = useState('');
   const [editForm, setEditForm] = useState({
     name: '',
     type: 'receptionist',
@@ -536,30 +539,48 @@ export function AdminAgents() {
   const openAssignPhone = (agent: Agent) => {
     setSelectedAgent(agent);
     setPhoneNumberId(agent.phoneNumberId || '');
+    setDirectPhoneNum(agent.phoneNumber || '');
+    setTwilioSid(agent.twilioAccountSid || '');
+    setTwilioToken(agent.twilioAuthToken || '');
     setPhoneMode('select');
     setPhoneModal(true);
     fetchPhoneNumbers();
   };
 
   const handleAssignPhone = async () => {
-    if (!selectedAgent || !phoneNumberId.trim()) return;
+    if (!selectedAgent) return;
     try {
-      const selectedNumber = phoneNumbers.find(pn => pn.id === phoneNumberId);
-      await dispatch(assignPhone({
-        id: selectedAgent.id,
-        phoneNumberId: phoneNumberId.trim(),
-        phoneNumber: selectedNumber?.number,
-      })).unwrap();
+      if (selectedAgent.useCustomEngine) {
+        if (!directPhoneNum.trim()) return;
+        await dispatch(assignPhone({
+          id: selectedAgent.id,
+          phoneNumberId: directPhoneNum.trim(),
+          phoneNumber: directPhoneNum.trim(),
+          twilioAccountSid: twilioSid.trim() || undefined,
+          twilioAuthToken: twilioToken.trim() || undefined,
+        })).unwrap();
+      } else {
+        if (!phoneNumberId.trim()) return;
+        const selectedNumber = phoneNumbers.find(pn => pn.id === phoneNumberId);
+        await dispatch(assignPhone({
+          id: selectedAgent.id,
+          phoneNumberId: phoneNumberId.trim(),
+          phoneNumber: selectedNumber?.number,
+        })).unwrap();
+      }
       setPhoneModal(false);
       setSelectedAgent(null);
       setPhoneNumberId('');
+      setDirectPhoneNum('');
+      setTwilioSid('');
+      setTwilioToken('');
     } catch (err) {
       console.error(err);
     }
   };
 
   const handleUnlinkPhone = async (agent: Agent) => {
-    if (!agent.phoneNumberId) return;
+    if (!agent.phoneNumberId && !agent.phoneNumber) return;
     try {
       await dispatch(unlinkPhone({ id: agent.id })).unwrap();
     } catch (err) {
@@ -876,7 +897,7 @@ export function AdminAgents() {
       <Modal
         isOpen={phoneModal}
         onClose={() => setPhoneModal(false)}
-        title={`Assign Phone Number to ${selectedAgent?.name || ''}`}
+        title={selectedAgent?.useCustomEngine ? `Configure Custom Telephony Credentials for ${selectedAgent?.name || ''}` : `Assign Phone Number to ${selectedAgent?.name || ''}`}
         footer={
           <>
             <button
@@ -885,7 +906,16 @@ export function AdminAgents() {
             >
               Cancel
             </button>
-            {phoneMode === 'import' ? (
+            {selectedAgent?.useCustomEngine ? (
+              <button
+                onClick={handleAssignPhone}
+                disabled={!directPhoneNum.trim()}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all cursor-pointer disabled:opacity-40 disabled:pointer-events-none"
+                style={{ background: 'linear-gradient(135deg, #2563EB, #10B981)', boxShadow: '0 4px 20px rgba(16,185,129,0.20)' }}
+              >
+                Save Credentials
+              </button>
+            ) : phoneMode === 'import' ? (
               <button
                 onClick={handleImportNumber}
                 disabled={importing || !importForm.number.trim()}
@@ -908,170 +938,214 @@ export function AdminAgents() {
         }
       >
         <div className="space-y-4">
-          {/* Mode Toggle */}
-          <div className="flex gap-2 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <button
-              type="button"
-              onClick={() => setPhoneMode('select')}
-              className="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-colors cursor-pointer"
-              style={{
-                background: phoneMode === 'select' ? 'linear-gradient(135deg, #2563EB, #10B981)' : 'transparent',
-                color: phoneMode === 'select' ? 'white' : 'rgba(255,255,255,0.4)',
-              }}
-            >
-              Select Existing
-            </button>
-            <button
-              type="button"
-              onClick={() => setPhoneMode('import')}
-              className="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-colors cursor-pointer"
-              style={{
-                background: phoneMode === 'import' ? 'linear-gradient(135deg, #2563EB, #10B981)' : 'transparent',
-                color: phoneMode === 'import' ? 'white' : 'rgba(255,255,255,0.4)',
-              }}
-            >
-              Import from Provider
-            </button>
-          </div>
-
-          {phoneMode === 'select' ? (
-            <>
-              {phoneLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <svg className="animate-spin w-5 h-5 text-white/40" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                  </svg>
-                  <span className="ml-2 text-sm text-white/40">Loading phone numbers...</span>
-                </div>
-              ) : phoneNumbers.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-sm text-white/40">No phone numbers found in Vapi.</p>
-                  <button
-                    type="button"
-                    onClick={() => setPhoneMode('import')}
-                    className="mt-2 text-sm text-blue-400 hover:text-blue-300 font-medium cursor-pointer"
-                  >
-                    Import one from a provider
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Select Phone Number</label>
-                  <PhoneDropdown
-                    phoneNumbers={phoneNumbers}
-                    selectedId={phoneNumberId}
-                    onSelect={setPhoneNumberId}
-                  />
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <div className="p-4 rounded-xl" style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.15)' }}>
-                <p className="text-sm text-blue-400 font-medium">Import Existing Number</p>
-                <p className="text-xs text-white/35 mt-1">Connect your provider phone number to Vapi.</p>
+          {selectedAgent?.useCustomEngine ? (
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.15)' }}>
+                <p className="text-sm text-amber-500 font-medium flex items-center gap-1">⚡ Custom LLM Engine Telephony Config</p>
+                <p className="text-xs text-white/35 mt-1">Configure direct Twilio phone number credentials for this custom agent.</p>
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Provider</label>
-                <ProviderDropdown
-                  value={importForm.provider}
-                  onChange={(v) => setImportForm(prev => ({ ...prev, provider: v }))}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Twilio Phone Number</label>
+                <input
+                  type="text"
+                  value={directPhoneNum}
+                  onChange={(e) => setDirectPhoneNum(e.target.value)}
+                  placeholder="e.g. +1845541210"
+                  className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all font-semibold"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Phone Number</label>
+                <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Twilio Account SID</label>
                 <input
                   type="text"
-                  value={importForm.number}
-                  onChange={(e) => setImportForm(prev => ({ ...prev, number: e.target.value }))}
-                  placeholder="+1 (555) 123-4567"
+                  value={twilioSid}
+                  onChange={(e) => setTwilioSid(e.target.value)}
+                  placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all font-mono"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Twilio Auth Token</label>
+                <input
+                  type="password"
+                  value={twilioToken}
+                  onChange={(e) => setTwilioToken(e.target.value)}
+                  placeholder="Your Twilio auth token"
                   className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
                   style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
                 />
-                <p className="text-[11px] text-white/25">Must be in E.164 format (e.g. +14155552671)</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Mode Toggle */}
+              <div className="flex gap-2 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <button
+                  type="button"
+                  onClick={() => setPhoneMode('select')}
+                  className="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-colors cursor-pointer"
+                  style={{
+                    background: phoneMode === 'select' ? 'linear-gradient(135deg, #2563EB, #10B981)' : 'transparent',
+                    color: phoneMode === 'select' ? 'white' : 'rgba(255,255,255,0.4)',
+                  }}
+                >
+                  Select Existing
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPhoneMode('import')}
+                  className="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-colors cursor-pointer"
+                  style={{
+                    background: phoneMode === 'import' ? 'linear-gradient(135deg, #2563EB, #10B981)' : 'transparent',
+                    color: phoneMode === 'import' ? 'white' : 'rgba(255,255,255,0.4)',
+                  }}
+                >
+                  Import from Provider
+                </button>
               </div>
 
-              {importForm.provider === 'twilio' && (
-                <div className="space-y-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">Twilio Credentials</p>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Account SID</label>
-                    <input type="text" value={importForm.twilioAccountSid} onChange={(e) => setImportForm(prev => ({ ...prev, twilioAccountSid: e.target.value }))} placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                      className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
-                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Auth Token</label>
-                    <input type="password" value={importForm.twilioAuthToken} onChange={(e) => setImportForm(prev => ({ ...prev, twilioAuthToken: e.target.value }))} placeholder="Your Twilio auth token"
-                      className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
-                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
-                  </div>
-                </div>
-              )}
-
-              {importForm.provider === 'vonage' && (
-                <div className="space-y-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">Vonage Credentials</p>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">API Key</label>
-                    <input type="text" value={importForm.vonageApiKey} onChange={(e) => setImportForm(prev => ({ ...prev, vonageApiKey: e.target.value }))} placeholder="Your Vonage API key"
-                      className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
-                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">API Secret</label>
-                    <input type="password" value={importForm.vonageApiSecret} onChange={(e) => setImportForm(prev => ({ ...prev, vonageApiSecret: e.target.value }))} placeholder="Your Vonage API secret"
-                      className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
-                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
-                  </div>
-                </div>
-              )}
-
-              {importForm.provider === 'telnyx' && (
-                <div className="space-y-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">Telnyx Credentials</p>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">API Key</label>
-                    <input type="password" value={importForm.telnyxApiKey} onChange={(e) => setImportForm(prev => ({ ...prev, telnyxApiKey: e.target.value }))} placeholder="Your Telnyx API key"
-                      className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
-                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
-                  </div>
-                </div>
-              )}
-
-              {(importForm.provider === 'plivo' || importForm.provider === 'zadarma' || importForm.provider === 'custom-sip') && (
-                <div className="space-y-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">SIP Trunk Credentials</p>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">SIP Gateway / Domain</label>
-                    <input type="text" value={importForm.sipGateway} onChange={(e) => setImportForm(prev => ({ ...prev, sipGateway: e.target.value }))}
-                      placeholder={importForm.provider === 'plivo' ? 'sip.plivo.com' : importForm.provider === 'zadarma' ? 'sip.zadarma.com' : 'sip.example.com'}
-                      className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
-                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Username (optional)</label>
-                      <input type="text" value={importForm.sipUsername} onChange={(e) => setImportForm(prev => ({ ...prev, sipUsername: e.target.value }))} placeholder="SIP username"
-                        className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
-                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+              {phoneMode === 'select' ? (
+                <>
+                  {phoneLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <svg className="animate-spin w-5 h-5 text-white/40" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                      </svg>
+                      <span className="ml-2 text-sm text-white/40">Loading phone numbers...</span>
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Password (optional)</label>
-                      <input type="password" value={importForm.sipPassword} onChange={(e) => setImportForm(prev => ({ ...prev, sipPassword: e.target.value }))} placeholder="SIP password"
-                        className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
-                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                  ) : phoneNumbers.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-sm text-white/40">No phone numbers found in Vapi.</p>
+                      <button
+                        type="button"
+                        onClick={() => setPhoneMode('import')}
+                        className="mt-2 text-sm text-blue-400 hover:text-blue-300 font-medium cursor-pointer"
+                      >
+                        Import one from a provider
+                      </button>
                     </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Select Phone Number</label>
+                      <PhoneDropdown
+                        phoneNumbers={phoneNumbers}
+                        selectedId={phoneNumberId}
+                        onSelect={setPhoneNumberId}
+                      />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="p-4 rounded-xl" style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.15)' }}>
+                    <p className="text-sm text-blue-400 font-medium">Import Existing Number</p>
+                    <p className="text-xs text-white/35 mt-1">Connect your provider phone number to Vapi.</p>
                   </div>
-                  <div className="relative">
-                    <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-1.5 block">Transport</label>
-                    <TransportDropdown
-                      value={importForm.sipTransport}
-                      onChange={(v) => setImportForm(prev => ({ ...prev, sipTransport: v }))}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Provider</label>
+                    <ProviderDropdown
+                      value={importForm.provider}
+                      onChange={(v) => setImportForm(prev => ({ ...prev, provider: v }))}
                     />
                   </div>
-                </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Phone Number</label>
+                    <input
+                      type="text"
+                      value={importForm.number}
+                      onChange={(e) => setImportForm(prev => ({ ...prev, number: e.target.value }))}
+                      placeholder="+1 (555) 123-4567"
+                      className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+                    />
+                    <p className="text-[11px] text-white/25">Must be in E.164 format (e.g. +14155552671)</p>
+                  </div>
+
+                  {importForm.provider === 'twilio' && (
+                    <div className="space-y-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">Twilio Credentials</p>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Account SID</label>
+                        <input type="text" value={importForm.twilioAccountSid} onChange={(e) => setImportForm(prev => ({ ...prev, twilioAccountSid: e.target.value }))} placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                          className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Auth Token</label>
+                        <input type="password" value={importForm.twilioAuthToken} onChange={(e) => setImportForm(prev => ({ ...prev, twilioAuthToken: e.target.value }))} placeholder="Your Twilio auth token"
+                          className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                      </div>
+                    </div>
+                  )}
+
+                  {importForm.provider === 'vonage' && (
+                    <div className="space-y-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">Vonage Credentials</p>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">API Key</label>
+                        <input type="text" value={importForm.vonageApiKey} onChange={(e) => setImportForm(prev => ({ ...prev, vonageApiKey: e.target.value }))} placeholder="Your Vonage API key"
+                          className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">API Secret</label>
+                        <input type="password" value={importForm.vonageApiSecret} onChange={(e) => setImportForm(prev => ({ ...prev, vonageApiSecret: e.target.value }))} placeholder="Your Vonage API secret"
+                          className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                      </div>
+                    </div>
+                  )}
+
+                  {importForm.provider === 'telnyx' && (
+                    <div className="space-y-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">Telnyx Credentials</p>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">API Key</label>
+                        <input type="password" value={importForm.telnyxApiKey} onChange={(e) => setImportForm(prev => ({ ...prev, telnyxApiKey: e.target.value }))} placeholder="Your Telnyx API key"
+                          className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                      </div>
+                    </div>
+                  )}
+
+                  {(importForm.provider === 'plivo' || importForm.provider === 'zadarma' || importForm.provider === 'custom-sip') && (
+                    <div className="space-y-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">SIP Trunk Credentials</p>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">SIP Gateway / Domain</label>
+                        <input type="text" value={importForm.sipGateway} onChange={(e) => setImportForm(prev => ({ ...prev, sipGateway: e.target.value }))}
+                          placeholder={importForm.provider === 'plivo' ? 'sip.plivo.com' : importForm.provider === 'zadarma' ? 'sip.zadarma.com' : 'sip.example.com'}
+                          className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Username (optional)</label>
+                          <input type="text" value={importForm.sipUsername} onChange={(e) => setImportForm(prev => ({ ...prev, sipUsername: e.target.value }))} placeholder="SIP username"
+                            className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Password (optional)</label>
+                          <input type="password" value={importForm.sipPassword} onChange={(e) => setImportForm(prev => ({ ...prev, sipPassword: e.target.value }))} placeholder="SIP password"
+                            className="w-full px-4 py-2.5 text-sm rounded-xl text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }} />
+                        </div>
+                      </div>
+                      <div className="relative">
+                        <label className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-1.5 block">Transport</label>
+                        <TransportDropdown
+                          value={importForm.sipTransport}
+                          onChange={(v) => setImportForm(prev => ({ ...prev, sipTransport: v }))}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}

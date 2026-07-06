@@ -695,17 +695,19 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
               <button
                 type="button"
                 onClick={handleGoogleClick}
-                className="w-full flex items-center justify-center gap-3 py-3 rounded-xl font-medium text-white transition-all duration-200"
+                className="w-full flex items-center justify-center gap-3 py-3 rounded-xl font-medium text-white transition-all duration-300 cursor-pointer"
                 style={{
-                  background: '#000000',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.08)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#1a1a1a';
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
                   e.currentTarget.style.transform = 'translateY(-1px)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#000000';
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
@@ -718,13 +720,10 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
                 Continue with Google
               </button>
 
-              <div className="relative my-2">
-                <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                  <div className="w-full border-t border-white/10"></div>
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-[#0b0f19] px-2 text-[var(--slate-gray)]">Or continue with email</span>
-                </div>
+              <div className="flex items-center gap-3 my-2">
+                <div className="flex-1 border-t border-white/10" />
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 font-mono">Or continue with email</span>
+                <div className="flex-1 border-t border-white/10" />
               </div>
 
               {!isLogin && (
@@ -886,38 +885,46 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
           )}
 
           {/* ── Demo Credentials (login only) ──────────────────────── */}
-          {isLogin && !isAuthFlow && (
-            <div className="space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(148,175,210,0.4)' }}>
-                Demo Accounts
-              </p>
-              <div className="grid grid-cols-2 gap-2">
+          {isLogin && !isAuthFlow && !showOtp && (
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center gap-2">
+                <span className="w-1 h-3.5 bg-emerald-500 rounded-full" />
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 font-mono">
+                  Demo Access Console
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: 'Admin', email: 'admin@autoniv.ai', pwd: 'Password123@' },
-                  { label: 'User', email: 'user@autoniv.ai', pwd: 'Test2@1234' },
+                  { label: 'System Admin', email: 'admin@autoniv.ai', pwd: 'Password123@' },
+                  { label: 'General User', email: 'user@autoniv.ai', pwd: 'Test2@1234' },
                 ].map((d) => (
                   <button
                     key={d.label}
                     type="button"
                     onClick={() => { setEmail(d.email); setPassword(d.pwd); setTouched({}); setFieldErrors({}); }}
-                    className="px-3 py-2 rounded-xl text-left transition-all duration-200"
+                    className="px-3 py-2.5 rounded-xl text-left transition-all duration-300 cursor-pointer border flex flex-col justify-between"
                     style={{ 
-                      background: 'rgba(16,185,129,0.04)',
-                      border: '1px solid rgba(16,185,129,0.08)'
+                      background: 'rgba(16,185,129,0.03)',
+                      borderColor: 'rgba(16,185,129,0.08)'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(16,185,129,0.08)';
+                      e.currentTarget.style.background = 'rgba(16,185,129,0.06)';
                       e.currentTarget.style.borderColor = 'rgba(16,185,129,0.2)';
                       e.currentTarget.style.transform = 'translateY(-2px)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(16,185,129,0.04)';
+                      e.currentTarget.style.background = 'rgba(16,185,129,0.03)';
                       e.currentTarget.style.borderColor = 'rgba(16,185,129,0.08)';
                       e.currentTarget.style.transform = 'translateY(0)';
                     }}
                   >
-                    <span className="block text-xs font-semibold" style={{ color: '#e2e8f0' }}>{d.label}</span>
-                    <span className="block text-[10px] mt-0.5 truncate" style={{ color: 'rgba(148,175,210,0.5)' }}>{d.email}</span>
+                    <div>
+                      <span className="text-[11px] font-extrabold text-white block">{d.label}</span>
+                      <span className="text-[9px] text-slate-550 block truncate mt-0.5">{d.email}</span>
+                    </div>
+                    <span className="text-[8px] font-bold uppercase tracking-wider text-emerald-450 font-mono mt-2 self-start bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                      Auto-Fill
+                    </span>
                   </button>
                 ))}
               </div>
@@ -1014,13 +1021,13 @@ export function AuthDialog({ mode, isOpen, onClose, onSwitch }: AuthDialogProps)
 
 function inputCls(hasError: boolean) {
   return [
-    'w-full px-4 py-3.5 rounded-xl',
-    'text-white placeholder-[var(--muted)]',
-    'focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-transparent',
-    'transition-all duration-200',
+    'w-full px-4 py-3 rounded-xl text-xs sm:text-sm',
+    'text-white placeholder-slate-500',
+    'focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/40',
+    'transition-all duration-300',
     hasError
-      ? 'border-rose-500/50 bg-rose-500/5'
-      : 'border-slate-700/50 bg-black',
+      ? 'border-rose-500/40 bg-rose-500/5'
+      : 'border-white/10 bg-white/[0.02] hover:border-white/20 focus:bg-white/[0.04]',
     'border'
   ].join(' ');
 }

@@ -207,6 +207,12 @@ export function AgentPanel({
     }
   }, [formData.language]);
 
+  useEffect(() => {
+    if (formData.useCustomEngine) {
+      setIsDirectPhone(true);
+    }
+  }, [formData.useCustomEngine]);
+
   const handleAssignPhone = async () => {
     if (!onAssignPhone) return;
     setPhoneSaving(true);
@@ -390,51 +396,81 @@ export function AgentPanel({
                     <>
                       {/* Current linked status */}
                       {(editing.phoneNumberId || editing.phoneNumber) && (
-                        <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-[var(--primary-blue-soft)] border border-[var(--border)]">
-                          <div className="w-7 h-7 rounded-lg bg-[var(--primary-blue)]/10 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-3.5 h-3.5 text-[var(--primary-blue)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L17 7"/></svg>
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-[var(--primary-blue-soft)] border border-[var(--border)]">
+                            <div className="w-7 h-7 rounded-lg bg-[var(--primary-blue)]/10 flex items-center justify-center flex-shrink-0">
+                              <svg className="w-3.5 h-3.5 text-[var(--primary-blue)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L17 7"/></svg>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--primary-blue)]/60">Currently linked</p>
+                              <p className="text-xs font-semibold text-[var(--primary-blue)] truncate">{editing.phoneNumber || editing.phoneNumberId}</p>
+                            </div>
+                            {onUnlinkPhone && (
+                              <button
+                                type="button"
+                                onClick={handleUnlinkPhone}
+                                disabled={phoneSaving}
+                                className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 transition-all cursor-pointer disabled:opacity-40 flex items-center gap-1 flex-shrink-0"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                                Unlink
+                              </button>
+                            )}
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--primary-blue)]/60">Currently linked</p>
-                            <p className="text-xs font-semibold text-[var(--primary-blue)] truncate">{editing.phoneNumber || editing.phoneNumberId}</p>
-                          </div>
-                          {onUnlinkPhone && (
-                            <button
-                              type="button"
-                              onClick={handleUnlinkPhone}
-                              disabled={phoneSaving}
-                              className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 transition-all cursor-pointer disabled:opacity-40 flex items-center gap-1 flex-shrink-0"
-                            >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
-                              Unlink
-                            </button>
+
+                          {/* Compatibility Warning for Custom Engine + Vapi Number */}
+                          {formData.useCustomEngine && editing.phoneNumberId && (
+                            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs leading-relaxed flex gap-2">
+                              <span className="text-base flex-shrink-0">⚠️</span>
+                              <div>
+                                <strong>Compatibility Warning:</strong> This custom agent is currently linked to a Vapi Phone Number. Vapi numbers only work when custom engine is disabled. Please unlink it above and assign a Custom Twilio Number.
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Compatibility Warning for Vapi Agent + Custom Twilio Number */}
+                          {!formData.useCustomEngine && editing.phoneNumber && !editing.phoneNumberId && (
+                            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 text-xs leading-relaxed flex gap-2">
+                              <span className="text-base flex-shrink-0">⚠️</span>
+                              <div>
+                                <strong>Compatibility Warning:</strong> This agent is configured to run on Vapi, but is linked to a Custom Twilio Number. Vapi agents require a Vapi Number. Please unlink it below and link a Vapi Number.
+                              </div>
+                            </div>
                           )}
                         </div>
                       )}
 
                       {/* Selection mode toggle */}
-                      <div className="flex items-center gap-4 py-1">
-                        <label className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-secondary)] cursor-pointer">
-                          <input
-                            type="radio"
-                            name="phoneMode"
-                            checked={!isDirectPhone}
-                            onChange={() => setIsDirectPhone(false)}
-                            className="text-[var(--primary-blue)] focus:ring-0 focus:ring-offset-0"
-                          />
-                          Vapi Number
-                        </label>
-                        <label className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-secondary)] cursor-pointer">
-                          <input
-                            type="radio"
-                            name="phoneMode"
-                            checked={isDirectPhone}
-                            onChange={() => setIsDirectPhone(true)}
-                            className="text-[var(--primary-blue)] focus:ring-0 focus:ring-offset-0"
-                          />
-                          Custom Twilio Number
-                        </label>
-                      </div>
+                      {!formData.useCustomEngine ? (
+                        <div className="flex items-center gap-4 py-1">
+                          <label className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-secondary)] cursor-pointer">
+                            <input
+                              type="radio"
+                              name="phoneMode"
+                              checked={!isDirectPhone}
+                              onChange={() => setIsDirectPhone(false)}
+                              className="text-[var(--primary-blue)] focus:ring-0 focus:ring-offset-0"
+                            />
+                            Vapi Number
+                          </label>
+                          <label className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-secondary)] cursor-pointer">
+                            <input
+                              type="radio"
+                              name="phoneMode"
+                              checked={isDirectPhone}
+                              onChange={() => setIsDirectPhone(true)}
+                              className="text-[var(--primary-blue)] focus:ring-0 focus:ring-offset-0"
+                            />
+                            Custom Twilio Number
+                          </label>
+                        </div>
+                      ) : (
+                        <div className="py-1">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                            ⚡ Forced Custom Twilio Mode (Custom LLM Engine)
+                          </span>
+                        </div>
+                      )}
 
                       {!isDirectPhone ? (
                         <>

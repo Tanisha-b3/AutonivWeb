@@ -781,6 +781,7 @@ function CallMeDialog({
                     onChange={(e) => setCalleeName(e.target.value)}
                     placeholder="e.g. John Smith"
                     className="w-full px-3.5 py-3 text-xs bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all font-semibold"
+                    style={{ outline: 'none' }}
                   />
                 </div>
 
@@ -826,6 +827,7 @@ function CallMeDialog({
                                 onChange={(e) => setCountrySearch(e.target.value)}
                                 placeholder="Search country or code..."
                                 className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-400 transition-colors font-medium"
+                                style={{ outline: 'none' }}
                               />
                             </div>
                             <div className="max-h-48 overflow-y-auto py-1 scrollbar-thin">
@@ -869,6 +871,7 @@ function CallMeDialog({
                       placeholder="XXXXXXXXXX"
                       autoFocus
                       className="flex-1 min-w-0 px-3.5 py-3 text-xs bg-transparent text-slate-700 focus:outline-none transition-all font-mono font-bold rounded-r-2xl"
+                      style={{ outline: 'none' }}
                       onKeyDown={(e) => { if (e.key === 'Enter') handleCall(); }}
                     />
 

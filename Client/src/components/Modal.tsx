@@ -100,6 +100,21 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
                     {footer}
                   </div>
                 )}
+                <style>{`
+                  .custom-scrollbar::-webkit-scrollbar {
+                    width: 5px;
+                  }
+                  .custom-scrollbar::-webkit-scrollbar-track {
+                    background: transparent;
+                  }
+                  .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 99px;
+                  }
+                  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: rgba(16, 185, 129, 0.3);
+                  }
+                `}</style>
               </Dialog.Panel>
             </Transition.Child>
           </div>

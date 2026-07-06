@@ -151,7 +151,7 @@ export function Pricing() {
                   {currency === 'usd' && (
                     <motion.div
                       layoutId="section-currency-toggle"
-                      className="absolute inset-0 rounded-full bg-slate-800 shadow-md"
+                      className="absolute inset-0 rounded-full bg-gradient-to-r from-slate-800 to-slate-700 shadow-md border border-slate-600/30"
                       style={{ zIndex: 0 }}
                       transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                     />
@@ -167,7 +167,7 @@ export function Pricing() {
                   {currency === 'inr' && (
                     <motion.div
                       layoutId="section-currency-toggle"
-                      className="absolute inset-0 rounded-full bg-slate-800 shadow-md"
+                      className="absolute inset-0 rounded-full bg-gradient-to-r from-slate-800 to-slate-700 shadow-md border border-slate-600/30"
                       style={{ zIndex: 0 }}
                       transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                     />
@@ -192,10 +192,21 @@ export function Pricing() {
                 <motion.div
                   whileHover={{ y: -8, scale: 1.02 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                  className={`relative flex flex-col h-full rounded-3xl overflow-hidden transition-all duration-300 bg-slate-950/40 backdrop-blur-md border cursor-default group${plan.highlight ? " popular-border" : ""}`}
+                  className={`relative flex flex-col h-full rounded-3xl overflow-hidden transition-all duration-500 border cursor-default group`}
                   style={{
                     borderColor: plan.highlight ? planColor : 'rgba(255, 255, 255, 0.06)',
-                    boxShadow: plan.highlight ? `0 10px 30px -10px ${planColor}45` : 'none',
+                    boxShadow: plan.highlight ? `0 20px 50px -12px ${planColor}30, inset 0 0 20px rgba(255,255,255,0.02)` : '0 10px 30px -15px rgba(0,0,0,0.3)',
+                    background: plan.highlight 
+                      ? 'linear-gradient(180deg, rgba(13,27,42,0.8) 0%, rgba(13,27,42,0.3) 100%)' 
+                      : 'linear-gradient(180deg, rgba(10,15,30,0.6) 0%, rgba(10,15,30,0.3) 100%)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = planColor;
+                    e.currentTarget.style.boxShadow = `0 30px 60px -15px ${planColor}45, inset 0 0 20px rgba(255,255,255,0.05)`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = plan.highlight ? planColor : 'rgba(255, 255, 255, 0.06)';
+                    e.currentTarget.style.boxShadow = plan.highlight ? `0 20px 50px -12px ${planColor}30, inset 0 0 20px rgba(255,255,255,0.02)` : '0 10px 30px -15px rgba(0,0,0,0.3)';
                   }}
                 >
                   {/* Badge */}
