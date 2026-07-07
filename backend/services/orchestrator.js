@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import Agent from '../db/models/Agent.js';
 import Call from '../db/models/Call.js';
 import User from '../db/models/User.js';
+import { DEMO_AGENT } from '../routes/publicDemo.js';
 
 import { synthesizeSpeech } from './tts.js';
 import { LANGUAGE_NAMES } from './translate.js';
@@ -406,7 +407,9 @@ async function handleWebCall(clientWs, req) {
   const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
   const agentId = parsedUrl.searchParams.get('agentId');
 
-  if (!agentId || !mongoose.Types.ObjectId.isValid(agentId)) {
+  const isDemo = agentId === 'demo';
+
+  if (!agentId || (!isDemo && !mongoose.Types.ObjectId.isValid(agentId))) {
     clientWs.close(4000, 'agentId parameter is required');
     return;
   }
@@ -426,12 +429,31 @@ async function handleWebCall(clientWs, req) {
   const { groq, openaiClient, gemini } = getSharedLLM();
 
   try {
-    agentObj = await Agent.findById(agentId);
-    if (!agentObj) { clientWs.close(4001, 'Agent not found'); return; }
+    if (isDemo) {
+      agentObj = {
+        _id: 'demo',
+        name: 'Autoniv AI Assistant',
+        type: 'receptionist',
+        language: 'en',
+        voiceId: 'FGY2WhTYpPnrIDTdsKH5',
+        prompt: DEMO_AGENT.prompt,
+      };
+    } else {
+      agentObj = await Agent.findById(agentId);
+      if (!agentObj) { clientWs.close(4001, 'Agent not found'); return; }
+    }
+
+    let callUserId = null;
+    if (isDemo) {
+      const fallbackUser = await User.findOne({ role: 'admin' }).lean();
+      callUserId = fallbackUser ? fallbackUser._id : new mongoose.Types.ObjectId();
+    } else {
+      callUserId = agentObj.userId;
+    }
 
     const callRecord = new Call({
-      agentId: agentObj._id,
-      userId: agentObj.userId,
+      agentId: isDemo ? null : agentObj._id,
+      userId: callUserId,
       callerNumber: 'Web Caller',
       status: 'in-progress',
       startedAt: new Date(),
