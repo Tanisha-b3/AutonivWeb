@@ -68,7 +68,7 @@ export function PublicNavbar() {
   const navItems = [
     { label: 'How It Works', href: '#how-it-works', isHash: true },
     { label: 'Features', href: '#features', isHash: true },
-    { label: 'Services', href: '/services', hasDropdown: true },
+    { label: 'Services', href: '/services' },
     { label: 'Case Studies', href: '/case-studies' },
     { label: 'Pricing', href: '/pricing' },
     { label: 'News', href: '/news', badge: 'NEW' },
