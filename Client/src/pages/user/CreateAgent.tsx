@@ -8,6 +8,7 @@ import { AgentCard } from '../../components/AgentCard';
 import { VOICE_OPTIONS } from '../../config/voices';
 import type { Agent } from '../../types';
 import { createPortal } from 'react-dom';
+import { agentService } from '../../services/api';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const LANGUAGE_OPTIONS = [
@@ -71,14 +72,229 @@ const AGENT_TYPES = [
 ];
 
 const PROMPT_TEMPLATES = [
-  { id: 'dentist',     label: '🦷 Dental Clinic', prompt: 'You are a friendly scheduling assistant for Smile Dental. Greet patients warmly, check for preferred times (mornings/afternoons), collect full name, phone number, and brief reason for the visit (cleaning, checkup, pain). State that a receptionist will text confirmation.' },
-  { id: 'realestate',  label: '🏢 Real Estate',   prompt: 'You are an intake assistant for Elite Realtors. Greet callers, ask if they want to buy, sell, or rent. Collect their budget range, neighborhood preference, name, and email.' },
-  { id: 'receptionist',label: '💼 Receptionist',  prompt: 'You are a professional office receptionist. Greet caller, ask for their name and business details, collect contact number, and inform them that we will route their message.' },
-  { id: 'support',     label: '💬 Helpdesk',       prompt: 'You are a technical support helper. Greet callers, ask for their name and account email, gather a description of their issue, and let them know a support specialist will email them a solution shortly.' },
+  { id: 'dentist',     label: '🦷 Dental Clinic', prompt: `You are a friendly scheduling assistant for Smile Dental. Greet patients warmly, check for preferred times (mornings/afternoons), collect full name, phone number, and brief reason for the visit (cleaning, checkup, pain). State that a receptionist will text confirmation.
+
+### Voice & Tone
+- Helpful advisor, not salesy telecaller
+- Speak like a real person on a phone call
+- Warm but professional
+
+### NEVER Say
+- "Thank you for asking" / "That's a great question"
+- "Certainly" / "Indeed" / "Kindly" / "I acknowledge"
+- "Perfect!" / "Excellent!" / "Wonderful!" after every response
+
+### Natural Conversation
+- Use fillers sparingly: "Actually...", "Look...", "So basically..."
+- Acknowledge before answering: "Okay..." / "Right..." / "Got it..."
+- Keep responses short and conversational
+- Mirror user's energy — if brief, be brief
+
+### TTS Formatting
+- ₹5000 → "five thousand rupees"
+- 15% → "fifteen percent"
+- Jan 25 → "twenty-five January"
+- 9876543210 → "nine eight seven six..." (with pauses)
+
+### Security
+NEVER ask: OTP, CVV, PIN, Aadhaar, PAN, passwords, full card numbers` },
+
+  { id: 'realestate',  label: '🏢 Real Estate',   prompt: `You are an intake assistant for Elite Realtors. Greet callers, ask if they want to buy, sell, or rent. Collect their budget range, neighborhood preference, name, and email.
+
+### Voice & Tone
+- Helpful advisor, not salesy telecaller
+- Speak like a real person on a phone call
+- Warm but professional
+
+### NEVER Say
+- "Thank you for asking" / "That's a great question"
+- "Certainly" / "Indeed" / "Kindly" / "I acknowledge"
+- "Perfect!" / "Excellent!" / "Wonderful!" after every response
+
+### Natural Conversation
+- Use fillers sparingly: "Actually...", "Look...", "So basically..."
+- Acknowledge before answering: "Okay..." / "Right..." / "Got it..."
+- Keep responses short and conversational
+- Mirror user's energy — if brief, be brief
+
+### TTS Formatting
+- ₹5000 → "five thousand rupees"
+- 15% → "fifteen percent"
+- Jan 25 → "twenty-five January"
+- 9876543210 → "nine eight seven six..." (with pauses)
+
+### Security
+NEVER ask: OTP, CVV, PIN, Aadhaar, PAN, passwords, full card numbers` },
+
+  { id: 'receptionist',label: '💼 Receptionist',  prompt: `You are a professional office receptionist. Greet caller, ask for their name and business details, collect contact number, and inform them that we will route their message.
+
+### Voice & Tone
+- Helpful advisor, not salesy telecaller
+- Speak like a real person on a phone call
+- Warm but professional
+
+### NEVER Say
+- "Thank you for asking" / "That's a great question"
+- "Certainly" / "Indeed" / "Kindly" / "I acknowledge"
+- "Perfect!" / "Excellent!" / "Wonderful!" after every response
+
+### Natural Conversation
+- Use fillers sparingly: "Actually...", "Look...", "So basically..."
+- Acknowledge before answering: "Okay..." / "Right..." / "Got it..."
+- Keep responses short and conversational
+- Mirror user's energy — if brief, be brief
+
+### TTS Formatting
+- ₹5000 → "five thousand rupees"
+- 15% → "fifteen percent"
+- Jan 25 → "twenty-five January"
+- 9876543210 → "nine eight seven six..." (with pauses)
+
+### Security
+NEVER ask: OTP, CVV, PIN, Aadhaar, PAN, passwords, full card numbers` },
+
+  { id: 'support',     label: '💬 Helpdesk',       prompt: `You are a technical support helper. Greet callers, ask for their name and account email, gather a description of their issue, and let them know a support specialist will email them a solution shortly.
+
+### Voice & Tone
+- Helpful advisor, not salesy telecaller
+- Speak like a real person on a phone call
+- Warm but professional
+
+### NEVER Say
+- "Thank you for asking" / "That's a great question"
+- "Certainly" / "Indeed" / "Kindly" / "I acknowledge"
+- "Perfect!" / "Excellent!" / "Wonderful!" after every response
+
+### Natural Conversation
+- Use fillers sparingly: "Actually...", "Look...", "So basically..."
+- Acknowledge before answering: "Okay..." / "Right..." / "Got it..."
+- Keep responses short and conversational
+- Mirror user's energy — if brief, be brief
+
+### TTS Formatting
+- ₹5000 → "five thousand rupees"
+- 15% → "fifteen percent"
+- Jan 25 → "twenty-five January"
+- 9876543210 → "nine eight seven six..." (with pauses)
+
+### Security
+NEVER ask: OTP, CVV, PIN, Aadhaar, PAN, passwords, full card numbers` },
+
+  { id: 'healthcare',  label: '🏥 Healthcare',    prompt: `You are a patient intake assistant for a healthcare clinic. Greet patients warmly, ask about their reason for visit (consultation, follow-up, specific symptoms), collect full name, phone number, and preferred appointment time. Reassure them the doctor's office will confirm.
+
+### Voice & Tone
+- Helpful advisor, not salesy telecaller
+- Speak like a real person on a phone call
+- Warm but professional
+
+### NEVER Say
+- "Thank you for asking" / "That's a great question"
+- "Certainly" / "Indeed" / "Kindly" / "I acknowledge"
+- "Perfect!" / "Excellent!" / "Wonderful!" after every response
+
+### Natural Conversation
+- Use fillers sparingly: "Actually...", "Look...", "So basically..."
+- Acknowledge before answering: "Okay..." / "Right..." / "Got it..."
+- Keep responses short and conversational
+- Mirror user's energy — if brief, be brief
+
+### TTS Formatting
+- ₹5000 → "five thousand rupees"
+- 15% → "fifteen percent"
+- Jan 25 → "twenty-five January"
+- 9876543210 → "nine eight seven six..." (with pauses)
+
+### Security
+NEVER ask: OTP, CVV, PIN, Aadhaar, PAN, passwords, full card numbers` },
+
+  { id: 'restaurant',  label: '🍽️ Restaurant',    prompt: `You are a reservation assistant for a restaurant. Greet callers, ask for party size, preferred date and time, and any special requests (outdoor seating, high chair, dietary needs). Collect name and phone number. Confirm the reservation details back.
+
+### Voice & Tone
+- Helpful advisor, not salesy telecaller
+- Speak like a real person on a phone call
+- Warm but professional
+
+### NEVER Say
+- "Thank you for asking" / "That's a great question"
+- "Certainly" / "Indeed" / "Kindly" / "I acknowledge"
+- "Perfect!" / "Excellent!" / "Wonderful!" after every response
+
+### Natural Conversation
+- Use fillers sparingly: "Actually...", "Look...", "So basically..."
+- Acknowledge before answering: "Okay..." / "Right..." / "Got it..."
+- Keep responses short and conversational
+- Mirror user's energy — if brief, be brief
+
+### TTS Formatting
+- ₹5000 → "five thousand rupees"
+- 15% → "fifteen percent"
+- Jan 25 → "twenty-five January"
+- 9876543210 → "nine eight seven six..." (with pauses)
+
+### Security
+NEVER ask: OTP, CVV, PIN, Aadhaar, PAN, passwords, full card numbers` },
+
+  { id: 'insurance',   label: '🛡️ Insurance',     prompt: `You are an insurance inquiry assistant. Greet callers, ask what type of insurance they're interested in (health, auto, home, life), collect their name, phone number, and email. Let them know an agent will contact them within 24 hours with a personalized quote.
+
+### Voice & Tone
+- Helpful advisor, not salesy telecaller
+- Speak like a real person on a phone call
+- Warm but professional
+
+### NEVER Say
+- "Thank you for asking" / "That's a great question"
+- "Certainly" / "Indeed" / "Kindly" / "I acknowledge"
+- "Perfect!" / "Excellent!" / "Wonderful!" after every response
+
+### Natural Conversation
+- Use fillers sparingly: "Actually...", "Look...", "So basically..."
+- Acknowledge before answering: "Okay..." / "Right..." / "Got it..."
+- Keep responses short and conversational
+- Mirror user's energy — if brief, be brief
+
+### TTS Formatting
+- ₹5000 → "five thousand rupees"
+- 15% → "fifteen percent"
+- Jan 25 → "twenty-five January"
+- 9876543210 → "nine eight seven six..." (with pauses)
+
+### Security
+NEVER ask: OTP, CVV, PIN, Aadhaar, PAN, passwords, full card numbers` },
+
+  { id: 'education',   label: '📚 Education',     prompt: `You are an admissions assistant for an educational institution. Greet inquiries warmly, ask about the program they're interested in (undergraduate, graduate, diploma, certificate), collect name, phone number, and email. Inform them about upcoming info sessions and that an advisor will reach out.
+
+### Voice & Tone
+- Helpful advisor, not salesy telecaller
+- Speak like a real person on a phone call
+- Warm but professional
+
+### NEVER Say
+- "Thank you for asking" / "That's a great question"
+- "Certainly" / "Indeed" / "Kindly" / "I acknowledge"
+- "Perfect!" / "Excellent!" / "Wonderful!" after every response
+
+### Natural Conversation
+- Use fillers sparingly: "Actually...", "Look...", "So basically..."
+- Acknowledge before answering: "Okay..." / "Right..." / "Got it..."
+- Keep responses short and conversational
+- Mirror user's energy — if brief, be brief
+
+### TTS Formatting
+- ₹5000 → "five thousand rupees"
+- 15% → "fifteen percent"
+- Jan 25 → "twenty-five January"
+- 9876543210 → "nine eight seven six..." (with pauses)
+
+### Security
+NEVER ask: OTP, CVV, PIN, Aadhaar, PAN, passwords, full card numbers` },
 ];
 
 const DEFAULT_FORM_DATA = {
   name: '', type: 'receptionist', prompt: '', language: 'en', voiceId: VOICE_OPTIONS[0].value,
+  phoneNumberId: '',
+  phoneNumber: '',
+  twilioAccountSid: '',
+  twilioAuthToken: '',
 };
 
 // ── Shared styles ──────────────────────────────────────────────────────────
@@ -276,11 +492,40 @@ export function CreateAgent() {
 
   const [formData, setFormData] = useState(() =>
     templateData
-      ? { name: `My ${templateData.title}`, type: templateData.type, prompt: templateData.prompt, language: templateData.language, voiceId: templateData.voiceId }
+      ? {
+          name: `My ${templateData.title}`,
+          type: templateData.type,
+          prompt: templateData.prompt,
+          language: templateData.language,
+          voiceId: templateData.voiceId,
+          phoneNumberId: '',
+          phoneNumber: '',
+          twilioAccountSid: '',
+          twilioAuthToken: '',
+        }
       : DEFAULT_FORM_DATA
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError]           = useState<string | null>(null);
+
+  const [phoneNumbers, setPhoneNumbers] = useState<any[]>([]);
+  const [phoneLoading, setPhoneLoading] = useState(false);
+  const [isDirectPhone, setIsDirectPhone] = useState(false);
+
+  useEffect(() => {
+    const fetchPhoneNumbers = async () => {
+      setPhoneLoading(true);
+      try {
+        const res = await agentService.getPhoneNumbers();
+        setPhoneNumbers(res.data.phoneNumbers || []);
+      } catch (err) {
+        console.error('Failed to fetch phone numbers:', err);
+      } finally {
+        setPhoneLoading(false);
+      }
+    };
+    fetchPhoneNumbers();
+  }, []);
 
   const filteredVoices = VOICE_OPTIONS;
   const voiceOpt  = VOICE_OPTIONS.find(v => v.value === formData.voiceId);
@@ -297,7 +542,15 @@ export function CreateAgent() {
     setSubmitting(true);
     setError(null);
     try {
-      await dispatch(createAgent(formData)).unwrap();
+      const submitData = {
+        ...formData,
+        phoneNumber: isDirectPhone
+          ? formData.phoneNumberId
+          : (phoneNumbers.find(p => p.id === formData.phoneNumberId)?.number || ''),
+        twilioAccountSid: isDirectPhone ? formData.twilioAccountSid : '',
+        twilioAuthToken: isDirectPhone ? formData.twilioAuthToken : '',
+      };
+      await dispatch(createAgent(submitData)).unwrap();
       await dispatch(fetchMyAgents({ page: 1, limit: 20 }));
       navigate('/dashboard/agents');
     } catch (err: any) {
@@ -305,7 +558,7 @@ export function CreateAgent() {
     } finally {
       setSubmitting(false);
     }
-  }, [submitting, dispatch, formData, navigate]);
+  }, [submitting, dispatch, formData, navigate, isDirectPhone, phoneNumbers]);
 
   const previewAgent: Agent = {
     id: 'preview', userId: 'preview',
@@ -488,61 +741,53 @@ export function CreateAgent() {
 
             {/* 2 — Voice & Language */}
             <SectionCard step={2} title="Voice & Language" subtitle="Audio persona and locale">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label style={fieldLabel}>Language</label>
-                  <SelectInput
-                    value={formData.language}
-                    onChange={v => patch({ language: v })}
-                    options={
-                      user?.features?.agents?.multiLanguage
-                        ? LANGUAGE_OPTIONS
-                        : LANGUAGE_OPTIONS.filter(o => o.value === 'en')
-                    }
-                  />
-                  {!user?.features?.agents?.multiLanguage && (
-                    <p style={{ fontSize: 9.5, color: '#9ca3af', marginTop: 4, fontWeight: 500 }}>
-                      Upgrade to Starter+ for multi-language support
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label style={fieldLabel}>Voice model</label>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 min-w-0">
-                      <SelectInput
-                        value={formData.voiceId}
-                        onChange={v => patch({ voiceId: v })}
-                        options={filteredVoices.map(v => ({ value: v.value, label: v.label.split(' - ')[0] }))}
-                      />
-                    </div>
-                    <VoicePreviewButton voiceId={formData.voiceId} language={formData.language} prompt={formData.prompt || undefined} />
-                  </div>
-                </div>
+              {/* Language */}
+              <div className="mb-4">
+                <label style={fieldLabel}>Language</label>
+                <SelectInput
+                  value={formData.language}
+                  onChange={v => patch({ language: v })}
+                  options={
+                    user?.features?.agents?.multiLanguage
+                      ? LANGUAGE_OPTIONS
+                      : LANGUAGE_OPTIONS.filter(o => o.value === 'en')
+                  }
+                />
+                {!user?.features?.agents?.multiLanguage && (
+                  <p style={{ fontSize: 9.5, color: '#9ca3af', marginTop: 4, fontWeight: 500 }}>
+                    Upgrade to Starter+ for multi-language support
+                  </p>
+                )}
               </div>
 
-              {/* Voice indicator */}
-              <div
-                className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl"
-                style={{ background: 'var(--s1)', border: '1px solid var(--border)' }}
-              >
-                <div className="flex items-end gap-0.5 h-4">
-                  {[...Array(7)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      className="w-[2px] rounded-full"
-                      style={{ background: 'var(--gg)' }}
-                      animate={{ height: [4, Math.random() * 10 + 4, 4] }}
-                      transition={{ duration: 1.3, repeat: Infinity, delay: i * 0.13, ease: 'easeInOut' }}
-                    />
-                  ))}
+              {/* Voice Selection */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <label style={fieldLabel}>Voice model</label>
+                  <VoicePreviewButton voiceId={formData.voiceId} language={formData.language} prompt={formData.prompt || undefined} />
                 </div>
-                <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
-                  Active voice: <span className="font-semibold" style={{ color: 'var(--text)' }}>{voiceName}</span>
-                </span>
-                <span className="ml-auto text-[9.5px] font-medium" style={{ color: 'var(--text-muted)' }}>
-                  ElevenLabs V2
-                </span>
+
+                <SelectInput
+                  value={formData.voiceId}
+                  onChange={v => patch({ voiceId: v })}
+                  options={VOICE_OPTIONS}
+                />
+
+                {/* Voice indicator */}
+                <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg" style={{ background: 'var(--primary-blue-soft)', border: '1px solid var(--primary-blue)' }}>
+                  <div className="flex items-end gap-0.5 h-3">
+                    {[4, 8, 5, 9, 4].map((h, i) => (
+                      <div
+                        key={i}
+                        className="w-[2px] rounded-full animate-pulse"
+                        style={{ background: 'var(--primary-blue)', height: `${h}px`, animationDelay: `${i * 0.15}s` }}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-[11px] font-semibold" style={{ color: 'var(--primary-blue)' }}>
+                    {voiceName}
+                  </span>
+                </div>
               </div>
             </SectionCard>
 
@@ -594,6 +839,133 @@ export function CreateAgent() {
                 >
                   {formData.prompt.length} chars
                 </span>
+              </div>
+            </SectionCard>
+
+            {/* 4 — Phone configuration */}
+            <SectionCard step={4} title="Phone Configuration" subtitle="Assign Vapi or Twilio phone number (Optional)">
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-secondary)] cursor-pointer">
+                    <input
+                      type="radio"
+                      name="phoneMode"
+                      checked={!isDirectPhone}
+                      onChange={() => setIsDirectPhone(false)}
+                      className="text-[var(--primary-blue)] focus:ring-0 focus:ring-offset-0"
+                    />
+                    Vapi Number
+                  </label>
+                  <label className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-secondary)] cursor-pointer">
+                    <input
+                      type="radio"
+                      name="phoneMode"
+                      checked={isDirectPhone}
+                      onChange={() => setIsDirectPhone(true)}
+                      className="text-[var(--primary-blue)] focus:ring-0 focus:ring-offset-0"
+                    />
+                    Custom Twilio Number
+                  </label>
+                </div>
+
+                {!isDirectPhone ? (
+                  <div>
+                    <label style={fieldLabel}>Select Vapi number</label>
+                    <div className="relative">
+                      <select
+                        value={formData.phoneNumberId}
+                        onChange={e => patch({ phoneNumberId: e.target.value })}
+                        style={inputBase}
+                        className="appearance-none cursor-pointer focus:outline-none focus:border-[var(--primary-blue)]/50 focus:ring-1 focus:ring-[var(--primary-blue)]/10"
+                      >
+                        <option value="">— No phone number —</option>
+                        {phoneNumbers.map((pn) => (
+                          <option key={pn.id} value={pn.id} disabled={!!pn.assistantId}>
+                            {pn.number} ({pn.provider}){pn.assistantId ? ' — In Use' : ''}
+                          </option>
+                        ))}
+                      </select>
+                      <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
+                      </svg>
+                    </div>
+                    {phoneNumbers.length === 0 && !phoneLoading && (
+                      <p className="text-[11px] text-[var(--text-muted)] leading-relaxed mt-1.5">
+                        No phone numbers found in Vapi.
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span style={{ ...fieldLabel, marginBottom: 0 }}>Twilio Phone Number</span>
+                        <a
+                          href="https://console.twilio.com/us1/develop/phone-numbers/manage/search"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider transition-all duration-150"
+                          style={{
+                            background: 'rgba(37,99,235,0.08)',
+                            border: '1px solid rgba(37,99,235,0.2)',
+                            color: 'var(--primary-blue)',
+                            textDecoration: 'none',
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = 'rgba(37,99,235,0.14)';
+                            e.currentTarget.style.borderColor = 'var(--primary-blue)';
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.background = 'rgba(37,99,235,0.08)';
+                            e.currentTarget.style.borderColor = 'rgba(37,99,235,0.2)';
+                            e.currentTarget.style.transform = 'none';
+                          }}
+                        >
+                          Buy Number ↗
+                        </a>
+                      </div>
+                      <input
+                        type="text"
+                        value={formData.phoneNumberId}
+                        onChange={e => patch({ phoneNumberId: e.target.value })}
+                        placeholder="e.g. +1845541210"
+                        style={inputBase}
+                        onFocus={focusStyle}
+                        onBlur={blurStyle}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label style={fieldLabel}>Twilio Account SID</label>
+                        <input
+                          type="text"
+                          value={formData.twilioAccountSid}
+                          onChange={e => patch({ twilioAccountSid: e.target.value })}
+                          placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                          style={inputBase}
+                          onFocus={focusStyle}
+                          onBlur={blurStyle}
+                        />
+                      </div>
+                      <div>
+                        <label style={fieldLabel}>Twilio Auth Token</label>
+                        <input
+                          type="password"
+                          value={formData.twilioAuthToken}
+                          onChange={e => patch({ twilioAuthToken: e.target.value })}
+                          placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                          style={inputBase}
+                          onFocus={focusStyle}
+                          onBlur={blurStyle}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <p className="text-[10.5px]" style={{ color: 'var(--text-muted)' }}>
+                  If left blank, the agent can only be tested using web chat.
+                </p>
               </div>
             </SectionCard>
 

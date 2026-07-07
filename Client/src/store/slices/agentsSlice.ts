@@ -63,7 +63,19 @@ export const fetchMyAgents = createAsyncThunk(
 
 export const createAgent = createAsyncThunk(
   'agents/create',
-  async (data: { name: string; type: string; prompt?: string; language?: string; voiceId?: string }) => {
+  async (data: {
+    name: string;
+    type: string;
+    prompt?: string;
+    language?: string;
+    voiceId?: string;
+    useCustomEngine?: boolean;
+    customEngineModel?: string;
+    twilioAccountSid?: string;
+    twilioAuthToken?: string;
+    phoneNumberId?: string;
+    phoneNumber?: string;
+  }) => {
     const res = await agentService.create(data);
     return normalize(res.data.agent);
   }

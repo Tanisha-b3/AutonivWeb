@@ -41,10 +41,18 @@ export const VOICE_OPTIONS: VoiceOption[] = [
   { value: 'openai:nova', label: 'Nova (OpenAI) - Female' },
   { value: 'openai:shimmer', label: 'Shimmer (OpenAI) - Female' },
 
-  // --- Sarvam AI Indian-Native Voices (Indic-native) - Bulbul V3 ---
+  // --- Groq TTS (Fast Inference) ---
+  { value: 'groq:aura-asteria-en', label: 'Asteria (Groq) - English Female (Fast)' },
+  { value: 'groq:aura-luna-en', label: 'Luna (Groq) - English Female (Fast)' },
+  { value: 'groq:aura-stella-en', label: 'Stella (Groq) - English Female (Fast)' },
+  { value: 'groq:aura-orion-en', label: 'Orion (Groq) - English Male (Fast)' },
+  { value: 'groq:aura-zeus-en', label: 'Zeus (Groq) - English Male (Fast)' },
+
+  // --- Sarvam AI Indian-Native Voices (Indic-native) - Bulbul V3 (Official 42+ Speakers) ---
+  { value: 'sarvam:bulbul:v3:shubh', label: 'Sarvam Shubh (V3 - Male)' },
+  { value: 'sarvam:bulbul:v3:shreya', label: 'Sarvam Shreya (V3 - Female)' },
   { value: 'sarvam:bulbul:v3:aditya', label: 'Sarvam Aditya (V3 - Male)' },
   { value: 'sarvam:bulbul:v3:ritu', label: 'Sarvam Ritu (V3 - Female)' },
-  { value: 'sarvam:bulbul:v3:ashutosh', label: 'Sarvam Ashutosh (V3 - Male)' },
   { value: 'sarvam:bulbul:v3:priya', label: 'Sarvam Priya (V3 - Female)' },
   { value: 'sarvam:bulbul:v3:neha', label: 'Sarvam Neha (V3 - Female)' },
   { value: 'sarvam:bulbul:v3:rahul', label: 'Sarvam Rahul (V3 - Male)' },
@@ -55,7 +63,6 @@ export const VOICE_OPTIONS: VoiceOption[] = [
   { value: 'sarvam:bulbul:v3:amit', label: 'Sarvam Amit (V3 - Male)' },
   { value: 'sarvam:bulbul:v3:dev', label: 'Sarvam Dev (V3 - Male)' },
   { value: 'sarvam:bulbul:v3:ishita', label: 'Sarvam Ishita (V3 - Female)' },
-  { value: 'sarvam:bulbul:v3:shreya', label: 'Sarvam Shreya (V3 - Female)' },
   { value: 'sarvam:bulbul:v3:ratan', label: 'Sarvam Ratan (V3 - Male)' },
   { value: 'sarvam:bulbul:v3:varun', label: 'Sarvam Varun (V3 - Male)' },
   { value: 'sarvam:bulbul:v3:manan', label: 'Sarvam Manan (V3 - Male)' },
@@ -63,7 +70,7 @@ export const VOICE_OPTIONS: VoiceOption[] = [
   { value: 'sarvam:bulbul:v3:roopa', label: 'Sarvam Roopa (V3 - Female)' },
   { value: 'sarvam:bulbul:v3:kabir', label: 'Sarvam Kabir (V3 - Male)' },
   { value: 'sarvam:bulbul:v3:aayan', label: 'Sarvam Aayan (V3 - Male)' },
-  { value: 'sarvam:bulbul:v3:shubh', label: 'Sarvam Shubh (V3 - Male)' },
+  { value: 'sarvam:bulbul:v3:ashutosh', label: 'Sarvam Ashutosh (V3 - Male)' },
   { value: 'sarvam:bulbul:v3:advait', label: 'Sarvam Advait (V3 - Male)' },
   { value: 'sarvam:bulbul:v3:anand', label: 'Sarvam Anand (V3 - Male)' },
   { value: 'sarvam:bulbul:v3:tanya', label: 'Sarvam Tanya (V3 - Female)' },
@@ -80,7 +87,7 @@ export const VOICE_OPTIONS: VoiceOption[] = [
   { value: 'sarvam:bulbul:v3:soham', label: 'Sarvam Soham (V3 - Male)' },
   { value: 'sarvam:bulbul:v3:rupali', label: 'Sarvam Rupali (V3 - Female)' },
 
-  // --- Sarvam AI Indian-Native Voices (Indic-native) - Bulbul V2 ---
+  // --- Sarvam AI Indian-Native Voices (Indic-native) - Bulbul V2 (Hindi-only) ---
   { value: 'sarvam:bulbul:v2:anushka', label: 'Sarvam Anushka (V2 - Female)' },
   { value: 'sarvam:bulbul:v2:abhilash', label: 'Sarvam Abhilash (V2 - Male)' },
   { value: 'sarvam:bulbul:v2:manisha', label: 'Sarvam Manisha (V2 - Female)' },

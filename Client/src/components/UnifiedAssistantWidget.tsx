@@ -1,28 +1,24 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import VapiModule from '@vapi-ai/web';
 import { publicLeadService, publicDemoService } from '../services/api';
 
-const Vapi = (typeof VapiModule === 'function' ? VapiModule : (VapiModule as any).default) as new (key: string) => any;
-
-/* ─── Vapi singleton ─────────────────────────────────────────── */
-let vapiInstance: any | null = null;
-function getVapi(): any | null {
-  const key = import.meta.env.VITE_VAPI_API_KEY as string | undefined;
-  if (!key) return null;
-  if (!vapiInstance) vapiInstance = new Vapi(key);
-  return vapiInstance;
-}
-
+/* ─── Design tokens ──────────────────────────────────────────── */
 const T = {
-  green: 'var(--primary)',
-  greenDim: 'var(--primary-soft)',
-  greenDark: 'var(--primary-dark)',
-  greenLight: '#00A3FF',
-  slate: 'var(--text-muted)',
-  surface: 'rgba(255,255,255,0.04)',
-  border: 'var(--border)',
-  borderHover: 'rgba(37,99,235,0.35)',
+  bg: '#050816',
+  bgElevated: '#080d1c',
+  card: 'rgba(255,255,255,0.045)',
+  cardHover: 'rgba(255,255,255,0.08)',
+  border: 'rgba(255,255,255,0.08)',
+  borderStrong: 'rgba(255,255,255,0.14)',
+  primary: '#2563EB',   // brand blue
+  secondary: '#10B981', // brand emerald green
+  accent: '#34D399',    // brand accent green
+  success: '#10B981',   // green
+  danger: '#FF5F57',
+  textMuted: 'rgba(178,199,230,0.62)',
+  textSoft: 'rgba(226,236,248,0.92)',
+  gradPrimary: 'linear-gradient(135deg, #2563EB 0%, #10B981 100%)', // brand primary gradient
+  gradAccent: 'linear-gradient(135deg, #2563EB 0%, #34D399 100%)',  // brand accent gradient
 };
 
 interface Message {
@@ -57,16 +53,30 @@ const KB = {
     { title: 'CRM Integration', desc: 'Seamlessly sync leads and call data with Salesforce, HubSpot, and 50+ tools.', metric: '50+ integrations' },
     { title: 'Enterprise Security', desc: 'Bank-grade encryption, SOC 2 certified compliance.', metric: 'SOC 2 certified' },
   ],
-  plans: [
-    { name: 'Free', price: 0, calls: 100, features: ['1 chatbot', '100 conversations/month', 'Website embed', 'Basic FAQ & lead capture'] },
-    { name: 'Starter', price: 3499, calls: 1000, features: ['3 chatbots', '1,000 conversations/month', 'WhatsApp + website', 'Hindi & Hinglish support'] },
-    { name: 'Growth', price: 9999, calls: 5000, features: ['10 chatbots', '5,000 conversations/month', 'All channels incl. Instagram', 'CRM & helpdesk integrations'], badge: 'Most Popular' },
-    { name: 'Enterprise', price: 0, calls: 99999, features: ['Unlimited chatbots', 'Unlimited conversations', 'Custom AI model training', 'DPDP Act 2023 compliance'] },
-  ],
+  plans: {
+    chat: [
+      { name: 'Chat Free', price: '₹0/mo', features: ['1 chatbot', '100 chats/mo'] },
+      { name: 'Chat Starter', price: '₹3,499/mo', features: ['3 chatbots', '1,000 chats/mo', 'WhatsApp channel support'] },
+      { name: 'Chat Growth', price: '₹9,999/mo', features: ['10 chatbots', '5,000 chats/mo', 'CRM integrations'] },
+      { name: 'Chat Enterprise', price: 'Custom', features: ['Unlimited chatbots & chats', 'Dedicated support'] },
+    ],
+    voice: [
+      { name: 'Voice Trial', price: '₹4,999/mo', features: ['30 calls/mo (30 mins total)', 'Basic FAQ & lead capture'] },
+      { name: 'Voice Foundation', price: '₹14,999/mo', setup: '₹14,999', features: ['120 calls/mo (120 mins total)', 'Analytics dashboard'] },
+      { name: 'Voice Scale', price: '₹29,999/mo', setup: '₹39,999', features: ['400 calls/mo (400 mins total)', 'Custom scripts support'] },
+      { name: 'Voice Dominate', price: '₹74,999/mo', setup: '₹89,999', features: ['1,200 calls/mo (unlimited mins)', 'White-labeling support'] },
+    ],
+    combo: [
+      { name: 'Combo Trial', price: '₹4,999/mo', features: ['1 chatbot / 100 chats/mo', '30 calls/mo (30 mins total)'] },
+      { name: 'Combo Foundation', price: '₹18,498/mo', setup: '₹14,999', features: ['1 chatbot / 1,000 chats/mo', '120 calls/mo (120 mins total)'] },
+      { name: 'Combo Scale', price: '₹39,998/mo', setup: '₹39,999', features: ['10 chatbots / 5,000 chats/mo', '400 calls/mo (400 mins total)'] },
+      { name: 'Combo Dominate', price: '₹74,999/mo', setup: '₹89,999', features: ['Unlimited chatbots & chats', '1,200 calls/mo (unlimited mins)'] },
+    ]
+  },
 };
 
 /* ─────────────────────────────────────────────────────────────────── */
-/*  Helper: detect if user is asking a question mid-form              */
+/*  Helper: detect if user is asking a question mid-form               */
 /* ─────────────────────────────────────────────────────────────────── */
 function isOffTopicQuestion(input: string): boolean {
   const q = input.toLowerCase().trim();
@@ -91,7 +101,7 @@ function getReprompt(step: LeadStep): string {
 function renderInline(text: string): React.ReactNode[] {
   return text.split(/(\*\*[^*]+\*\*)/).map((part, i) =>
     part.startsWith('**') && part.endsWith('**')
-      ? <strong key={i} style={{ color: T.green, fontWeight: 600 }}>{part.slice(2, -2)}</strong>
+      ? <strong key={i} style={{ color: T.secondary, fontWeight: 600 }}>{part.slice(2, -2)}</strong>
       : <span key={i}>{part}</span>
   );
 }
@@ -123,7 +133,7 @@ function renderMarkdown(text: string): React.ReactNode {
             <thead>
               <tr>
                 {rows[0].split('|').filter((_, ci) => ci > 0 && ci < rows[0].split('|').length - 1).map((cell, ci) => (
-                  <th key={ci} style={{ padding: '5px 8px', textAlign: 'left', color: T.green, borderBottom: '1px solid rgba(16,185,129,0.2)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  <th key={ci} style={{ padding: '5px 8px', textAlign: 'left', color: T.secondary, borderBottom: `1px solid ${T.border}`, fontWeight: 600, whiteSpace: 'nowrap' }}>
                     {cell.trim()}
                   </th>
                 ))}
@@ -133,7 +143,7 @@ function renderMarkdown(text: string): React.ReactNode {
               {rows.slice(1).map((row, ri) => (
                 <tr key={ri} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                   {row.split('|').filter((_, ci) => ci > 0 && ci < row.split('|').length - 1).map((cell, ci) => (
-                    <td key={ci} style={{ padding: '5px 8px', color: 'rgba(226,232,240,0.85)', fontSize: 11 }}>
+                    <td key={ci} style={{ padding: '5px 8px', color: T.textSoft, fontSize: 11 }}>
                       {renderInline(cell.trim())}
                     </td>
                   ))}
@@ -155,8 +165,8 @@ function renderMarkdown(text: string): React.ReactNode {
       elements.push(
         <ul key={`ul-${i}`} style={{ margin: '4px 0', paddingLeft: 0, listStyle: 'none' }}>
           {bulletItems.map((item, bi) => (
-            <li key={bi} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 3, color: 'rgba(226,232,240,0.85)', fontSize: 11, lineHeight: 1.5 }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.green, flexShrink: 0, marginTop: 5, opacity: 0.7 }} />
+            <li key={bi} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, marginBottom: 4, color: T.textSoft, fontSize: 11, lineHeight: 1.55 }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.gradPrimary, flexShrink: 0, marginTop: 5.5 }} />
               <span>{renderInline(item)}</span>
             </li>
           ))}
@@ -174,8 +184,12 @@ function renderMarkdown(text: string): React.ReactNode {
       elements.push(
         <ol key={`ol-${i}`} style={{ margin: '4px 0', paddingLeft: 0, listStyle: 'none' }}>
           {numItems.map((item, ni) => (
-            <li key={ni} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, marginBottom: 4, fontSize: 11, lineHeight: 1.5, color: 'rgba(226,232,240,0.85)' }}>
-              <span style={{ minWidth: 18, height: 18, borderRadius: 4, background: 'rgba(16,185,129,0.18)', color: T.green, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+            <li key={ni} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, marginBottom: 4, fontSize: 11, lineHeight: 1.55, color: T.textSoft }}>
+              <span style={{
+                minWidth: 18, height: 18, borderRadius: 6, background: 'rgba(59,130,246,0.16)',
+                color: T.secondary, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center',
+                justifyContent: 'center', flexShrink: 0, marginTop: 1, border: `1px solid rgba(59,130,246,0.25)`,
+              }}>
                 {ni + 1}
               </span>
               <span>{renderInline(item)}</span>
@@ -199,7 +213,7 @@ function renderMarkdown(text: string): React.ReactNode {
     }
 
     elements.push(
-      <p key={`p-${i}`} style={{ margin: '0 0 3px', fontSize: 11.5, lineHeight: 1.6, color: 'rgba(226,232,240,0.9)' }}>
+      <p key={`p-${i}`} style={{ margin: '0 0 3px', fontSize: 11.5, lineHeight: 1.6, color: T.textSoft }}>
         {renderInline(line)}
       </p>
     );
@@ -216,11 +230,11 @@ function generateResponse(input: string): { text: string; triggerLead?: boolean 
   const q = input.toLowerCase().trim();
 
   if (/^(hi|hello|hey|howdy|greetings|good (morning|evening|afternoon))/.test(q)) {
-    return { text: "Hello! I'm the **Autoniv AI Assistant**. I can help you with:\n\n- **Features** — AI voice agents, analytics, integrations\n- **Pricing** — Plans starting at ₹4,999/mo\n- **Agents** — Receptionist, Appointment, FAQ types\n\nHow can I assist you?" };
+    return { text: "Hello! I'm **Ava**, the Autoniv AI Assistant. I can help you with:\n\n- **Features** — AI voice agents, analytics, integrations\n- **Pricing** — Plans starting at ₹4,999/mo\n- **Agents** — Receptionist, Appointment, FAQ types\n\nHow can I assist you?" };
   }
 
   if (/who are you|what are you|what can you do/.test(q)) {
-    return { text: `I'm the **${KB.platform.name} AI Assistant** — built into the platform.\n\nI know everything about:\n\n- Features, pricing plans, and add-ons\n- Agent types (Receptionist, Appointment, FAQ)\n- Integrations and use cases\n\nAsk me anything!` };
+    return { text: `I'm **Ava**, the ${KB.platform.name} AI Assistant — built into the platform.\n\nI know everything about:\n\n- Features, pricing plans, and add-ons\n- Agent types (Receptionist, Appointment, FAQ)\n- Integrations and use cases\n\nAsk me anything!` };
   }
 
   if (/^help|commands/.test(q)) {
@@ -234,16 +248,86 @@ function generateResponse(input: string): { text: string; triggerLead?: boolean 
 
   if (/pric|plan|cost|subscription|how much|charge/.test(q)) {
     if (/compare|vs|which|best|recommend/.test(q)) {
-      return { text: "**Plan Comparison**\n\n| Plan | Price | Conversations |\n|------|-------|-------|\n| Free | ₹0 | 100 |\n| Starter | ₹3,499/mo | 1,000 |\n| Growth ⭐ | ₹9,999/mo | 5,000 |\n| Enterprise | Custom | Unlimited |\n\nInterested? Share your details and our team will help you choose the best plan!", triggerLead: true };
+      return {
+        text: `**Autoniv Plan Comparison**
+
+| Plan Tier | Chat Plan | Voice Plan | Combo Plan |
+|-----------|-----------|------------|------------|
+| **Trial/Free** | ₹0/mo | ₹4,999/mo | ₹4,999/mo |
+| **Foundation** | ₹3,499/mo | ₹14,999/mo | ₹18,498/mo |
+| **Scale** | ₹9,999/mo | ₹29,999/mo | ₹39,998/mo |
+| **Dominate** | Custom | ₹74,999/mo | ₹74,999/mo |
+
+Interested in a plan? Share your details and we will help you get set up!`,
+        triggerLead: true
+      };
     }
-    const plans = KB.plans.map(p => `**${p.name}** — ₹${p.price.toLocaleString()}/mo\n${p.features.slice(0, 2).map(f => `- ${f}`).join('\n')}`).join('\n\n');
-    return { text: `**Autoniv Pricing**\n\n${plans}\n\nWant to get started? Share your details and we'll set you up!`, triggerLead: true };
+
+    const formatSection = (title: string, list: any[]) => {
+      return `### ${title}\n` + list.map(p => {
+        const setupStr = p.setup ? ` *(+ ${p.setup} setup)*` : '';
+        return `• **${p.name}** — **${p.price}**${setupStr}\n  *Features:* ${p.features.join(', ')}`;
+      }).join('\n');
+    };
+
+    const chatText = formatSection("Chat Plans (SaaS Chatbots)", KB.plans.chat);
+    const voiceText = formatSection("Voice Plans (AI Phone Receptionists)", KB.plans.voice);
+    const comboText = formatSection("Combo Plans (Chat + Voice)", KB.plans.combo);
+
+    return {
+      text: `**Autoniv Pricing & Plans**\n\nWe offer tailored options for Chat, Voice, and Combo solutions:\n\n${chatText}\n\n${voiceText}\n\n${comboText}\n\nWould you like a personalized demo? Share your details to connect with us!`,
+      triggerLead: true
+    };
   }
 
-  if (/\bfree\b/.test(q) && /plan|pric/.test(q)) return { text: "**Free Plan** — ₹0 forever\n\n- 100 conversations/month\n- 1 chatbot\n- Website embed\n- Basic FAQ & lead capture\n\nWant to try it? Share your details!", triggerLead: true };
-  if (/\bstarter\b/.test(q)) return { text: "**Starter Plan** — ₹3,499/mo\n\n- 1,000 conversations/month\n- 3 chatbots\n- WhatsApp + website\n- Hindi & Hinglish support\n\nReady to start? Share your details!", triggerLead: true };
-  if (/\bgrowth\b/.test(q)) return { text: "**Growth Plan** ⭐ — ₹9,999/mo\n\n- 5,000 conversations/month\n- 10 chatbots\n- All channels incl. Instagram\n- CRM & helpdesk integrations\n\nMost popular! Share your details to get started!", triggerLead: true };
-  if (/\benterprise\b/.test(q)) return { text: "**Enterprise Plan** — Custom pricing\n\n- Unlimited chatbots\n- Unlimited conversations\n- Custom AI model training\n- DPDP Act 2023 compliance\n\nEnterprise ready? Share your details!", triggerLead: true };
+  if (/\bfree\b/.test(q) && /plan|pric/.test(q)) {
+    return {
+      text: `**Free & Trial Plans**
+
+• **Chat Free**: ₹0 forever (1 chatbot, 100 chats/mo, website embed)
+• **Voice Trial**: ₹4,999/mo (30 calls/mo, 30 total minutes)
+• **Combo Trial**: ₹4,999/mo (1 chatbot, 100 chats/mo + 30 calls/mo)
+
+Would you like to start a free trial? Share your details!`,
+      triggerLead: true
+    };
+  }
+  if (/\b(starter|foundation)\b/.test(q)) {
+    return {
+      text: `**Starter & Foundation Plans**
+
+• **Chat Starter**: ₹3,499/mo (3 chatbots, 1,000 chats/mo, WhatsApp channel)
+• **Voice Foundation**: ₹14,999/mo + ₹14,999 setup (120 calls/mo, 120 total minutes)
+• **Combo Foundation**: ₹18,498/mo + ₹14,999 setup (1 chatbot, 1,000 chats/mo + 120 calls/mo)
+
+Ready to get started? Share your details and we will set you up!`,
+      triggerLead: true
+    };
+  }
+  if (/\b(growth|scale)\b/.test(q)) {
+    return {
+      text: `**Growth & Scale Plans**
+
+• **Chat Growth**: ₹9,999/mo (10 chatbots, 5,000 chats/mo, CRM integrations)
+• **Voice Scale**: ₹29,999/mo + ₹39,999 setup (400 calls/mo, 400 total minutes)
+• **Combo Scale**: ₹39,998/mo + ₹39,999 setup (10 chatbots, 5,000 chats/mo + 400 calls/mo)
+
+This is our most popular tier for growing businesses. Share your details to sign up!`,
+      triggerLead: true
+    };
+  }
+  if (/\b(enterprise|dominate)\b/.test(q)) {
+    return {
+      text: `**Enterprise & Dominate Plans**
+
+• **Chat Enterprise**: Custom pricing (Unlimited chatbots & chats, custom AI models)
+• **Voice Dominate**: ₹74,999/mo + ₹89,999 setup (1,200 calls/mo, unlimited minutes, white-label reseller)
+• **Combo Dominate**: ₹74,999/mo + ₹89,999 setup (Unlimited chats/mo + 1,200 calls/mo)
+
+Ready for full-scale automation? Share your details and our team will build a custom package!`,
+      triggerLead: true
+    };
+  }
 
   if (/agent|receptionist|appointment|faq|voice assistant|ai agent|bot/.test(q)) {
     if (/receptionist|front desk/.test(q)) return { text: "**Receptionist Agent**\n\n- Front desk & general inquiries\n- Greets callers warmly\n- Collects name, phone, and purpose\n- Available 24/7\n\n**Best For**: Healthcare, real estate, any business needing a virtual front desk.\n\nWant one? Share your details!", triggerLead: true };
@@ -271,18 +355,18 @@ function generateResponse(input: string): { text: string; triggerLead?: boolean 
 }
 
 /* ─── Waveform ───────────────────────────────────────────── */
-function Waveform({ active, color = 'var(--primary)' }: { active: boolean; color?: string }) {
+function Waveform({ active }: { active: boolean }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 2, height: 26, justifyContent: 'center' }}>
-      {Array.from({ length: 18 }).map((_, i) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 3, height: 30, justifyContent: 'center' }}>
+      {Array.from({ length: 22 }).map((_, i) => (
         <div
           key={i}
           style={{
             width: 2.5,
             borderRadius: 99,
-            background: color,
-            height: active ? `${5 + Math.abs(Math.sin(i * 0.7)) * 18}px` : '3px',
-            opacity: active ? 0.9 : 0.15,
+            background: T.gradPrimary,
+            height: active ? `${6 + Math.abs(Math.sin(i * 0.7)) * 20}px` : '3px',
+            opacity: active ? 0.95 : 0.15,
             animation: active ? `waveBar ${0.5 + (i % 4) * 0.08}s ease-in-out ${i * 0.02}s infinite alternate` : 'none',
             transition: 'height .3s ease, opacity .3s ease',
           }}
@@ -292,60 +376,94 @@ function Waveform({ active, color = 'var(--primary)' }: { active: boolean; color
   );
 }
 
-/* ─── Voice Orb ──────────────────────────────────────────── */
+/* ─── Floating particles (ambient, behind the orb) ──────────────── */
+function Particles() {
+  const seeds = [0, 1, 2, 3, 4, 5];
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+      {seeds.map(i => (
+        <span key={i} style={{
+          position: 'absolute',
+          left: `${14 + i * 13}%`,
+          bottom: -8,
+          width: i % 2 === 0 ? 3 : 4,
+          height: i % 2 === 0 ? 3 : 4,
+          borderRadius: '50%',
+          background: i % 2 === 0 ? T.secondary : T.accent,
+          opacity: 0.35,
+          animation: `floatUp ${6 + i}s ease-in-out ${i * 0.8}s infinite`,
+        }} />
+      ))}
+    </div>
+  );
+}
+
+/* ─── AI Orb — the signature element ────────────────────────────
+   A living sphere: breathes at idle, glows cyan while the agent
+   speaks, glows violet while the user speaks, ringed by a slowly
+   rotating conic-gradient halo.                                  */
 function VoiceOrb({ speaking }: { speaking: 'user' | 'agent' | 'idle' }) {
   const isAgent = speaking === 'agent';
   const isUser = speaking === 'user';
   const isActive = speaking !== 'idle';
-  const coreColor = isAgent ? 'var(--primary)' : isUser ? 'var(--secondary)' : 'var(--cyan-dark)';
+  const glow = isAgent ? T.secondary : isUser ? T.accent : T.primary;
 
   return (
-    <div style={{ position: 'relative', width: 120, height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      {/* Ripple rings */}
+    <div style={{ position: 'relative', width: 132, height: 132, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* rotating gradient halo */}
+      <div style={{
+        position: 'absolute', width: 118, height: 118, borderRadius: '50%',
+        background: `conic-gradient(from 0deg, ${T.primary}, ${T.secondary}, ${T.accent}, ${T.primary})`,
+        filter: 'blur(1px)', opacity: isActive ? 0.55 : 0.22,
+        animation: 'spinSlow 9s linear infinite',
+        WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))',
+        mask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))',
+        transition: 'opacity .5s ease',
+      }} />
+
+      {/* ripple rings while active */}
       {isActive && [0, 1, 2].map(i => (
         <div key={i} style={{
           position: 'absolute', inset: 0, borderRadius: '50%',
-          border: '1.5px solid rgba(0,163,255,0.12)',
-          animation: `ringPulse 2.2s ease-out ${i * 0.7}s infinite`,
+          border: `1.5px solid ${glow}33`,
+          animation: `ringPulse 2.1s ease-out ${i * 0.65}s infinite`,
           pointerEvents: 'none',
         }} />
       ))}
 
-      {/* Outer glow */}
-      <div style={{
-        position: 'absolute', width: 90, height: 90, borderRadius: '50%',
-        background: isActive ? 'rgba(0,163,255,0.14)' : 'rgba(0,163,255,0.04)',
-        filter: 'blur(24px)', transition: 'background .6s ease',
-      }} />
+      {/* soft outer glow */}
+      <motion.div
+        animate={{ opacity: isActive ? [0.35, 0.55, 0.35] : [0.12, 0.2, 0.12] }}
+        transition={{ duration: isActive ? 1.6 : 3.2, repeat: Infinity, ease: 'easeInOut' }}
+        style={{
+          position: 'absolute', width: 96, height: 96, borderRadius: '50%',
+          background: glow, filter: 'blur(26px)',
+        }}
+      />
 
-      {/* Border ring */}
-      <div style={{
-        position: 'absolute', inset: 0, borderRadius: '50%',
-        border: '1px solid rgba(0,163,255,0.08)',
-      }} />
-
-      {/* Core sphere */}
-      <div style={{
-        position: 'relative', zIndex: 2, width: 60, height: 60, borderRadius: '50%',
-        background: speaking === 'idle'
-          ? 'radial-gradient(circle at 35% 35%, #0d1f36, #050d1a)'
-          : isAgent
-            ? 'radial-gradient(circle at 30% 30%, var(--primary) 0%, var(--primary-dark) 40%, var(--cyan-dark) 100%)'
-            : 'radial-gradient(circle at 30% 30%, var(--secondary) 0%, var(--primary) 55%, var(--primary-dark) 100%)',
-        border: `1.5px solid ${coreColor}30`,
-        boxShadow: isActive
-          ? `0 0 0 3px ${coreColor}10, 0 0 35px ${coreColor}25, inset 0 1.5px 0 rgba(255,255,255,.15)`
-          : '0 0 20px rgba(0,163,255,.08), inset 0 1px 0 rgba(255,255,255,.04)',
-        transition: 'all .5s cubic-bezier(.16,1,.3,1)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive ? '#fff' : 'var(--primary-dark)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'stroke .4s ease' }}>
+      {/* core sphere — breathes gently at idle */}
+      <motion.div
+        animate={{ scale: isActive ? [1, 1.045, 1] : [1, 1.02, 1] }}
+        transition={{ duration: isActive ? 0.9 : 3.4, repeat: Infinity, ease: 'easeInOut' }}
+        style={{
+          position: 'relative', zIndex: 2, width: 62, height: 62, borderRadius: '50%',
+          background: speaking === 'idle'
+            ? `radial-gradient(circle at 32% 30%, #16233f, #060b16)`
+            : `radial-gradient(circle at 32% 30%, ${glow} 0%, ${T.primary} 55%, #0a1226 100%)`,
+          border: `1.5px solid ${glow}55`,
+          boxShadow: isActive
+            ? `0 0 0 3px ${glow}14, 0 0 40px ${glow}40, inset 0 1.5px 0 rgba(255,255,255,.18)`
+            : `0 0 24px ${T.primary}22, inset 0 1px 0 rgba(255,255,255,.05)`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive ? '#fff' : 'rgba(178,199,230,0.7)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'stroke .4s ease' }}>
           <rect x="9" y="2" width="6" height="12" rx="3" />
           <path d="M5 10a7 7 0 0014 0" />
           <line x1="12" y1="19" x2="12" y2="22" />
           <line x1="9" y1="22" x2="15" y2="22" />
         </svg>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -356,7 +474,7 @@ function ConnectingDots() {
     <div style={{ display: 'flex', alignItems: 'center', gap: 5, height: 16, justifyContent: 'center' }}>
       {[0, 1, 2].map(i => (
         <div key={i} style={{
-          width: 5, height: 5, borderRadius: '50%', background: 'var(--primary)',
+          width: 5, height: 5, borderRadius: '50%', background: T.gradPrimary,
           animation: 'connectBounce 1.2s ease-in-out infinite',
           animationDelay: `${i * 0.2}s`,
         }} />
@@ -379,11 +497,12 @@ export default function UnifiedAssistantWidget() {
     {
       id: 'welcome',
       role: 'assistant',
-      content: `Hi! I'm the **Autoniv AI Assistant**. I can help you with:\n\n- **Features** — AI voice agents, analytics\n- **Pricing** — Plans starting at ₹4,999/mo\n- **Book a Demo** — Get a personalized walkthrough\n\nHow can I assist you?`,
+      content: `Hi! I'm **Ava**, the Autoniv AI Assistant. I can help you with:\n\n- **Features** — AI voice agents, analytics\n- **Pricing** — Plans starting at ₹4,999/mo\n- **Book a Demo** — Get a personalized walkthrough\n\nHow can I assist you?`,
       timestamp: 0,
     },
   ]);
   const [isTyping, setIsTyping] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [leadStep, setLeadStep] = useState<LeadStep>('idle');
   const [leadInfo, setLeadInfo] = useState<LeadInfo>({ name: '', phone: '', email: '', purpose: '' });
@@ -395,6 +514,14 @@ export default function UnifiedAssistantWidget() {
   const [speaking, setSpeaking] = useState<'user' | 'agent' | 'idle'>('idle');
   const [callErrorMsg, setCallErrorMsg] = useState('');
 
+  const ws = useRef<WebSocket | null>(null);
+  const ctx = useRef<AudioContext | null>(null);
+  const proc = useRef<ScriptProcessorNode | null>(null);
+  const mic = useRef<MediaStream | null>(null);
+  const srcs = useRef<AudioBufferSourceNode[]>([]);
+  const nextT = useRef<number>(0);
+  const analyser = useRef<AnalyserNode | null>(null);
+
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const maxDurationRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -404,19 +531,60 @@ export default function UnifiedAssistantWidget() {
   }, []);
 
   const stopCall = useCallback(() => {
-    const vapi = getVapi();
-    if (vapi) {
-      try {
-        vapi.stop();
-        if (typeof vapi.removeAllListeners === 'function') {
-          vapi.removeAllListeners();
-        }
-      } catch { /* ignore */ }
+    if (ws.current) {
+      if (ws.current.readyState === WebSocket.OPEN) {
+        ws.current.send(JSON.stringify({ event: 'stop' }));
+      }
+      ws.current.close();
+      ws.current = null;
     }
+    if (proc.current) { proc.current.disconnect(); proc.current = null; }
+    if (mic.current) { mic.current.getTracks().forEach(t => t.stop()); mic.current = null; }
+
+    srcs.current.forEach(s => { try { s.stop(); } catch {} });
+    srcs.current = [];
+    nextT.current = 0;
+
+    if (ctx.current) { ctx.current.close().catch(() => {}); ctx.current = null; }
+    analyser.current = null;
+
     clearTimers();
     setCallMode('ended');
     setSpeaking('idle');
   }, [clearTimers]);
+
+  const play = useCallback((b64: string) => {
+    const ac = ctx.current, an = analyser.current;
+    if (!ac || !an) return;
+    try {
+      const bin = atob(b64), bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const i16 = new Int16Array(bytes.buffer), f32 = new Float32Array(i16.length);
+      for (let i = 0; i < i16.length; i++) f32[i] = i16[i] / 32768;
+
+      const ab = ac.createBuffer(1, f32.length, 24000);
+      ab.copyToChannel(f32, 0);
+
+      const src = ac.createBufferSource();
+      src.buffer = ab;
+      src.connect(an);
+      src.connect(ac.destination);
+
+      const t0 = Math.max(ac.currentTime, nextT.current);
+      src.start(t0);
+      nextT.current = t0 + ab.duration;
+      srcs.current.push(src);
+
+      src.onended = () => {
+        srcs.current = srcs.current.filter(x => x !== src);
+        if (!srcs.current.length) {
+          setSpeaking('idle');
+        }
+      };
+    } catch (e) {
+      console.error('[Audio Playback Error]', e);
+    }
+  }, []);
 
   useEffect(() => () => { stopCall(); }, [stopCall]);
 
@@ -430,59 +598,99 @@ export default function UnifiedAssistantWidget() {
   const startCall = useCallback(async () => {
     if (callMode === 'active' || callMode === 'connecting') { stopCall(); return; }
 
-    const vapi = getVapi();
-    if (!vapi) {
-      setCallErrorMsg('Voice calling is not available. Please try again later.');
-      setCallMode('error');
-      return;
-    }
-
     setCallMode('connecting');
     setCallSeconds(0);
     setCallErrorMsg('');
 
     try {
-      const { data } = await publicDemoService.getAgent();
-      const agent = data.agent;
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+      });
+      mic.current = stream;
 
-      const onSpeechStart = () => { setCallMode('active'); setSpeaking('agent'); };
-      const onSpeechEnd = () => setSpeaking('idle');
-      const onCallEnd = () => stopCall();
-      const onError = (e: any) => {
-        console.error('[LandingCall] VAPI error:', e);
-        setCallErrorMsg('Call failed. Please try again.');
+      const AC = window.AudioContext || (window as any).webkitAudioContext;
+      const ac = new AC({ sampleRate: 16000 });
+      ctx.current = ac;
+      if (ac.state === 'suspended') await ac.resume();
+      nextT.current = ac.currentTime;
+
+      const an = ac.createAnalyser();
+      an.fftSize = 256;
+      analyser.current = an;
+
+      const raw = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+      const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      let host = window.location.host;
+      if (raw.startsWith('http')) host = new URL(raw).host;
+
+      const url = `${proto}//${host}/web-call?agentId=demo`;
+      const socket = new WebSocket(url);
+      ws.current = socket;
+
+      socket.onopen = () => {
+        setCallMode('active');
+
+        // Start call timer
+        timerRef.current = setInterval(() => {
+          setCallSeconds(s => {
+            if (s >= 120) { stopCall(); return s; }
+            return s + 1;
+          });
+        }, 1000);
+
+        const src = ac.createMediaStreamSource(stream);
+        const p = ac.createScriptProcessor(4096, 1, 1);
+        proc.current = p;
+
+        src.connect(p);
+        p.connect(ac.destination);
+        src.connect(an);
+
+        p.onaudioprocess = e => {
+          const d = e.inputBuffer.getChannelData(0);
+          const pcm = new Int16Array(d.length);
+          for (let i = 0; i < d.length; i++) {
+            pcm[i] = Math.max(-1, Math.min(1, d[i])) * 0x7fff;
+          }
+          if (socket.readyState === WebSocket.OPEN) {
+            socket.send(pcm.buffer);
+          }
+        };
+      };
+
+      socket.onmessage = e => {
+        try {
+          const d = JSON.parse(e.data);
+          if (d.event === 'audio') {
+            setSpeaking('agent');
+            play(d.payload);
+          } else if (d.event === 'clear') {
+            setSpeaking('idle');
+            srcs.current.forEach(s => { try { s.stop(); } catch {} });
+            srcs.current = [];
+            nextT.current = ctx.current ? ctx.current.currentTime : 0;
+          } else if (d.event === 'transcript') {
+            if (d.role === 'caller') {
+              setSpeaking('user');
+            }
+          }
+        } catch {}
+      };
+
+      socket.onerror = () => {
+        setCallErrorMsg('Call stream error. Verify server connection.');
         stopCall();
       };
 
-      vapi.on('speech-start', onSpeechStart);
-      vapi.on('speech-end', onSpeechEnd);
-      vapi.on('call-end', onCallEnd);
-      vapi.on('error', onError);
+      socket.onclose = () => {
+        stopCall();
+      };
 
-      await vapi.start({
-        name: agent.name,
-        firstMessage: agent.firstMessage,
-        model: {
-          provider: 'openai',
-          model: 'gpt-4',
-          messages: [{ role: 'system', content: agent.prompt }],
-        },
-        voice: {
-          provider: '11labs',
-          voiceId: agent.voiceId,
-        },
-      });
-
-      setCallMode('active');
-      timerRef.current = setInterval(() => setCallSeconds(prev => prev + 1), 1000);
-      maxDurationRef.current = setTimeout(() => stopCall(), 120_000);
-
-    } catch (err) {
-      console.error('[LandingCall] Failed to start:', err);
-      setCallErrorMsg('Could not connect. Please try again.');
+    } catch (e: any) {
+      setCallErrorMsg(`Microphone permission error: ${e.message}`);
       setCallMode('error');
     }
-  }, [callMode, stopCall]);
+  }, [callMode, stopCall, play]);
 
   /* ─── Decoupled Event System ─── */
   useEffect(() => {
@@ -503,7 +711,7 @@ export default function UnifiedAssistantWidget() {
     setMessages([{
       id: 'welcome',
       role: 'assistant',
-      content: `Hi! I'm the **Autoniv AI Assistant**. I can help you with:\n\n- **Features** — AI voice agents, analytics\n- **Pricing** — Plans starting at ₹4,999/mo\n- **Book a Demo** — Get a personalized walkthrough\n\nHow can I assist you?`,
+      content: `Hi! I'm **Ava**, the Autoniv AI Assistant. I can help you with:\n\n- **Features** — AI voice agents, analytics\n- **Pricing** — Plans starting at ₹4,999/mo\n- **Book a Demo** — Get a personalized walkthrough\n\nHow can I assist you?`,
       timestamp: 0,
     }]);
     setLeadStep('idle');
@@ -645,55 +853,83 @@ export default function UnifiedAssistantWidget() {
       leadStep === 'ask_phone' ? 'Enter your phone number...' :
         leadStep === 'ask_email' ? 'Enter your email...' :
           leadStep === 'ask_purpose' ? 'What are you looking for...' :
-            'Ask about Autoniv, agents, pricing...';
+            'Ask anything...';
 
   const isCallActive = callMode === 'active' || callMode === 'connecting';
 
+  const quickActions: { icon: string; label: string; grad: string; prompt: string }[] = [
+    { icon: '💰', label: 'Pricing', grad: 'linear-gradient(135deg, rgba(37,99,235,0.16), rgba(16,185,129,0.10))', prompt: 'Show me pricing plans' },
+    { icon: '🤖', label: 'AI Agents', grad: 'linear-gradient(135deg, rgba(16,185,129,0.16), rgba(37,99,235,0.10))', prompt: 'Tell me about agent types' },
+    { icon: '✨', label: 'Features', grad: 'linear-gradient(135deg, rgba(37,99,235,0.14), rgba(52,211,153,0.10))', prompt: 'What features does Autoniv offer?' },
+    { icon: '📅', label: 'Book Demo', grad: 'linear-gradient(135deg, rgba(16,185,129,0.14), rgba(52,211,153,0.08))', prompt: 'I want to book a demo' },
+  ];
+
   return (
-    <div className="fixed bottom-6 right-6 z-50 ">
+    <div className="fixed bottom-6 right-6 z-50">
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.94 }}
+            initial={{ opacity: 0, y: 24, scale: 0.94 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.94 }}
-            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute bottom-20 right-0 w-[360px] rounded-2xl border overflow-hidden shadow-2xl flex flex-col"
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute bottom-20 right-0 w-[500px] max-w-[calc(100vw-32px)] rounded-[22px] overflow-hidden flex flex-col"
             style={{
-              height: '500px',
-              background: '#080d17',
-              borderColor: T.border,
-              boxShadow: `0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px ${T.border}`,
+              height: '560px',
+              background: `linear-gradient(180deg, ${T.bgElevated} 0%, ${T.bg} 100%)`,
+              border: `1px solid ${T.border}`,
+              backdropFilter: 'blur(24px)',
+              boxShadow: `0 32px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.02), 0 0 60px rgba(59,130,246,0.06)`,
             }}
           >
+            <div style={{
+              position: 'absolute', top: -60, left: -40, width: 220, height: 220, borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(37,99,235,0.18), transparent 70%)', filter: 'blur(10px)', pointerEvents: 'none',
+            }} />
+            <div style={{
+              position: 'absolute', top: -30, right: -60, width: 200, height: 200, borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(16,185,129,0.15), transparent 70%)', filter: 'blur(10px)', pointerEvents: 'none',
+            }} />
+
             {/* Header */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b shrink-0" style={{ borderColor: T.border }}>
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(16,185,129,0.15)' }}>
-                <svg className="w-3.5 h-3.5" fill="none" stroke={T.green} viewBox="0 0 24 24">
+            <div className="relative flex items-center gap-3 px-4 py-3.5 shrink-0" style={{ borderBottom: `1px solid ${T.border}` }}>
+              <div style={{
+                width: 34, height: 34, borderRadius: 11, flexShrink: 0, position: 'relative',
+                background: T.gradPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: `0 0 16px rgba(37,99,235,0.35)`,
+              }}>
+                <svg className="w-4 h-4" fill="none" stroke="#fff" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
               </div>
-              <div className="flex-1">
-                <p className="text-xs font-semibold text-white">AI Companion</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-bold text-white leading-tight">Ava AI</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className={`w-1.5 h-1.5 rounded-full ${isCallActive ? 'bg-amber-400 animate-pulse' : 'bg-[var(--primary)] animate-pulse'}`} />
-                  <span className="text-[10px]" style={{ color: T.slate }}>
-                    {isCallActive ? 'live call active' : 'online'}
+                  <span style={{ fontSize: 10, color: T.textMuted }}>Powered by Autoniv</span>
+                  <span style={{ width: 3, height: 3, borderRadius: '50%', background: T.textMuted }} />
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: isCallActive ? T.accent : T.success, animation: 'livePulse 2s ease infinite' }} />
+                  <span style={{ fontSize: 10, color: isCallActive ? T.accent : T.success, fontWeight: 600 }}>
+                    {isCallActive ? 'In call' : 'Live'}
                   </span>
                 </div>
               </div>
               {tab === 'chat' && (
                 <button onClick={clearChat}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-[var(--surface)]"
-                  style={{ color: T.slate }} title="Clear chat">
+                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                  style={{ color: T.textMuted }}
+                  onMouseEnter={e => (e.currentTarget.style.background = T.cardHover)}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  title="Refresh conversation">
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h5M20 20v-5h-5M4 9a9 9 0 0114.13-5.36M20 15a9 9 0 01-14.13 5.36" />
                   </svg>
                 </button>
               )}
               <button onClick={() => setIsOpen(false)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-[var(--surface)]"
-                style={{ color: T.slate }}>
+                className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                style={{ color: T.textMuted }}
+                onMouseEnter={e => (e.currentTarget.style.background = T.cardHover)}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -701,34 +937,32 @@ export default function UnifiedAssistantWidget() {
             </div>
 
             {/* Tab selector */}
-            <div className="flex px-4 py-2 border-b gap-2 shrink-0 bg-white/[0.01]" style={{ borderColor: T.border }}>
+            <div className="relative flex px-3 py-2.5 gap-1.5 shrink-0" style={{ borderBottom: `1px solid ${T.border}` }}>
               <button
                 onClick={() => setTab('chat')}
-                className="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5"
+                className="flex-1 py-2 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5"
                 style={tab === 'chat'
-                  ? { background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.2)', color: '#fff' }
-                  : { border: '1px solid transparent', color: T.slate }
-                }
+                  ? { background: 'rgba(37,99,235,0.14)', border: `1px solid rgba(37,99,235,0.30)`, color: '#fff' }
+                  : { border: '1px solid transparent', color: T.textMuted }}
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
-                AI Chat
+                Chat
               </button>
               <button
                 onClick={() => setTab('call')}
-                className="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 relative"
+                className="flex-1 py-2 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 relative"
                 style={tab === 'call'
-                  ? { background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.2)', color: '#fff' }
-                  : { border: '1px solid transparent', color: T.slate }
-                }
+                  ? { background: 'rgba(16,185,129,0.14)', border: `1px solid rgba(16,185,129,0.30)`, color: '#fff' }
+                  : { border: '1px solid transparent', color: T.textMuted }}
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                 </svg>
-                Voice Call
+                Voice
                 {isCallActive && (
-                  <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-[var(--primary)] animate-ping" />
+                  <span className="absolute top-1.5 right-3 w-1.5 h-1.5 rounded-full" style={{ background: T.accent, animation: 'livePulse 1.4s ease infinite' }} />
                 )}
               </button>
             </div>
@@ -737,97 +971,100 @@ export default function UnifiedAssistantWidget() {
             <div className="flex-1 overflow-hidden flex flex-col min-h-0 relative">
               {tab === 'chat' ? (
                 <>
-                  {/* Quick chips under tabs */}
-                  <div className="flex flex-wrap gap-1.5 px-3 pt-2 pb-1.5 border-b shrink-0" style={{ borderColor: 'rgba(255,255,255,0.02)' }}>
-                    {['Features', 'Pricing', 'Book a Demo', 'Contact'].map(chip => (
-                      <button key={chip} onClick={() => {
-                        setInput(
-                          chip === 'Features' ? 'What features does Autoniv offer?' :
-                            chip === 'Pricing' ? 'Show me pricing plans' :
-                              chip === 'Book a Demo' ? 'I want to book a demo' :
-                                'Contact sales'
-                        );
-                      }}
-                        className="px-2 py-0.5 text-[10px] font-medium rounded-full border transition-all hover:border-green-500/40"
-                        style={{ background: T.surface, borderColor: T.border, color: T.slate }}>
-                        {chip}
+                  {/* Quick action cards */}
+                  <div className="grid grid-cols-4 gap-1.5 px-3 pt-2.5 pb-2 shrink-0">
+                    {quickActions.map(qa => (
+                      <button key={qa.label} onClick={() => setInput(qa.prompt)}
+                        className="flex flex-col items-center justify-center gap-1 py-2 rounded-xl transition-all"
+                        style={{ background: qa.grad, border: `1px solid ${T.border}` }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = T.borderStrong; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.borderColor = T.border; }}
+                      >
+                        <span style={{ fontSize: 15 }}>{qa.icon}</span>
+                        <span style={{ fontSize: 9, fontWeight: 600, color: T.textSoft, textAlign: 'center', lineHeight: 1.2 }}>{qa.label}</span>
                       </button>
                     ))}
                   </div>
 
                   {/* Message body */}
-                  <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.08) transparent' }}>
+                  <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-3 min-h-0" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.08) transparent' }}>
                     {/* Call in progress banner */}
                     {isCallActive && (
                       <button
                         onClick={() => setTab('call')}
-                        className="w-full py-2 px-3 mb-2 rounded-xl flex items-center justify-between text-[11px] font-medium transition-all"
-                        style={{
-                          background: 'rgba(16,185,129,0.08)',
-                          border: '1px solid rgba(16,185,129,0.18)',
-                          color: '#10b981',
-                        }}
+                        className="w-full py-2 px-3 mb-1 rounded-xl flex items-center justify-between text-[11px] font-medium transition-all"
+                        style={{ background: 'rgba(16,185,129,0.08)', border: `1px solid rgba(16,185,129,0.22)`, color: T.accent }}
                       >
                         <div className="flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] animate-pulse" />
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: T.accent, animation: 'livePulse 1.4s ease infinite' }} />
                           <span>Voice call is active ({formatTime(callSeconds)})</span>
                         </div>
-                        <span className="font-semibold text-[10px]">Return to Call →</span>
+                        <span className="font-semibold text-[10px]">Return →</span>
                       </button>
                     )}
 
-                    {messages.map((msg) => (
-                      <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                    {messages.map((msg, idx) => (
+                      <motion.div
+                        key={msg.id}
+                        initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 380, damping: 30, delay: idx === messages.length - 1 ? 0.02 : 0 }}
+                        className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                      >
                         {msg.role === 'assistant' && (
-                          <div className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center mt-0.5" style={{ background: 'rgba(16,185,129,0.15)' }}>
-                            <svg className="w-3 h-3" fill="none" stroke={T.green} viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                            </svg>
+                          <div className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center mt-0.5" style={{ background: T.gradPrimary }}>
+                            <span style={{ fontSize: 11 }}>✨</span>
                           </div>
                         )}
                         <div className="max-w-[82%]">
-                          <div
-                            className="px-3 py-2 rounded-xl text-xs"
-                            style={msg.role === 'user'
-                              ? { background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.25)', color: '#e2e8f0', fontSize: 11.5, lineHeight: 1.6 }
-                              : { background: T.surface, border: `1px solid ${T.border}`, color: 'rgba(226,232,240,0.88)' }
-                            }
-                          >
-                            {msg.role === 'user'
-                              ? <span style={{ fontSize: 11.5, lineHeight: 1.6 }}>{msg.content}</span>
-                              : renderMarkdown(msg.content)
-                            }
-                          </div>
+                          {msg.role === 'user' ? (
+                            <div className="px-3 py-2 rounded-2xl rounded-tr-md text-xs" style={{
+                              background: T.gradPrimary, color: '#fff', fontSize: 11.5, lineHeight: 1.6,
+                              boxShadow: '0 4px 14px rgba(37,99,235,0.25)',
+                            }}>
+                              {msg.content}
+                            </div>
+                          ) : (
+                            <div className="rounded-2xl rounded-tl-md p-[1px]" style={{ background: `linear-gradient(135deg, rgba(37,99,235,0.35), rgba(16,185,129,0.15) 60%, transparent)` }}>
+                              <div className="px-3 py-2 rounded-2xl rounded-tl-md" style={{ background: T.bgElevated }}>
+                                {renderMarkdown(msg.content)}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
 
                     {leadError && (
                       <div className="flex gap-2">
-                        <div className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: 'rgba(239,68,68,0.1)' }}>
-                          <svg className="w-3 h-3" fill="none" stroke="#f87171" viewBox="0 0 24 24">
+                        <div className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: 'rgba(255,95,87,0.12)' }}>
+                          <svg className="w-3 h-3" fill="none" stroke={T.danger} viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         </div>
                         <div className="px-3 py-2 rounded-xl text-xs"
-                          style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171', fontSize: 11.5, lineHeight: 1.5 }}>
+                          style={{ background: 'rgba(255,95,87,0.08)', border: `1px solid rgba(255,95,87,0.25)`, color: T.danger, fontSize: 11.5, lineHeight: 1.5 }}>
                           {leadError}
                         </div>
                       </div>
                     )}
 
                     {isTyping && (
-                      <div className="flex gap-2">
-                        <div className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.15)' }}>
-                          <svg className="w-3 h-3" fill="none" stroke={T.green} viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                          </svg>
+                      <div className="flex gap-2 items-center">
+                        <div className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: T.gradPrimary }}>
+                          <span style={{ fontSize: 11 }}>✨</span>
                         </div>
-                        <div className="px-3 py-2.5 rounded-xl border flex items-center gap-1" style={{ background: T.surface, borderColor: T.border }}>
-                          {[0, 0.15, 0.3].map((delay, i) => (
-                            <motion.span key={i} className="w-1 h-1 rounded-full bg-[var(--surface)]0"
-                              animate={{ y: [0, -4, 0] }} transition={{ duration: 0.7, repeat: Infinity, delay }} />
-                          ))}
+                        <div className="px-3 py-2 rounded-2xl rounded-tl-md" style={{ background: T.card, border: `1px solid ${T.border}`, minWidth: 130 }}>
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <span style={{ fontSize: 10.5, color: T.textMuted, fontWeight: 500 }}>Ava is thinking</span>
+                          </div>
+                          <div style={{ height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.06)', overflow: 'hidden', position: 'relative' }}>
+                            <div style={{
+                              position: 'absolute', inset: 0, width: '40%',
+                              background: T.gradPrimary, borderRadius: 99,
+                              animation: 'shimmerBar 1.1s ease-in-out infinite',
+                            }} />
+                          </div>
                         </div>
                       </div>
                     )}
@@ -835,34 +1072,53 @@ export default function UnifiedAssistantWidget() {
                   </div>
 
                   {/* Input bar */}
-                  <div className="p-3 border-t shrink-0" style={{ borderColor: T.border }}>
+                  <div className="p-3 shrink-0" style={{ borderTop: `1px solid ${T.border}` }}>
                     {leadStep === 'submitting' ? (
-                      <div className="text-center text-xs py-2" style={{ color: T.slate }}>
-                        <svg className="animate-spin w-4 h-4 mx-auto mb-1 text-white" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      <div className="text-center text-xs py-2 flex items-center justify-center gap-2" style={{ color: T.textMuted }}>
+                        <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke={T.secondary} strokeWidth="4" />
+                          <path className="opacity-75" fill={T.secondary} d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
                         Submitting your details...
                       </div>
                     ) : (
-                      <div className="flex gap-2">
+                      <div className="flex items-center gap-2 rounded-2xl px-1.5 py-1.5 transition-all duration-300"
+                        style={{
+                          background: T.card,
+                          border: `1px solid ${inputFocused ? T.primary : T.border}`,
+                          boxShadow: inputFocused ? `0 0 12px rgba(37,99,235,0.22)` : 'none'
+                        }}>
+                        <button
+                          onClick={() => setTab('call')}
+                          className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors"
+                          style={{ color: T.textMuted }}
+                          onMouseEnter={e => (e.currentTarget.style.color = T.accent)}
+                          onMouseLeave={e => (e.currentTarget.style.color = T.textMuted)}
+                          title="Switch to voice call"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <rect x="9" y="2" width="6" height="12" rx="3" />
+                            <path strokeLinecap="round" d="M5 10a7 7 0 0014 0" />
+                            <line x1="12" y1="19" x2="12" y2="22" strokeLinecap="round" />
+                            <line x1="9" y1="22" x2="15" y2="22" strokeLinecap="round" />
+                          </svg>
+                        </button>
                         <input
                           value={input}
                           onChange={e => setInput(e.target.value)}
                           onKeyDown={e => e.key === 'Enter' && sendMessage()}
+                          onFocus={() => setInputFocused(true)}
+                          onBlur={() => setInputFocused(false)}
                           placeholder={inputPlaceholder}
                           disabled={isTyping}
-                          className="flex-1 rounded-xl px-3 py-2 text-xs text-white outline-none transition-all disabled:opacity-40"
-                          style={{ background: T.surface, border: `1px solid ${T.border}` }}
-                          onFocus={e => (e.target.style.borderColor = 'rgba(16,185,129,0.4)')}
-                          onBlur={e => (e.target.style.borderColor = T.border)}
+                          className="flex-1 bg-transparent text-xs text-white outline-none disabled:opacity-40 min-w-0"
                         />
                         <button
                           onClick={sendMessage}
                           disabled={!input.trim() || isTyping}
-                          className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-40"
-                          style={{ background: T.greenDim, border: `1px solid rgba(16,185,129,0.3)` }}>
-                          <svg className="w-3.5 h-3.5" fill="none" stroke={T.green} viewBox="0 0 24 24">
+                          className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-30"
+                          style={{ background: T.gradPrimary, boxShadow: input.trim() ? '0 0 14px rgba(37,99,235,0.4)' : 'none' }}>
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="#fff" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                           </svg>
                         </button>
@@ -872,24 +1128,26 @@ export default function UnifiedAssistantWidget() {
                 </>
               ) : (
                 /* Voice Call Interface */
-                <div className="flex-1 flex flex-col items-center justify-between p-5 min-h-0">
+                <div className="flex-1 flex flex-col items-center justify-between p-5 min-h-0 relative">
+                  <Particles />
+
                   {/* Status Indicator */}
-                  <div style={{
+                  <div className="relative z-10" style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6,
                     padding: '5px 12px', borderRadius: 99,
-                    background: callMode === 'active' ? 'rgba(16,185,129,0.06)' : callMode === 'connecting' ? 'rgba(255,228,132,0.06)' : 'rgba(16,185,129,0.04)',
-                    border: `1px solid ${callMode === 'active' ? 'rgba(16,185,129,0.15)' : callMode === 'connecting' ? 'rgba(255,228,132,0.15)' : 'rgba(16,185,129,0.10)'}`,
+                    background: callMode === 'active' ? 'rgba(16,185,129,0.08)' : callMode === 'connecting' ? 'rgba(52,211,153,0.08)' : 'rgba(37,99,235,0.06)',
+                    border: `1px solid ${callMode === 'active' ? 'rgba(16,185,129,0.20)' : callMode === 'connecting' ? 'rgba(52,211,153,0.20)' : 'rgba(37,99,235,0.14)'}`,
                     transition: 'all .3s',
                   }}>
                     <span style={{
                       width: 5, height: 5, borderRadius: '50%',
-                      background: callMode === 'active' ? '#10b981' : callMode === 'connecting' ? '#ffe484' : '#10b981',
+                      background: callMode === 'active' ? T.secondary : callMode === 'connecting' ? T.accent : T.primary,
                       animation: callMode !== 'idle' ? 'livePulse 2s ease infinite' : 'none',
                     }} />
                     <span style={{
                       fontSize: 10, fontFamily: "'JetBrains Mono', monospace",
-                      color: callMode === 'active' ? '#10b981' : callMode === 'connecting' ? '#ffe484' : '#6b9ec8',
-                      letterSpacing: '0.04em', textTransform: 'uppercase', fontWeight: 500,
+                      color: callMode === 'active' ? T.secondary : callMode === 'connecting' ? T.accent : T.textMuted,
+                      letterSpacing: '0.04em', textTransform: 'uppercase', fontWeight: 600,
                     }}>
                       {callMode === 'idle' && 'Ready to call'}
                       {callMode === 'connecting' && 'Connecting'}
@@ -900,47 +1158,46 @@ export default function UnifiedAssistantWidget() {
                   </div>
 
                   {/* Voice Orb Area */}
-                  <div className="my-2 flex flex-col items-center">
+                  <div className="my-2 flex flex-col items-center relative z-10">
                     <VoiceOrb speaking={speaking} />
-                    <h4 style={{ fontSize: 14, fontWeight: 700, color: '#e8f8ff', marginTop: 12, marginBottom: 4 }}>
-                      {callMode === 'idle' && 'Talk to Our AI Agent'}
+                    <h4 style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginTop: 14, marginBottom: 4 }}>
+                      {callMode === 'idle' && 'Talk to Ava'}
                       {callMode === 'connecting' && 'Connecting...'}
-                      {callMode === 'active' && 'In Live Call'}
+                      {callMode === 'active' && (speaking === 'agent' ? 'Ava is speaking' : speaking === 'user' ? 'Listening...' : 'In live call')}
                       {callMode === 'ended' && 'Call Complete'}
                       {callMode === 'error' && 'Connection Failed'}
                     </h4>
                     {callMode === 'idle' && (
-                      <p style={{ fontSize: 11, color: '#6b9ec8', textAlign: 'center', margin: 0, maxWidth: 220, lineHeight: 1.4 }}>
+                      <p style={{ fontSize: 11, color: T.textMuted, textAlign: 'center', margin: 0, maxWidth: 220, lineHeight: 1.5 }}>
                         Have a real conversation with our AI voice agent. Max duration is 2 mins.
                       </p>
                     )}
                     {callMode === 'active' && callSeconds > 0 && (
-                      <div className="mt-1" style={{
+                      <div className="mt-1.5" style={{
                         display: 'inline-flex', alignItems: 'center',
-                        padding: '2px 8px', borderRadius: 99,
-                        background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.18)'
+                        padding: '3px 10px', borderRadius: 99,
+                        background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.20)',
                       }}>
-                        <span style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: '#10b981', fontWeight: 600 }}>
+                        <span style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: T.secondary, fontWeight: 600 }}>
                           {formatTime(callSeconds)}
                         </span>
                       </div>
                     )}
                     {callErrorMsg && (
-                      <p style={{ fontSize: 10, color: '#ff8a8a', margin: '4px 0 0', textAlign: 'center' }}>{callErrorMsg}</p>
+                      <p style={{ fontSize: 10, color: T.danger, margin: '6px 0 0', textAlign: 'center' }}>{callErrorMsg}</p>
                     )}
                   </div>
 
                   {/* Waveform / Connection indicators */}
-                  <div className="w-full shrink-0 flex flex-col items-center gap-2">
+                  <div className="w-full shrink-0 flex flex-col items-center gap-2 relative z-10">
                     {(callMode === 'active' || callMode === 'connecting') && (
-                      <Waveform active={speaking !== 'idle'} color="#10b981" />
+                      <Waveform active={speaking !== 'idle'} />
                     )}
                     {callMode === 'connecting' && <ConnectingDots />}
                   </div>
 
                   {/* Action buttons or stats */}
-                  <div className="w-full shrink-0 flex flex-col gap-3 items-center">
-                    {/* Call End post-stats */}
+                  <div className="w-full shrink-0 flex flex-col gap-3 items-center relative z-10">
                     {callMode === 'ended' && (
                       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
                         <div style={{ display: 'flex', gap: 6 }}>
@@ -950,27 +1207,27 @@ export default function UnifiedAssistantWidget() {
                             { icon: '✨', label: 'Quality', value: 'Natural' },
                           ].map((stat, i) => (
                             <div key={i} style={{
-                              flex: 1, textAlign: 'center', padding: '6px 4px', borderRadius: 10,
-                              background: 'rgba(16,185,129,0.04)', border: '1px solid rgba(16,185,129,0.10)',
+                              flex: 1, textAlign: 'center', padding: '7px 4px', borderRadius: 12,
+                              background: 'rgba(59,130,246,0.05)', border: `1px solid ${T.border}`,
                             }}>
                               <div style={{ fontSize: 14, marginBottom: 2 }}>{stat.icon}</div>
-                              <div style={{ fontSize: 11, fontWeight: 700, color: '#10b981' }}>{stat.value}</div>
-                              <div style={{ fontSize: 8, color: '#6b9ec8', fontFamily: "'JetBrains Mono', monospace", marginTop: 1 }}>{stat.label}</div>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: T.secondary }}>{stat.value}</div>
+                              <div style={{ fontSize: 8, color: T.textMuted, fontFamily: "'JetBrains Mono', monospace", marginTop: 1 }}>{stat.label}</div>
                             </div>
                           ))}
                         </div>
                         <button
                           onClick={() => window.location.href = '/register'}
                           style={{
-                            width: '100%', padding: '10px 16px', borderRadius: 10, cursor: 'pointer',
-                            border: '1px solid rgba(16,185,129,0.25)',
-                            background: 'rgba(16,185,129,0.06)',
-                            color: '#10b981', fontSize: 12, fontWeight: 600,
+                            width: '100%', padding: '11px 16px', borderRadius: 12, cursor: 'pointer',
+                            border: 'none', background: T.gradAccent,
+                            color: '#fff', fontSize: 12, fontWeight: 700,
                             transition: 'all .2s',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                            boxShadow: '0 4px 18px rgba(139,92,246,0.3)',
                           }}
-                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.12)'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.40)'; }}
-                          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.06)'; e.currentTarget.style.borderColor = 'rgba(16,185,129,0.25)'; }}
+                          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
                         >
                           Create Your Own Agent
                           <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -980,29 +1237,26 @@ export default function UnifiedAssistantWidget() {
                       </div>
                     )}
 
-                    {/* Standard call start / end button */}
                     <div style={{ width: '100%', display: 'flex', gap: 8 }}>
                       {callMode === 'idle' || callMode === 'ended' || callMode === 'error' ? (
                         <button
                           onClick={startCall}
                           style={{
-                            width: '100%', padding: '11px 20px', borderRadius: 12,
+                            width: '100%', padding: '12px 20px', borderRadius: 14,
                             border: 'none', cursor: 'pointer',
-                            background: 'linear-gradient(135deg, #10b981, #059669, #047857)',
-                            backgroundSize: '200% 200%',
-                            animation: 'borderFlow 4s ease infinite',
+                            background: T.gradPrimary,
                             color: '#fff', fontSize: 13, fontWeight: 700,
-                            boxShadow: '0 0 0 1px rgba(255,255,255,.08) inset, 0 4px 0 rgba(0,20,50,.5), 0 0 30px rgba(16,185,129,.2)',
+                            boxShadow: '0 0 0 1px rgba(255,255,255,.08) inset, 0 6px 20px rgba(59,130,246,.32)',
                             transition: 'all .2s cubic-bezier(.16,1,.3,1)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                           }}
                           onMouseEnter={e => {
                             e.currentTarget.style.transform = 'translateY(-1.5px)';
-                            e.currentTarget.style.boxShadow = '0 0 0 1px rgba(255,255,255,.10) inset, 0 6px 0 rgba(0,20,50,.4), 0 0 40px rgba(16,185,129,.35)';
+                            e.currentTarget.style.boxShadow = '0 0 0 1px rgba(255,255,255,.10) inset, 0 8px 24px rgba(59,130,246,.42)';
                           }}
                           onMouseLeave={e => {
                             e.currentTarget.style.transform = 'none';
-                            e.currentTarget.style.boxShadow = '0 0 0 1px rgba(255,255,255,.08) inset, 0 4px 0 rgba(0,20,50,.5), 0 0 30px rgba(16,185,129,.2)';
+                            e.currentTarget.style.boxShadow = '0 0 0 1px rgba(255,255,255,.08) inset, 0 6px 20px rgba(59,130,246,.32)';
                           }}
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -1017,20 +1271,20 @@ export default function UnifiedAssistantWidget() {
                         <button
                           onClick={stopCall}
                           style={{
-                            width: '100%', padding: '11px 20px', borderRadius: 12, cursor: 'pointer',
-                            border: '1px solid rgba(255,87,87,0.25)',
-                            background: 'rgba(255,87,87,0.08)',
-                            color: '#ff5f57', fontSize: 13, fontWeight: 700,
+                            width: '100%', padding: '12px 20px', borderRadius: 14, cursor: 'pointer',
+                            border: `1px solid rgba(255,95,87,0.28)`,
+                            background: 'rgba(255,95,87,0.08)',
+                            color: T.danger, fontSize: 13, fontWeight: 700,
                             transition: 'all .2s',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                           }}
                           onMouseEnter={e => {
-                            e.currentTarget.style.background = 'rgba(255,87,87,0.14)';
-                            e.currentTarget.style.borderColor = 'rgba(255,87,87,0.45)';
+                            e.currentTarget.style.background = 'rgba(255,95,87,0.15)';
+                            e.currentTarget.style.borderColor = 'rgba(255,95,87,0.45)';
                           }}
                           onMouseLeave={e => {
-                            e.currentTarget.style.background = 'rgba(255,87,87,0.08)';
-                            e.currentTarget.style.borderColor = 'rgba(255,87,87,0.25)';
+                            e.currentTarget.style.background = 'rgba(255,95,87,0.08)';
+                            e.currentTarget.style.borderColor = 'rgba(255,95,87,0.28)';
                           }}
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -1059,22 +1313,24 @@ export default function UnifiedAssistantWidget() {
           transition={{ delay: 1.2, duration: 0.4, ease: 'easeOut' }}
           className="absolute -top-14 right-0 flex items-center gap-2 px-3 py-2 rounded-xl whitespace-nowrap shadow-lg z-50"
           style={{
-            background: 'rgba(255,255,255,0.95)',
-            border: '1px solid rgba(37,99,235,0.15)',
-            backdropFilter: 'blur(8px)',
+            background: 'rgba(8,13,28,0.92)',
+            border: `1px solid ${T.border}`,
+            backdropFilter: 'blur(10px)',
           }}
         >
-          <img
-            src="https://i.pravatar.cc/80?img=47"
-            alt="Ava"
-            className="w-6 h-6 rounded-full object-cover shrink-0"
-          />
-          <span className="text-xs font-medium" style={{ color: '#1e293b' }}>
-            Hi, I am <span className="font-bold" style={{ color: '#2563EB' }}>Ava</span> 👋
+          <div style={{
+            width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+            background: T.gradPrimary, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 10px rgba(59,130,246,0.5)',
+          }}>
+            <span style={{ fontSize: 10 }}>✨</span>
+          </div>
+          <span className="text-xs font-medium" style={{ color: T.textSoft }}>
+            Hi, I'm <span className="font-bold" style={{ color: T.secondary }}>Ava</span> 👋
           </span>
           <div
             className="absolute -bottom-1.5 right-5 w-3 h-3 rotate-45"
-            style={{ background: 'rgba(255,255,255,0.95)', borderRight: '1px solid rgba(37,99,235,0.15)', borderBottom: '1px solid rgba(37,99,235,0.15)' }}
+            style={{ background: 'rgba(8,13,28,0.92)', borderRight: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}` }}
           />
         </motion.div>
       )}
@@ -1082,25 +1338,39 @@ export default function UnifiedAssistantWidget() {
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="relative w-14 h-14 rounded-full flex items-center justify-center shadow-lg btn-cta"
+        className="relative w-14 h-14 rounded-full flex items-center justify-center"
         style={{
-          boxShadow: '0 6px 24px rgba(16,185,129,0.35)',
+          background: T.gradPrimary,
+          boxShadow: '0 6px 28px rgba(59,130,246,0.4)',
         }}
       >
+        {/* rotating halo ring */}
+        <span style={{
+          position: 'absolute', inset: -4, borderRadius: '50%',
+          background: `conic-gradient(from 0deg, ${T.primary}, ${T.secondary}, ${T.accent}, ${T.primary})`,
+          opacity: 0.5, animation: 'spinSlow 6s linear infinite',
+          WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px))',
+          mask: 'radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px))',
+        }} />
+        <motion.span
+          animate={{ scale: [1, 1.06, 1] }}
+          transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+          style={{ position: 'absolute', inset: 0, borderRadius: '50%' }}
+        />
         <AnimatePresence mode="wait">
           {isOpen ? (
             <motion.svg key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}
-              className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
+              className="w-6 h-6 relative z-10" fill="none" stroke="white" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </motion.svg>
           ) : (
             <motion.svg key="chat" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-              className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
+              className="w-6 h-6 relative z-10" fill="none" stroke="white" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </motion.svg>
           )}
         </AnimatePresence>
-        {!isOpen && <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-white border-2" style={{ borderColor: '#2563EB' }} />}
+        {!isOpen && <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-white border-2" style={{ borderColor: T.accent }} />}
       </motion.button>
 
       {/* Local keyframe styles self-contained inside the widget */}
@@ -1115,18 +1385,27 @@ export default function UnifiedAssistantWidget() {
           to { transform: scaleY(1); opacity: 1; }
         }
         @keyframes livePulse {
-          0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.3); }
-          70% { box-shadow: 0 0 0 9px rgba(16,185,129,0); }
-          100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+          0% { box-shadow: 0 0 0 0 rgba(0,229,255,0.35); }
+          70% { box-shadow: 0 0 0 9px rgba(0,229,255,0); }
+          100% { box-shadow: 0 0 0 0 rgba(0,229,255,0); }
         }
         @keyframes ringPulse {
           0% { transform: scale(1); opacity: 0.7; }
-          100% { transform: scale(2.6); opacity: 0; }
+          100% { transform: scale(2.4); opacity: 0; }
         }
-        @keyframes borderFlow {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
+        @keyframes spinSlow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes shimmerBar {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(350%); }
+        }
+        @keyframes floatUp {
+          0% { transform: translateY(0) scale(1); opacity: 0; }
+          15% { opacity: 0.4; }
+          85% { opacity: 0.25; }
+          100% { transform: translateY(-140px) scale(0.6); opacity: 0; }
         }
       `}</style>
     </div>
