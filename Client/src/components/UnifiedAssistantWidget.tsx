@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { publicLeadService, publicDemoService } from '../services/api';
+import { publicLeadService } from '../services/api';
 
 /* ─── Design tokens ──────────────────────────────────────────── */
 const T = {
