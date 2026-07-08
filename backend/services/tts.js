@@ -104,6 +104,24 @@ const AZURE_DEFAULT_VOICES = {
   or: { female: 'or-IN-SubhasiniNeural', male: 'or-IN-AnanyaNeural' }
 };
 
+// Gender of every Sarvam Bulbul speaker (mirrors the labels in
+// Client/src/config/voices.ts). Used so that when a Sarvam voice fails and we
+// fall back — or swap the speaker — a male voice stays male and a female voice
+// stays female, instead of defaulting to the wrong gender. Any name not listed
+// here is treated as female.
+const SARVAM_MALE_SPEAKERS = new Set([
+  // Bulbul v3
+  'shubh', 'aditya', 'rahul', 'rohan', 'amit', 'dev', 'ratan', 'varun', 'manan',
+  'sumit', 'kabir', 'aayan', 'ashutosh', 'advait', 'anand', 'tarun', 'sunny',
+  'mani', 'gokul', 'vijay', 'mohit', 'rehan', 'soham',
+  // Bulbul v2
+  'abhilash', 'karun', 'hitesh',
+]);
+
+function isSarvamMaleSpeaker(speaker) {
+  return SARVAM_MALE_SPEAKERS.has(String(speaker || '').toLowerCase());
+}
+
 export function detectLanguageOfText(text, agentLanguage = 'en') {
   if (!text) return agentLanguage;
 
@@ -125,31 +143,44 @@ export function detectLanguageOfText(text, agentLanguage = 'en') {
   if (/[\u4E00-\u9FFF]/.test(text)) return 'zh';
   if (/[\u0400-\u04FF]/.test(text)) return 'ru';
 
-  // 2. Word & Character checks for common European languages
+  // 2. Character & word checks for common European languages.
   const lowerText = text.toLowerCase();
-  
-  if (/[¡¿ñáéíóúü]/.test(lowerText) || /\b(hola|gracias|buenos|dias|como|esta|adios|por|favor|señor|si|para|con)\b/.test(lowerText)) {
+
+  // Diacritic checks are strong signals (these characters almost never appear in
+  // English), so a single occurrence is enough. Word checks are NOT reliable on
+  // their own: common English words ("is", "come", "si", "de", "en"...) also occur
+  // in these stopword lists, so a lone match misclassifies English text and hijacks
+  // the caller's chosen voice/provider. Require >=2 distinct stopword matches instead.
+  const hits = (words) => {
+    let n = 0;
+    for (const w of words) {
+      if (new RegExp(`\\b${w}\\b`).test(lowerText) && ++n >= 2) return true;
+    }
+    return false;
+  };
+
+  if (/[¡¿ñáéíóúü]/.test(lowerText) || hits(['hola', 'gracias', 'buenos', 'dias', 'como', 'esta', 'adios', 'por', 'favor', 'señor', 'para'])) {
     return 'es';
   }
-  if (/[œçàèùâêîôûëï]/.test(lowerText) || /\b(bonjour|merci|oui|comment|allez|tres|bien|s'il|plaît|pour|avec|vous)\b/.test(lowerText)) {
+  if (/[œçàèùâêîôûëï]/.test(lowerText) || hits(['bonjour', 'merci', 'oui', 'comment', 'allez', 'tres', 'bien', 'plaît', 'pour', 'avec', 'vous'])) {
     return 'fr';
   }
-  if (/[äöüß]/.test(lowerText) || /\b(hallo|danke|bitte|ja|nein|wie|geht|und|der|die|das|ist)\b/.test(lowerText)) {
+  if (/[äöüß]/.test(lowerText) || hits(['hallo', 'danke', 'bitte', 'nein', 'wie', 'geht', 'und', 'ist'])) {
     return 'de';
   }
-  if (/[àèéìòù]/.test(lowerText) || /\b(ciao|grazie|prego|si|come|sta|bene|per|con|bene)\b/.test(lowerText)) {
+  if (/[àèéìòù]/.test(lowerText) || hits(['ciao', 'grazie', 'prego', 'come', 'sta', 'bene', 'per', 'con'])) {
     return 'it';
   }
-  if (/[ãõçáéíóúâêô]/.test(lowerText) || /\b(olá|obrigado|sim|como|vai|bem|por|com|bom|dia)\b/.test(lowerText)) {
+  if (/[ãõçáéíóúâêô]/.test(lowerText) || hits(['olá', 'obrigado', 'sim', 'como', 'vai', 'bem', 'bom', 'dia'])) {
     return 'pt';
   }
-  if (/[ąćęłńóśźż]/.test(lowerText) || /\b(dzień|dobry|dziękuję|proszę|tak|nie|jak|się|masz)\b/.test(lowerText)) {
+  if (/[ąćęłńóśźż]/.test(lowerText) || hits(['dzień', 'dobry', 'dziękuję', 'proszę', 'tak', 'nie', 'jak', 'się', 'masz'])) {
     return 'pl';
   }
-  if (/[çğıöşü]/.test(lowerText) || /\b(merhaba|teşekkürler|lütfen|evet|hayır|nasıl|iyi|bir|ve|ile)\b/.test(lowerText)) {
+  if (/[çğıöşü]/.test(lowerText) || hits(['merhaba', 'teşekkürler', 'lütfen', 'evet', 'hayır', 'nasıl', 'iyi', 'bir', 'ile'])) {
     return 'tr';
   }
-  if (/\b(hallo|bedankt|alsjeblieft|ja|nee|hoe|gaat|het|en|de|een|is)\b/.test(lowerText)) {
+  if (hits(['hallo', 'bedankt', 'alsjeblieft', 'nee', 'hoe', 'gaat', 'het', 'een'])) {
     return 'nl';
   }
 
@@ -424,14 +455,14 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
     // Automatically upgrade V2 to V3 model if language is not Hindi, since V2 is Hindi-only
     if (sarvamModel === 'bulbul:v2' && language !== 'hi') {
       sarvamModel = 'bulbul:v3';
-      const isMale = /abhilash|karun|hitesh/i.test(speaker);
+      const isMale = isSarvamMaleSpeaker(speaker);
       speaker = isMale ? 'shubh' : 'shreya';
     }
 
     // Safeguard: Ensure speaker matches V3 model compatibility constraints
     const V3_SPEAKERS = ['aditya', 'ritu', 'ashutosh', 'priya', 'neha', 'rahul', 'pooja', 'rohan', 'simran', 'kavya', 'amit', 'dev', 'ishita', 'shreya', 'ratan', 'varun', 'manan', 'sumit', 'roopa', 'kabir', 'aayan', 'shubh', 'advait', 'anand', 'tanya', 'tarun', 'sunny', 'mani', 'gokul', 'vijay', 'shruti', 'suhani', 'mohit', 'kavitha', 'rehan', 'soham', 'rupali'];
     if (sarvamModel === 'bulbul:v3' && !V3_SPEAKERS.includes(speaker.toLowerCase())) {
-      const isMale = /shubh|manan|rohan/i.test(speaker);
+      const isMale = isSarvamMaleSpeaker(speaker);
       speaker = isMale ? 'shubh' : 'shreya';
     }
 
@@ -460,7 +491,7 @@ export async function synthesizeSpeech(text, isTwilio = true, language = 'en', v
       log.warn('sarvam_tts_fetch_network_error', { error: fetchErr.message });
     }
 
-    const isMaleSpeaker = /abhilash|karun|hitesh|rohan|shubh|manan/i.test(speaker);
+    const isMaleSpeaker = isSarvamMaleSpeaker(speaker);
     let errTxt = null;
 
     if (!response || !response.ok) {

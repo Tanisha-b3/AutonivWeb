@@ -209,7 +209,19 @@ router.post('/phone-numbers', requireAdmin, async (req, res) => {
 // POST /agents — create agent
 router.post('/', contentFilter('name', 'prompt'), async (req, res) => {
   try {
-    const { name, type, prompt, language, voiceId, useCustomEngine, customEngineModel, twilioAccountSid, twilioAuthToken } = req.body;
+    const {
+      name,
+      type,
+      prompt,
+      language,
+      voiceId,
+      useCustomEngine,
+      customEngineModel,
+      twilioAccountSid,
+      twilioAuthToken,
+      phoneNumberId,
+      phoneNumber,
+    } = req.body;
 
     if (!name || !type) {
       return res.status(400).json({ message: 'name and type are required' });
@@ -269,7 +281,22 @@ router.post('/', contentFilter('name', 'prompt'), async (req, res) => {
         vapiId = vapiAssistant.id;
       } catch (vapiErr) {
         log.warn('vapi_create_agent_failed', { error: vapiErr.message, userId: req.user?.userId });
-        // Continue without Vapi — agent saved locally
+        return res.status(502).json({ message: `Voice agent creation failed: ${vapiErr.message}` });
+      }
+    }
+
+    const isDirectNumber = phoneNumberId ? (phoneNumberId.startsWith('+') || /^\d+$/.test(phoneNumberId)) : false;
+
+    if (vapiId && phoneNumberId && !isDirectNumber) {
+      try {
+        await assignAgentToPhone(phoneNumberId, vapiId);
+      } catch (vapiErr) {
+        log.error('vapi_assign_phone_failed', { error: vapiErr.message, userId: req.user?.userId });
+        // Clean up created assistant
+        try {
+          await deleteVapiAssistant(vapiId);
+        } catch (_) {}
+        return res.status(502).json({ message: `Failed to assign phone number: ${vapiErr.message}` });
       }
     }
 
@@ -286,6 +313,8 @@ router.post('/', contentFilter('name', 'prompt'), async (req, res) => {
       customEngineModel: customEngineModel || 'groq:llama-3.3-70b',
       twilioAccountSid: twilioAccountSid ? encrypt(twilioAccountSid) : null,
       twilioAuthToken: twilioAuthToken ? encrypt(twilioAuthToken) : null,
+      phoneNumberId: isDirectNumber ? null : (phoneNumberId || null),
+      phoneNumber: isDirectNumber ? phoneNumberId : (phoneNumber || null),
     });
 
     res.status(201).json({

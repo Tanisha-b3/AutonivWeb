@@ -49,6 +49,42 @@ const AGENT_TYPES = [
   )},
 ];
 
+const VOICE_TONE_SUFFIX = `
+
+### Voice & Tone
+- Helpful advisor, not salesy telecaller
+- Speak like a real person on a phone call
+- Warm but professional
+
+### NEVER Say
+- "Thank you for asking" / "That's a great question"
+- "Certainly" / "Indeed" / "Kindly" / "I acknowledge"
+- "Perfect!" / "Excellent!" / "Wonderful!" after every response
+
+### Natural Conversation
+- Use fillers sparingly: "Actually...", "Look...", "So basically..."
+- Acknowledge before answering: "Okay..." / "Right..." / "Got it..."
+- Keep responses short and conversational
+- Mirror user's energy — if brief, be brief
+
+### TTS Formatting
+- ₹5000 → "five thousand rupees"
+- 15% → "fifteen percent"
+- Jan 25 → "twenty-five January"
+- 9876543210 → "nine eight seven six..." (with pauses)
+
+### Security
+NEVER ask: OTP, CVV, PIN, Aadhaar, PAN, passwords, full card numbers`;
+
+const PROMPT_TEMPLATES = [
+  { id: 'dentist',     label: '🦷 Dental Clinic', prompt: `You are a friendly scheduling assistant for Smile Dental. Greet patients warmly, check for preferred times (mornings/afternoons), collect full name, phone number, and brief reason for the visit (cleaning, checkup, pain). State that a receptionist will text confirmation.${VOICE_TONE_SUFFIX}` },
+  { id: 'realestate',  label: '🏢 Real Estate',   prompt: `You are an intake assistant for Elite Realtors. Greet callers, ask if they want to buy, sell, or rent. Collect their budget range, neighborhood preference, name, and email.${VOICE_TONE_SUFFIX}` },
+  { id: 'receptionist',label: '💼 Receptionist',  prompt: `You are a professional office receptionist. Greet caller, ask for their name and business details, collect contact number, and inform them that we will route their message.${VOICE_TONE_SUFFIX}` },
+  { id: 'support',     label: '💬 Helpdesk',       prompt: `You are a technical support helper. Greet callers, ask for their name and account email, gather a description of their issue, and let them know a support specialist will email them a solution shortly.${VOICE_TONE_SUFFIX}` },
+  { id: 'healthcare',  label: '🏥 Healthcare',    prompt: `You are a patient intake assistant for a healthcare clinic. Greet patients warmly, ask about their reason for visit (consultation, follow-up, specific symptoms), collect full name, phone number, and preferred appointment time. Reassure them the doctor's office will confirm.${VOICE_TONE_SUFFIX}` },
+  { id: 'restaurant',  label: '🍽️ Restaurant',    prompt: `You are a reservation assistant for a restaurant. Greet callers, ask for party size, preferred date and time, and any special requests (outdoor seating, high chair, dietary needs). Collect name and phone number. Confirm the reservation details back.${VOICE_TONE_SUFFIX}` },
+];
+
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-2">{children}</p>
@@ -363,6 +399,20 @@ export function AgentPanel({
               {/* Prompt */}
               <div>
                 <FieldLabel>System prompt</FieldLabel>
+                {/* Template chips */}
+                <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                  <span className="text-[10px] font-medium mr-1" style={{ color: 'var(--text-muted)' }}>Quick-fill:</span>
+                  {PROMPT_TEMPLATES.map(tpl => (
+                    <button
+                      key={tpl.id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, prompt: tpl.prompt })}
+                      className="px-2.5 py-1 text-[10.5px] font-medium rounded-lg cursor-pointer transition-colors duration-150 bg-[var(--s1)] border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--primary-blue)] hover:text-[var(--primary-blue)] hover:bg-[var(--primary-blue-soft)]"
+                    >
+                      {tpl.label}
+                    </button>
+                  ))}
+                </div>
                 <TextareaInput
                   value={formData.prompt}
                   onChange={(v) => setFormData({ ...formData, prompt: v })}
@@ -507,7 +557,33 @@ export function AgentPanel({
                       ) : (
                         <div className="space-y-3">
                           <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)]/70 mb-1.5">Twilio Phone Number</p>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]/70">Twilio Phone Number</span>
+                              <a
+                                href="https://console.twilio.com/us1/develop/phone-numbers/manage/search"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider transition-all duration-150"
+                                style={{
+                                  background: 'rgba(37,99,235,0.08)',
+                                  border: '1px solid rgba(37,99,235,0.2)',
+                                  color: 'var(--primary-blue)',
+                                  textDecoration: 'none',
+                                }}
+                                onMouseEnter={e => {
+                                  e.currentTarget.style.background = 'rgba(37,99,235,0.14)';
+                                  e.currentTarget.style.borderColor = 'var(--primary-blue)';
+                                  e.currentTarget.style.transform = 'translateY(-1px)';
+                                }}
+                                onMouseLeave={e => {
+                                  e.currentTarget.style.background = 'rgba(37,99,235,0.08)';
+                                  e.currentTarget.style.borderColor = 'rgba(37,99,235,0.2)';
+                                  e.currentTarget.style.transform = 'none';
+                                }}
+                              >
+                                Buy Number ↗
+                              </a>
+                            </div>
                             <input
                               type="text"
                               value={directPhoneNum}
