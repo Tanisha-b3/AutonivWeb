@@ -224,13 +224,15 @@ const StatCard = memo(({ label, value, icon, accentColor, delta, onClick, trend,
         style={{ background: `radial-gradient(circle, rgba(${accentColor},0.08) 0%, transparent 70%)` }}
       />
 
-      <div className="flex items-start justify-between mb-3.5 relative z-10">
-        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
-          {label}
-        </p>
+      <div className="flex items-start justify-between gap-2.5 mb-3.5 relative z-10">
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 block leading-tight">
+            {label}
+          </p>
+        </div>
         <div className="w-8.5 h-8.5 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ background: `rgba(${accentColor},0.10)` }}>
-          <span style={{ color: colorHex }}>{icon}</span>
+          <span style={{ color: colorHex }} className="flex-shrink-0">{icon}</span>
         </div>
       </div>
 

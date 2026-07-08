@@ -529,7 +529,13 @@ export function CreateAgent() {
 
   const filteredVoices = VOICE_OPTIONS;
   const voiceOpt  = VOICE_OPTIONS.find(v => v.value === formData.voiceId);
-  const voiceName = voiceOpt ? voiceOpt.label.split(' - ')[0] : 'Default';
+  let voiceName = 'Default';
+  if (voiceOpt) {
+    const firstPart = voiceOpt.label.split(' - ')[0];
+    const openCount = (firstPart.match(/\(/g) || []).length;
+    const closeCount = (firstPart.match(/\)/g) || []).length;
+    voiceName = firstPart + (openCount > closeCount ? ')' : '');
+  }
 
   useEffect(() => {
     if (!filteredVoices.some(v => v.value === formData.voiceId)) {

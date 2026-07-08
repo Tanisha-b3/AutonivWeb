@@ -295,7 +295,7 @@ export function PublicNavbar() {
       {/* Slide-in drawer */}
       <div
         ref={drawerRef}
-        className="lg:hidden fixed top-0 right-0 h-full z-[100] flex flex-col"
+        className="lg:hidden fixed top-9 right-0 h-full z-[100] flex flex-col"
         style={{
           width: 'min(85vw, 320px)',
           background: 'rgba(255,255,255,0.99)',
@@ -324,7 +324,7 @@ export function PublicNavbar() {
             }}
             aria-label="Autoniv home"
           >
-            <img src={LOGO_SRC} alt="Autoniv" className="h-10 sm:h-12 w-auto object-contain" />
+            <img src={LOGO_SRC} alt="Autoniv" className="h-18 sm:h-14 w-auto object-contain" />
           </Link>
           <button
             onClick={() => setMobileMenuOpen(false)}
@@ -386,8 +386,8 @@ export function PublicNavbar() {
             }}
             className="flex items-center justify-center w-full min-h-[48px] px-4 py-3 text-sm font-bold text-white rounded-xl transition-opacity duration-150 hover:opacity-90"
             style={{
-              background: '#1A56DB',
-              boxShadow: '0 4px 14px rgba(26,86,219,0.2)',
+              background: 'var(--gg)',
+              boxShadow: '0 4px 14px rgba(16,185,129,0.25)',
               border: 'none',
               cursor: 'pointer',
             }}

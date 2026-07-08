@@ -332,8 +332,8 @@ export function UserBilling() {
             <p className="mt-1.5 text-xs sm:text-sm text-slate-500 font-semibold">Manage plan levels, monitor usage quotas, and check invoices</p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <div className="flex items-center rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden shrink-0">
               <button
                 onClick={() => setCurrency('usd')}
                 className={`px-3.5 py-2 text-xs font-bold transition-all cursor-pointer border-none ${currency === 'usd'
@@ -353,8 +353,8 @@ export function UserBilling() {
                 INR
               </button>
             </div>
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200 shadow-sm w-fit">
-              <span className="w-2 h-2 rounded-full animate-pulse bg-emerald-500" />
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200 shadow-sm w-fit whitespace-nowrap shrink-0">
+              <span className="w-2 h-2 rounded-full animate-pulse bg-emerald-500 shrink-0" />
               <span className="text-xs text-slate-700 font-bold">
                 {activePlanConfig.name} Plan Active
               </span>
