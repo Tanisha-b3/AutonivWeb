@@ -65,7 +65,7 @@ export function PublicNavbar() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const navItems = [
+  const navItems: { label: string; href: string; isHash?: boolean; badge?: string; hasDropdown?: boolean }[] = [
     { label: 'How It Works', href: '#how-it-works', isHash: true },
     { label: 'Features', href: '#features', isHash: true },
     { label: 'Services', href: '/services' },
