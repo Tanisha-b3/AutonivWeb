@@ -28,7 +28,12 @@ const fmtLang = (l?: string | null) => (l ? LANG_LABELS[l] || l.toUpperCase() : 
 const resolveVoice = (agent: any) => {
   if (!agent) return 'Default';
   const opt = VOICE_OPTIONS.find(v => v.value === agent.voiceId);
-  if (opt) return opt.label.split(' - ')[0];
+  if (opt) {
+    const firstPart = opt.label.split(' - ')[0];
+    const openCount = (firstPart.match(/\(/g) || []).length;
+    const closeCount = (firstPart.match(/\)/g) || []).length;
+    return firstPart + (openCount > closeCount ? ')' : '');
+  }
   if (agent.voiceId === 'sarvam:bulbul') return 'Sarvam Bulbul';
   if (agent.voiceId?.startsWith('sarvam:')) {
     const sp = agent.voiceId.split(':').pop();
@@ -420,13 +425,13 @@ export function CustomWebCall() {
                   >
                     <div>
                       <div className="flex items-start justify-between gap-4 mb-4">
-                        <div className="flex items-center gap-3.5">
+                        <div className="flex items-center gap-3.5 min-w-0 flex-1">
                           <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 shadow-inner" style={{ background: 'linear-gradient(135deg, #064e3b, #065f46)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
                             {a.type === 'receptionist' ? '📞' : a.type === 'appointment' ? '📅' : '💬'}
                           </div>
-                          <div>
-                            <h4 className="font-bold text-base text-white group-hover:text-emerald-400 transition-colors truncate max-w-[170px]">{a.name}</h4>
-                            <span className="text-[10px] font-mono font-bold tracking-widest text-emerald-400 uppercase">{a.type}</span>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-bold text-base text-white group-hover:text-emerald-400 transition-colors truncate">{a.name}</h4>
+                            <span className="text-[10px] font-mono font-bold tracking-widest text-emerald-400 uppercase block truncate">{a.type}</span>
                           </div>
                         </div>
                         <span className={`w-2 h-2 rounded-full mt-1 ${a.isActive ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' : 'bg-slate-700'}`} />

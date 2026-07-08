@@ -222,7 +222,7 @@ export function Industry({ activeUseCase, setActiveUseCase, openAuth }: Industry
           </Reveal>
 
           {/* ── Tabs Selection ── */}
-          <Reveal className="flex justify-center mb-12 overflow-x-auto pb-4 max-w-full">
+          <Reveal className="flex justify-start lg:justify-center mb-12 overflow-x-auto pb-4 max-w-full px-4 md:px-8">
             <div className="inline-flex bg-slate-100/80 p-1.5 rounded-full border border-slate-200/50 shadow-inner whitespace-nowrap">
               {useCases.map((caseItem, i) => (
                 <button

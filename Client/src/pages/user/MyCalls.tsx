@@ -100,10 +100,12 @@ const StatCard = memo(({ label, value, icon, accentColor, colorHex }: StatCardPr
         transition={{ duration: 0.3 }}
         style={{ background: `radial-gradient(circle, rgba(${accentColor},0.12) 0%, transparent 70%)` }}
       />
-      <div className="flex items-center justify-between mb-3 relative z-10">
-        <span className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-slate-400 group-hover:text-slate-500 transition-colors">{label}</span>
+      <div className="flex items-start justify-between gap-2.5 mb-3 relative z-10">
+        <div className="min-w-0">
+          <span className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-slate-400 group-hover:text-slate-500 transition-colors block leading-tight">{label}</span>
+        </div>
         <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-350 group-hover:scale-110" style={{ background: `rgba(${accentColor},0.1)` }}>
-          <span style={{ color: colorHex }}>{icon}</span>
+          <span style={{ color: colorHex }} className="flex-shrink-0">{icon}</span>
         </div>
       </div>
       <p className="text-2xl font-extrabold text-slate-800 leading-none relative z-10 tracking-tight">{value}</p>

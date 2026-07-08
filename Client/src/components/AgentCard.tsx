@@ -87,7 +87,10 @@ export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, 
   const voiceOpt = VOICE_OPTIONS.find(v => v.value === agent.voiceId);
   let voiceName = 'Default';
   if (voiceOpt) {
-    voiceName = voiceOpt.label.split(' - ')[0];
+    const firstPart = voiceOpt.label.split(' - ')[0];
+    const openCount = (firstPart.match(/\(/g) || []).length;
+    const closeCount = (firstPart.match(/\)/g) || []).length;
+    voiceName = firstPart + (openCount > closeCount ? ')' : '');
   } else if (agent.voiceId === 'sarvam:bulbul') {
     voiceName = 'Sarvam Bulbul (Indic-native)';
   } else if (agent.voiceId && agent.voiceId.startsWith('sarvam:')) {
@@ -132,7 +135,7 @@ export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, 
       <div className="p-5">
         {/* Header */}
         <div className="flex flex-row items-center justify-between gap-3 mb-4.5">
-          <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5 min-w-0 flex-1">
             {/* Icon orb */}
             <div className={`relative w-12 h-12 rounded-2xl bg-gradient-to-br ${config.gradient} flex items-center justify-center shadow-[0_8px_16px_rgba(${config.glowRgb},0.22)] transition-all duration-300 group-hover:scale-105 group-hover:rotate-3 flex-shrink-0`}>
               {config.icon}
@@ -141,11 +144,11 @@ export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, 
               )}
             </div>
 
-            <div className="min-w-0">
-              <h3 className="font-extrabold text-[15px] leading-tight tracking-tight truncate max-w-[155px] text-slate-800 transition-colors duration-200 group-hover:text-blue-600">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-extrabold text-[15px] leading-tight tracking-tight truncate text-slate-800 transition-colors duration-200 group-hover:text-blue-600">
                 {agent.name}
               </h3>
-              <span className="text-[9.5px] font-black uppercase tracking-[0.16em] text-slate-400">
+              <span className="text-[9.5px] font-black uppercase tracking-[0.16em] text-slate-400 block truncate">
                 {config.label}
               </span>
             </div>
@@ -250,97 +253,105 @@ export function AgentCard({ agent, onDelete, onToggle, onAssignPhone, onCallMe, 
         )}
 
         {/* Footer separator line */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-4 border-t border-slate-100 gap-3">
-          {/* Phone badge */}
-          <div className="flex-shrink-0">
-            {(agent.phoneNumberId || agent.phoneNumber) ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9.5px] font-extrabold uppercase tracking-wide border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-xs">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                {agent.phoneNumber || 'Linked'}
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9.5px] font-bold uppercase tracking-wide border border-slate-200 bg-slate-50 text-slate-400">
-                <svg className="w-3 h-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                </svg>
-                No Phone
-              </span>
-            )}
+        <div className="pt-4 border-t border-slate-100 space-y-3">
+          {/* Top Row: Phone Badge & Secondary/Destructive Actions */}
+          <div className="flex items-center justify-between gap-2.5">
+            {/* Phone badge */}
+            <div className="min-w-0">
+              {(agent.phoneNumberId || agent.phoneNumber) ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9.5px] font-extrabold uppercase tracking-wide border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-xs truncate max-w-[170px]" title={agent.phoneNumber}>
+                  <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                  <span className="truncate">{agent.phoneNumber || 'Linked'}</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9.5px] font-bold uppercase tracking-wide border border-slate-200 bg-slate-50 text-slate-400">
+                  <svg className="w-3 h-3 text-slate-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
+                  No Phone
+                </span>
+              )}
+            </div>
+
+            {/* Config & Delete buttons */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {onAssignPhone && (
+                <motion.button
+                  whileHover={{ scale: 1.04, backgroundColor: '#2563EB', color: '#fff', borderColor: '#2563EB' }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => onAssignPhone(agent)}
+                  title="Link Phone"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wide rounded-xl cursor-pointer border transition-all duration-200"
+                  style={{
+                    background: 'rgba(37,99,235,0.06)',
+                    border: '1.5px solid rgba(37,99,235,0.25)',
+                    color: '#2563EB',
+                  }}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                  Link
+                </motion.button>
+              )}
+
+              {onDelete && (
+                <motion.button
+                  whileHover={{ scale: 1.05, backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onDelete(agent.id)}
+                  title="Delete Agent"
+                  className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-200 text-rose-400 border border-slate-200 bg-white"
+                >
+                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </motion.button>
+              )}
+            </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {onWebCall && agent.isActive && (
-              <motion.button
-                whileHover={{ scale: 1.04, boxShadow: '0 4px 14px rgba(37,99,235,0.22)' }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => onWebCall(agent)}
-                title="Web Call"
-                className="flex items-center gap-1.5 px-3.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wide rounded-xl cursor-pointer border-none text-white bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 transition-all duration-300 shadow-sm"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                Web
-              </motion.button>
-            )}
+          {/* Bottom Row: Primary Calling Actions */}
+          {agent.isActive && (onWebCall || (onCallMe && (agent.phoneNumberId || agent.phoneNumber))) && (
+            <div className="flex gap-2 w-full pt-1">
+              {onWebCall && (
+                <motion.button
+                  whileHover={{ scale: 1.02, boxShadow: '0 4px 14px rgba(37,99,235,0.22)' }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => onWebCall(agent)}
+                  title="Web Call"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-extrabold uppercase tracking-wide rounded-xl cursor-pointer border-none text-white bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 transition-all duration-300 shadow-sm"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Web Call
+                </motion.button>
+              )}
 
-            {onCallMe && agent.isActive && (agent.phoneNumberId || agent.phoneNumber) && (
-              <motion.button
-                whileHover={{ scale: 1.04, backgroundColor: '#10B981', color: '#fff', borderColor: '#10B981' }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => onCallMe(agent)}
-                title="Test Call"
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wide rounded-xl cursor-pointer border transition-all duration-200"
-                style={{
-                  background: 'rgba(16,185,129,0.06)',
-                  border: '1.5px solid rgba(16,185,129,0.25)',
-                  color: '#10B981',
-                }}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                Test
-              </motion.button>
-            )}
-
-            {onAssignPhone && (
-              <motion.button
-                whileHover={{ scale: 1.04, backgroundColor: '#2563EB', color: '#fff', borderColor: '#2563EB' }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => onAssignPhone(agent)}
-                title="Link Phone"
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wide rounded-xl cursor-pointer border transition-all duration-200"
-                style={{
-                  background: 'rgba(37,99,235,0.06)',
-                  border: '1.5px solid rgba(37,99,235,0.25)',
-                  color: '#2563EB',
-                }}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                </svg>
-                Link
-              </motion.button>
-            )}
-
-            {onDelete && (
-              <motion.button
-                whileHover={{ scale: 1.08, backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
-                whileTap={{ scale: 0.94 }}
-                onClick={() => onDelete(agent.id)}
-                title="Delete Agent"
-                className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-200 text-rose-400 border border-slate-200 bg-white"
-              >
-                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </motion.button>
-            )}
-          </div>
+              {onCallMe && (agent.phoneNumberId || agent.phoneNumber) && (
+                <motion.button
+                  whileHover={{ scale: 1.02, backgroundColor: '#10B981', color: '#fff', borderColor: '#10B981' }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => onCallMe(agent)}
+                  title="Test Call"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-extrabold uppercase tracking-wide rounded-xl cursor-pointer border transition-all duration-200"
+                  style={{
+                    background: 'rgba(16,185,129,0.06)',
+                    border: '1.5px solid rgba(16,185,129,0.25)',
+                    color: '#10B981',
+                  }}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                  Test Call
+                </motion.button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

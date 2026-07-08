@@ -809,12 +809,12 @@ export function MyAgents() {
           )}
 
           {agents.length > 0 && (
-            <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={openCreate}
                 disabled={atLimit}
-                className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-xs font-bold transition-all shadow-md cursor-pointer ${atLimit
+                className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-xs font-bold transition-all shadow-md cursor-pointer whitespace-nowrap shrink-0 ${atLimit
                     ? 'cursor-not-allowed border-none'
                     : 'text-white btn-cta border-none shadow-md'
                   }`}
@@ -832,7 +832,7 @@ export function MyAgents() {
                 <button
                   type="button"
                   onClick={() => navigate('/dashboard/agents/new-custom')}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-xs font-bold text-slate-700 bg-white border border-slate-200 transition-all shadow-md hover:bg-slate-50 cursor-pointer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-xs font-bold text-slate-700 bg-white border border-slate-200 transition-all shadow-md hover:bg-slate-50 cursor-pointer whitespace-nowrap shrink-0"
                 >
                   <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.4}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
