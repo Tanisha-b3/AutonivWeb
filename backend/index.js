@@ -28,6 +28,7 @@ import chatHistoryRoutes from './routes/chatHistory.js';
 import widgetRoutes from './routes/widget.js';
 import ttsRoutes from './routes/tts.js';
 import { initOrchestrator } from './services/orchestrator.js';
+import { syncWebhookUrls } from './services/vapi.js';
 
 import {
   buildCors,
@@ -146,6 +147,15 @@ app.use(errorHandler);
 (async () => {
   try {
     await connectDb();
+
+    // Sync VAPI assistant webhook URLs on startup
+    try {
+      const syncResult = await syncWebhookUrls();
+      log.info('vapi_webhook_sync_result', syncResult);
+    } catch (err) {
+      log.warn('vapi_webhook_sync_startup_failed', { error: err.message });
+    }
+
     const server = app.listen(PORT, () => {
       log.info('server_started', { port: PORT, env: process.env.NODE_ENV || 'development' });
 

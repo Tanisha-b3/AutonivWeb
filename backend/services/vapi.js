@@ -298,7 +298,7 @@ async function buildAssistantConfig({ name, type, prompt, language, voiceId, use
     model: modelConfig,
     voice,
     ...(transcriber ? { transcriber } : {}),
-    ...(serverUrl ? { serverUrl: getWebhookUrl(serverUrl) } : {}),
+    ...(serverUrl ? { server: { url: getWebhookUrl(serverUrl) } } : {}),
     recordingEnabled: true,
     silenceTimeoutSeconds: 30,
     maxDurationSeconds: 600,
@@ -326,6 +326,47 @@ export async function updateVapiAssistant(assistantId, { name, type, prompt, lan
 export async function deleteVapiAssistant(assistantId) {
   if (!assistantId) throw new Error('[vapi] deleteVapiAssistant: assistantId is required');
   return vapiRequest(`/assistant/${assistantId}`, 'DELETE');
+}
+
+export async function syncWebhookUrls() {
+  const serverUrl = process.env.WEBHOOK_URL || process.env.SERVER_URL;
+  if (!serverUrl) {
+    log.warn('vapi_sync_skip_no_url');
+    return { updated: 0, skipped: 0, errors: 0 };
+  }
+
+  const webhookUrl = getWebhookUrl(serverUrl);
+  const Agent = (await import('../db/models/Agent.js')).default;
+  const agents = await Agent.find({ vapiId: { $ne: null }, useCustomEngine: { $ne: true } }).lean();
+
+  let updated = 0, skipped = 0, errors = 0;
+
+  for (const agent of agents) {
+    try {
+      const fullAssistant = await vapiRequest(`/assistant/${agent.vapiId}`);
+      const currentUrl = fullAssistant.server?.url || fullAssistant.serverUrl || null;
+      if (currentUrl === webhookUrl) {
+        skipped++;
+        continue;
+      }
+
+      // PUT requires the full config — merge server.url into existing config
+      const updatedConfig = { ...fullAssistant, server: { ...(fullAssistant.server || {}), url: webhookUrl } };
+      delete updatedConfig.id;
+      delete updatedConfig.createdAt;
+      delete updatedConfig.updatedAt;
+
+      await vapiRequest(`/assistant/${agent.vapiId}`, 'PUT', updatedConfig);
+      updated++;
+      log.info('vapi_webhook_url_synced', { agentId: agent._id, vapiId: agent.vapiId, from: currentUrl, to: webhookUrl });
+    } catch (err) {
+      errors++;
+      log.warn('vapi_webhook_url_sync_failed', { agentId: agent._id, vapiId: agent.vapiId, error: err.message });
+    }
+  }
+
+  log.info('vapi_webhook_sync_complete', { total: agents.length, updated, skipped, errors });
+  return { updated, skipped, errors };
 }
 
 export async function listVapiAssistants() {
