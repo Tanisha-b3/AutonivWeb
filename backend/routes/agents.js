@@ -404,29 +404,26 @@ router.delete('/:id', async (req, res) => {
     if (!agent) return res.status(404).json({ message: 'Agent not found' });
     if (forbidden) return res.status(403).json({ message: 'Access denied' });
 
-    // Unlink any assigned Vapi phone number first to prevent deletion blocks/orphans on Vapi
-    if (agent.phoneNumberId) {
-      try {
-        await assignAgentToPhone(agent.phoneNumberId, null);
-      } catch (phoneErr) {
-        log.warn('vapi_unlink_phone_during_delete_failed', { error: phoneErr.message, userId: req.user?.userId });
-      }
-    }
-
-    if (agent.vapiId) {
-      try {
-        await deleteVapiAssistant(agent.vapiId);
-      } catch (vapiErr) {
-        log.warn('vapi_delete_agent_failed', { error: vapiErr.message, userId: req.user?.userId });
-      }
-    }
-
     const objId = new mongoose.Types.ObjectId(id);
 
-    const callsToDelete = await Call.find({ agentId: objId }).select('recordingUrl').lean();
-    await deleteRecordings(callsToDelete.map(c => c.recordingUrl));
+    // Run VAPI cleanup, recording fetch, and DB prep in parallel
+    const [, callsToDelete] = await Promise.all([
+      agent.phoneNumberId
+        ? assignAgentToPhone(agent.phoneNumberId, null).catch(e =>
+            log.warn('vapi_unlink_phone_during_delete_failed', { error: e.message, userId: req.user?.userId })
+          )
+        : Promise.resolve(),
+      agent.vapiId
+        ? deleteVapiAssistant(agent.vapiId).catch(e =>
+            log.warn('vapi_delete_agent_failed', { error: e.message, userId: req.user?.userId })
+          )
+        : Promise.resolve(),
+      Call.find({ agentId: objId }).select('recordingUrl').lean(),
+    ]);
 
+    // Delete recordings and DB records in parallel
     await Promise.all([
+      deleteRecordings(callsToDelete.map(c => c.recordingUrl)),
       Lead.deleteMany({ agentId: objId }),
       Appointment.deleteMany({ agentId: objId }),
       Call.deleteMany({ agentId: objId }),
