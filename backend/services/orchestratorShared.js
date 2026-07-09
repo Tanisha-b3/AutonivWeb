@@ -552,12 +552,19 @@ export async function closeAndCleanup({ callSid, agentObj, callStartTime, fullTr
       if (recorder) {
         try {
           const wavBuffer = recorder.getWavBuffer();
-          const filename = `${callSid}.wav`;
-          recordingUrl = await uploadRecording(wavBuffer, filename);
-          console.log(`[Audio Recording] Uploaded recording to Cloudinary: ${recordingUrl}`);
+          console.log(`[Audio Recording] WAV buffer size: ${wavBuffer.length} bytes, maxByteOffset: ${recorder.maxByteOffset}`);
+          if (recorder.maxByteOffset > 0) {
+            const filename = `${callSid}.wav`;
+            recordingUrl = await uploadRecording(wavBuffer, filename);
+            console.log(`[Audio Recording] Uploaded to Cloudinary: ${recordingUrl}`);
+          } else {
+            console.log(`[Audio Recording] No audio data recorded, skipping upload`);
+          }
         } catch (recErr) {
-          console.error('[Audio Recording] Failed to upload to Cloudinary:', recErr.message);
+          console.error('[Audio Recording] Failed to upload to Cloudinary:', recErr.message, recErr.stack);
         }
+      } else {
+        console.log(`[Audio Recording] No recorder instance, skipping`);
       }
 
       const updateData = {

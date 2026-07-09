@@ -9,6 +9,7 @@ import UpgradeRequest from '../db/models/UpgradeRequest.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 import { log } from '../services/logger.js';
 import { containsAbuse } from '../services/contentModeration.js';
+import { deleteRecordings } from '../services/cloudinary.js';
 
 const router = express.Router();
 router.use(authenticate);
@@ -191,6 +192,9 @@ async function handleDeleteUser(message) {
 
   if (!user) return { text: 'User not found. Please provide the email or name of the user to delete.', type: 'error' };
   if (user.email === 'admin@autoniv.ai') return { text: 'Cannot delete the primary admin account.', type: 'error' };
+
+  const callsToDelete = await Call.find({ userId: user._id }).select('recordingUrl').lean();
+  await deleteRecordings(callsToDelete.map(c => c.recordingUrl));
 
   await Promise.all([
     Appointment.deleteMany({ userId: user._id }),

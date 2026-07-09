@@ -9,6 +9,7 @@ import { authenticate, requireAdmin, requireFeature } from '../middleware/auth.j
 import { contentFilter } from '../services/contentModeration.js';
 import { log } from '../services/logger.js';
 import { parsePage, paginatedResponse } from '../services/pagination.js';
+import { deleteRecordings } from '../services/cloudinary.js';
 import {
   createVapiAssistant,
   updateVapiAssistant,
@@ -421,6 +422,9 @@ router.delete('/:id', async (req, res) => {
     }
 
     const objId = new mongoose.Types.ObjectId(id);
+
+    const callsToDelete = await Call.find({ agentId: objId }).select('recordingUrl').lean();
+    await deleteRecordings(callsToDelete.map(c => c.recordingUrl));
 
     await Promise.all([
       Lead.deleteMany({ agentId: objId }),

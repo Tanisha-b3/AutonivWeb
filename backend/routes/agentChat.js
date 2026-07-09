@@ -8,6 +8,7 @@ import Lead from '../db/models/Lead.js';
 import Appointment from '../db/models/Appointment.js';
 import { authenticate, requireFeature } from '../middleware/auth.js';
 import { containsAbuse } from '../services/contentModeration.js';
+import { deleteRecordings } from '../services/cloudinary.js';
 
 const router = express.Router();
 router.use(authenticate);
@@ -174,6 +175,9 @@ async function handleDeleteAgent(text, userId) {
     const names = agents.map(a => `"${a.name}"`).join(', ');
     return { text: `Which agent? You have: ${names}. Example: \`delete agent "My Agent"\``, type: 'info' };
   }
+
+  const callsToDelete = await Call.find({ agentId }).select('recordingUrl').lean();
+  await deleteRecordings(callsToDelete.map(c => c.recordingUrl));
 
   await Promise.all([
     Lead.deleteMany({ agentId }),

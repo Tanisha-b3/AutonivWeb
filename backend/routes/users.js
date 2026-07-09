@@ -12,6 +12,7 @@ import { requireValidObjectId } from '../middleware/validators.js';
 import { contentFilter } from '../services/contentModeration.js';
 import { log, securityEvent } from '../services/logger.js';
 import { parsePage, paginatedResponse } from '../services/pagination.js';
+import { deleteRecordings } from '../services/cloudinary.js';
 import {
   isValidEmail,
   passwordError,
@@ -292,6 +293,9 @@ router.delete('/:id', requireValidObjectId('id'), async (req, res) => {
         return res.status(403).json({ message: 'Admin accounts cannot self-delete' });
       }
     }
+
+    const callsToDelete = await Call.find({ userId: id }).select('recordingUrl').lean();
+    await deleteRecordings(callsToDelete.map(c => c.recordingUrl));
 
     await Appointment.deleteMany({ userId: id });
     await Lead.deleteMany({ userId: id });
