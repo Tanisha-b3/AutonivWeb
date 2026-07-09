@@ -9,11 +9,12 @@ export function Demo() {
   const [demoDone, setDemoDone] = useState(false);
   const demoTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const demoSectionRef = useRef<HTMLDivElement>(null);
   const demoRunningRef = useRef(false);
 
   useEffect(() => { demoRunningRef.current = demoRunning; }, [demoRunning]);
-  useEffect(() => { const container = chatEndRef.current?.parentElement; if (container) container.scrollTop = container.scrollHeight; }, [demoMsgs]);
+  useEffect(() => { const c = chatContainerRef.current; if (c) c.scrollTo({ top: c.scrollHeight, behavior: 'smooth' }); }, [demoMsgs]);
   useEffect(() => () => { demoTimers.current.forEach(clearTimeout); }, []);
 
   const startDemo = () => {
@@ -487,6 +488,7 @@ export function Demo() {
                         </div>
 
                         <div
+                          ref={chatContainerRef}
                           style={{
                             flex: 1,
                             display: "flex",
