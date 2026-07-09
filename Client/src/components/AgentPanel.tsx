@@ -33,7 +33,6 @@ const LANGUAGE_OPTIONS = [
 
 const ENGINE_OPTIONS = [
   { value: 'groq:llama-3.3-70b', label: 'Groq Llama-3.3-70b' },
-  { value: 'gemini:gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
   { value: 'openai:gpt-4o-mini', label: 'OpenAI GPT-4o-mini' },
 ];
 

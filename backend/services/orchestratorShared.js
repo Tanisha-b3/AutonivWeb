@@ -17,6 +17,27 @@ const LANGUAGE_MAP = {
   mr: 'mr', pa: 'pa', or: 'or',
 };
 
+// Groq deprecates/renames model ids over time; stored agent configs and the
+// frontend dropdowns still use short aliases (e.g. `groq:llama-3.3-70b`).
+// Map those to the current, valid Groq model ids so requests don't 404.
+const GROQ_MODEL_ALIASES = {
+  'llama-3.3-70b': 'llama-3.3-70b-versatile',
+  'llama-3.1-70b': 'llama-3.1-70b-versatile',
+  'llama-3.1-8b': 'llama-3.1-8b-instant',
+};
+const GROQ_DEFAULT_MODEL = 'llama-3.3-70b-versatile';
+
+// Voice replies are spoken, so they should be short (1-3 sentences). Capping
+// output tokens keeps turns snappy and slashes per-call token spend. ~160
+// tokens ≈ 3-4 spoken sentences — enough to answer without rambling.
+const MAX_REPLY_TOKENS = 160;
+const REPLY_TEMPERATURE = 0.6;
+
+function resolveGroqModel(modelId) {
+  if (!modelId) return GROQ_DEFAULT_MODEL;
+  return GROQ_MODEL_ALIASES[modelId] || modelId;
+}
+
 export function getLangCode(language) {
   return LANGUAGE_MAP[language] || 'en-IN';
 }
@@ -101,7 +122,8 @@ export class ReconnectingDeepgramWS {
             console.log(`[${this.logPrefix} Final] ${transcript}`);
             this.onTranscript(transcript, true);
           } else {
-            console.log(`[${this.logPrefix} Interim] Interruption detected.`);
+            // Interim (word-by-word) result. Whether this counts as a barge-in
+            // is decided by the handler, which knows if the agent is speaking.
             this.onInterruption();
           }
         }
@@ -236,6 +258,8 @@ async function requestCompletion(client, modelName, messages, tools, timeoutMs =
       model: modelName,
       messages,
       stream: false,
+      max_tokens: MAX_REPLY_TOKENS,
+      temperature: REPLY_TEMPERATURE,
       ...(tools.length > 0 ? { tools, tool_choice: 'auto' } : {}),
     }, { timeout: timeoutMs });
 
@@ -260,6 +284,8 @@ async function requestCompletion(client, modelName, messages, tools, timeoutMs =
       model: modelName,
       messages,
       stream: true,
+      max_tokens: MAX_REPLY_TOKENS,
+      temperature: REPLY_TEMPERATURE,
       ...(tools.length > 0 ? { tools, tool_choice: 'auto' } : {}),
     }, { timeout: timeoutMs });
   }
@@ -338,12 +364,12 @@ export async function generateCompletion({ groq, openaiClient, gemini, conversat
   } else if (provider === 'openai' && openaiClient) {
     candidates.push({ name: 'OpenAI', client: openaiClient, model: modelId || 'gpt-4o-mini' });
   } else if (groq) {
-    candidates.push({ name: 'Groq', client: groq, model: modelId || 'llama-3.3-70b-versatile' });
+    candidates.push({ name: 'Groq', client: groq, model: resolveGroqModel(modelId) });
   }
 
   // Load backups to candidates list in standard order
   if (groq && !candidates.some(c => c.name === 'Groq')) {
-    candidates.push({ name: 'Groq', client: groq, model: 'llama-3.3-70b-versatile' });
+    candidates.push({ name: 'Groq', client: groq, model: GROQ_DEFAULT_MODEL });
   }
   if (openaiClient && !candidates.some(c => c.name === 'OpenAI')) {
     candidates.push({ name: 'OpenAI', client: openaiClient, model: 'gpt-4o-mini' });

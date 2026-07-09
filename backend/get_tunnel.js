@@ -5,7 +5,9 @@ import path from 'path';
 console.log('🚀 Launching pinggy.link tunnel...');
 
 const ssh = spawn('ssh', [
+  '-p', '443',
   '-o', 'StrictHostKeyChecking=no',
+  '-o', 'UserKnownHostsFile=NUL',
   '-o', 'ServerAliveInterval=30',
   '-R0:localhost:3000',
   'free.pinggy.io'
@@ -16,7 +18,7 @@ ssh.stdout.on('data', (data) => {
   process.stdout.write(output);
 
   // Look for https://....pinggy.link
-  const match = output.match(/https:\/\/[a-z0-9-]+\.pinggy\.link/);
+  const match = output.match(/https:\/\/[a-z0-9.-]+\.pinggy-(?:free\.link|net)/);
   if (match) {
     const url = match[0];
     console.log(`\n\n🎉 Found Tunnel URL: ${url}`);

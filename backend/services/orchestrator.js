@@ -52,8 +52,9 @@ CLINIC INFORMATION (only state what is listed here — never invent details):
 
 YOUR ROLE:
 - Greet the caller warmly and ask what service they need
-- Collect: (1) service needed, (2) preferred date(s), (3) preferred time (morning/afternoon/evening), (4) full name, (5) phone number
-- Confirm the phone number back to the caller
+- Collect: (1) service needed, (2) preferred date(s), (3) preferred time (morning/afternoon/evening), (4) full name, (5) phone number, (6) email address
+- Confirm the phone number and email back to the caller
+- Email is required — you cannot complete a booking without a valid email address
 
 BOOKING FLOW (follow this exact order):
 1. Collect the caller's information naturally through conversation
@@ -77,9 +78,11 @@ Agent: "I'd be happy to help you with that! What date works best for you?"
 Caller: "How about next Tuesday?"
 Agent: "Let me check availability for next Tuesday... I have openings at 10:00 AM and 2:30 PM. Which works better for you?"
 Caller: "10:00 AM please."
-Agent: "Perfect! I just need your full name and phone number to complete the booking."
-Caller: "Sarah Johnson, 555-123-4567."
-Agent: "Thank you, Sarah! I've saved your information. Your appointment for teeth whitening is confirmed for next Tuesday at 10:00 AM. Your reference number is ABC123. You'll receive a confirmation shortly. Is there anything else I can help with?"`,
+Agent: "Perfect! I just need your full name, phone number, and email to complete the booking."
+Caller: "Sarah Johnson, 555-123-4567, sarah.j@email.com."
+Agent: "Thank you, Sarah! Let me confirm — teeth whitening next Tuesday at 10:00 AM, phone 555-123-4567, email sarah.j@email.com. Is that all correct?"
+Caller: "Yes, that's right."
+Agent: "Great, you're booked! Your reference number is ABC123. You'll receive a confirmation shortly. Is there anything else I can help with?"`,
 
     faq: `You are a helpful customer support assistant.
 Answer questions about:
@@ -94,6 +97,13 @@ For unknown answers: "I don't have that right now - our team can help you with t
 
   return defaults[type] || defaults.faq;
 }
+
+// Appended for every appointment agent (including custom-prompt ones) so the
+// booking policy is enforced regardless of what the agent's own prompt says.
+const APPOINTMENT_BOOKING_RULES = `\n\nBOOKING RULES (must always follow):
+1. Email is REQUIRED to book. Always ask for the caller's email, confirm the spelling by reading it back, and never book without a valid one.
+2. Never invent or assume the appointment date or time. You MAY suggest dates/times (e.g. offer available slots from checkAppointmentAvailability), but only call saveAppointment with a date and time the caller has explicitly confirmed out loud.
+3. Before booking, read the full details back — service, date, time, name, phone, and email — and get a clear "yes" from the caller.`;
 
 function interpolatePrompt(prompt, user) {
   if (!prompt || !user) return prompt;
@@ -192,6 +202,12 @@ function handleTwilioStream(twilioWs, urlAgentId) {
   let isProcessing = false;
   let toolAlreadyExecuted = { saveAppointment: false, saveLead: false };
   let cleanedUp = false;
+  // While the agent is speaking, mu-law audio we send to Twilio echoes back on
+  // the inbound leg and Deepgram transcribes it as caller speech (the agent
+  // "hears itself" and answers its own greeting in a loop). We mute the STT
+  // feed for the exact playback duration plus a short tail so that can't happen.
+  let muteInputUntil = 0;
+  const ECHO_TAIL_MS = 600;
   // Records caller (inbound) + agent (outbound) mu-law audio into one track so
   // phone calls produce a recordingUrl, just like the web-call path.
   const recorder = new AudioRecorder(24000); // 24kHz mixed track
@@ -211,7 +227,13 @@ function handleTwilioStream(twilioWs, urlAgentId) {
   };
 
   const triggerInterruption = () => {
+    // Only a barge-in matters: ignore interim transcripts unless the agent is
+    // actively responding, and only fire once per interruption. This stops
+    // routine listening from spuriously cutting the agent off (or spamming
+    // 'clear' events) on every word-by-word interim result.
+    if (!isProcessing || isInterrupted) return;
     isInterrupted = true;
+    console.log('[Interruption] Caller barged in — stopping agent playback.');
     if (twilioWs.readyState === WebSocket.OPEN && streamSid) {
       twilioWs.send(JSON.stringify({ event: 'clear', streamSid }));
     }
@@ -228,8 +250,13 @@ function handleTwilioStream(twilioWs, urlAgentId) {
     try {
       const base64Audio = await synthesizeSpeech(sentence, true, agentObj?.language || 'en', agentObj?.voiceId);
       if (base64Audio && !isInterrupted && twilioWs.readyState === WebSocket.OPEN && streamSid) {
-        recorder.writeMulaw8k(Buffer.from(base64Audio, 'base64'), Date.now());
+        const agentAudio = Buffer.from(base64Audio, 'base64');
+        recorder.writeMulaw8k(agentAudio, Date.now());
         twilioWs.send(JSON.stringify({ event: 'media', streamSid, media: { payload: base64Audio } }));
+        // mu-law @ 8kHz mono = 8 bytes/ms. Keep the STT feed muted for the
+        // playback duration (+ echo tail) so the agent doesn't hear itself.
+        const playbackMs = agentAudio.length / 8;
+        muteInputUntil = Math.max(muteInputUntil, Date.now() + playbackMs + ECHO_TAIL_MS);
       }
     } catch (err) {
       console.error('[Orchestrator TTS Error] Telephony TTS synthesis failed:', err.message);
@@ -332,6 +359,7 @@ function handleTwilioStream(twilioWs, urlAgentId) {
     const ownerUser = agentObj ? await User.findById(agentObj.userId).lean() : null;
     let systemInstructions = buildSystemPrompt(agentObj?.type || 'receptionist', agentObj?.prompt);
     if (ownerUser) systemInstructions = interpolatePrompt(systemInstructions, ownerUser);
+    if ((agentObj?.type || 'receptionist') === 'appointment') systemInstructions += APPOINTMENT_BOOKING_RULES;
 
     const agentLangName = LANGUAGE_NAMES[agentObj?.language || 'en'] || 'English';
     systemInstructions += `\n\nMULTILINGUAL & HUMAN SPEECH RULES:
@@ -348,7 +376,13 @@ function handleTwilioStream(twilioWs, urlAgentId) {
     console.log(`[Twilio WS] Playing greeting: "${greetingText}"`);
     conversationHistory.push({ role: 'assistant', content: greetingText });
     fullTranscript += `Agent: ${greetingText}\n`;
-    await processSentenceForPlay(greetingText);
+    // Mark the agent as speaking so the caller can barge in over the greeting.
+    isProcessing = true;
+    try {
+      await processSentenceForPlay(greetingText);
+    } finally {
+      isProcessing = false;
+    }
   };
 
   twilioWs.on('message', async (message) => {
@@ -377,6 +411,10 @@ function handleTwilioStream(twilioWs, urlAgentId) {
         case 'media': {
           const inboundMulaw = Buffer.from(data.media.payload, 'base64');
           recorder.writeMulaw8k(inboundMulaw, Date.now());
+          // Don't forward to STT while the agent is speaking (+ echo tail):
+          // this is the agent's own voice bleeding back, not the caller.
+          // Still recorded above so the call recording stays complete.
+          if (Date.now() < muteInputUntil) break;
           if (deepgramWs && deepgramWs.readyState === WebSocket.OPEN) {
             deepgramWs.send(inboundMulaw);
           }
@@ -469,7 +507,13 @@ async function handleWebCall(clientWs, req) {
   }
 
   const triggerInterruption = () => {
+    // Only a barge-in matters: ignore interim transcripts unless the agent is
+    // actively responding, and only fire once per interruption. This stops
+    // routine listening from spuriously cutting the agent off (or spamming
+    // 'clear' events) on every word-by-word interim result.
+    if (!isProcessing || isInterrupted) return;
     isInterrupted = true;
+    console.log('[Interruption] Caller barged in — stopping agent playback.');
     if (clientWs.readyState === WebSocket.OPEN) {
       clientWs.send(JSON.stringify({ event: 'clear' }));
     }
@@ -567,6 +611,7 @@ async function handleWebCall(clientWs, req) {
     const ownerUser = await User.findById(agentObj.userId).lean();
     let systemInstructions = buildSystemPrompt(agentObj.type, agentObj.prompt);
     if (ownerUser) systemInstructions = interpolatePrompt(systemInstructions, ownerUser);
+    if (agentObj.type === 'appointment') systemInstructions += APPOINTMENT_BOOKING_RULES;
 
     const agentLangName = LANGUAGE_NAMES[agentObj?.language || 'en'] || 'English';
     systemInstructions += `\n\nMULTILINGUAL & HUMAN SPEECH RULES:
@@ -587,7 +632,13 @@ async function handleWebCall(clientWs, req) {
     if (clientWs.readyState === WebSocket.OPEN) {
       clientWs.send(JSON.stringify({ event: 'transcript', role: 'agent', text: greetingText }));
     }
-    await processSentenceForPlay(greetingText);
+    // Mark the agent as speaking so the caller can barge in over the greeting.
+    isProcessing = true;
+    try {
+      await processSentenceForPlay(greetingText);
+    } finally {
+      isProcessing = false;
+    }
   };
 
   try {

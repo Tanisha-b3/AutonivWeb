@@ -1,4 +1,18 @@
-const BARS = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+// Each bar has its own peak height, animation speed and delay so the
+// equalizer reads as a live audio meter rather than a synchronized wave.
+const BARS = [
+  { peak: 0.55, dur: 1.05, delay: 0.0 },
+  { peak: 0.8, dur: 0.82, delay: 0.18 },
+  { peak: 0.45, dur: 1.25, delay: 0.05 },
+  { peak: 1.0, dur: 0.7, delay: 0.32 },
+  { peak: 0.65, dur: 0.95, delay: 0.12 },
+  { peak: 0.95, dur: 0.76, delay: 0.28 },
+  { peak: 0.5, dur: 1.15, delay: 0.02 },
+  { peak: 0.78, dur: 0.88, delay: 0.22 },
+  { peak: 0.6, dur: 1.0, delay: 0.09 },
+];
+
+const MAX_BAR_HEIGHT = 48;
 
 export default function AutonivLoadingScreen() {
   return (
@@ -10,7 +24,7 @@ export default function AutonivLoadingScreen() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 44,
+        gap: 40,
         background:
           'radial-gradient(900px 500px at 50% 30%, #131a2e 0%, #0b1120 55%, #060912 100%)',
         overflow: 'hidden',
@@ -51,51 +65,84 @@ export default function AutonivLoadingScreen() {
           display: 'flex',
           alignItems: 'center',
           gap: 6,
-          height: 48,
+          height: MAX_BAR_HEIGHT,
         }}
       >
-        {BARS.map((i) => {
-          // Symmetric height falloff from the center bar
-          const distance = Math.abs(i - (BARS.length - 1) / 2);
-          const peak = 44 - distance * 5;
-          return (
-            <span
-              key={i}
-              style={{
-                display: 'block',
-                width: 5,
-                height: peak,
-                borderRadius: 999,
-                background: 'linear-gradient(180deg, #818cf8 0%, #8b5cf6 55%, #22c55e 100%)',
-                transformOrigin: 'center',
-                animation: 'auto-eq 1.1s ease-in-out infinite',
-                animationDelay: `${i * 0.09}s`,
-                boxShadow: '0 0 12px rgba(139,92,246,0.35)',
-              }}
-            />
-          );
-        })}
+        {BARS.map((bar, i) => (
+          <span
+            key={i}
+            style={{
+              display: 'block',
+              width: 5,
+              height: MAX_BAR_HEIGHT,
+              // The base height sets each bar's ceiling; the animation
+              // scales between a low floor and that ceiling.
+              maxHeight: Math.round(MAX_BAR_HEIGHT * bar.peak),
+              borderRadius: 999,
+              background:
+                'linear-gradient(180deg, #818cf8 0%, #8b5cf6 55%, #22c55e 100%)',
+              transformOrigin: 'center',
+              animation: `auto-eq ${bar.dur}s ease-in-out ${bar.delay}s infinite`,
+              boxShadow: '0 0 12px rgba(139,92,246,0.35)',
+            }}
+          />
+        ))}
       </div>
 
-      {/* Label */}
-      <span
+      {/* Label + indeterminate progress track */}
+      <div
         style={{
           position: 'relative',
-          fontFamily: 'Inter, system-ui, sans-serif',
-          fontSize: 12.5,
-          fontWeight: 500,
-          letterSpacing: '0.22em',
-          textTransform: 'uppercase',
-          color: 'rgba(148,163,184,0.75)',
-          animation: 'auto-fade 0.9s ease',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 16,
         }}
       >
-        Preparing your workspace
-      </span>
+        <span
+          style={{
+            fontFamily: 'Inter, system-ui, sans-serif',
+            fontSize: 12.5,
+            fontWeight: 500,
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: 'rgba(148,163,184,0.75)',
+            animation: 'auto-fade 0.9s ease',
+          }}
+        >
+          Preparing your workspace
+        </span>
+
+        <div
+          style={{
+            position: 'relative',
+            width: 180,
+            height: 2,
+            borderRadius: 999,
+            background: 'rgba(148,163,184,0.14)',
+            overflow: 'hidden',
+            animation: 'auto-fade 1.2s ease',
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              height: '100%',
+              width: '40%',
+              borderRadius: 999,
+              background:
+                'linear-gradient(90deg, transparent 0%, #818cf8 50%, #22c55e 100%)',
+              animation: 'auto-progress 1.4s ease-in-out infinite',
+            }}
+          />
+        </div>
+      </div>
 
       <style>{`
         @keyframes auto-eq {
-          0%, 100% { transform: scaleY(0.35); opacity: 0.7; }
+          0%, 100% { transform: scaleY(0.28); opacity: 0.7; }
           50%      { transform: scaleY(1);    opacity: 1; }
         }
         @keyframes auto-breathe {
@@ -109,6 +156,10 @@ export default function AutonivLoadingScreen() {
         @keyframes auto-fade {
           from { opacity: 0; }
           to   { opacity: 1; }
+        }
+        @keyframes auto-progress {
+          0%   { transform: translateX(-100%); }
+          100% { transform: translateX(350%); }
         }
         @media (prefers-reduced-motion: reduce) {
           img, span, div { animation: none !important; }

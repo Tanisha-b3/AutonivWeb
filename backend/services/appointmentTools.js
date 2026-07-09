@@ -126,8 +126,8 @@ const APPOINTMENT_TOOLS = [
         type: 'object',
         properties: {
           provider: { type: 'string', description: 'preferred staff member (dentist/doctor/stylist), optional' },
-          date: { type: 'string', description: 'preferred date as stated by the caller (e.g. 2026-08-15)' },
-          time: { type: 'string', description: 'preferred time, e.g. "4:30 PM"' },
+          date: { type: 'string', description: 'The date to check (e.g. 2026-08-15) — either the one the caller asked for or one you want to propose to them. You may suggest dates, but never book one until the caller confirms.' },
+          time: { type: 'string', description: 'The time to check, e.g. "4:30 PM" — either the caller\'s requested time or one you want to propose. You may suggest times, but never book one until the caller confirms.' },
         },
         required: ['date'],
       },
@@ -143,14 +143,14 @@ const APPOINTMENT_TOOLS = [
         properties: {
           name: { type: 'string', description: 'The real full name of the caller as shared during the call. Never use placeholders.' },
           phone: { type: 'string', description: 'The actual phone number of the caller. Never use placeholders.' },
-          email: { type: 'string', description: 'The actual email address of the caller if provided.' },
+          email: { type: 'string', description: 'The caller\'s real email address. REQUIRED — you must ask for and confirm it before booking. Never use a placeholder.' },
           patientType: { type: 'string', description: 'new or existing customer/patient' },
           reason: { type: 'string', description: 'reason for visit / service' },
           provider: { type: 'string', description: 'preferred staff member (dentist/doctor/stylist), optional' },
-          date: { type: 'string', description: 'The confirmed appointment date (e.g. 2026-08-15)' },
-          time: { type: 'string', description: 'The confirmed appointment time (e.g. 10:00 AM)' },
+          date: { type: 'string', description: 'The date the caller CONFIRMED out loud (e.g. 2026-08-15). Only book a slot the caller has explicitly agreed to — never one you assumed or that they have not confirmed.' },
+          time: { type: 'string', description: 'The time the caller CONFIRMED out loud (e.g. 10:00 AM). Only book a slot the caller has explicitly agreed to — never one you assumed or that they have not confirmed.' },
         },
-        required: ['name', 'phone', 'date', 'time', 'reason'],
+        required: ['name', 'phone', 'email', 'date', 'time', 'reason'],
       },
     },
   },
@@ -214,9 +214,34 @@ const APPOINTMENT_TOOLS = [
   },
 ];
 
+// LLMs routinely emit `null` for optional params they choose not to fill (e.g.
+// `provider: null`). Strict schemas ("type": "string") make the provider-side
+// validator reject the whole tool call. Widen every non-required property to
+// also accept null so those calls validate; the dispatcher already treats null
+// as "not provided".
+function allowNullableOptionals(tools) {
+  return tools.map((tool) => {
+    const params = tool.function?.parameters;
+    if (!params?.properties) return tool;
+    const required = new Set(params.required || []);
+    const properties = {};
+    for (const [key, schema] of Object.entries(params.properties)) {
+      if (required.has(key) || !schema?.type) {
+        properties[key] = schema;
+        continue;
+      }
+      const types = Array.isArray(schema.type) ? schema.type : [schema.type];
+      properties[key] = types.includes('null')
+        ? schema
+        : { ...schema, type: [...types, 'null'] };
+    }
+    return { ...tool, function: { ...tool.function, parameters: { ...params, properties } } };
+  });
+}
+
 export function getToolDefinitions(agentType) {
-  if (agentType === 'appointment') return APPOINTMENT_TOOLS;
-  if (agentType === 'receptionist' || agentType === 'faq') return [LEAD_TOOL];
+  if (agentType === 'appointment') return allowNullableOptionals(APPOINTMENT_TOOLS);
+  if (agentType === 'receptionist' || agentType === 'faq') return allowNullableOptionals([LEAD_TOOL]);
   return [];
 }
 
@@ -385,6 +410,14 @@ export async function executeTool(name, args, ctx) {
           return { success: false, error: 'Cannot book appointment with unknown contact details. Please ask the caller for their name and phone number first.' };
         }
 
+        // Email is mandatory for booking. Reject missing/placeholder/malformed
+        // addresses so the agent asks for (and confirms) a real one.
+        const email = pick(args, 'email');
+        const isValidEmail = (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(val).trim());
+        if (isUnknown(email) || !isValidEmail(email)) {
+          return { success: false, error: 'An email address is required to book. Please ask the caller for their email, confirm the spelling, then book.' };
+        }
+
         if ((customerName && containsAbuse(customerName)) || (service && containsAbuse(service))) {
           return { success: false, error: 'Content policy violation' };
         }
@@ -436,7 +469,7 @@ export async function executeTool(name, args, ctx) {
           userId,
           name: customerName ? sanitizeText(safeString(customerName, 200)) : null,
           phone: safePhone,
-          email: pick(args, 'email') ? safeString(args.email, 254) : null,
+          email: safeString(email, 254),
           service: sanitizedService,
           provider: provider ? sanitizeText(safeString(provider, 100)) : null,
           patientType: patientType ? safeString(patientType, 50) : null,

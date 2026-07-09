@@ -115,11 +115,18 @@ router.put('/:id', requireValidObjectId('id'), contentFilter('name', 'service'),
       .populate('agentId', 'name')
       .lean();
 
-    if (status === 'confirmed' && updated.email) {
+    if (status === 'confirmed') {
+      if (updated.email) {
+        try {
+          await sendAppointmentEmail({ to: updated.email, appointment: updated });
+        } catch (emailErr) {
+          log.error('appointment_email_failed', { error: emailErr.message, appointmentId: id });
+        }
+      }
       try {
-        await sendAppointmentEmail({ to: updated.email, appointment: updated });
-      } catch (emailErr) {
-        log.error('appointment_email_failed', { error: emailErr.message, appointmentId: id });
+        await sendAppointmentConfirmation(updated);
+      } catch (waErr) {
+        log.error('appointment_whatsapp_failed', { error: waErr.message, appointmentId: id });
       }
     }
 
