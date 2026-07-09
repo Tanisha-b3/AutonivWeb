@@ -407,7 +407,7 @@ router.delete('/:id', async (req, res) => {
     const objId = new mongoose.Types.ObjectId(id);
 
     // Run VAPI cleanup, recording fetch, and DB prep in parallel
-    const [, callsToDelete] = await Promise.all([
+    const [phoneResult, vapiResult, callsToDelete] = await Promise.all([
       agent.phoneNumberId
         ? assignAgentToPhone(agent.phoneNumberId, null).catch(e =>
             log.warn('vapi_unlink_phone_during_delete_failed', { error: e.message, userId: req.user?.userId })
