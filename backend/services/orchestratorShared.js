@@ -10,6 +10,7 @@ import User from '../db/models/User.js';
 import { translateText, LANGUAGE_NAMES } from './translate.js';
 import { getToolDefinitions, executeTool } from './appointmentTools.js';
 import { synthesizeSpeech } from './tts.js';
+import { uploadRecording } from './cloudinary.js';
 
 const LANGUAGE_MAP = {
   en: 'en-IN', hi: 'hi', ta: 'ta', te: 'te',
@@ -550,17 +551,12 @@ export async function closeAndCleanup({ callSid, agentObj, callStartTime, fullTr
       let recordingUrl = null;
       if (recorder) {
         try {
-          // Async I/O so the write never blocks the event loop (and every other
-          // live call) the way fs.writeFileSync did.
-          await fs.promises.mkdir('recordings', { recursive: true });
           const wavBuffer = recorder.getWavBuffer();
           const filename = `${callSid}.wav`;
-          const filepath = path.join('recordings', filename);
-          await fs.promises.writeFile(filepath, wavBuffer);
-          recordingUrl = `/api/recordings/${filename}`;
-          console.log(`[Audio Recording] Saved custom call recording to ${filepath}`);
+          recordingUrl = await uploadRecording(wavBuffer, filename);
+          console.log(`[Audio Recording] Uploaded recording to Cloudinary: ${recordingUrl}`);
         } catch (recErr) {
-          console.error('[Audio Recording] Failed to write WAV file:', recErr.message);
+          console.error('[Audio Recording] Failed to upload to Cloudinary:', recErr.message);
         }
       }
 

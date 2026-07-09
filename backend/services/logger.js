@@ -18,6 +18,7 @@ const REDACT_KEYS = [
   'whatsapp_api_key',
   'webhook_secret',
   'vapi_webhook_secret',
+  'cloudinary_api_secret',
 ];
 
 const REDACT_VALUE_PATTERNS = [
