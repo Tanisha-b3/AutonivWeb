@@ -613,7 +613,7 @@ textarea::placeholder {
 }
 
 .landing-page {
-  contain: layout style;
+  /* contain: layout style; — removed: breaks position:fixed for navbar and widget */
 }
 
 .landing-page * {
