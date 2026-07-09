@@ -302,6 +302,24 @@ export async function generateCompletion({ groq, openaiClient, gemini, conversat
     });
   }
 
+  // The appointment management tools (lookup / reschedule / cancel / emergency)
+  // are only needed when the caller actually signals that intent. Booking a new
+  // appointment only needs saveLead + checkAppointmentAvailability + saveAppointment.
+  // Dropping the rest by default roughly halves the tool-schema tokens sent on
+  // every completion — the biggest per-call overhead.
+  const EXTENDED_TOOLS = new Set([
+    'getAppointment', 'updateAppointment', 'cancelAppointment', 'checkEmergencyAvailability',
+  ]);
+  const recentText = conversationHistory
+    .filter(m => m.role === 'user' && typeof m.content === 'string')
+    .slice(-4)
+    .map(m => m.content.toLowerCase())
+    .join(' ');
+  const MANAGEMENT_INTENT = /reschedul|re-schedul|change|move|postpone|cancel|cancle|existing|already|my appointment|look ?up|find my|emergenc|urgent/;
+  if (!MANAGEMENT_INTENT.test(recentText)) {
+    tools = tools.filter(t => !EXTENDED_TOOLS.has(t.function.name));
+  }
+
   // Strip out old tool execution logs to save massive amounts of tokens.
   // We only retain tool call/response messages if they are in the last 4 turns.
   let cleanedMessages = [];
@@ -487,82 +505,18 @@ export async function executeToolCalls({ toolCalls, agentObj, toolAlreadyExecute
   }
 }
 
-export async function generateGreeting({ groq, openaiClient, gemini, systemInstructions, agentType, agentObj }) {
-  const engineSelected = agentObj?.customEngineModel || 'groq:llama-3.3-70b';
-  const [provider] = engineSelected.split(':');
+const FIRST_MESSAGES = {
+  receptionist: 'Thank you for calling, how can I help you today?',
+  appointment: 'Hello! I can help you book an appointment. What service are you looking for today?',
+  faq: 'Hi there! I am here to answer your questions. What would you like to know?',
+};
 
-  let generator;
-  let greetingModel;
-
-  if (provider === 'gemini') {
-    generator = gemini || openaiClient || groq;
-    greetingModel = gemini ? 'gemini-2.5-flash' : (openaiClient ? 'gpt-4o-mini' : 'llama-3.1-8b-instant');
-  } else if (provider === 'openai') {
-    generator = openaiClient || groq || gemini;
-    greetingModel = openaiClient ? 'gpt-4o-mini' : (groq ? 'llama-3.1-8b-instant' : 'gemini-2.5-flash');
-  } else {
-    // Default or groq
-    generator = groq || openaiClient || gemini;
-    greetingModel = groq ? 'llama-3.1-8b-instant' : (openaiClient ? 'gpt-4o-mini' : 'gemini-2.5-flash');
-  }
-
-  const FIRST_MESSAGES = {
-    receptionist: 'Thank you for calling, how can I help you today?',
-    appointment: 'Hello! I can help you book an appointment. What service are you looking for today?',
-    faq: 'Hi there! I am here to answer your questions. What would you like to know?',
-  };
-  let greetingText = FIRST_MESSAGES[agentType] || FIRST_MESSAGES.receptionist;
-
-  if (generator) {
-    try {
-      console.log('[LLM Greeting] Generating custom greeting...');
-      const greetingPrompt = `You are starting a voice call. Generate the greeting message that you will say to the caller, strictly following your system instructions. Do NOT include any explanations, formatting, markdown, or placeholders. Just output the exact sentence you will speak. Keep it to one short sentence.`;
-
-      let completion;
-      try {
-        completion = await generator.chat.completions.create({
-          model: greetingModel,
-          messages: [
-            { role: 'system', content: systemInstructions },
-            { role: 'user', content: greetingPrompt }
-          ],
-          max_tokens: 60,
-          temperature: 0.7,
-        }, { timeout: 8000 });
-      } catch (primaryErr) {
-        const generators = [
-          { name: 'Groq', client: groq, model: 'llama-3.1-8b-instant' },
-          { name: 'OpenAI', client: openaiClient, model: 'gpt-4o-mini' },
-          { name: 'Gemini', client: gemini, model: 'gemini-2.5-flash' },
-        ];
-        const alternative = generators.find(g => g.client && g.client !== generator);
-        if (alternative) {
-          console.warn('[LLM Greeting] Primary failed, falling back:', primaryErr.message);
-          completion = await alternative.client.chat.completions.create({
-            model: alternative.model,
-            messages: [
-              { role: 'system', content: systemInstructions },
-              { role: 'user', content: greetingPrompt }
-            ],
-            max_tokens: 60,
-            temperature: 0.7,
-          }, { timeout: 8000 });
-        } else {
-          throw primaryErr;
-        }
-      }
-
-      const generatedGreeting = completion.choices[0]?.message?.content?.trim();
-      if (generatedGreeting && generatedGreeting.length > 5) {
-        greetingText = generatedGreeting.replace(/^["']|["']$/g, '');
-        console.log(`[Generated Greeting] "${greetingText}"`);
-      }
-    } catch (greetErr) {
-      console.error('[Greeting Generation Error]', greetErr.message);
-    }
-  }
-
-  return greetingText;
+// Static, templated greeting. We deliberately DON'T call an LLM here: an extra
+// completion per call (system prompt re-sent every time) was a large slice of
+// daily token usage, added start-of-call latency, and occasionally produced a
+// truncated line. A fixed greeting is instant, free, and predictable.
+export async function generateGreeting({ agentType }) {
+  return FIRST_MESSAGES[agentType] || FIRST_MESSAGES.receptionist;
 }
 
 export async function translateIfNeeded(systemInstructions, greetingText, language) {

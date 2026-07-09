@@ -100,10 +100,10 @@ For unknown answers: "I don't have that right now - our team can help you with t
 
 // Appended for every appointment agent (including custom-prompt ones) so the
 // booking policy is enforced regardless of what the agent's own prompt says.
-const APPOINTMENT_BOOKING_RULES = `\n\nBOOKING RULES (must always follow):
-1. Email is REQUIRED to book. Always ask for the caller's email, confirm the spelling by reading it back, and never book without a valid one.
-2. Never invent or assume the appointment date or time. You MAY suggest dates/times (e.g. offer available slots from checkAppointmentAvailability), but only call saveAppointment with a date and time the caller has explicitly confirmed out loud.
-3. Before booking, read the full details back — service, date, time, name, phone, and email — and get a clear "yes" from the caller.`;
+const APPOINTMENT_BOOKING_RULES = `\n\nBOOKING RULES:
+1. Email is REQUIRED — always ask for and confirm it before booking.
+2. Never invent the date or time. You may suggest slots, but only book what the caller confirms.
+3. Before booking, read back service, date, time, name, phone, and email, and get a clear "yes".`;
 
 function interpolatePrompt(prompt, user) {
   if (!prompt || !user) return prompt;
@@ -202,6 +202,11 @@ function handleTwilioStream(twilioWs, urlAgentId) {
   let isProcessing = false;
   let toolAlreadyExecuted = { saveAppointment: false, saveLead: false };
   let cleanedUp = false;
+  // Twilio stamps every inbound media frame with a monotonic `timestamp` (ms
+  // since stream start). We anchor it to wall-clock once so caller audio is
+  // placed in the recording by true capture time, not jittery arrival time —
+  // otherwise bursts of queued frames overlap-add and sound like scratching.
+  let mediaEpoch = null;
   // While the agent is speaking, mu-law audio we send to Twilio echoes back on
   // the inbound leg and Deepgram transcribes it as caller speech (the agent
   // "hears itself" and answers its own greeting in a loop). We mute the STT
@@ -410,7 +415,17 @@ function handleTwilioStream(twilioWs, urlAgentId) {
           break;
         case 'media': {
           const inboundMulaw = Buffer.from(data.media.payload, 'base64');
-          recorder.writeMulaw8k(inboundMulaw, Date.now());
+          // Place the chunk by Twilio's monotonic media timestamp (jitter-free),
+          // falling back to arrival time only if it's ever missing.
+          const mediaTs = Number(data.media?.timestamp);
+          let recordTs;
+          if (Number.isFinite(mediaTs)) {
+            if (mediaEpoch === null) mediaEpoch = Date.now() - mediaTs;
+            recordTs = mediaEpoch + mediaTs;
+          } else {
+            recordTs = Date.now();
+          }
+          recorder.writeMulaw8k(inboundMulaw, recordTs);
           // Don't forward to STT while the agent is speaking (+ echo tail):
           // this is the agent's own voice bleeding back, not the caller.
           // Still recorded above so the call recording stays complete.
