@@ -4,6 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useAppDispatch, useAppSelector } from '../../hooks/useStore';
 import { fetchMyCalls, syncMyCalls, deleteCall } from '../../store/slices/callsSlice';
 import { DataTable } from '../../components/DataTable';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import type { Column } from '../../components/DataTable';
 import type { Call } from '../../types';
 
@@ -443,6 +444,8 @@ export function MyCalls() {
   const [page, setPage]                 = useState(1);
   const [viewMode, setViewMode]         = useState<'table' | 'cards'>('table');
   const [chartTab, setChartTab]         = useState<'volume' | 'minutes'>('volume');
+  const [deleteTarget, setDeleteTarget] = useState<Call | null>(null);
+  const [deleting, setDeleting]         = useState(false);
 
   useEffect(() => { 
     dispatch(fetchMyCalls({ page, limit: 20 })); 
@@ -466,6 +469,19 @@ export function MyCalls() {
 
   const openCall = (call: Call) => {
     setSelectedCall(call);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await dispatch(deleteCall(deleteTarget.id)).unwrap();
+      setDeleteTarget(null);
+    } catch {
+      // error handled by slice
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const filteredCalls = useMemo(() => {
@@ -663,9 +679,7 @@ export function MyCalls() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (window.confirm('Delete this call and its recording?')) {
-                  dispatch(deleteCall(call.id));
-                }
+                setDeleteTarget(call);
               }}
               className="px-2 py-1.2 text-[10px] font-bold rounded-xl border border-red-200 text-red-500 hover:border-red-350 hover:bg-red-50 hover:text-red-700 bg-white transition-all cursor-pointer btn-press"
             >
@@ -877,6 +891,18 @@ export function MyCalls() {
       <CallDetailsDrawer
         call={selectedCall}
         onClose={() => setSelectedCall(null)}
+      />
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Delete Call"
+        message={`Are you sure you want to delete this call? ${deleteTarget?.recordingUrl ? 'The recording will also be permanently removed.' : 'This action cannot be undone.'}`}
+        confirmLabel="Delete"
+        variant="danger"
+        loading={deleting}
       />
     </div>
   );

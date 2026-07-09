@@ -24,7 +24,7 @@ export default function AutonivLoadingScreen() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 40,
+        gap: 20,
         background:
           'radial-gradient(900px 500px at 50% 30%, #131a2e 0%, #0b1120 55%, #060912 100%)',
         overflow: 'hidden',
@@ -45,18 +45,26 @@ export default function AutonivLoadingScreen() {
         }}
       />
 
-      {/* Logo */}
-      <img
-        src="/logo-autoniv.png"
-        alt="Autoniv"
+      {/* Logo + Brand */}
+      <div
         style={{
           position: 'relative',
-          height: 120,
-          width: 'auto',
-          objectFit: 'contain',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
           animation: 'auto-rise 0.7s cubic-bezier(0.22,1,0.36,1)',
         }}
-      />
+      >
+        <img
+          src="/logo-autoniv.png"
+          alt="Autoniv"
+          style={{
+            height: 180,
+            width: 'auto',
+            objectFit: 'contain',
+          }}
+        />
+      </div>
 
       {/* Voice equalizer — the product motif */}
       <div
@@ -79,8 +87,8 @@ export default function AutonivLoadingScreen() {
               // scales between a low floor and that ceiling.
               maxHeight: Math.round(MAX_BAR_HEIGHT * bar.peak),
               borderRadius: 999,
-              background:
-                'linear-gradient(180deg, #818cf8 0%, #8b5cf6 55%, #22c55e 100%)',
+                background:
+                  'linear-gradient(180deg, #10b981 0%, #06b6d4 55%, #3b82f6 100%)',
               transformOrigin: 'center',
               animation: `auto-eq ${bar.dur}s ease-in-out ${bar.delay}s infinite`,
               boxShadow: '0 0 12px rgba(139,92,246,0.35)',
