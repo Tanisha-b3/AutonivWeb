@@ -58,10 +58,9 @@ function TimelineStep({
 
         {/* Top hairline shimmer */}
         {active && (
-          <motion.div
-            className="absolute inset-x-0 top-0 h-[2px] pointer-events-none"
+          <div
+            className="absolute inset-x-0 top-0 h-[2px] pointer-events-none transition-opacity duration-300"
             style={{ background: `linear-gradient(90deg, transparent, ${color}, transparent)` }}
-            layoutId="stepHairline"
           />
         )}
 

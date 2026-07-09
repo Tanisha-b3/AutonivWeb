@@ -31,20 +31,14 @@ export function Blog() {
               const tagStyle = tagStyles[post.tag as keyof typeof tagStyles] || tagStyles.Product;
               return (
                 <Reveal key={i} delay={i * 0.1}>
-                  <div className="rounded-3xl overflow-hidden transition-all duration-500 group cursor-pointer flex flex-col h-full"
+                  <div className="rounded-3xl overflow-hidden transition-all duration-500 group cursor-pointer flex flex-col h-full hover:-translate-y-1.5 hover:shadow-xl"
                     style={{ 
                       background: "#ffffff", 
                       border: "1px solid rgba(15, 23, 42, 0.08)", 
-                      boxShadow: "0 15px 35px -15px rgba(15, 23, 42, 0.04)" 
+                      boxShadow: "0 15px 35px -15px rgba(15, 23, 42, 0.04)",
+                      willChange: "transform",
                     }}
-                    onMouseEnter={(e) => { 
-                      e.currentTarget.style.boxShadow = "0 30px 60px -20px rgba(37,99,235,0.12), 0 0 0 1px rgba(37,99,235,0.15)"; 
-                      e.currentTarget.style.transform = "translateY(-6px)"; 
-                    }}
-                    onMouseLeave={(e) => { 
-                      e.currentTarget.style.boxShadow = "0 15px 35px -15px rgba(15, 23, 42, 0.04)"; 
-                      e.currentTarget.style.transform = "translateY(0)"; 
-                    }}>
+                  >
                     <div className="h-40 w-full flex items-center justify-center text-5xl relative overflow-hidden transition-all duration-500" 
                       style={{ background: `linear-gradient(135deg, rgba(37,99,235,${0.06 + i * 0.02}), rgba(16,185,129,${0.04 + i * 0.02}))` }}>
                       <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: "radial-gradient(rgba(0,0,0,0.15) 1px, transparent 1px)", backgroundSize: "16px 16px" }} />

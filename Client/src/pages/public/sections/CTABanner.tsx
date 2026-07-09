@@ -44,14 +44,14 @@ function AnimatedStat({ n, l, delay }: { n: string; l: string; delay: number }) 
 
 function ParticleField() {
   const particles = useMemo(() => {
-    const seed = [12, 45, 78, 23, 56, 89, 34, 67, 90, 11];
+    const seed = [12, 45, 78, 23, 56];
     return seed.map((s, i) => ({
       id: i,
       x: `${(s * 7) % 100}%`,
       y: `${(s * 13) % 100}%`,
       size: (s % 3) + 1,
       delay: (s % 50) / 10,
-      duration: (s % 8) + 6,
+      duration: (s % 8) + 8,
     }));
   }, []);
 
@@ -89,27 +89,23 @@ function MorphingBlob({ color, delay = 0 }: { color: string; delay?: number }) {
     <motion.div
       className="absolute pointer-events-none"
       animate={{
-        borderRadius: [
-          "30% 70% 70% 30% / 30% 30% 70% 70%",
-          "50% 50% 20% 80% / 25% 80% 20% 75%",
-          "60% 40% 30% 70% / 60% 30% 70% 40%",
-          "30% 70% 70% 30% / 30% 30% 70% 70%",
-        ],
-        x: [0, 30, -20, 0],
-        y: [0, -20, 15, 0],
-        scale: [1, 1.1, 0.95, 1],
+        x: [0, 20, -15, 0],
+        y: [0, -15, 10, 0],
+        scale: [1, 1.05, 0.97, 1],
       }}
       transition={{
-        duration: 12,
+        duration: 16,
         delay,
         repeat: Infinity,
         ease: "easeInOut",
       }}
       style={{
-        width: 300,
-        height: 300,
-        background: `radial-gradient(circle, ${color}30, transparent 70%)`,
+        width: 250,
+        height: 250,
+        borderRadius: "50%",
+        background: `radial-gradient(circle, ${color}25, transparent 70%)`,
         willChange: "transform",
+        filter: "blur(40px)",
       }}
     />
   );

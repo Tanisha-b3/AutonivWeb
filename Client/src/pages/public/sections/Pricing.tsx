@@ -194,19 +194,25 @@ export function Pricing() {
                   transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                   className={`relative flex flex-col h-full rounded-3xl overflow-hidden transition-all duration-500 border cursor-default group`}
                   style={{
-                    borderColor: plan.highlight ? planColor : 'rgba(255, 255, 255, 0.06)',
-                    boxShadow: plan.highlight ? `0 20px 50px -12px ${planColor}30, inset 0 0 20px rgba(255,255,255,0.02)` : '0 10px 30px -15px rgba(0,0,0,0.3)',
+                    borderColor: plan.highlight ? planColor : mode === 'chat' ? 'rgba(59,130,246,0.15)' : 'rgba(255, 255, 255, 0.06)',
+                    boxShadow: plan.highlight 
+                      ? `0 20px 50px -12px ${planColor}30, inset 0 0 20px rgba(255,255,255,0.02)` 
+                      : mode === 'chat' 
+                        ? '0 10px 30px -15px rgba(59,130,246,0.15)' 
+                        : '0 10px 30px -15px rgba(0,0,0,0.3)',
                     background: plan.highlight 
                       ? 'linear-gradient(180deg, rgba(13,27,42,0.8) 0%, rgba(13,27,42,0.3) 100%)' 
-                      : 'linear-gradient(180deg, rgba(10,15,30,0.6) 0%, rgba(10,15,30,0.3) 100%)'
+                      : mode === 'chat'
+                        ? 'linear-gradient(180deg, rgba(15,23,42,0.6) 0%, rgba(15,23,42,0.3) 100%)'
+                        : 'linear-gradient(180deg, rgba(10,15,30,0.6) 0%, rgba(10,15,30,0.3) 100%)'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = planColor;
                     e.currentTarget.style.boxShadow = `0 30px 60px -15px ${planColor}45, inset 0 0 20px rgba(255,255,255,0.05)`;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = plan.highlight ? planColor : 'rgba(255, 255, 255, 0.06)';
-                    e.currentTarget.style.boxShadow = plan.highlight ? `0 20px 50px -12px ${planColor}30, inset 0 0 20px rgba(255,255,255,0.02)` : '0 10px 30px -15px rgba(0,0,0,0.3)';
+                    e.currentTarget.style.borderColor = plan.highlight ? planColor : mode === 'chat' ? 'rgba(59,130,246,0.15)' : 'rgba(255, 255, 255, 0.06)';
+                    e.currentTarget.style.boxShadow = plan.highlight ? `0 20px 50px -12px ${planColor}30, inset 0 0 20px rgba(255,255,255,0.02)` : mode === 'chat' ? '0 10px 30px -15px rgba(59,130,246,0.15)' : '0 10px 30px -15px rgba(0,0,0,0.3)';
                   }}
                 >
                   {/* Badge */}
@@ -215,8 +221,19 @@ export function Pricing() {
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.4, delay: 0.2 }}
-                      className="absolute top-0 left-1/2 -translate-x-1/2 px-5 py-1 rounded-b-xl text-[10px] font-bold text-white uppercase tracking-widest"
-                      style={{ background: plan.highlight ? `linear-gradient(135deg, ${planColor}, #2563EB)` : 'rgba(255,255,255,0.08)' }}
+                      className="absolute top-0 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-b-xl text-[10px] font-bold text-white uppercase tracking-widest"
+                      style={{ 
+                        background: plan.highlight 
+                          ? `linear-gradient(135deg, ${planColor}, #2563EB)` 
+                          : mode === 'chat' 
+                            ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' 
+                            : 'rgba(255,255,255,0.08)',
+                        boxShadow: plan.highlight 
+                          ? `0 4px 12px ${planColor}40` 
+                          : mode === 'chat' 
+                            ? '0 4px 12px rgba(59,130,246,0.3)' 
+                            : 'none'
+                      }}
                     >
                       {plan.badge}
                     </motion.div>
@@ -226,10 +243,11 @@ export function Pricing() {
                   <div className={`p-6 flex-1 ${plan.badge ? 'pt-10' : ''}`}>
                     {/* Plan type label */}
                     <div className="mb-3">
-                      <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-1 rounded"
+                      <span className="text-[11px] font-bold tracking-wider uppercase px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5"
                         style={{
-                          background: mode === 'chat' ? 'rgba(100,116,139,0.1)' : mode === 'voice' ? 'rgba(16,185,129,0.1)' : 'rgba(139,92,246,0.1)',
-                          color: mode === 'chat' ? '#64748b' : mode === 'voice' ? '#10B981' : '#8b5cf6',
+                          background: mode === 'chat' ? 'rgba(59,130,246,0.12)' : mode === 'voice' ? 'rgba(16,185,129,0.12)' : 'rgba(139,92,246,0.12)',
+                          color: mode === 'chat' ? '#60a5fa' : mode === 'voice' ? '#34d399' : '#a78bfa',
+                          border: `1px solid ${mode === 'chat' ? 'rgba(59,130,246,0.25)' : mode === 'voice' ? 'rgba(16,185,129,0.25)' : 'rgba(139,92,246,0.25)'}`,
                         }}
                       >
                         {mode === 'chat' ? '💬 For Chat' : mode === 'voice' ? '🎙️ For Voice' : '💬🎙️ Voice + Chat'}
@@ -321,7 +339,13 @@ export function Pricing() {
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => window.location.href = '/contact'}
+                      onClick={() => {
+                        const el = document.getElementById('contact');
+                        if (el) {
+                          const y = el.getBoundingClientRect().top + window.scrollY - 72;
+                          window.scrollTo({ top: y, behavior: 'smooth' });
+                        }
+                      }}
                       className={`w-full font-bold text-xs py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
                         plan.highlight
                           ? "bg-gradient-to-r from-blue-600 to-emerald-500 text-white hover:shadow-lg hover:shadow-emerald-500/25"
@@ -358,12 +382,32 @@ export function Pricing() {
         </Reveal>
 
         {/* Footer Link */}
-        <p className="text-center text-xs mt-8 text-slate-500">
-          All plans include 99.9% uptime SLA and zero setup fees.{" "}
-          <Link to="/pricing" className="font-semibold text-emerald-400 hover:text-emerald-300 transition-colors">
-            View full pricing →
+        <div className="flex flex-col items-center gap-3 mt-8">
+          <p className="text-center text-xs text-slate-500">
+            All plans include 99.9% uptime SLA and zero setup fees.
+          </p>
+          <Link
+            to="/pricing"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white transition-all duration-300"
+            style={{
+              background: "var(--gg)",
+              boxShadow: "0 4px 14px rgba(16,185,129,0.25)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 8px 24px rgba(16,185,129,0.35)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 4px 14px rgba(16,185,129,0.25)";
+            }}
+          >
+            View full pricing
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
           </Link>
-        </p>
+        </div>
       </div>
     </section>
   );

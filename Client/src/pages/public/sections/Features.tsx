@@ -5,16 +5,16 @@ import { CountUp, GradientText } from "./anim";
 import { EASE_OUT } from "./motionConstants";
 
 const cardAnimations = [
-  // Card 1: Slide from left
-  { hidden: { opacity: 0, x: -60, rotateY: -15 }, visible: { opacity: 1, x: 0, rotateY: 0 } },
+  // Card 1: Slide from left (transform-only for GPU)
+  { hidden: { opacity: 0, x: -60 }, visible: { opacity: 1, x: 0 } },
   // Card 2: Fade up with scale
   { hidden: { opacity: 0, y: 40, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1 } },
   // Card 3: Scale with bounce
   { hidden: { opacity: 0, scale: 0.7 }, visible: { opacity: 1, scale: 1 } },
-  // Card 4: Rotate in 3D
-  { hidden: { opacity: 0, rotateX: -40, rotateY: 20, scale: 0.85 }, visible: { opacity: 1, rotateX: 0, rotateY: 0, scale: 1 } },
+  // Card 4: Fade up from below (safe for mobile, no 3D)
+  { hidden: { opacity: 0, y: 50, scale: 0.9 }, visible: { opacity: 1, y: 0, scale: 1 } },
   // Card 5: Rise with glow
-  { hidden: { opacity: 0, y: 60, boxShadow: "0 0 0 rgba(0,0,0,0)" }, visible: { opacity: 1, y: 0, boxShadow: "0 20px 40px rgba(0,0,0,0.08)" } },
+  { hidden: { opacity: 0, y: 60 }, visible: { opacity: 1, y: 0 } },
   // Card 6: Fade up (safe for mobile)
   { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } },
 ];
@@ -140,26 +140,12 @@ function FeatureCard({ feature, index }: { feature: typeof features[0]; index: n
       style={{ perspective: 1000 }}
     >
       <div
-        className="group relative p-7 rounded-2xl overflow-hidden h-full cursor-default transition-all duration-500 flex flex-col justify-between"
+        className="group relative p-7 rounded-2xl overflow-hidden h-full cursor-default transition-all duration-500 flex flex-col justify-between hover:-translate-y-1 hover:shadow-lg"
         style={{
           background: "#f8fafc",
           border: "1px solid rgba(37, 99, 235, 0.14)",
           boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.04)",
-          transformStyle: "preserve-3d",
-        }}
-        onMouseEnter={(e) => {
-          const el = e.currentTarget;
-          el.style.transform = "perspective(900px) rotateX(2deg) rotateY(-2deg) translateZ(8px)";
-          el.style.boxShadow = `0 20px 50px -10px ${feature.color}20, 0 0 0 1px ${feature.color}30`;
-          el.style.borderColor = `${feature.color}40`;
-          el.style.background = "#ffffff";
-        }}
-        onMouseLeave={(e) => {
-          const el = e.currentTarget;
-          el.style.transform = "perspective(900px) rotateX(0deg) rotateY(0deg) translateZ(0px)";
-          el.style.boxShadow = "0 10px 30px -10px rgba(0, 0, 0, 0.04)";
-          el.style.borderColor = "rgba(37, 99, 235, 0.14)";
-          el.style.background = "#f8fafc";
+          willChange: "transform",
         }}
       >
         {/* Hover radial wash */}

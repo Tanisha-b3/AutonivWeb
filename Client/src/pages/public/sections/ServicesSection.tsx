@@ -968,7 +968,7 @@ export function Services({ openAuth }: { openAuth?: (mode: 'login' | 'register')
           }}
         >
           <motion.div
-            className="flex flex-wrap items-center justify-center sm:justify-between gap-6"
+            className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6"
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, margin: "-40px" }}
@@ -996,36 +996,53 @@ export function Services({ openAuth }: { openAuth?: (mode: 'login' | 'register')
                   {t.icon}
                 </motion.div>
                 <div>
-                  <p className="text-white font-semibold text-sm leading-tight">
+                  <p className="text-white font-semibold text-xs sm:text-sm leading-tight">
                     {t.label}
                   </p>
-                  <p className="text-slate-500 text-xs mt-0.5">{t.desc}</p>
+                  <p className="text-slate-500 text-[10px] sm:text-xs mt-0.5">{t.desc}</p>
                 </div>
-                {i < trustItems.length - 1 && (
-                  <div className="hidden sm:block w-px h-8 bg-white/[0.06] ml-3" />
-                )}
               </motion.div>
             ))}
           </motion.div>
         </motion.div>
 
         {/* Footer line */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-center text-xs text-slate-600 mt-7"
-        >
-          All plans include a 14-day free trial.{" "}
-          <a
-            href="/services"
-            className="font-semibold transition-opacity hover:opacity-75"
-            style={{ color: "#64ddff" }}
+        <div className="flex flex-col items-center gap-3 mt-7">
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-center text-xs text-slate-600"
           >
-            View full pricing →
-          </a>
-        </motion.p>
+            All Services
+          </motion.p>
+          <motion.a
+            href="/services"
+            initial={{ opacity: 0, y: 8 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white transition-all duration-300 no-underline"
+            style={{
+              background: "linear-gradient(135deg, #2563EB, #10B981)",
+              boxShadow: "0 4px 14px rgba(37,99,235,0.25)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 8px 24px rgba(37,99,235,0.35)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 4px 14px rgba(37,99,235,0.25)";
+            }}
+          >
+            View Services
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </motion.a>
+        </div>
       </div>
     </section>
   );
