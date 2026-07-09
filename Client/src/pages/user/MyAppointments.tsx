@@ -292,7 +292,7 @@ export function MyAppointments() {
               title: 'No appointments found',
               description: 'Appointments booked through your agents will appear here.',
             }}
-            defaultSort={{ key: 'preferredDate', direction: 'desc' }}
+            defaultSort={{ key: 'createdAt', direction: 'desc' }}
             searchable={true}
             searchTerm={search}
             onSearchChange={setSearch}
