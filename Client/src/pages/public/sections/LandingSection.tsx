@@ -49,37 +49,37 @@ export function LandingSection() {
             <Services openAuth={openAuth} />
             <VoiceAgentService />
             <ChatAgentService />
-          <Suspense fallback={null}>
+          <Suspense fallback={<div style={{ minHeight: 500 }} />}>
             <Comparison />
           </Suspense>
-          <Suspense fallback={null}>
+          <Suspense fallback={<div style={{ minHeight: 600 }} />}>
             <div id="how-it-works">
               <HowItWorks openAuth={openAuth} />
             </div>
           </Suspense>
-          <Suspense fallback={null}>
+          <Suspense fallback={<div style={{ minHeight: 600 }} />}>
             <Industry activeUseCase={activeUseCase} setActiveUseCase={setActiveUseCase} openAuth={openAuth} />
           </Suspense>
-          <Suspense fallback={null}>
+          <Suspense fallback={<div style={{ minHeight: 500 }} />}>
             <CaseStudiesSection />
           </Suspense>
-          <Suspense fallback={null}>
+          <Suspense fallback={<div style={{ minHeight: 500 }} />}>
             <Blog />
           </Suspense>
-          <Suspense fallback={null}>
+          <Suspense fallback={<div style={{ minHeight: 600 }} />}>
             <Pricing />
           </Suspense>
-          <Suspense fallback={null}>
+          <Suspense fallback={<div style={{ minHeight: 500 }} />}>
             <Contact />
           </Suspense>
-          
-          <Suspense fallback={null}>
+
+          <Suspense fallback={<div style={{ minHeight: 500 }} />}>
             <Testimonials />
           </Suspense>
-          <Suspense fallback={null}>
+          <Suspense fallback={<div style={{ minHeight: 400 }} />}>
             <FAQ />
           </Suspense>
-          <Suspense fallback={null}>
+          <Suspense fallback={<div style={{ minHeight: 300 }} />}>
             <CTABanner openAuth={openAuth} />
           </Suspense>
         </div>

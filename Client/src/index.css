@@ -563,6 +563,10 @@ textarea::placeholder {
   0%, 100% { transform: scaleY(0.55); }
   50% { transform: scaleY(1); }
 }
+@keyframes bgWaveBounce {
+  0%, 100% { transform: scaleY(0.3); opacity: 0.4; }
+  50% { transform: scaleY(0.8); opacity: 0.7; }
+}
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar-thumb {
@@ -582,9 +586,6 @@ textarea::placeholder {
   overflow: hidden;
   margin: 18px auto;
   scroll-margin-top: 100px;
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
 }
 .section-box.white{
   background: #ffffff;
@@ -612,7 +613,7 @@ textarea::placeholder {
 }
 
 .landing-page {
-  will-change: scroll-position;
+  contain: layout style;
 }
 
 .landing-page * {

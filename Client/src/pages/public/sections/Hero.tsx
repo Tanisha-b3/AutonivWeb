@@ -362,15 +362,17 @@ export function Hero({ openAuth }: { openAuth: (m: "login" | "register") => void
                     onMouseMove={handlePhoneMouseMove}
                     onMouseLeave={handlePhoneMouseLeave}
                   >
+                 {/* Static wrapper handles clip — overflow:hidden on a 3D-animated element forces repaints */}
+                 <div
+                   className="w-[150px] h-[310px] sm:w-[200px] sm:h-[410px] lg:w-[245px] lg:h-[490px] rounded-[28px] sm:rounded-[36px] lg:rounded-[42px] shadow-2xl overflow-hidden"
+                   style={{ transform: "rotate(6deg)" }}
+                 >
                  <motion.div
-      className="w-[150px] h-[310px] sm:w-[200px] sm:h-[410px] lg:w-[245px] lg:h-[490px] bg-[#0a0a0a] rounded-[28px] sm:rounded-[36px] lg:rounded-[42px] border-[4px] sm:border-[6px] lg:border-[7px] border-[#1a1a1a] shadow-2xl relative flex flex-col items-center p-2 sm:p-3 select-none"
+      className="w-full h-full bg-[#0a0a0a] border-[4px] sm:border-[6px] lg:border-[7px] border-[#1a1a1a] relative flex flex-col items-center p-2 sm:p-3 select-none"
       style={{
         rotateX: tiltX,
         rotateY: tiltY,
-        rotate: 6,
         transformPerspective: 1000,
-        transformStyle: "flat",
-        overflow: "hidden",
       }}
     >
       {/* Notch */}
@@ -555,6 +557,7 @@ export function Hero({ openAuth }: { openAuth: (m: "login" | "register") => void
         </motion.div>
       </div>
     </motion.div>
+                 </div>{/* end static clip wrapper */}
                   </motion.div>
 
                   {/* Floating Cards - Smaller on mobile */}
