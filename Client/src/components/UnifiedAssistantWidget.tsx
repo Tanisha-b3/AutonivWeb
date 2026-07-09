@@ -1337,6 +1337,8 @@ export default function UnifiedAssistantWidget() {
       <motion.button
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
+        animate={{ y: isOpen ? 0 : [0, -8, 0] }}
+        transition={{ y: { duration: 3, repeat: isOpen ? 0 : Infinity, ease: 'easeInOut' } }}
         onClick={() => setIsOpen(!isOpen)}
         className="relative w-14 h-14 rounded-full flex items-center justify-center"
         style={{

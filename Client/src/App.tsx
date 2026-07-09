@@ -8,6 +8,7 @@ import ScrollToTop from './components/ScrollToTop';
 import LoadingScreen from './components/LoadingScreen';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { isChatPlan, isVoicePlan } from './utils/plan';
+import UnifiedAssistantWidget from './components/UnifiedAssistantWidget';
 // import AIAssistantChat from './components/AIAssistantChat';
 
 const Landing = lazy(() => import('./pages/public').then(m => ({ default: m.Landing })));
@@ -229,6 +230,7 @@ export default function App() {
     <BrowserRouter>
       <ErrorBoundary>
         <AppRoutes />
+        <UnifiedAssistantWidget />
       </ErrorBoundary>
     </BrowserRouter>
   );

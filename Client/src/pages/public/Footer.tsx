@@ -1,6 +1,5 @@
 // import AIAssistantChat from '../../components/AIAssistantChat';
 import { Link } from 'react-router-dom';
-import UnifiedAssistantWidget from '../../components/UnifiedAssistantWidget';
 import { Stagger, StaggerItem } from './sections/anim';
 
 const LOGO_SRC = '/logo-autoniv.png';
@@ -76,6 +75,7 @@ function scrollToSection(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
 
 export default function Footer() {
   return (
+    <>
     <footer
       style={{
         borderTop: '1px solid rgba(16,185,129,0.10)',
@@ -407,8 +407,7 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Floating chat widget lives here, outside the max-w container */}
-      <UnifiedAssistantWidget />
     </footer>
+    </>
   );
 }
