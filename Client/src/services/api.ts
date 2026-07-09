@@ -341,6 +341,8 @@ export const callService = {
 
   outbound: (agentId: string, phoneNumber: string) =>
     api.post('/calls/outbound', { agentId, phoneNumber }),
+
+  delete: (id: string) => api.delete(`/calls/${id}`),
 };
 
 // ── Leads ──────────────────────────────────────────────────────────────────

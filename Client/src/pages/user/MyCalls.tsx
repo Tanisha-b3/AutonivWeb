@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAppDispatch, useAppSelector } from '../../hooks/useStore';
-import { fetchMyCalls, syncMyCalls } from '../../store/slices/callsSlice';
+import { fetchMyCalls, syncMyCalls, deleteCall } from '../../store/slices/callsSlice';
 import { DataTable } from '../../components/DataTable';
 import type { Column } from '../../components/DataTable';
 import type { Call } from '../../types';
@@ -660,11 +660,22 @@ export function MyCalls() {
                 Inspect
               </button>
             )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm('Delete this call and its recording?')) {
+                  dispatch(deleteCall(call.id));
+                }
+              }}
+              className="px-2 py-1.2 text-[10px] font-bold rounded-xl border border-red-200 text-red-500 hover:border-red-350 hover:bg-red-50 hover:text-red-700 bg-white transition-all cursor-pointer btn-press"
+            >
+              Delete
+            </button>
           </div>
         );
       },
     },
-  ], [openCall]);
+  ], [openCall, dispatch]);
 
   return (
     <div className="h-full overflow-y-auto overflow-x-hidden pb-10 pr-2">

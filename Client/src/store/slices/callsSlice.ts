@@ -75,6 +75,11 @@ export const syncMyCalls = createAsyncThunk('calls/syncMy', async () => {
   return normalizeList(res.data.items);
 });
 
+export const deleteCall = createAsyncThunk('calls/delete', async (callId: string) => {
+  await callService.delete(callId);
+  return callId;
+});
+
 const callsSlice = createSlice({
   name: 'calls',
   initialState,
@@ -132,6 +137,10 @@ const callsSlice = createSlice({
       .addCase(syncMyCalls.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to sync calls';
+      })
+      .addCase(deleteCall.fulfilled, (state, action) => {
+        state.myCalls = state.myCalls.filter(c => c.id !== action.payload);
+        state.items = state.items.filter(c => c.id !== action.payload);
       });
   },
 });

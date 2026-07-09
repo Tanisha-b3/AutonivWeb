@@ -8,6 +8,7 @@ import { log } from '../services/logger.js';
 import { getVapiCalls, extractVapiCallData, createVapiOutboundCall } from '../services/vapi.js';
 import { parsePage, paginatedResponse } from '../services/pagination.js';
 import { decrypt } from '../services/encryption.js';
+import { deleteRecording } from '../services/cloudinary.js';
 
 const router = express.Router();
 router.use(authenticate);
@@ -145,6 +146,38 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     log.error('get_call_error', { error: error.message, userId: req.user?.userId });
     res.status(500).json({ message: 'Failed to fetch call' });
+  }
+});
+
+// DELETE /calls/:id — delete a call and its recording
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid call ID' });
+    }
+
+    const call = await Call.findById(id).lean();
+    if (!call) {
+      return res.status(404).json({ message: 'Call not found' });
+    }
+
+    if (req.user.role !== 'admin' && call.userId?.toString() !== req.user.userId) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    if (call.recordingUrl) {
+      await deleteRecording(call.recordingUrl);
+    }
+
+    await Call.findByIdAndDelete(id);
+
+    log.info('call_deleted', { callId: id, userId: req.user.userId });
+    res.json({ message: 'Call deleted successfully' });
+  } catch (error) {
+    log.error('delete_call_error', { error: error.message, userId: req.user?.userId });
+    res.status(500).json({ message: 'Failed to delete call' });
   }
 });
 
