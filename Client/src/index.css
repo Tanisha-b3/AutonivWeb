@@ -523,12 +523,12 @@ textarea::placeholder {
   0%,
   100% {
     transform: scale(1);
-    box-shadow: 0 0 24px rgba(16, 185, 129, 0.4);
+    opacity: 0.75;
   }
 
   50% {
     transform: scale(1.05);
-    box-shadow: 0 0 40px rgba(37, 99, 235, 0.5);
+    opacity: 1;
   }
 }
 
@@ -566,6 +566,10 @@ textarea::placeholder {
 @keyframes bgWaveBounce {
   0%, 100% { transform: scaleY(0.3); opacity: 0.4; }
   50% { transform: scaleY(0.8); opacity: 0.7; }
+}
+@keyframes dotFlicker {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.9; }
 }
 
 /* ── Scrollbar ── */

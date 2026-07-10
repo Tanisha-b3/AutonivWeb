@@ -111,11 +111,11 @@ export const CONVERSATION = [
   { role: "agent", text: "Done! You're booked. See you Tuesday ✓", delay: 9100 },
 ];
 
-export const PARTICLE_FIELD = Array.from({ length: 90 }).map((_, i) => {
+export const PARTICLE_FIELD = Array.from({ length: 45 }).map((_, i) => {
   const seed = (i * 9301 + 49297) % 233280;
   const rand = seed / 233280;
-  const x = (i / 90) * 100;
+  const x = (i / 45) * 100;
   const distFromCenter = Math.abs(x - 50) / 50;
   const density = Math.max(0.15, 1 - distFromCenter * 0.7);
-  return { x, y: (rand - 0.5) * 1.3, size: 1 + rand * 1.5, opacity: density * (0.3 + rand * 0.5), delay: rand * 3.5 };
+  return { x, y: (rand - 0.5) * 1.3, size: 1.3 + rand * 1.7, opacity: density * (0.3 + rand * 0.5), delay: rand * 3.5 };
 });

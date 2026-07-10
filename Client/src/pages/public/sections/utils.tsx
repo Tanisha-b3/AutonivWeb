@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, memo } from "react";
 import { Link } from "react-router-dom";
 import { PARTICLE_FIELD } from "./data";
 
@@ -49,7 +49,7 @@ export function Aurora() {
 
 /* ─── Full Spectrum Field (bars + particles, low height, slow speed) ── */
 
-export function SpectrumField({ active }: { active: boolean }) {
+export const SpectrumField = memo(function SpectrumField({ active }: { active: boolean }) {
   return (
     <div
       style={{
@@ -106,8 +106,8 @@ export function SpectrumField({ active }: { active: boolean }) {
           transform: "none",
         }}
       >
-        {Array.from({ length: 80 }).map((_, i) => {
-          const total = 80;
+        {Array.from({ length: 48 }).map((_, i) => {
+          const total = 48;
           const center = (total - 1) / 2;
           const dist = Math.abs(i - center);
           const distRatio = dist / center;
@@ -134,7 +134,7 @@ export function SpectrumField({ active }: { active: boolean }) {
             <div
               key={i}
               style={{
-                width: 2,
+                width: 3,
                 borderRadius: 99,
                 height: active ? `${h}%` : "2%",
                 background: isLeftHalf
@@ -168,10 +168,10 @@ export function SpectrumField({ active }: { active: boolean }) {
       />
     </div>
   );
-}
+});
 
 /* ─── Glow Ring Orb (cyan ring + solid mic circle) ── */
-export function GlowRingOrb({
+export const GlowRingOrb = memo(function GlowRingOrb({
   active,
   scale = 1,
 }: {
@@ -204,6 +204,7 @@ export function GlowRingOrb({
           background:
             "radial-gradient(circle, rgba(34,211,238,0.18) 0%, rgba(34,211,238,0.04) 55%, transparent 75%)",
           filter: `blur(${s(10)}px)`,
+          willChange: active ? "transform, opacity" : "auto",
           animation: active ? "orbPulseGlow 2.6s ease-in-out infinite" : "none",
         }}
       />
@@ -261,7 +262,7 @@ export function GlowRingOrb({
       </div>
     </div>
   );
-}
+});
 
 /* ─── Scroll Reveal ──────────────────────────────────── */
 export function Reveal({
