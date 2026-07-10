@@ -156,6 +156,7 @@ IMPORTANT RULES:
 - Never share raw database IDs
 - Never make up clinic facts — only use what is listed above
 - Never invent available time slots — only use what checkAppointmentAvailability returns
+- You MUST collect the caller's email address and confirm the spelling before calling saveAppointment. Without a valid email the booking will fail.
 - Keep responses conversational and natural for voice
 - If you cannot answer a question, say: "I don't have that information — our team can help you with that."
 
@@ -191,67 +192,130 @@ const FIRST_MESSAGES = {
   faq:          'Hi there! I am here to answer your questions. What would you like to know?',
 };
 
+/**
+ * Function-tool definitions (OpenAI-style). These are registered with Vapi as
+ * persistent Tool objects (see ensureVapiTools) rather than attached inline, so
+ * that Vapi reliably POSTs each tool call to our webhook `server.url`.
+ */
+const TOOL_FUNCTIONS = [
+  {
+    name: 'saveLead',
+    description: 'Record the caller as a lead once you have their name and phone. Call ONCE per conversation. Do not announce it to the caller.',
+    parameters: {
+      type: 'object',
+      properties: {
+        name:    { type: 'string', description: 'Caller full name' },
+        phone:   { type: 'string', description: 'Caller phone number' },
+        email:   { type: 'string', description: 'Caller email address (optional)' },
+        purpose: { type: 'string', description: 'Reason for calling' },
+      },
+      required: ['name', 'phone'],
+    },
+  },
+  {
+    name: 'checkAppointmentAvailability',
+    description: 'Check whether a requested date/time is free before booking. Returns whether the slot is available and a few alternative slots. NEVER invent slots yourself — only use what this returns.',
+    parameters: {
+      type: 'object',
+      properties: {
+        provider: { type: 'string', description: 'preferred staff member (dentist/doctor/stylist), optional' },
+        date: { type: 'string', description: 'preferred date as stated by the caller' },
+        time: { type: 'string', description: 'preferred time, e.g. "4:30 PM"' },
+      },
+      required: ['date'],
+    },
+  },
+  {
+    name: 'saveAppointment',
+    description: 'Book the appointment AFTER checkAppointmentAvailability confirms the slot is free. Returns an appointmentId to read back to the caller. Call ONCE per conversation.',
+    parameters: {
+      type: 'object',
+      properties: {
+        name:          { type: 'string', description: 'Caller full name' },
+        phone:         { type: 'string', description: 'Caller phone number' },
+        service:       { type: 'string', description: 'Service to book' },
+        preferredDate: { type: 'string', description: 'Preferred appointment date' },
+        preferredTime: { type: 'string', description: 'Preferred time slot' },
+      },
+      required: ['name', 'phone'],
+    },
+  },
+];
+
+function buildToolPayload(fn, toolServerUrl) {
+  return {
+    type: 'function',
+    ...(toolServerUrl ? { server: { url: toolServerUrl } } : {}),
+    function: fn,
+  };
+}
+
+/** Inline tool array — kept only as a fallback when persistent tools can't be created. */
 function buildVapiTools(serverUrl) {
   const toolServerUrl = getWebhookUrl(serverUrl || process.env.WEBHOOK_URL || process.env.SERVER_URL);
+  return TOOL_FUNCTIONS.map((fn) => buildToolPayload(fn, toolServerUrl));
+}
 
-  const serverConfig = toolServerUrl ? { server: { url: toolServerUrl } } : {};
+/** List all Vapi Tool objects on the account, normalizing the response shape. */
+export async function listVapiTools() {
+  const raw = await vapiRequest('/tool');
+  if (Array.isArray(raw))          return raw;
+  if (Array.isArray(raw?.results)) return raw.results;
+  if (Array.isArray(raw?.data))    return raw.data;
+  return [];
+}
 
-  return [
-    {
-      type: 'function',
-      ...serverConfig,
-      function: {
-        name: 'saveLead',
-        description: 'Record the caller as a lead once you have their name and phone. Call ONCE per conversation. Do not announce it to the caller.',
-        parameters: {
-          type: 'object',
-          properties: {
-            name:    { type: 'string', description: 'Caller full name' },
-            phone:   { type: 'string', description: 'Caller phone number' },
-            email:   { type: 'string', description: 'Caller email address (optional)' },
-            purpose: { type: 'string', description: 'Reason for calling' },
-          },
-          required: ['name', 'phone'],
-        },
-      },
-    },
-    {
-      type: 'function',
-      ...serverConfig,
-      function: {
-        name: 'checkAppointmentAvailability',
-        description: 'Check whether a requested date/time is free before booking. Returns whether the slot is available and a few alternative slots. NEVER invent slots yourself — only use what this returns.',
-        parameters: {
-          type: 'object',
-          properties: {
-            provider: { type: 'string', description: 'preferred staff member (dentist/doctor/stylist), optional' },
-            date: { type: 'string', description: 'preferred date as stated by the caller' },
-            time: { type: 'string', description: 'preferred time, e.g. "4:30 PM"' },
-          },
-          required: ['date'],
-        },
-      },
-    },
-    {
-      type: 'function',
-      ...serverConfig,
-      function: {
-        name: 'saveAppointment',
-        description: 'Book the appointment AFTER checkAppointmentAvailability confirms the slot is free. Returns an appointmentId to read back to the caller. Call ONCE per conversation.',
-        parameters: {
-          type: 'object',
-          properties: {
-            name:          { type: 'string', description: 'Caller full name' },
-            phone:         { type: 'string', description: 'Caller phone number' },
-            service:       { type: 'string', description: 'Service to book' },
-            preferredDate: { type: 'string', description: 'Preferred appointment date' },
-            preferredTime: { type: 'string', description: 'Preferred time slot' },
-          },
-          required: ['name', 'phone'],
-        },
-      },
-    },
-  ];
+// Cache of resolved tool ids keyed by the webhook URL they point at, so we
+// don't re-list/re-create on every assistant create/update.
+const _toolIdCache = new Map();
+
+/** Clear the in-memory tool-id cache (e.g. after the webhook URL changes). */
+export function clearVapiToolCache() {
+  _toolIdCache.clear();
+}
+
+/**
+ * Ensure our function tools exist as persistent Vapi Tool objects and return
+ * their ids. Creates any missing tool, and repoints an existing tool's
+ * `server.url` if it drifted from the current webhook URL. Idempotent.
+ */
+export async function ensureVapiTools(serverUrl) {
+  const toolServerUrl = getWebhookUrl(serverUrl || process.env.WEBHOOK_URL || process.env.SERVER_URL);
+  const cacheKey = toolServerUrl || '__no_server__';
+  if (_toolIdCache.has(cacheKey)) return _toolIdCache.get(cacheKey);
+
+  const existing = await listVapiTools();
+  const byName = new Map();
+  for (const t of existing) {
+    const n = t?.function?.name;
+    if (n && !byName.has(n)) byName.set(n, t);
+  }
+
+  const ids = [];
+  for (const fn of TOOL_FUNCTIONS) {
+    const found = byName.get(fn.name);
+    if (found?.id) {
+      const currentUrl = found.server?.url || null;
+      if (toolServerUrl && currentUrl !== toolServerUrl) {
+        try {
+          await vapiRequest(`/tool/${found.id}`, 'PATCH', { server: { url: toolServerUrl } });
+          log.info('vapi_tool_url_synced', { toolId: found.id, name: fn.name, from: currentUrl, to: toolServerUrl });
+        } catch (err) {
+          log.warn('vapi_tool_url_sync_failed', { toolId: found.id, name: fn.name, error: err.message });
+        }
+      }
+      ids.push(found.id);
+    } else {
+      const created = await vapiRequest('/tool', 'POST', buildToolPayload(fn, toolServerUrl));
+      if (created?.id) {
+        ids.push(created.id);
+        log.info('vapi_tool_created', { toolId: created.id, name: fn.name, serverUrl: toolServerUrl });
+      }
+    }
+  }
+
+  _toolIdCache.set(cacheKey, ids);
+  return ids;
 }
 
 async function buildAssistantConfig({ name, type, prompt, language, voiceId, userId, serverUrl: explicitUrl } = {}) {
@@ -281,8 +345,21 @@ async function buildAssistantConfig({ name, type, prompt, language, voiceId, use
     systemPrompt,
     messages: [{ role: 'system', content: systemPrompt }],
     temperature: 0.7,
-    tools: buildVapiTools(serverUrl),
   };
+
+  // Prefer persistent Vapi Tool objects (reliable server callbacks). Fall back
+  // to inline tools only if registration fails, so agent creation still works.
+  try {
+    const toolIds = await ensureVapiTools(serverUrl);
+    if (toolIds.length > 0) {
+      modelConfig.toolIds = toolIds;
+    } else {
+      modelConfig.tools = buildVapiTools(serverUrl);
+    }
+  } catch (err) {
+    log.warn('vapi_ensure_tools_failed_fallback_inline', { error: err.message });
+    modelConfig.tools = buildVapiTools(serverUrl);
+  }
 
   const voice = voiceId
     ? { provider: '11labs', voiceId }
@@ -336,6 +413,16 @@ export async function syncWebhookUrls() {
   }
 
   const webhookUrl = getWebhookUrl(serverUrl);
+
+  // Ensure our persistent tools exist and point at the current webhook URL.
+  clearVapiToolCache();
+  try {
+    const toolIds = await ensureVapiTools(serverUrl);
+    log.info('vapi_tools_ensured', { count: toolIds.length });
+  } catch (err) {
+    log.warn('vapi_tools_ensure_failed', { error: err.message });
+  }
+
   const Agent = (await import('../db/models/Agent.js')).default;
   const agents = await Agent.find({ vapiId: { $ne: null }, useCustomEngine: { $ne: true } }).lean();
 

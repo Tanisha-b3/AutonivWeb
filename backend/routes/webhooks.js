@@ -2,8 +2,6 @@ import express from 'express';
 import mongoose from 'mongoose';
 import Agent from '../db/models/Agent.js';
 import Call from '../db/models/Call.js';
-import Lead from '../db/models/Lead.js';
-import Appointment from '../db/models/Appointment.js';
 import Webhook from '../db/models/Webhook.js';
 import User from '../db/models/User.js';
 import { verifyVapiSignature } from '../middleware/webhookSignature.js';
@@ -15,6 +13,7 @@ import { log, securityEvent, IS_PROD } from '../services/logger.js';
 import { safeString } from '../services/validators.js';
 import { decrypt } from '../services/encryption.js';
 import { signMediaStreamToken } from '../services/mediaStreamToken.js';
+import { executeTool } from '../services/appointmentTools.js';
 
 const router = express.Router();
 
@@ -226,89 +225,36 @@ async function handleTranscript(call, transcript) {
   );
 }
 
+// Per-call tool state (dedup guard), so repeat tool calls within one Vapi call
+// don't create duplicate leads/bookings. Keyed by Vapi call id.
+const _toolStateByCall = new Map();
+
+function getToolState(callId) {
+  if (!callId) return {};
+  let state = _toolStateByCall.get(callId);
+  if (!state) {
+    state = {};
+    _toolStateByCall.set(callId, state);
+    // Bound memory: drop the state a few minutes after the call.
+    setTimeout(() => _toolStateByCall.delete(callId), 10 * 60 * 1000).unref?.();
+  }
+  return state;
+}
+
 async function handleFunctionCall(call, functionCall) {
   if (!functionCall?.name) return { success: false, error: 'No function name' };
 
-  if (functionCall.name === 'saveLead') {
-    const agent = await Agent.findOne({ vapiId: call?.assistantId }).lean();
-    if (!agent) return { success: false, error: 'Agent not found' };
+  const agent = await Agent.findOne({ vapiId: call?.assistantId });
+  if (!agent) return { success: false, error: 'Agent not found' };
 
-    const existingCall = await Call.findOne({ vapiCallId: call.id }).lean();
-    const existingLead = await Lead.findOne({
-      agentId: agent._id,
-      $or: [
-        { callId: existingCall?._id },
-        { phone: functionCall.parameters?.phone }
-      ]
-    }).lean();
-    if (existingLead) {
-      return { success: true, leadId: existingLead._id, message: 'Lead already saved' };
-    }
-
-    const { name, phone, email, purpose } = functionCall.parameters || {};
-
-    const sanitizedName = name ? sanitizeText(safeString(name, 200)) : null;
-    const sanitizedPurpose = purpose && !['unknown', 'Unknown'].includes(purpose) ? sanitizeText(safeString(purpose, 500)) : 'inquiry';
-    const safePhone = phone ? safeString(phone, 30) : null;
-    const safeEmail = email ? safeString(email, 254) : null;
-
-    if ((name && containsAbuse(name)) || (purpose && containsAbuse(purpose))) {
-      securityEvent('webhook_lead_blocked_abuse', { callId: call?.id });
-      return { success: false, error: 'Content policy violation' };
-    }
-
-    const lead = await Lead.create({
-      agentId: agent._id,
-      callId: existingCall ? existingCall._id : null,
-      userId: agent.userId,
-      name: sanitizedName,
-      phone: safePhone,
-      email: safeEmail,
-      purpose: sanitizedPurpose,
-    });
-
-    return { success: true, leadId: lead._id, name: sanitizedName, phone: safePhone };
-  }
-
-  if (functionCall.name === 'saveAppointment') {
-    const agent = await Agent.findOne({ vapiId: call?.assistantId }).lean();
-    if (!agent) return { success: false, error: 'Agent not found' };
-
-    const existingCall = await Call.findOne({ vapiCallId: call.id }).lean();
-    const existingAppt = await Appointment.findOne({ callId: existingCall?._id, agentId: agent._id }).lean();
-    if (existingAppt) {
-      return { success: true, bookingId: existingAppt._id, message: 'Booking already saved' };
-    }
-
-    const { name, phone, service, preferredDate, preferredTime } = functionCall.parameters || {};
-
-    const sanitizedName = name ? sanitizeText(safeString(name, 200)) : null;
-    const sanitizedService = service ? sanitizeText(safeString(service, 200)) : null;
-    const safePhone = phone ? safeString(phone, 30) : null;
-    const safeDate = preferredDate ? safeString(preferredDate, 30) : null;
-    const safeTime = preferredTime ? safeString(preferredTime, 30) : null;
-
-    if ((name && containsAbuse(name)) || (service && containsAbuse(service))) {
-      securityEvent('webhook_booking_blocked_abuse', { callId: call?.id });
-      return { success: false, error: 'Content policy violation' };
-    }
-
-    const appointment = await Appointment.create({
-      agentId: agent._id,
-      callId: existingCall ? existingCall._id : null,
-      userId: agent.userId,
-      name: sanitizedName,
-      phone: safePhone,
-      service: sanitizedService,
-      preferredDate: safeDate,
-      preferredTime: safeTime,
-      status: 'pending',
-    });
-
-    return { success: true, bookingId: appointment._id, name: sanitizedName, service: sanitizedService };
-  }
-
-  return { success: false, error: 'Unknown function' };
+  // Delegate to the canonical tool executor so the webhook path and the
+  // orchestrator path share identical validation, dedup, and tool coverage
+  // (saveLead, checkAppointmentAvailability, saveAppointment, …).
+  return executeTool(functionCall.name, functionCall.parameters || {}, {
+    agentObj: agent,
+    toolState: getToolState(call?.id),
+    callId: call?.id || null,
+  });
 }
 
 router.get('/test', (req, res) => {
@@ -357,8 +303,11 @@ router.post('/incoming-call', async (req, res) => {
     }
 
     if (!agent) {
+      // Any call reaching /incoming-call is a custom-engine call (Vapi answers
+      // its own numbers), so only fall back to a custom receptionist — never a
+      // Vapi agent, which would be rejected downstream.
       log.warn('twilio_incoming_call_no_agent_resolved', { to, from });
-      agent = await Agent.findOne({ type: 'receptionist' });
+      agent = await Agent.findOne({ type: 'receptionist', vapiId: null });
     }
 
     // Verify the request genuinely came from Twilio before acting on it.
@@ -418,12 +367,16 @@ router.post('/incoming-call', async (req, res) => {
 </Response>`);
   }
 
-  // Only custom-engine agents are handled by our own WebSocket orchestrator.
-  // Vapi agents are answered by Vapi directly (their Twilio number points at
-  // Vapi), so a non-custom agent reaching here means the number is misconfigured.
-  if (!agent.useCustomEngine) {
+  // Our WebSocket orchestrator handles custom-engine agents. The single source
+  // of truth is `vapiId`: an agent WITHOUT a vapiId is a custom agent (its
+  // Twilio number points here), while an agent WITH a vapiId is answered by
+  // Vapi directly — reaching this webhook means that number is misconfigured.
+  // We key off vapiId (not useCustomEngine) so the inbound path agrees with the
+  // outbound path in routes/calls.js, which also branches on `!agent.vapiId`.
+  const isCustomAgent = !agent.vapiId;
+  if (!isCustomAgent) {
     log.warn('twilio_incoming_call_non_custom_agent', {
-      agentId: agent._id?.toString(), vapiId: agent.vapiId, callSid,
+      agentId: agent._id?.toString(), vapiId: agent.vapiId, useCustomEngine: agent.useCustomEngine, callSid,
     });
     return res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
