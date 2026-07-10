@@ -78,7 +78,7 @@ process.on('voiceCallEnded', async ({ callSid, transcript, leadData }) => {
       if (call) {
         const minutes = Math.ceil(duration / 60);
         await User.findByIdAndUpdate(call.userId, {
-          $inc: { minutesUsed: minutes },
+          $inc: { minutesUsed: minutes, callsUsed: 1 },
         });
       }
     }

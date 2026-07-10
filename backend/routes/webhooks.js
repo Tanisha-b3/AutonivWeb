@@ -205,7 +205,7 @@ async function handleCallEnded(call) {
       { $set: { billed: true } }
     );
     if (flip) {
-      await User.findByIdAndUpdate(existing.userId, { $inc: { minutesUsed: billingMinutes } });
+      await User.findByIdAndUpdate(existing.userId, { $inc: { minutesUsed: billingMinutes, callsUsed: 1 } });
       log.info('webhook_call_billed', { callId: call.id, billingMinutes });
     } else {
       log.info('webhook_call_already_billed', { callId: call.id });

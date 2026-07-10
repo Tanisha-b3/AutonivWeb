@@ -590,7 +590,7 @@ export async function closeAndCleanup({ callSid, agentObj, callStartTime, fullTr
         );
         if (flip) {
           await User.findByIdAndUpdate(agentObj.userId, {
-            $inc: { minutesUsed: billingMinutes }
+            $inc: { minutesUsed: billingMinutes, callsUsed: 1 }
           });
           console.log(`[Billing] Added ${billingMinutes} minutes for user: ${agentObj.userId}`);
         } else {
