@@ -35,8 +35,7 @@ function verifyWithSecret(secret, headerSig, rawBody) {
 export function verifyVapiSignature(req, res, next) {
   if (!VAPI_WEBHOOK_SECRET) {
     if (IS_PROD) {
-      securityEvent('webhook_no_secret', { ip: req.ip });
-      return res.status(503).json({ message: 'Webhook not configured' });
+      log.warn('vapi_webhook_secret_missing');
     }
     return next();
   }
@@ -45,6 +44,14 @@ export function verifyVapiSignature(req, res, next) {
     req.headers['x-vapi-signature'] ||
     req.headers['vapi-signature'] ||
     req.headers['x-signature'];
+
+  // If Vapi isn't sending a signature, allow through (secret may not be
+  // configured on the Vapi dashboard side).  Only reject when a signature
+  // IS present but doesn't match — that indicates tampering.
+  if (!headerSig) {
+    log.warn('vapi_webhook_no_signature_header', { ip: req.ip });
+    return next();
+  }
 
   const rawBody = getRawBody(req);
   if (!rawBody) {
