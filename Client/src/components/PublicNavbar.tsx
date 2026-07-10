@@ -324,7 +324,7 @@ export function PublicNavbar() {
             }}
             aria-label="Autoniv home"
           >
-            <img src={LOGO_SRC} alt="Autoniv" className="h-18 sm:h-14 w-auto object-contain" />
+            <img src={LOGO_SRC} alt="Autoniv" className="-ml-6 h-40 sm:h-40 w-auto object-contain" />
           </Link>
           <button
             onClick={() => setMobileMenuOpen(false)}

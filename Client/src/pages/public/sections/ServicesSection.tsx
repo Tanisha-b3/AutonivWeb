@@ -628,8 +628,9 @@ function ServiceCard({
       whileHover={{ y: -8, transition: { duration: 0.25, ease: easeOut } }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="group relative flex flex-col rounded-3xl cursor-default overflow-hidden backdrop-blur-md"
+      className="group relative flex flex-col rounded-3xl cursor-default overflow-hidden"
       style={{
+        willChange: "transform",
         background: hovered
           ? "linear-gradient(145deg, rgba(255,255,255,0.065) 0%, rgba(255,255,255,0.02) 100%)"
           : "linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)",
