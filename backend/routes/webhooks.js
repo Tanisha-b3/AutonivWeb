@@ -38,7 +38,7 @@ router.post('/vapi', webhookLimiter, async (req, res) => {
       const toolCalls = message?.toolCallList || message?.toolCalls || [];
 
       if (toolCalls.length === 0) {
-        return res.json({ results: [] });
+        return res.json({ messageResponse: { results: [] } });
       }
 
       const results = [];
@@ -57,24 +57,30 @@ router.post('/vapi', webhookLimiter, async (req, res) => {
           log.warn('webhook_tool_calls_parse_failed', { name });
         }
 
-        const result = await handleFunctionCall(toolCallCall, { name, parameters: args });
-        results.push({ toolCallId: tc.id, result });
+        const toolResult = await handleFunctionCall(toolCallCall, { name, parameters: args });
+        const resultStr = toolResult?.success
+          ? (toolResult.message || JSON.stringify(toolResult))
+          : (toolResult?.error || 'Tool execution failed');
+        results.push({ toolCallId: tc.id, name, result: resultStr });
       }
 
-      return res.json({ results });
+      return res.json({ messageResponse: { results } });
     } catch (e) {
       log.error('webhook_tool_calls_error', { error: e.message });
-      return res.status(500).json({ error: 'Internal error' });
+      return res.status(500).json({ messageResponse: { error: 'Internal error' } });
     }
   }
 
   if (mappedType === 'function-call') {
     try {
-      const result = await handleFunctionCall(callData, functionCall);
-      return res.json({ result });
+      const toolResult = await handleFunctionCall(callData, functionCall);
+      const resultStr = toolResult?.success
+        ? (toolResult.message || JSON.stringify(toolResult))
+        : (toolResult?.error || 'Tool execution failed');
+      return res.json({ messageResponse: { result: resultStr } });
     } catch (error) {
       log.error('webhook_function_call_error', { error: error.message });
-      return res.status(500).json({ error: 'Internal error' });
+      return res.status(500).json({ messageResponse: { error: 'Internal error' } });
     }
   }
 
