@@ -211,7 +211,7 @@ const StatCard = memo(({ label, value, icon, accentColor, delta, onClick, trend,
       onMouseEnter={() => setHoveredCard(label)}
       onMouseLeave={() => setHoveredCard(null)}
       onClick={onClick}
-      className="rounded-2xl p-5 border relative overflow-hidden transition-all duration-300 cursor-default bg-white/70 shadow-sm backdrop-blur-md"
+      className="rounded-2xl p-4 sm:p-5 border relative overflow-hidden transition-all duration-300 cursor-default bg-white/70 shadow-sm backdrop-blur-md"
       style={{
         borderColor: isHovered ? `rgba(${accentColor},0.3)` : 'var(--slate-border)',
         boxShadow: isHovered ? `0 12px 36px rgba(${accentColor},0.08)` : '0 1px 3px rgba(37,99,235,0.01)',
@@ -225,8 +225,8 @@ const StatCard = memo(({ label, value, icon, accentColor, delta, onClick, trend,
       />
 
       <div className="flex items-start justify-between gap-2.5 mb-3.5 relative z-10">
-        <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 block leading-tight">
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 block leading-tight truncate">
             {label}
           </p>
         </div>
@@ -238,7 +238,7 @@ const StatCard = memo(({ label, value, icon, accentColor, delta, onClick, trend,
 
       <div className="relative z-10">
         <div className="flex items-baseline gap-2">
-          <p className="text-2xl sm:text-[28px] font-extrabold text-slate-800 tracking-tight leading-none">
+          <p className="text-xl sm:text-2xl lg:text-[28px] font-extrabold text-slate-800 tracking-tight leading-none">
             {typeof value === 'number' ? (
               <AnimatedCounter value={value} />
             ) : (
@@ -252,7 +252,7 @@ const StatCard = memo(({ label, value, icon, accentColor, delta, onClick, trend,
           )}
         </div>
         {!trend && delta && (
-          <p className="text-[10px] font-bold mt-1 text-slate-400 uppercase tracking-wider">
+          <p className="text-[10px] font-bold mt-1 text-slate-400 uppercase tracking-wider truncate">
             {delta}
           </p>
         )}
@@ -1564,7 +1564,7 @@ export function UserDashboard() {
         )}
 
         {/* ── Stats Row ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {statsCardsList.map(card => (
             <StatCard
               key={card.label}

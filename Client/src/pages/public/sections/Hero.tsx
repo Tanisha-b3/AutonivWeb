@@ -62,10 +62,10 @@ function FloatingCard({
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y: 28, scale: 0.88, rotate: -3 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
+      initial={{ opacity: 0, y: 14, scale: 0.96 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.7, delay, ease: easeOut }}
+      transition={{ duration: 0.6, delay, ease: easeOut }}
     >
       <motion.div
         animate={reduced ? undefined : { y: floatY }}
@@ -110,18 +110,18 @@ export function Hero({ openAuth }: { openAuth: (m: "login" | "register") => void
 
   const heroVariants = {
     hidden: {},
-    show: { transition: { staggerChildren: 0.12, delayChildren: 0.05 } },
+    show: { transition: { staggerChildren: 0.10, delayChildren: 0.02 } },
   };
   const fadeUp = {
-    hidden: { opacity: 0, y: 22 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: easeOut } },
+    hidden: { opacity: 0, y: 12 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: easeOut } },
   };
 
   return (
-    <section ref={ref} className="section-box tint">
+    <section ref={ref} className="section-box tint" style={{ contain: "layout style", contentVisibility: "auto", containIntrinsicSize: "auto 700px" } as React.CSSProperties}>
             <div
               className="section-pad relative overflow-hidden"
-              style={{ paddingTop: 40, paddingBottom: 40 }}
+              style={{ paddingTop: 40, paddingBottom: 40, transform: "translateZ(0)" }}
             >
               <motion.div
                 className="absolute inset-0 pointer-events-none"
@@ -335,10 +335,10 @@ export function Hero({ openAuth }: { openAuth: (m: "login" | "register") => void
                 </motion.div>
 
                 <motion.div
-                  style={{ y: yCards }}
-                  initial={{ opacity: 0, scale: 0.92 }}
+                  style={{ y: yCards, transform: "translateZ(0)" }}
+                  initial={{ opacity: 0, scale: 0.97 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.8, ease: easeOut, delay: 0.2 }}
+                  transition={{ duration: 0.6, ease: easeOut, delay: 0.1 }}
                   className="mt-4 lg:col-span-5 flex justify-center items-center relative min-h-[380px] sm:min-h-[450px] lg:min-h-[580px] z-10 w-full order-2 lg:order-2 pt-4 lg:pt-0"
                 >
                   <motion.div

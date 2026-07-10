@@ -47,15 +47,15 @@ export function Demo() {
     const el = demoSectionRef.current;
     if (!el) return;
     const obs = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !demoRunningRef.current) setTimeout(() => startDemo(), 600);
-    }, { threshold: 0.3 });
+      if (entry.isIntersecting && !demoRunningRef.current) setTimeout(() => startDemo(), 300);
+    }, { threshold: 0.2 });
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
 
   return (
-   <section ref={demoSectionRef} id="demo" className="section-box black">
-            <div className="section-pad relative overflow-hidden">
+   <section ref={demoSectionRef} id="demo" className="section-box black" style={{ contain: "layout style", contentVisibility: "auto", containIntrinsicSize: "auto 600px" } as React.CSSProperties}>
+            <div className="section-pad relative overflow-hidden" style={{ transform: "translateZ(0)" }}>
               <div
                 style={{
                   position: "absolute",

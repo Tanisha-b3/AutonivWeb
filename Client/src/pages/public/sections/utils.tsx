@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { PARTICLE_FIELD } from "./data";
 
@@ -276,23 +276,17 @@ export function Reveal({
   from?: "bottom" | "left" | "right" | "scale";
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const revealed = useRef(false);
+  const [isVisible, setIsVisible] = useState(false);
+
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-    const t: Record<string, string> = {
-      bottom: "translateY(32px)",
-      left: "translateX(-32px)",
-      right: "translateX(32px)",
-      scale: "scale(0.92)",
-    };
-    el.style.opacity = "0";
-    el.style.transform = t[from];
-    el.style.transition = `opacity .85s ${delay}s cubic-bezier(.16,1,.3,1),transform .85s ${delay}s cubic-bezier(.16,1,.3,1)`;
+    if (!el || revealed.current) return;
     const obs = new IntersectionObserver(
       ([e]) => {
         if (e.isIntersecting) {
-          el.style.opacity = "1";
-          el.style.transform = "none";
+          revealed.current = true;
+          setIsVisible(true);
           obs.disconnect();
         }
       },
@@ -300,9 +294,26 @@ export function Reveal({
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [delay, from]);
+  }, []);
+
+  const transforms: Record<string, string> = {
+    bottom: "translateY(32px)",
+    left: "translateX(-32px)",
+    right: "translateX(32px)",
+    scale: "scale(0.92)",
+  };
+
   return (
-    <div ref={ref} className={className}>
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? "none" : transforms[from],
+        transition: `opacity .85s ${delay}s cubic-bezier(.16,1,.3,1), transform .85s ${delay}s cubic-bezier(.16,1,.3,1)`,
+        willChange: isVisible ? "auto" : "transform, opacity",
+      }}
+    >
       {children}
     </div>
   );
