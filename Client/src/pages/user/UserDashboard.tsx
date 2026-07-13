@@ -1122,6 +1122,8 @@ export function UserDashboard() {
 
   const minutesLimit  = user?.minutesLimit ?? 0;
   const isUnlimitedMinutes = minutesLimit === -1;
+  const billingMinutesUsed = user?.minutesUsed ?? 0;
+  const billingUsagePercent = isUnlimitedMinutes ? 0 : minutesLimit > 0 ? Math.min((billingMinutesUsed / minutesLimit) * 100, 100) : 0;
   const usagePercent  = isUnlimitedMinutes ? 0 : minutesLimit > 0 ? Math.min((minutesUsed / minutesLimit) * 100, 100) : 0;
 
   const callBreakdown = useMemo(() => {
@@ -1906,8 +1908,8 @@ export function UserDashboard() {
             <div className="rounded-xl p-4 mb-4 bg-slate-50/70 border border-slate-100">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-slate-600 font-bold">{isVoice ? 'Billing Minutes' : 'Chat Conversations'}</span>
-                <span className={`text-xs font-extrabold ${(isVoice ? usagePercent : (user?.chatLimit === -1 ? 0 : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100)) > 80 ? 'text-rose-600' : 'text-slate-800'}`}>
-                  <AnimatedCounter value={isVoice ? minutesUsed : (user?.chatUsed || 0)} />
+                <span className={`text-xs font-extrabold ${(isVoice ? billingUsagePercent : (user?.chatLimit === -1 ? 0 : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100)) > 80 ? 'text-rose-600' : 'text-slate-800'}`}>
+                  <AnimatedCounter value={isVoice ? billingMinutesUsed : (user?.chatUsed || 0)} />
                   {isVoice ? (
                     isUnlimitedMinutes
                       ? <span className="text-slate-400 font-semibold"> / ∞ mins</span>
@@ -1920,36 +1922,39 @@ export function UserDashboard() {
                 </span>
               </div>
               <div className="h-2 rounded-full overflow-hidden bg-slate-200">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${isVoice ? usagePercent : (user?.chatLimit === -1 ? 0 : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100)}%` }}
+                <motion.div initial={{ width: 0 }} animate={{ width: `${isVoice ? billingUsagePercent : (user?.chatLimit === -1 ? 0 : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100)}%` }}
                   transition={{ delay: 0.2, duration: 0.75, ease: 'easeOut' }}
-                  className={`h-full rounded-full ${(isVoice ? usagePercent : (user?.chatLimit === -1 ? 0 : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100)) > 80 ? 'bg-gradient-to-r from-rose-500 to-amber-500' : 'bg-gradient-to-r from-[var(--primary-blue)] to-[#10B981]'}`} />
+                  className={`h-full rounded-full ${(isVoice ? billingUsagePercent : (user?.chatLimit === -1 ? 0 : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100)) > 80 ? 'bg-gradient-to-r from-rose-500 to-amber-500' : 'bg-gradient-to-r from-[var(--primary-blue)] to-[#10B981]'}`} />
               </div>
               <div className="flex items-center justify-between mt-1.5">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{Math.round(isVoice ? usagePercent : (user?.chatLimit === -1 ? 0 : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100))}% metrics consumed</span>
-                {(isVoice ? usagePercent : (user?.chatLimit === -1 ? 0 : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100)) > 80 && (
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{Math.round(isVoice ? billingUsagePercent : (user?.chatLimit === -1 ? 0 : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100))}% metrics consumed</span>
+                {(isVoice ? billingUsagePercent : (user?.chatLimit === -1 ? 0 : ((user?.chatUsed || 0) / (user?.chatLimit || 1)) * 100)) > 80 && (
                   <span className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 text-rose-500">
                     ⚠ quota critical
                   </span>
                 )}
               </div>
             </div>
- 
+
             <div className="grid grid-cols-2 gap-2.5">
               {(isVoice ? [
-                { label: 'Active Agents',   value: myAgentStats.active,   color: 'text-green-600', bg: 'bg-green-50/30' },
-                { label: 'Muted Agents',    value: myAgentStats.inactive,  color: 'text-slate-400', bg: 'bg-slate-50/30' },
-                { label: 'All Agents Count', value: myAgentStats.total,     color: 'text-[var(--primary-blue)]', bg: 'bg-[var(--primary-blue-soft)]/20' },
-                { label: 'Captured Leads',  value: s.leadCount || 0,       color: 'text-amber-600', bg: 'bg-amber-50/30', to: '/dashboard/leads' },
+                { label: 'Active Agents',   value: myAgentStats.active,   dotColor: 'bg-emerald-500 animate-pulse' },
+                { label: 'Muted Agents',    value: myAgentStats.inactive,  dotColor: 'bg-slate-400' },
+                { label: 'All Agents Count', value: myAgentStats.total,     dotColor: 'bg-blue-500' },
+                { label: 'Captured Leads',  value: s.leadCount || 0,       dotColor: 'bg-amber-500', to: '/dashboard/leads' },
               ] : [
-                { label: 'Chats Used',      value: user?.chatUsed || 0,   color: 'text-blue-600', bg: 'bg-blue-50/30' },
-                { label: 'Chats Available', value: user?.chatLimit === -1 ? 'Unlimited' : Math.max(0, (user?.chatLimit || 0) - (user?.chatUsed || 0)), color: 'text-green-600', bg: 'bg-green-50/30' },
-                { label: 'Monthly Quota',   value: user?.chatLimit === -1 ? 'Unlimited' : (user?.chatLimit || 0), color: 'text-[var(--primary-blue)]', bg: 'bg-[var(--primary-blue-soft)]/20' },
-                { label: 'Captured Leads',  value: s.leadCount || 0,       color: 'text-amber-600', bg: 'bg-amber-50/30', to: '/dashboard/leads' },
+                { label: 'Chats Used',      value: user?.chatUsed || 0,   dotColor: 'bg-blue-500' },
+                { label: 'Chats Available', value: user?.chatLimit === -1 ? 'Unlimited' : Math.max(0, (user?.chatLimit || 0) - (user?.chatUsed || 0)), dotColor: 'bg-emerald-500' },
+                { label: 'Monthly Quota',   value: user?.chatLimit === -1 ? 'Unlimited' : (user?.chatLimit || 0), dotColor: 'bg-blue-500' },
+                { label: 'Captured Leads',  value: s.leadCount || 0,       dotColor: 'bg-amber-500', to: '/dashboard/leads' },
               ]).map(item => {
                 const inner = (
-                  <div className={`rounded-xl p-3 border transition-all ${item.bg} border-slate-100 hover:border-slate-200`}>
-                    <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">{item.label}</p>
-                    <p className={`text-xl font-extrabold ${item.color}`}>
+                  <div className="rounded-xl p-3 border transition-all bg-slate-50/50 border-slate-100 hover:border-slate-200/80 hover:bg-slate-50/80 hover:shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex flex-col justify-between h-full cursor-pointer">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${item.dotColor}`} />
+                      <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400">{item.label}</p>
+                    </div>
+                    <p className="text-xl font-black text-slate-800">
                       {typeof item.value === 'number' ? (
                         <AnimatedCounter value={item.value} />
                       ) : (

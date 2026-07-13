@@ -452,6 +452,29 @@ textarea::placeholder {
   transform: scale(0.97);
 }
 
+/* ── Secondary Outlined CTA button ── */
+:not(.landing-page)>.btn-secondary-outline,
+.dashboard .btn-secondary-outline {
+  background: rgba(37, 99, 235, 0.04);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  color: var(--primary-blue);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.04);
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s, border-color 0.15s;
+}
+
+:not(.landing-page)>.btn-secondary-outline:hover:not(:disabled),
+.dashboard .btn-secondary-outline:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.12);
+}
+
+:not(.landing-page)>.btn-secondary-outline:active:not(:disabled),
+.dashboard .btn-secondary-outline:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
 /* ── Smooth number transitions ── */
 .tabular-nums {
   font-variant-numeric: tabular-nums;

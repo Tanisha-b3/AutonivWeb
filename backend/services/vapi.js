@@ -1,5 +1,6 @@
 import { translateText, LANGUAGE_NAMES } from './translate.js';
 import { log } from './logger.js';
+import { getToolDefinitions } from './appointmentTools.js';
 
 const VAPI_BASE_URL = process.env.VAPI_BASE_URL || 'https://api.vapi.ai';
 
@@ -156,6 +157,7 @@ IMPORTANT RULES:
 - Never share raw database IDs
 - Never make up clinic facts — only use what is listed above
 - Never invent available time slots — only use what checkAppointmentAvailability returns
+- You MUST collect the caller's email address and confirm the spelling before calling saveAppointment. Without a valid email the booking will fail.
 - Keep responses conversational and natural for voice
 - If you cannot answer a question, say: "I don't have that information — our team can help you with that."
 
@@ -191,67 +193,14 @@ const FIRST_MESSAGES = {
   faq:          'Hi there! I am here to answer your questions. What would you like to know?',
 };
 
-function buildVapiTools(serverUrl) {
+/** Build the inline tool definitions with the server webhook URL dynamically by agent type. */
+function buildVapiTools(type, serverUrl) {
   const toolServerUrl = getWebhookUrl(serverUrl || process.env.WEBHOOK_URL || process.env.SERVER_URL);
-
-  const serverConfig = toolServerUrl ? { server: { url: toolServerUrl } } : {};
-
-  return [
-    {
-      type: 'function',
-      ...serverConfig,
-      function: {
-        name: 'saveLead',
-        description: 'Record the caller as a lead once you have their name and phone. Call ONCE per conversation. Do not announce it to the caller.',
-        parameters: {
-          type: 'object',
-          properties: {
-            name:    { type: 'string', description: 'Caller full name' },
-            phone:   { type: 'string', description: 'Caller phone number' },
-            email:   { type: 'string', description: 'Caller email address (optional)' },
-            purpose: { type: 'string', description: 'Reason for calling' },
-          },
-          required: ['name', 'phone'],
-        },
-      },
-    },
-    {
-      type: 'function',
-      ...serverConfig,
-      function: {
-        name: 'checkAppointmentAvailability',
-        description: 'Check whether a requested date/time is free before booking. Returns whether the slot is available and a few alternative slots. NEVER invent slots yourself — only use what this returns.',
-        parameters: {
-          type: 'object',
-          properties: {
-            provider: { type: 'string', description: 'preferred staff member (dentist/doctor/stylist), optional' },
-            date: { type: 'string', description: 'preferred date as stated by the caller' },
-            time: { type: 'string', description: 'preferred time, e.g. "4:30 PM"' },
-          },
-          required: ['date'],
-        },
-      },
-    },
-    {
-      type: 'function',
-      ...serverConfig,
-      function: {
-        name: 'saveAppointment',
-        description: 'Book the appointment AFTER checkAppointmentAvailability confirms the slot is free. Returns an appointmentId to read back to the caller. Call ONCE per conversation.',
-        parameters: {
-          type: 'object',
-          properties: {
-            name:          { type: 'string', description: 'Caller full name' },
-            phone:         { type: 'string', description: 'Caller phone number' },
-            service:       { type: 'string', description: 'Service to book' },
-            preferredDate: { type: 'string', description: 'Preferred appointment date' },
-            preferredTime: { type: 'string', description: 'Preferred time slot' },
-          },
-          required: ['name', 'phone'],
-        },
-      },
-    },
-  ];
+  const tools = getToolDefinitions(type);
+  return tools.map((tool) => ({
+    ...tool,
+    ...(toolServerUrl ? { server: { url: toolServerUrl } } : {}),
+  }));
 }
 
 async function buildAssistantConfig({ name, type, prompt, language, voiceId, userId, serverUrl: explicitUrl } = {}) {
@@ -281,8 +230,10 @@ async function buildAssistantConfig({ name, type, prompt, language, voiceId, use
     systemPrompt,
     messages: [{ role: 'system', content: systemPrompt }],
     temperature: 0.7,
-    tools: buildVapiTools(serverUrl),
   };
+
+  // Register all tools inline (avoids persistent account-wide tool collisions)
+  modelConfig.tools = buildVapiTools(type, serverUrl);
 
   const voice = voiceId
     ? { provider: '11labs', voiceId }
@@ -336,6 +287,7 @@ export async function syncWebhookUrls() {
   }
 
   const webhookUrl = getWebhookUrl(serverUrl);
+
   const Agent = (await import('../db/models/Agent.js')).default;
   const agents = await Agent.find({ vapiId: { $ne: null }, useCustomEngine: { $ne: true } }).lean();
 
@@ -345,13 +297,41 @@ export async function syncWebhookUrls() {
     try {
       const fullAssistant = await vapiRequest(`/assistant/${agent.vapiId}`);
       const currentUrl = fullAssistant.server?.url || fullAssistant.serverUrl || null;
-      if (currentUrl === webhookUrl) {
+      
+      let toolsUpToDate = true;
+      if (fullAssistant.model && Array.isArray(fullAssistant.model.tools)) {
+        for (const tool of fullAssistant.model.tools) {
+          if (tool.server && tool.server.url !== webhookUrl) {
+            toolsUpToDate = false;
+            break;
+          }
+        }
+      }
+
+      if (currentUrl === webhookUrl && toolsUpToDate) {
         skipped++;
         continue;
       }
 
-      // PUT requires the full config — merge server.url into existing config
-      const updatedConfig = { ...fullAssistant, server: { ...(fullAssistant.server || {}), url: webhookUrl } };
+      // PUT requires the full config — merge server.url and update all inline tools
+      const updatedConfig = { ...fullAssistant };
+      updatedConfig.server = { ...(fullAssistant.server || {}), url: webhookUrl };
+      
+      if (updatedConfig.model && Array.isArray(updatedConfig.model.tools)) {
+        updatedConfig.model.tools = updatedConfig.model.tools.map(tool => {
+          if (tool.server) {
+            return {
+              ...tool,
+              server: {
+                ...tool.server,
+                url: webhookUrl
+              }
+            };
+          }
+          return tool;
+        });
+      }
+
       delete updatedConfig.id;
       delete updatedConfig.createdAt;
       delete updatedConfig.updatedAt;
